@@ -1,4 +1,4 @@
-import { BarChart3, LayoutGrid, Package, Search, X, Globe, type LucideIcon } from "lucide-react";
+import { BarChart3, LayoutGrid, Package, X, Globe, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 
@@ -74,21 +74,10 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
         <Dialog.Overlay className="fixed inset-0 z-50 bg-crust/96 backdrop-blur-md transition-opacity duration-200 data-[state=open]:animate-fade-in" />
         
         {/* Contenedor del Modal Glassmorphic Obsidian */}
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-hairline modal-shell-solid shadow-2xl transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
+        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-hairline modal-shell-solid shadow-2xl transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
           
-          <header className="flex items-center gap-3 border-b border-hairline px-4 py-2.5 sm:px-5">
-            <Dialog.Title className="sr-only">Configuración</Dialog.Title>
-
-            {/* Search bar */}
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-dim" />
-              <input
-                type="search"
-                placeholder="Buscar configuración..."
-                className="h-9 w-full rounded-card border border-hairline bg-obsidian-raised pl-9 pr-3 text-[13px] text-ink outline-none placeholder:text-ink-dim transition-colors duration-150 focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20"
-                aria-label="Buscar en configuración"
-              />
-            </div>
+          <header className="flex items-center justify-between border-b border-hairline px-4 py-2.5 sm:px-5">
+            <Dialog.Title className="text-[13px] font-semibold tracking-wide text-ink">Configuración</Dialog.Title>
 
             <Dialog.Close asChild>
               <button
@@ -101,13 +90,15 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
             </Dialog.Close>
           </header>
 
-          {/* Horizontal section tabs */}
-          <div className="border-b border-hairline px-4 py-2 sm:px-5">
-            <div
+          {/* Two-column layout: sidebar + content */}
+          <div className="grid grid-cols-[200px_1fr] min-h-0 overflow-hidden">
+
+            {/* Left sidebar nav */}
+            <nav
               role="tablist"
               aria-label="Secciones de configuración"
-              aria-orientation="horizontal"
-              className="flex gap-1 overflow-x-auto scrollbar-thin"
+              aria-orientation="vertical"
+              className="flex flex-col gap-0.5 border-r border-hairline p-2 overflow-y-auto"
             >
               {SETTINGS_SECTIONS.map((section) => {
                 const SectionIcon = section.icon;
@@ -123,7 +114,7 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
                     id={`settings-tab-${section.id}`}
                     onClick={() => setActiveSection(section.id)}
                     className={[
-                      "flex shrink-0 items-center gap-2 rounded-card px-3 py-2 text-left transition-[background-color,color] duration-150",
+                      "flex w-full items-center gap-2.5 rounded-card px-3 py-2.5 text-left transition-[background-color,color] duration-150",
                       isActive
                         ? "bg-obsidian-elevated text-ink"
                         : "text-ink-muted hover:bg-obsidian-raised hover:text-ink",
@@ -135,28 +126,28 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
                         isActive ? "text-champagne" : "text-ink-dim",
                       ].join(" ")}
                     />
-                    <span className="text-[11px] font-medium tracking-[0.01em] text-current">
+                    <span className="text-[12px] font-medium tracking-[0.01em] text-current">
                       {section.label}
                     </span>
                   </button>
                 );
               })}
-            </div>
-          </div>
+            </nav>
 
-          {/* Content panel */}
-          <section
-            id={`settings-panel-${activeSection}`}
-            role="tabpanel"
-            aria-labelledby={`settings-tab-${activeSection}`}
-            className="min-h-0 overflow-hidden"
-          >
-            <div className="scrollbar-thin h-full overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
-              {renderSectionPanel(activeSection, { categories, products }, () => {
-                setActiveSection(SETTINGS_SECTION.CATEGORIES);
-              })}
-            </div>
-          </section>
+            {/* Content panel */}
+            <section
+              id={`settings-panel-${activeSection}`}
+              role="tabpanel"
+              aria-labelledby={`settings-tab-${activeSection}`}
+              className="min-h-0 overflow-hidden"
+            >
+              <div className="scrollbar-thin h-full overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
+                {renderSectionPanel(activeSection, { categories, products }, () => {
+                  setActiveSection(SETTINGS_SECTION.CATEGORIES);
+                })}
+              </div>
+            </section>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
