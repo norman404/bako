@@ -1,6 +1,7 @@
 import { CreditCard, Package, Receipt, RefreshCw, Wallet } from "lucide-react";
 
 import { useTurnoMetrics } from "@/modules/turno/hooks/use-turno-metrics";
+import { Button } from "@/components/ui/Button";
 import { formatPosCurrency } from "@/lib/currency";
 
 function formatUpdatedAtLabel(updatedAt: Date | string): string {
@@ -26,17 +27,17 @@ function TurnoSummaryPanel() {
       <header className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
         <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Turno</h2>
 
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="small"
           onClick={() => {
             void metricsQuery.refetch();
           }}
-          className="inline-flex h-8 items-center gap-1.5 rounded-card border border-hairline bg-obsidian px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink transition-colors duration-150 hover:border-hairline-strong hover:text-champagne disabled:cursor-not-allowed disabled:opacity-40"
           disabled={metricsQuery.isFetching}
         >
           <RefreshCw className={["h-3.5 w-3.5 text-ink-dim", metricsQuery.isFetching ? "animate-spin" : ""].join(" ")} />
           Refrescar
-        </button>
+        </Button>
       </header>
 
       {metricsQuery.isError ? (

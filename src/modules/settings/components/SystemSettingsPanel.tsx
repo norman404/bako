@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Save } from "lucide-react";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -80,14 +81,16 @@ export function SystemSettingsPanel() {
           </div>
 
           <div className="flex items-center justify-end border-t border-hairline pt-4 mt-2">
-            <button
+            <Button
               type="submit"
+              variant="default"
+              size="small"
+              className="rounded-card bg-champagne text-obsidian hover:bg-champagne/90"
               disabled={isLoading}
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-card bg-champagne px-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian transition-colors duration-150 hover:bg-champagne/90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Save className="h-3.5 w-3.5" />
               Guardar cambios
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -37,15 +37,16 @@ function Cart({
             </h2>
           </div>
           {!isEmpty ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="small"
               onClick={onClearCart}
-              className="flex items-center gap-1.5 rounded-sharp border border-hairline px-2.5 py-1.5 text-[10px] uppercase tracking-[0.16em] text-ink-dim transition-colors duration-150 hover:border-danger/40 hover:text-danger"
+              className="rounded-sharp border border-hairline text-ink-dim hover:border-danger/40 hover:text-danger"
               aria-label="Vaciar comanda"
             >
               <Trash2 className="h-3 w-3" />
               Vaciar
-            </button>
+            </Button>
           ) : null}
         </div>
       </header>
@@ -81,34 +82,37 @@ function Cart({
 
                 <div className="mt-3 flex items-center justify-between">
                   <div className="inline-flex items-center rounded-sharp border border-hairline-strong">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onDecreaseQuantity(item.product.id)}
-                      className="flex h-10 w-10 items-center justify-center text-ink-muted transition-colors duration-150 hover:bg-obsidian-elevated hover:text-ink"
+                      className="h-10 w-10 text-ink-muted hover:bg-obsidian-elevated hover:text-ink"
                       aria-label={`Disminuir ${item.product.name}`}
                     >
                       <Minus className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                     <span className="font-mono-tabular flex h-10 min-w-10 items-center justify-center border-x border-hairline-strong bg-champagne/10 px-2 text-center text-[13px] font-medium text-champagne">
                       {item.quantity}
                     </span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => onIncreaseQuantity(item.product.id)}
-                      className="flex h-10 w-10 items-center justify-center text-ink-muted transition-colors duration-150 hover:bg-obsidian-elevated hover:text-ink"
+                      className="h-10 w-10 text-ink-muted hover:bg-obsidian-elevated hover:text-ink"
                       aria-label={`Aumentar ${item.product.name}`}
                     >
                       <Plus className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => onRemoveItem(item.product.id)}
-                    className="flex h-8 w-8 items-center justify-center text-ink-dim opacity-40 transition-opacity duration-150 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
+                    className="h-8 w-8 text-ink-dim opacity-40 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
                     aria-label={`Eliminar ${item.product.name}`}
                   >
                     <X className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </div>
               </li>
             ))}

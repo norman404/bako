@@ -2,6 +2,8 @@ import { BarChart3, LayoutGrid, Package, X, Globe, type LucideIcon } from "lucid
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 
+import { Button } from "@/components/ui/Button";
+
 import type { Category } from "@/modules/menu/domain/category";
 import type { Product } from "@/modules/menu/domain/product";
 import { CategorySettingsPanel } from "@/modules/menu/components/admin/CategorySettingsPanel";
@@ -80,13 +82,13 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
             <Dialog.Title className="text-[13px] font-semibold tracking-wide text-ink">Configuración</Dialog.Title>
 
             <Dialog.Close asChild>
-              <button
-                type="button"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink"
+              <Button
+                variant="ghost"
+                size="icon"
                 aria-label="Cerrar configuración"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </Dialog.Close>
           </header>
 
@@ -105,19 +107,17 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
                 const isActive = activeSection === section.id;
 
                 return (
-                  <button
+                  <Button
                     key={section.id}
-                    type="button"
                     role="tab"
                     aria-selected={isActive}
                     aria-controls={`settings-panel-${section.id}`}
                     id={`settings-tab-${section.id}`}
                     onClick={() => setActiveSection(section.id)}
+                    variant="ghost"
                     className={[
-                      "flex w-full items-center gap-2.5 rounded-card px-3 py-2.5 text-left transition-[background-color,color] duration-150",
-                      isActive
-                        ? "bg-obsidian-elevated text-ink"
-                        : "text-ink-muted hover:bg-obsidian-raised hover:text-ink",
+                      "w-full justify-start gap-2.5 rounded-card px-3 py-2.5",
+                      isActive ? "bg-obsidian-elevated text-ink" : "text-ink-muted",
                     ].join(" ")}
                   >
                     <SectionIcon
@@ -126,10 +126,10 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
                         isActive ? "text-champagne" : "text-ink-dim",
                       ].join(" ")}
                     />
-                    <span className="text-[12px] font-medium tracking-[0.01em] text-current">
+                    <span className="text-[12px] font-medium tracking-[0.01em]">
                       {section.label}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </nav>

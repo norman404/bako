@@ -9,6 +9,7 @@ import {
   useCreateCategory,
   useUpdateCategory,
 } from "@/modules/menu/hooks/use-categories";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -149,14 +150,14 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
       <header className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
         <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Categorías</h2>
 
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="small"
           onClick={beginCreate}
-          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-card border border-hairline bg-obsidian px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink transition-colors duration-150 hover:border-hairline-strong hover:text-champagne"
         >
           <Plus className="h-3.5 w-3.5" />
           Nueva
-        </button>
+        </Button>
       </header>
 
       <div className="grid min-h-0 gap-3 xl:grid-cols-[minmax(0,0.86fr)_minmax(300px,1.14fr)]">
@@ -167,29 +168,30 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
 
               return (
                 <div key={category.id} className="flex items-stretch gap-1">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={() => beginEdit(category)}
                     className={getListButtonClass(isActive)}
                   >
                     <p className="text-[12px] font-medium text-ink">{category.name}</p>
                     <p className="mt-1 line-clamp-1 text-[10px] text-ink-dim">{category.description}</p>
-                  </button>
+                  </Button>
 
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
                       if (isArchivePending) {
                         return;
                       }
                       void handleArchive(category);
                     }}
-                    className="flex h-auto min-h-[60px] w-8 shrink-0 items-center justify-center rounded-card text-ink-dim transition-colors duration-150 hover:bg-surface-mid hover:text-danger disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-auto min-h-[60px] w-8 rounded-card text-ink-dim hover:bg-surface-mid hover:text-danger"
                     aria-label={`Archivar ${category.name}`}
                     disabled={isArchivePending}
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               );
             })}
@@ -244,13 +246,15 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
             <FormError message={formError} />
 
             <div className="flex items-center justify-end border-t border-hairline pt-2.5">
-              <button
+              <Button
                 type="submit"
+                variant="default"
+                size="small"
+                className="rounded-card bg-champagne text-obsidian hover:bg-champagne/90"
                 disabled={isSaving}
-                className="inline-flex h-9 items-center justify-center rounded-card bg-champagne px-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian transition-colors duration-150 hover:bg-champagne/90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {mode === CATEGORY_FORM_MODE.CREATE ? "Crear categoría" : "Guardar cambios"}
-              </button>
+              </Button>
             </div>
           </form>
         </section>

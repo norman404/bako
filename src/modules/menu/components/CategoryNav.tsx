@@ -1,4 +1,5 @@
 import type { Category } from "@/modules/menu/domain/category";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 interface CategoryNavProps {
@@ -52,12 +53,12 @@ interface CategoryItemProps {
 
 function CategoryItem({ id, label, count, active, onSelect }: CategoryItemProps) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       onClick={() => onSelect(id)}
       className={cn(
-        "group relative shrink-0 px-5 py-5 text-left transition-colors duration-150",
-        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-champagne/60",
+        "group relative shrink-0 px-5 py-5 text-left",
+        "focus-visible:ring-champagne/60",
       )}
     >
       <span className="flex items-baseline gap-2">
@@ -86,7 +87,7 @@ function CategoryItem({ id, label, count, active, onSelect }: CategoryItemProps)
           active ? "scale-x-100 bg-champagne" : "scale-x-0 bg-hairline-strong group-hover:scale-x-100",
         )}
       />
-    </button>
+    </Button>
   );
 }
 

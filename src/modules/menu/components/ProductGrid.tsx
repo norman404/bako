@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/Button";
 import type { Category } from "@/modules/menu/domain/category";
 import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
@@ -31,19 +32,12 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart }: Pr
     <section className="relative">
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {visibleProducts.map((product) => (
-          <button
+          <Button
             key={product.id}
-            type="button"
+            variant="ghost"
             onClick={() => onAddToCart(product)}
             aria-label={`Agregar ${product.name}`}
-            className={[
-              "group relative flex min-h-[140px] flex-col items-stretch gap-5 text-left cursor-pointer touch-manipulation",
-              "rounded-card border border-hairline bg-obsidian-raised p-6",
-              "transition-[transform,border-color,background-color] duration-150 ease-out",
-              "hover:-translate-y-0.5 hover:border-hairline-strong hover:bg-obsidian-elevated",
-              "focus-visible:z-10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-champagne/60",
-              "active:bg-obsidian",
-            ].join(" ")}
+            className="group relative flex min-h-[140px] flex-col items-stretch gap-5 text-left touch-manipulation rounded-card border border-hairline bg-obsidian-raised p-6 hover:-translate-y-0.5 hover:border-hairline-strong hover:bg-obsidian-elevated active:bg-obsidian"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sharp border border-hairline bg-obsidian text-2xl leading-none">
@@ -76,7 +70,7 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart }: Pr
                 </span>
               </div>
             </div>
-          </button>
+          </Button>
         ))}
       </div>
     </section>

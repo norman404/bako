@@ -1,6 +1,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
+import { Button } from "@/components/ui/Button";
 import { Dialog, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import { CheckoutModalFooterActions } from "@/modules/checkout/components/CheckoutModal.Footer";
 import { CheckoutModalFulfillmentPanel } from "@/modules/checkout/components/CheckoutModal.Fulfillment";
@@ -87,15 +88,16 @@ function CheckoutModal({
                 Cobro
               </h2>
 
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleCloseRequest}
                 disabled={isSubmitting}
-                className="flex h-8 w-8 items-center justify-center rounded-card text-ink-muted transition-colors duration-150 hover:bg-surface-mid hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                className="h-8 w-8 rounded-card text-ink-muted hover:bg-surface-mid hover:text-ink"
                 aria-label="Cerrar"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </header>
 
             <div className="scrollbar-thin min-h-0 max-h-[calc(100dvh-9.5rem)] space-y-4 overflow-y-auto px-4 py-4 sm:max-h-[calc(100dvh-11rem)] sm:px-5 sm:py-4">

@@ -16,6 +16,7 @@ import {
   parseProductPriceInput,
 } from "@/modules/menu/lib/product-price";
 import { formatPosCurrency } from "@/lib/currency";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -224,14 +225,14 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
             />
           </label>
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="small"
             onClick={beginCreate}
-            className="inline-flex h-8 items-center justify-center gap-1.5 rounded-card border border-hairline bg-obsidian px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-ink transition-colors duration-150 hover:border-hairline-strong hover:text-champagne"
           >
             <Plus className="h-3.5 w-3.5" />
             Nuevo
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -243,8 +244,8 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
 
               return (
                 <div key={product.id} className="flex items-stretch gap-1">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={() => beginEdit(product)}
                     className={getListButtonClass(isActive)}
                   >
@@ -256,22 +257,23 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                       <span className="font-mono-tabular text-[10px] text-champagne">{formatPosCurrency(product.price)}</span>
                     </div>
                     <p className="mt-1.5 text-[9px] uppercase tracking-[0.14em] text-ink-dim">{product.prepTimeMinutes} min</p>
-                  </button>
+                  </Button>
 
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
                       if (isArchivePending) {
                         return;
                       }
                       void handleArchive(product);
                     }}
-                    className="flex h-auto min-h-[68px] w-8 shrink-0 items-center justify-center rounded-card text-ink-dim transition-colors duration-150 hover:bg-surface-mid hover:text-danger disabled:cursor-not-allowed disabled:opacity-40"
+                    className="h-auto min-h-[68px] w-8 rounded-card text-ink-dim hover:bg-surface-mid hover:text-danger"
                     aria-label={`Archivar ${product.name}`}
                     disabled={isArchivePending}
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </div>
               );
             })}
@@ -294,13 +296,14 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
           {!hasCategories ? (
             <div className="mt-3 flex items-center justify-between gap-3 rounded-card border border-hairline px-3 py-2">
               <p className="text-[12px] text-ink-muted">Creá una categoría primero.</p>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="small"
                 onClick={onManageCategories}
-                className="inline-flex h-8 items-center rounded-card border border-hairline px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink transition-colors duration-150 hover:border-hairline-strong hover:text-champagne"
+                className="rounded-card border border-hairline"
               >
                 Categorías
-              </button>
+              </Button>
             </div>
           ) : null}
 
@@ -423,13 +426,15 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
             <FormError message={formError} />
 
             <div className="flex items-center justify-end border-t border-hairline pt-2.5">
-              <button
+              <Button
                 type="submit"
+                variant="default"
+                size="small"
+                className="rounded-card bg-champagne text-obsidian hover:bg-champagne/90"
                 disabled={!hasCategories || isSaving}
-                className="inline-flex h-9 items-center justify-center rounded-card bg-champagne px-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-obsidian transition-colors duration-150 hover:bg-champagne/90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {mode === PRODUCT_FORM_MODE.CREATE ? "Guardar producto" : "Guardar cambios"}
-              </button>
+              </Button>
             </div>
           </form>
         </section>

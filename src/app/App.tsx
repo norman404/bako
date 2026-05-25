@@ -2,6 +2,8 @@ import { Menu, Search, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
+import { Button } from "@/components/ui/Button";
+
 import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
@@ -198,30 +200,33 @@ export function App() {
                 aria-label="Buscar productos"
               />
               {productSearch ? (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={clearProductSearch}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-sharp text-ink-dim transition-colors duration-150 hover:text-ink"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-sharp text-ink-dim hover:text-ink"
                   aria-label="Limpiar búsqueda"
                 >
                   <X className="h-3 w-3" />
-                </button>
+                </Button>
               ) : null}
             </div>
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={openSettings}
-              className="flex h-7 w-7 items-center cursor-pointer justify-center rounded-card text-ink-muted transition-colors duration-150 hover:bg-obsidian-elevated hover:text-ink"
+              className="h-7 w-7 rounded-card text-ink-muted hover:bg-obsidian-elevated hover:text-ink"
               aria-label="Abrir configuración"
             >
               <Settings className="h-3.5 w-3.5" />
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={toggleMobileCart}
-              className="relative flex h-7 w-7 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink lg:hidden"
+              className="relative h-7 w-7 rounded-card border border-hairline text-ink-muted hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink lg:hidden"
               aria-label="Abrir cuenta"
             >
               <Menu className="h-3.5 w-3.5" />
@@ -230,7 +235,7 @@ export function App() {
                   {cartTotals.itemsCount}
                 </span>
               ) : null}
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -292,10 +297,10 @@ export function App() {
 
       {cartTotals.itemsCount > 0 && !isMobileCartOpen ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-obsidian/95 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-3 backdrop-blur lg:hidden">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={openMobileCart}
-            className="group relative flex h-16 w-full items-center justify-between overflow-hidden rounded-sharp border border-champagne/30 bg-obsidian-raised px-4 text-ink transition-colors duration-150 hover:border-champagne/60"
+            className="group relative flex h-16 w-full items-center justify-between overflow-hidden rounded-sharp border border-champagne/30 bg-obsidian-raised px-4 text-ink hover:border-champagne/60"
           >
             <span className="flex items-center gap-3">
               <span className="font-mono-tabular flex h-9 w-9 items-center justify-center rounded-sharp bg-champagne text-[12px] font-bold text-obsidian">
@@ -309,7 +314,7 @@ export function App() {
             <span className="font-mono-tabular text-[18px] font-medium tracking-tight text-champagne">
               {formatPosCurrency(cartTotals.total)}
             </span>
-          </button>
+          </Button>
         </div>
       ) : null}
 
@@ -322,14 +327,15 @@ export function App() {
             onClick={closeMobileCart}
           />
           <div className="absolute inset-x-2 bottom-2 top-12 animate-modal-in">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={closeMobileCart}
-              className="absolute -top-10 right-0 z-10 flex h-9 w-9 items-center justify-center rounded-sharp border border-hairline-strong bg-obsidian-raised text-ink"
+              className="absolute -top-10 right-0 z-10 rounded-sharp border border-hairline-strong bg-obsidian-raised text-ink"
               aria-label="Cerrar"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
             <Cart
               items={synchronizedCartItems}
               onIncreaseQuantity={handleIncreaseQuantity}

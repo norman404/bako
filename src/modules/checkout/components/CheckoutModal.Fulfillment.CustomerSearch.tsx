@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type CustomerQueryResult = ReturnType<
   typeof import("@/modules/checkout/hooks/use-checkout").useCustomers
@@ -98,16 +99,16 @@ export function CustomerSearchPanel({
               const isSelected = selectedCustomerId === customer.id;
 
               return (
-                <button
+                <Button
                   key={customer.id}
-                  type="button"
+                  variant="ghost"
                   onClick={() => onSelectCustomer(customer)}
-                  className={[
+                  className={cn(
                     CUSTOMER_CARD_CLASS,
                     isSelected
                       ? "border-champagne/24 bg-surface-mid"
                       : "border-transparent bg-transparent",
-                  ].join(" ")}
+                  )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -129,7 +130,7 @@ export function CustomerSearchPanel({
                       </span>
                     ) : null}
                   </div>
-                </button>
+                </Button>
               );
             })}
           </div>

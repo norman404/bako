@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 interface SegmentedOption {
@@ -21,9 +22,9 @@ function SegmentedControl({ options, activeValue, onSelect, className }: Segment
         const isActive = option.value === activeValue;
         const Icon = option.icon;
         return (
-          <button
+          <Button
             key={option.value}
-            type="button"
+            variant="ghost"
             onClick={() => onSelect(option.value)}
             aria-pressed={isActive}
             className={cn(
@@ -48,7 +49,7 @@ function SegmentedControl({ options, activeValue, onSelect, className }: Segment
                 {option.label}
               </span>
             </div>
-          </button>
+          </Button>
         );
       })}
     </div>
