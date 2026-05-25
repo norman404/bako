@@ -219,7 +219,7 @@ export function PosPage() {
             <button
               type="button"
               onClick={openSettings}
-              className="flex h-7 w-7 items-center justify-center rounded-card text-ink-muted transition-colors duration-150 hover:bg-obsidian-elevated hover:text-ink"
+              className="flex h-7 w-7 items-center cursor-pointer justify-center rounded-card text-ink-muted transition-colors duration-150 hover:bg-obsidian-elevated hover:text-ink"
               aria-label="Abrir configuración"
             >
               <Settings className="h-3.5 w-3.5" />

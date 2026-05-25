@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { RouterProvider } from "@tanstack/react-router";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "sonner";
 
-import { router } from "./app/router";
+import { App } from "./app/App";
 import { initDatabase } from "./shared/db/client";
 import { useSettingsStore } from "./modules/settings/store/settings-store";
 import "./styles/app.css";
@@ -40,7 +39,7 @@ async function bootstrap() {
     // 3. Montar aplicación real
     root.render(
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <App />
         <Toaster richColors closeButton position="top-right" />
       </QueryClientProvider>
     );
