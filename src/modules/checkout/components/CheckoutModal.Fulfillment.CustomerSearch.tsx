@@ -1,10 +1,11 @@
-import { LoaderCircle, MapPin, Phone, Search } from "lucide-react";
+import { LoaderCircle, MapPin, Phone } from "lucide-react";
 
 import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { FormField } from "@/components/ui/FormField";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { cn } from "@/lib/utils";
 
 type CustomerQueryResult = ReturnType<
@@ -41,19 +42,14 @@ export function CustomerSearchPanel({
 }: CustomerSearchPanelProps) {
   return (
     <div className="space-y-3 rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
-      <div className="grid gap-1">
-        <Label htmlFor="customer-search">Buscar cliente</Label>
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim" />
-          <Input
-            id="customer-search"
-            value={customerSearch}
-            onInput={(event) => onCustomerSearchChange(event.currentTarget.value)}
-            placeholder="Nombre, teléfono o dirección"
-            className="pl-10"
-          />
-        </div>
-      </div>
+      <FormField label="Buscar cliente" htmlFor="customer-search">
+        <SearchInput
+          id="customer-search"
+          value={customerSearch}
+          onInput={(event) => onCustomerSearchChange(event.currentTarget.value)}
+          placeholder="Nombre, teléfono o dirección"
+        />
+      </FormField>
 
       <div className="space-y-2.5">
         <div className="flex items-center justify-between gap-3">
@@ -77,7 +73,7 @@ export function CustomerSearchPanel({
               : "No pudimos cargar clientes guardados"}
           </p>
         ) : customerOptions.length === 0 ? (
-          <div className="rounded-card border border-dashed border-hairline px-3 py-3">
+          <EmptyState className="px-3 py-3 text-left">
             <p className="text-[12px] leading-snug text-ink-dim">
               {trimmedCustomerSearch.length > 0
                 ? 'No encontramos clientes con esa búsqueda. Probá con otro dato o tocá "Nuevo cliente".'
@@ -92,7 +88,7 @@ export function CustomerSearchPanel({
             >
               Nuevo cliente
             </Button>
-          </div>
+          </EmptyState>
         ) : (
           <div className="grid gap-2 lg:grid-cols-2">
             {customerOptions.map((customer) => {

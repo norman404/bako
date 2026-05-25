@@ -1,4 +1,4 @@
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -18,9 +18,11 @@ import {
 import { formatPosCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormError } from "@/components/ui/FormError";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { FormField } from "@/components/ui/FormField";
+import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Select,
   SelectTrigger,
@@ -213,17 +215,13 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
         <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Productos</h2>
 
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-          <label className="relative block sm:min-w-[220px]">
-            <span className="sr-only">Buscar producto</span>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-dim" />
-            <Input
-              aria-label="Buscar producto"
-              value={searchTerm}
-              onInput={(event) => setSearchTerm(event.currentTarget.value)}
-              className="pl-9"
-              placeholder="Buscar"
-            />
-          </label>
+          <SearchInput
+            containerClassName="sm:min-w-[220px]"
+            aria-label="Buscar producto"
+            value={searchTerm}
+            onInput={(event) => setSearchTerm(event.currentTarget.value)}
+            placeholder="Buscar"
+          />
 
           <Button
             variant="secondary"
@@ -279,9 +277,7 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
             })}
 
             {visibleProducts.length === 0 ? (
-              <p className="rounded-card border border-dashed border-hairline px-4 py-8 text-center text-[12px] text-ink-muted">
-                Sin resultados.
-              </p>
+              <EmptyState>Sin resultados.</EmptyState>
             ) : null}
           </div>
         </section>
@@ -308,8 +304,7 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
           ) : null}
 
           <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
-            <div className="grid gap-1">
-              <Label htmlFor="product-category">Categoría</Label>
+            <FormField label="Categoría" htmlFor="product-category">
               <Select
                 value={formState.categoryId || defaultCategoryId}
                 onValueChange={(value) =>
@@ -327,10 +322,9 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </FormField>
 
-            <div className="grid gap-1">
-              <Label htmlFor="product-name">Nombre</Label>
+            <FormField label="Nombre" htmlFor="product-name">
               <Input
                 id="product-name"
                 value={formState.name}
@@ -342,10 +336,9 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                 }
                 placeholder="Flat white"
               />
-            </div>
+            </FormField>
 
-            <div className="grid gap-1">
-              <Label htmlFor="product-description">Descripción</Label>
+            <FormField label="Descripción" htmlFor="product-description">
               <Input
                 id="product-description"
                 value={formState.description}
@@ -357,11 +350,10 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                 }
                 placeholder="Doble shot con leche vaporizada"
               />
-            </div>
+            </FormField>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1">
-                <Label htmlFor="product-price">Precio</Label>
+              <FormField label="Precio" htmlFor="product-price">
                 <Input
                   id="product-price"
                   value={formState.price}
@@ -375,10 +367,9 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                   className="font-mono-tabular"
                   placeholder="55.50"
                 />
-              </div>
+              </FormField>
 
-              <div className="grid gap-1">
-                <Label htmlFor="product-prep-time">Prep (min)</Label>
+              <FormField label="Prep (min)" htmlFor="product-prep-time">
                 <Input
                   id="product-prep-time"
                   value={formState.prepTimeMinutes}
@@ -392,11 +383,10 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                   className="font-mono-tabular"
                   placeholder="5"
                 />
-              </div>
+              </FormField>
             </div>
 
-            <div className="grid gap-1">
-              <Label htmlFor="product-image">Emoji / imagen</Label>
+            <FormField label="Emoji / imagen" htmlFor="product-image">
               <Input
                 id="product-image"
                 value={formState.image}
@@ -408,7 +398,7 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                 }
                 placeholder="☕"
               />
-            </div>
+            </FormField>
 
             <div className="flex items-center gap-2">
               <Checkbox

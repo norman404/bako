@@ -11,9 +11,10 @@ import {
 } from "@/modules/menu/hooks/use-categories";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FormError } from "@/components/ui/FormError";
+import { FormField } from "@/components/ui/FormField";
+import { EmptyState } from "@/components/ui/EmptyState";
 
 const CATEGORY_FORM_MODE = {
   CREATE: "create",
@@ -197,9 +198,7 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
             })}
 
             {categories.length === 0 ? (
-              <p className="rounded-card border border-dashed border-hairline px-4 py-8 text-center text-[12px] text-ink-muted">
-                Sin categorías.
-              </p>
+              <EmptyState>Sin categorías.</EmptyState>
             ) : null}
           </div>
         </section>
@@ -212,8 +211,7 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
           </div>
 
           <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
-            <div className="grid gap-1">
-              <Label htmlFor="category-name">Nombre</Label>
+            <FormField label="Nombre" htmlFor="category-name">
               <Input
                 id="category-name"
                 value={formState.name}
@@ -225,10 +223,9 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
                 }
                 placeholder="Bebidas calientes"
               />
-            </div>
+            </FormField>
 
-            <div className="grid gap-1">
-              <Label htmlFor="category-description">Descripción</Label>
+            <FormField label="Descripción" htmlFor="category-description">
               <Textarea
                 id="category-description"
                 value={formState.description}
@@ -241,7 +238,7 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
                 className="min-h-[132px]"
                 placeholder="Espacios del menú para bebidas, comidas y postres"
               />
-            </div>
+            </FormField>
 
             <FormError message={formError} />
 

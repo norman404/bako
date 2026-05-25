@@ -1,8 +1,9 @@
-import { Menu, Search, Settings, X } from "lucide-react";
+import { Menu, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
 import { Button } from "@/components/ui/Button";
+import { SearchInput } from "@/components/ui/SearchInput";
 
 import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
@@ -190,13 +191,12 @@ export function App() {
           {/* Search + actions — right */}
           <div className="ml-auto flex items-center gap-1.5">
             <div className="relative w-44 sm:w-60">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-dim" />
-              <input
+              <SearchInput
                 type="search"
                 placeholder="Buscar productos..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className="h-7 w-full rounded-card border border-hairline bg-obsidian-raised pl-9 pr-8 text-[13px] text-ink outline-none placeholder:text-ink-dim transition-colors duration-150 focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20"
+                className="h-7 pr-8 w-full"
                 aria-label="Buscar productos"
               />
               {productSearch ? (

@@ -2,6 +2,7 @@ import { CreditCard, Package, Receipt, RefreshCw, Wallet } from "lucide-react";
 
 import { useTurnoMetrics } from "@/modules/turno/hooks/use-turno-metrics";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { formatPosCurrency } from "@/lib/currency";
 
 function formatUpdatedAtLabel(updatedAt: Date | string): string {
@@ -208,9 +209,7 @@ function TurnoSummaryPanel() {
                     </article>
                   ))
                 ) : (
-                  <p className="rounded-card border border-dashed border-hairline px-4 py-8 text-center text-[12px] text-ink-muted">
-                    Sin ventas.
-                  </p>
+                  <EmptyState>Sin ventas.</EmptyState>
                 )}
               </div>
             </section>

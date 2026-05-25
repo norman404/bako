@@ -24,6 +24,7 @@ function CheckoutModalFooterActions({
       <Button
         type="button"
         variant="secondary"
+        size="medium"
         onClick={onClose}
         disabled={isSubmitting}
         className="h-10 text-[11px] uppercase tracking-[0.16em]"
@@ -32,6 +33,7 @@ function CheckoutModalFooterActions({
       </Button>
       <Button
         type="button"
+        size="medium"
         onClick={() => void onConfirm()}
         disabled={isDisabled}
         aria-disabled={isDisabled}

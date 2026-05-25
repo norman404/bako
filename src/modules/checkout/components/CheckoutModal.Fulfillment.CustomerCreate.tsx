@@ -2,9 +2,9 @@ import { MapPin, Phone, UserRound } from "lucide-react";
 
 import type { CheckoutCustomerFormState } from "@/modules/checkout/lib/builders";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { SearchInput } from "@/components/ui/SearchInput";
+import { FormField } from "@/components/ui/FormField";
 
 interface CustomerCreateFormProps {
   customerForm: CheckoutCustomerFormState;
@@ -35,48 +35,41 @@ export function CustomerCreateForm({
       </div>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
-        <div className="grid gap-1">
-          <Label htmlFor="create-customer-name">Cliente</Label>
-          <div className="relative">
-            <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim" />
-            <Input
-              id="create-customer-name"
-              value={customerForm.name}
-              onInput={(event) => onCustomerFieldChange("name", event.currentTarget.value)}
-              className="pl-10"
-              placeholder="Valentina Suárez"
-            />
-          </div>
-        </div>
+        <FormField label="Cliente" htmlFor="create-customer-name">
+          <SearchInput
+            id="create-customer-name"
+            icon={<UserRound />}
+            value={customerForm.name}
+            onInput={(event) => onCustomerFieldChange("name", event.currentTarget.value)}
+            placeholder="Valentina Suárez"
+          />
+        </FormField>
 
-        <div className="grid gap-1">
-          <Label htmlFor="create-customer-phone">Teléfono</Label>
-          <div className="relative">
-            <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim" />
-            <Input
-              id="create-customer-phone"
-              value={customerForm.phone}
-              onInput={(event) => onCustomerFieldChange("phone", event.currentTarget.value)}
-              className="pl-10"
-              placeholder="11 5555 5555"
-              inputMode="tel"
-            />
-          </div>
-        </div>
+        <FormField label="Teléfono" htmlFor="create-customer-phone">
+          <SearchInput
+            id="create-customer-phone"
+            icon={<Phone />}
+            value={customerForm.phone}
+            onInput={(event) => onCustomerFieldChange("phone", event.currentTarget.value)}
+            placeholder="11 5555 5555"
+            inputMode="tel"
+          />
+        </FormField>
       </div>
 
-      <div className="grid gap-1 mt-3">
-        <Label htmlFor="create-customer-address">Dirección</Label>
-        <div className="relative">
-          <MapPin className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-ink-dim" />
-          <Textarea
-            id="create-customer-address"
-            value={customerForm.address}
-            onInput={(event) => onCustomerFieldChange("address", event.currentTarget.value)}
-            className="min-h-[88px] pl-10"
-            placeholder="Av. Siempre Viva 742, Timbre B"
-          />
-        </div>
+      <div className="mt-3">
+        <FormField label="Dirección" htmlFor="create-customer-address">
+          <div className="relative">
+            <MapPin className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-ink-dim" />
+            <Textarea
+              id="create-customer-address"
+              value={customerForm.address}
+              onInput={(event) => onCustomerFieldChange("address", event.currentTarget.value)}
+              className="min-h-[88px] pl-10"
+              placeholder="Av. Siempre Viva 742, Timbre B"
+            />
+          </div>
+        </FormField>
       </div>
     </div>
   );

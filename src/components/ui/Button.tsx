@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   [
-    "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap",
+    "inline-flex cursor-pointer gap-2",
     "rounded-sharp text-sm font-semibold",
     "transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-out",
     "disabled:pointer-events-none disabled:opacity-40",
@@ -28,15 +28,14 @@ const buttonVariants = cva(
           "border border-danger/45 bg-danger/10 text-danger shadow-inset-subtle-sm hover:bg-danger/16 hover:text-danger-light",
       },
       size: {
-        small: "h-8 px-3 text-[11px] uppercase tracking-[0.16em]",
-        medium: "h-10 px-4",
-        large: "h-14 px-6 text-[15px]",
-        icon: "h-10 w-10 p-0",
+        small: "h-8 px-3 text-[11px] uppercase tracking-[0.16em] whitespace-nowrap items-center justify-center",
+        medium: "h-10 px-4 whitespace-nowrap items-center justify-center",
+        large: "h-14 px-6 text-[15px] whitespace-nowrap items-center justify-center",
+        icon: "h-10 w-10 p-0 whitespace-nowrap items-center justify-center",
       },
     },
     defaultVariants: {
       variant: "default",
-      size: "medium",
     },
   },
 );
