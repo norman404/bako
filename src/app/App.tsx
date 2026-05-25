@@ -238,10 +238,6 @@ export function App() {
       <main className="flex min-h-0 flex-1 overflow-hidden lg:flex-row">
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-24 lg:pb-0">
           <div className="border-b border-hairline px-4 py-3 sm:px-6 lg:px-8">
-            <p className="eyebrow">
-              {products.length} producto{products.length === 1 ? "" : "s"} · Caja activa
-            </p>
-
             <div className="mt-3 -mx-1 px-1 sm:-mx-5 sm:px-5">
               <CategoryNav
                 categories={categories}

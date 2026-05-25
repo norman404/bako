@@ -4,23 +4,22 @@
   :root {
     color-scheme: dark;
 
-    /*  */
-    /* Midnight Obsidian — luxury minimal dark */
-    --obsidian: #0a0a0b;
-    --obsidian-raised: #111113;
-    --obsidian-elevated: #17171a;
+    /* Catppuccin Mocha */
+    --obsidian: #181825;          /* mantle  — app bg */
+    --obsidian-raised: #1e1e2e;   /* base    — panels */
+    --obsidian-elevated: #313244; /* surface0 — elevated */
 
-    --hairline: rgba(255, 255, 255, 0.06);
-    --hairline-strong: rgba(255, 255, 255, 0.10);
+    --hairline: rgba(205, 214, 244, 0.07);
+    --hairline-strong: rgba(205, 214, 244, 0.12);
 
-    --ink: #f4f1ea;
-    --ink-muted: rgba(244, 241, 234, 0.60);
-    --ink-dim: rgba(244, 241, 234, 0.38);
+    --ink: #cdd6f4;
+    --ink-muted: rgba(205, 214, 244, 0.60);
+    --ink-dim: rgba(205, 214, 244, 0.38);
 
-    --champagne: #e8d5a8;
-    --champagne-dim: #a89775;
+    --champagne: #cba6f7;      /* mauve — primary accent */
+    --champagne-dim: #9273c4;  /* mauve dimmed */
 
-    --danger: #bc8456;
+    --danger: #f38ba8;         /* mocha red */
 
     --font-sans: "Satoshi", "Segoe UI", system-ui, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
@@ -58,7 +57,7 @@
   }
 
   ::selection {
-    background: rgba(232, 213, 168, 0.22);
+    background: rgba(203, 166, 247, 0.22);
     color: var(--ink);
   }
 }
@@ -135,47 +134,47 @@
 
   .modal-shell-solid {
     background:
-      linear-gradient(180deg, rgba(25, 25, 28, 0.985) 0%, rgba(15, 15, 18, 0.985) 58%, rgba(10, 10, 11, 0.995) 100%);
+      linear-gradient(180deg, rgba(49, 50, 68, 0.985) 0%, rgba(30, 30, 46, 0.985) 58%, rgba(24, 24, 37, 0.995) 100%);
     box-shadow:
       0 42px 120px -44px rgba(0, 0, 0, 1),
       0 18px 36px -24px rgba(0, 0, 0, 0.8),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      inset 0 1px 0 rgba(205, 214, 244, 0.05);
   }
 
   .panel-solid {
     background:
-      linear-gradient(180deg, rgba(19, 19, 22, 0.95) 0%, rgba(11, 11, 13, 0.95) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      linear-gradient(180deg, rgba(49, 50, 68, 0.95) 0%, rgba(30, 30, 46, 0.95) 100%);
+    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.04);
   }
 
   .panel-solid-muted {
-    background: rgba(10, 10, 11, 0.86);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    background: rgba(24, 24, 37, 0.86);
+    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.03);
   }
 
   .pay-cta {
     box-shadow:
-      0 22px 54px -26px rgba(232, 213, 168, 0.75),
-      0 10px 24px -18px rgba(232, 213, 168, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.24);
+      0 22px 54px -26px rgba(203, 166, 247, 0.65),
+      0 10px 24px -18px rgba(203, 166, 247, 0.30),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
 
   .segmented-shell {
-    background: rgba(255, 255, 255, 0.03);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    background: rgba(205, 214, 244, 0.03);
+    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.04);
   }
 
   .segmented-option-active {
-    border-color: rgba(232, 213, 168, 0.58);
-    background: linear-gradient(180deg, rgba(232, 213, 168, 0.24) 0%, rgba(232, 213, 168, 0.14) 100%);
+    border-color: rgba(203, 166, 247, 0.50);
+    background: linear-gradient(180deg, rgba(203, 166, 247, 0.20) 0%, rgba(203, 166, 247, 0.12) 100%);
     box-shadow:
-      0 18px 40px -32px rgba(232, 213, 168, 0.8),
-      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      0 18px 40px -32px rgba(203, 166, 247, 0.70),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10);
   }
 
   .segmented-option-inactive {
-    background: rgba(10, 10, 11, 0.88);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    background: rgba(24, 24, 37, 0.88);
+    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.03);
   }
 
   .scrollbar-thin::-webkit-scrollbar {

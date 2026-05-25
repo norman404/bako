@@ -17,15 +17,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-champagne/70 bg-champagne text-obsidian shadow-[0_18px_40px_-24px_rgba(232,213,168,0.75),inset_0_1px_0_rgba(255,255,255,0.28)] hover:border-champagne hover:bg-[#f2ddb0] hover:shadow-[0_22px_44px_-24px_rgba(232,213,168,0.82),inset_0_1px_0_rgba(255,255,255,0.32)]",
+          "border border-champagne/70 bg-champagne text-obsidian shadow-[0_18px_40px_-24px_rgba(203,166,247,0.65),inset_0_1px_0_rgba(255,255,255,0.22)] hover:border-champagne hover:bg-[#d4b5ff] hover:shadow-[0_22px_44px_-24px_rgba(203,166,247,0.75),inset_0_1px_0_rgba(255,255,255,0.26)]",
         secondary:
-          "border border-hairline-strong bg-obsidian-elevated text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] hover:border-champagne/35 hover:bg-[#1a1a1e] hover:text-ink",
+          "border border-hairline-strong bg-obsidian-elevated text-ink shadow-[inset_0_1px_0_rgba(205,214,244,0.05)] hover:border-champagne/35 hover:bg-[#45475a] hover:text-ink",
         outline:
           "border border-hairline-strong bg-transparent text-ink hover:border-champagne/40 hover:bg-obsidian-elevated hover:text-ink",
         ghost:
           "bg-transparent text-ink-muted hover:bg-obsidian-elevated hover:text-ink",
         danger:
-          "border border-danger/45 bg-danger/10 text-danger shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-danger/16 hover:text-[#d79d6f]",
+          "border border-danger/45 bg-danger/10 text-danger shadow-[inset_0_1px_0_rgba(205,214,244,0.04)] hover:bg-danger/16 hover:text-[#f5a0b5]",
       },
       size: {
         small: "h-8 px-3 text-[11px] uppercase tracking-[0.16em]",
