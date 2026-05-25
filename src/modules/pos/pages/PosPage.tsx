@@ -1,4 +1,4 @@
-import { Menu, Search, Settings2, X } from "lucide-react";
+import { Menu, Search, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
@@ -184,21 +184,16 @@ export function PosPage() {
     <div className="flex h-dvh flex-col overflow-hidden bg-obsidian text-ink">
       <header className="border-b border-hairline bg-obsidian select-none" data-tauri-drag-region>
         <div
-          className={`flex h-11 items-center justify-between gap-3 pr-3 sm:pr-4 ${IS_MAC ? "pl-20" : "pl-4"}`}
+          className={`relative flex h-11 items-center pr-3 sm:pr-4 ${IS_MAC ? "pl-20" : "pl-4"}`}
           data-tauri-drag-region
         >
-          {/* Branding — left */}
-          <div className="flex shrink-0 items-baseline gap-1">
-            <span className="font-display text-[17px] leading-none tracking-[-0.02em] text-ink">
-              coffee
-            </span>
-            <span className="text-[17px] font-medium leading-none tracking-[-0.02em] text-champagne">
-              pos
-            </span>
-          </div>
+          {/* Title — absolute center */}
+          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 font-display text-[14px] font-semibold tracking-[-0.01em] text-ink">
+            Bako
+          </span>
 
           {/* Search + actions — right */}
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5">
             <div className="relative w-44 sm:w-60">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-dim" />
               <input
@@ -206,7 +201,7 @@ export function PosPage() {
                 placeholder="Buscar productos..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className="h-9 w-full rounded-card border border-hairline bg-obsidian-raised pl-9 pr-8 text-[13px] text-ink outline-none placeholder:text-ink-dim transition-colors duration-150 focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20"
+                className="h-7 w-full rounded-card border border-hairline bg-obsidian-raised pl-9 pr-8 text-[13px] text-ink outline-none placeholder:text-ink-dim transition-colors duration-150 focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20"
                 aria-label="Buscar productos"
               />
               {productSearch ? (
@@ -216,26 +211,27 @@ export function PosPage() {
                   className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-sharp text-ink-dim transition-colors duration-150 hover:text-ink"
                   aria-label="Limpiar búsqueda"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-3 w-3" />
                 </button>
               ) : null}
             </div>
+
             <button
               type="button"
               onClick={openSettings}
-              className="flex h-9 w-9 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink"
+              className="flex h-7 w-7 items-center justify-center rounded-card text-ink-muted transition-colors duration-150 hover:bg-obsidian-elevated hover:text-ink"
               aria-label="Abrir configuración"
             >
-              <Settings2 className="h-4 w-4" />
+              <Settings className="h-3.5 w-3.5" />
             </button>
 
             <button
               type="button"
               onClick={toggleMobileCart}
-              className="relative flex h-9 w-9 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink lg:hidden"
+              className="relative flex h-7 w-7 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink lg:hidden"
               aria-label="Abrir cuenta"
             >
-              <Menu className="h-4 w-4" />
+              <Menu className="h-3.5 w-3.5" />
               {cartTotals.itemsCount > 0 ? (
                 <span className="font-mono-tabular absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-sharp bg-champagne px-0.5 text-[9px] font-bold text-obsidian">
                   {cartTotals.itemsCount}
