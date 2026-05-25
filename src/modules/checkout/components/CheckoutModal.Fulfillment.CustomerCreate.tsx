@@ -2,23 +2,15 @@ import { MapPin, Phone, UserRound } from "lucide-react";
 
 import type { CheckoutCustomerFormState } from "@/modules/checkout/lib/builders";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CustomerCreateFormProps {
   customerForm: CheckoutCustomerFormState;
   onCustomerFieldChange: (field: keyof CheckoutCustomerFormState, value: string) => void;
   onShowSearchCustomers: () => void;
 }
-
-const FIELD_INPUT_CLASS = [
-  "h-9 w-full rounded-card border border-hairline bg-obsidian px-3",
-  "text-[13px] text-ink outline-none",
-  "placeholder:text-ink-dim",
-  "transition-colors duration-150",
-  "focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20",
-].join(" ");
-
-const FIELD_LABEL_CLASS =
-  "grid gap-1 text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim";
 
 export function CustomerCreateForm({
   customerForm,
@@ -43,50 +35,49 @@ export function CustomerCreateForm({
       </div>
 
       <div className="mt-3 grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
-        <label className={FIELD_LABEL_CLASS}>
-          Cliente
+        <div className="grid gap-1">
+          <Label htmlFor="create-customer-name">Cliente</Label>
           <div className="relative">
             <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim" />
-            <input
+            <Input
+              id="create-customer-name"
               value={customerForm.name}
               onInput={(event) => onCustomerFieldChange("name", event.currentTarget.value)}
-              className={`${FIELD_INPUT_CLASS} pl-10`}
+              className="pl-10"
               placeholder="Valentina Suárez"
             />
           </div>
-        </label>
+        </div>
 
-        <label className={FIELD_LABEL_CLASS}>
-          Teléfono
+        <div className="grid gap-1">
+          <Label htmlFor="create-customer-phone">Teléfono</Label>
           <div className="relative">
             <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim" />
-            <input
+            <Input
+              id="create-customer-phone"
               value={customerForm.phone}
               onInput={(event) => onCustomerFieldChange("phone", event.currentTarget.value)}
-              className={`${FIELD_INPUT_CLASS} pl-10`}
+              className="pl-10"
               placeholder="11 5555 5555"
               inputMode="tel"
             />
           </div>
-        </label>
+        </div>
       </div>
 
-      <label className={`${FIELD_LABEL_CLASS} mt-3`}>
-        Dirección
+      <div className="grid gap-1 mt-3">
+        <Label htmlFor="create-customer-address">Dirección</Label>
         <div className="relative">
           <MapPin className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-ink-dim" />
-          <textarea
+          <Textarea
+            id="create-customer-address"
             value={customerForm.address}
             onInput={(event) => onCustomerFieldChange("address", event.currentTarget.value)}
-            className={[
-              "min-h-[88px] w-full resize-none rounded-card border border-hairline bg-obsidian py-3 pl-10 pr-3",
-              "text-[13px] text-ink outline-none placeholder:text-ink-dim",
-              "transition-colors duration-150 focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20",
-            ].join(" ")}
+            className="min-h-[88px] pl-10"
             placeholder="Av. Siempre Viva 742, Timbre B"
           />
         </div>
-      </label>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,17 @@ import {
   parseProductPriceInput,
 } from "@/modules/menu/lib/product-price";
 import { formatPosCurrency } from "@/lib/currency";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FormError } from "@/components/ui/FormError";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 
 const PRODUCT_FORM_MODE = {
   CREATE: "create",
@@ -97,16 +108,6 @@ function toProductPayload(
     isPopular: formState.isPopular,
   };
 }
-
-const FIELD_INPUT_CLASS = [
-  "h-9 w-full rounded-card border border-hairline bg-obsidian px-3",
-  "text-[13px] text-ink outline-none",
-  "placeholder:text-ink-dim",
-  "transition-colors duration-150",
-  "focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20",
-].join(" ");
-
-const FIELD_LABEL_CLASS = "grid gap-1 text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim";
 
 function getListButtonClass(isActive: boolean): string {
   return [
@@ -214,11 +215,11 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
           <label className="relative block sm:min-w-[220px]">
             <span className="sr-only">Buscar producto</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-dim" />
-            <input
+            <Input
               aria-label="Buscar producto"
               value={searchTerm}
               onInput={(event) => setSearchTerm(event.currentTarget.value)}
-              className="h-9 w-full rounded-card border border-hairline bg-obsidian pl-9 pr-3 text-[13px] text-ink outline-none transition-colors duration-150 placeholder:text-ink-dim focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20"
+              className="pl-9"
               placeholder="Buscar"
             />
           </label>
@@ -304,29 +305,31 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
           ) : null}
 
           <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
-            <label className={FIELD_LABEL_CLASS}>
-              Categoría
-              <select
+            <div className="grid gap-1">
+              <Label htmlFor="product-category">Categoría</Label>
+              <Select
                 value={formState.categoryId || defaultCategoryId}
-                onChange={(event) =>
-                  setFormState((previous) => ({
-                    ...previous,
-                    categoryId: event.currentTarget.value,
-                  }))
+                onValueChange={(value) =>
+                  setFormState((previous) => ({ ...previous, categoryId: value }))
                 }
-                className={FIELD_INPUT_CLASS}
               >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id} className="bg-obsidian text-ink">
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger id="product-category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <label className={FIELD_LABEL_CLASS}>
-              Nombre
-              <input
+            <div className="grid gap-1">
+              <Label htmlFor="product-name">Nombre</Label>
+              <Input
+                id="product-name"
                 value={formState.name}
                 onInput={(event) =>
                   setFormState((previous) => ({
@@ -334,14 +337,14 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                     name: event.currentTarget.value,
                   }))
                 }
-                className={FIELD_INPUT_CLASS}
                 placeholder="Flat white"
               />
-            </label>
+            </div>
 
-            <label className={FIELD_LABEL_CLASS}>
-              Descripción
-              <input
+            <div className="grid gap-1">
+              <Label htmlFor="product-description">Descripción</Label>
+              <Input
+                id="product-description"
                 value={formState.description}
                 onInput={(event) =>
                   setFormState((previous) => ({
@@ -349,15 +352,15 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                     description: event.currentTarget.value,
                   }))
                 }
-                className={FIELD_INPUT_CLASS}
                 placeholder="Doble shot con leche vaporizada"
               />
-            </label>
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className={FIELD_LABEL_CLASS}>
-                Precio
-                <input
+              <div className="grid gap-1">
+                <Label htmlFor="product-price">Precio</Label>
+                <Input
+                  id="product-price"
                   value={formState.price}
                   onInput={(event) =>
                     setFormState((previous) => ({
@@ -366,14 +369,15 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                     }))
                   }
                   inputMode="decimal"
-                  className={`${FIELD_INPUT_CLASS} font-mono-tabular`}
+                  className="font-mono-tabular"
                   placeholder="55.50"
                 />
-              </label>
+              </div>
 
-              <label className={FIELD_LABEL_CLASS}>
-                Prep (min)
-                <input
+              <div className="grid gap-1">
+                <Label htmlFor="product-prep-time">Prep (min)</Label>
+                <Input
+                  id="product-prep-time"
                   value={formState.prepTimeMinutes}
                   onInput={(event) =>
                     setFormState((previous) => ({
@@ -382,15 +386,16 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                     }))
                   }
                   inputMode="numeric"
-                  className={`${FIELD_INPUT_CLASS} font-mono-tabular`}
+                  className="font-mono-tabular"
                   placeholder="5"
                 />
-              </label>
+              </div>
             </div>
 
-            <label className={FIELD_LABEL_CLASS}>
-              Emoji / imagen
-              <input
+            <div className="grid gap-1">
+              <Label htmlFor="product-image">Emoji / imagen</Label>
+              <Input
+                id="product-image"
                 value={formState.image}
                 onInput={(event) =>
                   setFormState((previous) => ({
@@ -398,31 +403,24 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                     image: event.currentTarget.value,
                   }))
                 }
-                className={FIELD_INPUT_CLASS}
                 placeholder="☕"
               />
-            </label>
+            </div>
 
-            <label className="flex items-center gap-2 text-[11px] text-ink">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="product-popular"
                 checked={formState.isPopular}
-                onChange={(event) =>
-                  setFormState((previous) => ({
-                    ...previous,
-                    isPopular: event.currentTarget.checked,
-                  }))
+                onCheckedChange={(checked) =>
+                  setFormState((previous) => ({ ...previous, isPopular: checked === true }))
                 }
-                className="h-4 w-4 accent-champagne"
               />
-              Popular
-            </label>
+              <label htmlFor="product-popular" className="text-[11px] text-ink cursor-pointer">
+                Popular
+              </label>
+            </div>
 
-            {formError ? (
-              <p className="rounded-card border border-danger/40 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
-                {formError}
-              </p>
-            ) : null}
+            <FormError message={formError} />
 
             <div className="flex items-center justify-end border-t border-hairline pt-2.5">
               <button

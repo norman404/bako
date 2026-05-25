@@ -2,6 +2,9 @@ import { LoaderCircle, MapPin, Phone, Search } from "lucide-react";
 
 import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type CustomerQueryResult = ReturnType<
   typeof import("@/modules/checkout/hooks/use-checkout").useCustomers
@@ -18,17 +21,6 @@ interface CustomerSearchPanelProps {
   onSelectCustomer: (customer: CheckoutCustomer) => void;
   onStartNewCustomer: () => void;
 }
-
-const FIELD_INPUT_CLASS = [
-  "h-9 w-full rounded-card border border-hairline bg-obsidian px-3",
-  "text-[13px] text-ink outline-none",
-  "placeholder:text-ink-dim",
-  "transition-colors duration-150",
-  "focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20",
-].join(" ");
-
-const FIELD_LABEL_CLASS =
-  "grid gap-1 text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim";
 
 const CUSTOMER_CARD_CLASS = [
   "w-full rounded-card border px-3 py-2.5 text-left transition-colors duration-150",
@@ -48,18 +40,19 @@ export function CustomerSearchPanel({
 }: CustomerSearchPanelProps) {
   return (
     <div className="space-y-3 rounded-card border border-hairline bg-white/[0.015] px-3 py-3 sm:px-4 sm:py-4">
-      <label className={FIELD_LABEL_CLASS}>
-        Buscar cliente
+      <div className="grid gap-1">
+        <Label htmlFor="customer-search">Buscar cliente</Label>
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim" />
-          <input
+          <Input
+            id="customer-search"
             value={customerSearch}
             onInput={(event) => onCustomerSearchChange(event.currentTarget.value)}
             placeholder="Nombre, teléfono o dirección"
-            className={`${FIELD_INPUT_CLASS} pl-10`}
+            className="pl-10"
           />
         </div>
-      </label>
+      </div>
 
       <div className="space-y-2.5">
         <div className="flex items-center justify-between gap-3">
@@ -67,9 +60,7 @@ export function CustomerSearchPanel({
             {customerSectionLabel}
           </p>
           {selectedCustomerId ? (
-            <span className="rounded-card border border-champagne/24 bg-champagne/8 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-champagne">
-              Cliente seleccionado
-            </span>
+            <Badge>Cliente seleccionado</Badge>
           ) : null}
         </div>
 

@@ -9,6 +9,10 @@ import {
   useCreateCategory,
   useUpdateCategory,
 } from "@/modules/menu/hooks/use-categories";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { FormError } from "@/components/ui/FormError";
 
 const CATEGORY_FORM_MODE = {
   CREATE: "create",
@@ -53,23 +57,6 @@ function toCategoryPayload(formState: CategoryFormState): CategoryCreateInput | 
     description,
   };
 }
-
-const FIELD_INPUT_CLASS = [
-  "h-9 w-full rounded-card border border-hairline bg-obsidian px-3",
-  "text-[13px] text-ink outline-none",
-  "placeholder:text-ink-dim",
-  "transition-colors duration-150",
-  "focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20",
-].join(" ");
-
-const FIELD_LABEL_CLASS = "grid gap-1 text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim";
-const FIELD_TEXTAREA_CLASS = [
-  "w-full min-h-[132px] resize-none rounded-card border border-hairline bg-obsidian px-3 py-3",
-  "text-[13px] text-ink outline-none",
-  "placeholder:text-ink-dim",
-  "transition-colors duration-150",
-  "focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20",
-].join(" ");
 
 function getListButtonClass(isActive: boolean): string {
   return [
@@ -223,9 +210,10 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
           </div>
 
           <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
-            <label className={FIELD_LABEL_CLASS}>
-              Nombre
-              <input
+            <div className="grid gap-1">
+              <Label htmlFor="category-name">Nombre</Label>
+              <Input
+                id="category-name"
                 value={formState.name}
                 onInput={(event) =>
                   setFormState((previous) => ({
@@ -233,14 +221,14 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
                     name: event.currentTarget.value,
                   }))
                 }
-                className={FIELD_INPUT_CLASS}
                 placeholder="Bebidas calientes"
               />
-            </label>
+            </div>
 
-            <label className={FIELD_LABEL_CLASS}>
-              Descripción
-              <textarea
+            <div className="grid gap-1">
+              <Label htmlFor="category-description">Descripción</Label>
+              <Textarea
+                id="category-description"
                 value={formState.description}
                 onInput={(event) =>
                   setFormState((previous) => ({
@@ -248,16 +236,12 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
                     description: event.currentTarget.value,
                   }))
                 }
-                className={FIELD_TEXTAREA_CLASS}
+                className="min-h-[132px]"
                 placeholder="Espacios del menú para bebidas, comidas y postres"
               />
-            </label>
+            </div>
 
-            {formError ? (
-              <p className="rounded-card border border-danger/40 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
-                {formError}
-              </p>
-            ) : null}
+            <FormError message={formError} />
 
             <div className="flex items-center justify-end border-t border-hairline pt-2.5">
               <button
