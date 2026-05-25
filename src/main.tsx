@@ -4,9 +4,9 @@ import { createRoot } from "react-dom/client";
 import { Toaster } from "sonner";
 
 import { router } from "./app/router";
-import { initDatabase } from "./shared/infrastructure/db/client";
-import { useSettingsStore } from "./features/settings/store/settings-store";
-import "./App.css";
+import { initDatabase } from "./shared/db/client";
+import { useSettingsStore } from "./modules/settings/store/settings-store";
+import "./styles/app.css";
 
 const queryClient = new QueryClient();
 const rootElement = document.getElementById("root");

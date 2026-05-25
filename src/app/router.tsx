@@ -6,7 +6,7 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 
-import { PosPage } from "@/features/pos/pages/pos-page";
+import { PosPage } from "@/modules/pos/pages/PosPage";
 
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
