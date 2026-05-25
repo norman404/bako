@@ -1,5 +1,4 @@
-import dayjs from "dayjs";
-import { Menu, Settings2, X } from "lucide-react";
+import { Menu, Search, Settings2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 
@@ -8,7 +7,7 @@ import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
 import { CategoryNav } from "@/modules/menu/components/CategoryNav";
 import { ProductGrid } from "@/modules/menu/components/ProductGrid";
-import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
+import { filterProductsByCategory, filterProductsByName } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
 import type { Product } from "@/modules/menu/domain/product";
 import { useCategories } from "@/modules/menu/hooks/use-categories";
@@ -20,6 +19,7 @@ import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos/store/pos-store";
 import { formatPosCurrency } from "@/lib/currency";
+import { IS_MAC } from "@/lib/platform";
 
 export function PosPage() {
   // Suscribirse de manera reactiva a los cambios de locale o currency del Zustand store para forzar un re-render instantáneo de todo el POS
@@ -39,6 +39,9 @@ export function PosPage() {
     isSettingsOpen,
     openSettings,
     closeSettings,
+    productSearch,
+    setProductSearch,
+    clearProductSearch,
   } = usePosStore(
     useShallow((state) => ({
       selectedCategory: state.selectedCategory,
@@ -54,6 +57,9 @@ export function PosPage() {
       isSettingsOpen: state.isSettingsOpen,
       openSettings: state.openSettings,
       closeSettings: state.closeSettings,
+      productSearch: state.productSearch,
+      setProductSearch: state.setProductSearch,
+      clearProductSearch: state.clearProductSearch,
     })),
   );
 
@@ -80,11 +86,9 @@ export function PosPage() {
   const isLoading = isProductsLoading || isCategoriesLoading;
   const createOrderMutation = useCreateOrder();
 
-  const currentDateLabel = dayjs().format("DD MMM YYYY").toUpperCase();
-  const currentTimeLabel = dayjs().format("HH:mm");
-
   const orderedProducts = sortProductsForMenu(products, categories);
-  const visibleProducts = filterProductsByCategory(orderedProducts, selectedCategory);
+  const categoryFilteredProducts = filterProductsByCategory(orderedProducts, selectedCategory);
+  const visibleProducts = filterProductsByName(categoryFilteredProducts, productSearch);
   const synchronizedCartItems = currentOrder.map((item) => {
     const currentProduct = products.find((product) => product.id === item.product.id);
     return currentProduct ? { ...item, product: currentProduct } : item;
@@ -178,53 +182,62 @@ export function PosPage() {
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-obsidian text-ink">
-      <header className="border-b border-hairline bg-obsidian">
-        <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-baseline gap-4 sm:gap-6">
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-display text-[26px] leading-none tracking-[-0.02em] text-ink">
-                coffee
-              </span>
-              <span className="text-[26px] font-medium leading-none tracking-[-0.02em] text-champagne">
-                pos
-              </span>
-            </div>
-            <span className="hidden h-3 w-px bg-hairline-strong lg:block" />
-            <span className="hidden font-mono-tabular text-[11px] tracking-[0.18em] text-ink-dim lg:inline">
-              {currentDateLabel} · {currentTimeLabel}
+      <header className="border-b border-hairline bg-obsidian select-none" data-tauri-drag-region>
+        <div
+          className={`flex h-11 items-center justify-between gap-3 pr-3 sm:pr-4 ${IS_MAC ? "pl-20" : "pl-4"}`}
+          data-tauri-drag-region
+        >
+          {/* Branding — left */}
+          <div className="flex shrink-0 items-baseline gap-1">
+            <span className="font-display text-[17px] leading-none tracking-[-0.02em] text-ink">
+              coffee
+            </span>
+            <span className="text-[17px] font-medium leading-none tracking-[-0.02em] text-champagne">
+              pos
             </span>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          {/* Search + actions — right */}
+          <div className="flex items-center gap-2">
+            <div className="relative w-44 sm:w-60">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-dim" />
+              <input
+                type="search"
+                placeholder="Buscar productos..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="h-9 w-full rounded-card border border-hairline bg-obsidian-raised pl-9 pr-8 text-[13px] text-ink outline-none placeholder:text-ink-dim transition-colors duration-150 focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20"
+                aria-label="Buscar productos"
+              />
+              {productSearch ? (
+                <button
+                  type="button"
+                  onClick={clearProductSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-sharp text-ink-dim transition-colors duration-150 hover:text-ink"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
             <button
               type="button"
               onClick={openSettings}
-              className="hidden h-10 items-center gap-2 rounded-sharp border border-hairline px-3 text-ink transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated sm:inline-flex"
+              className="flex h-9 w-9 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink"
               aria-label="Abrir configuración"
             >
-              <Settings2 className="h-3.5 w-3.5 text-ink-muted" />
-              <span className="eyebrow">Configuración</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={openSettings}
-              className="flex h-10 w-10 items-center justify-center rounded-sharp border border-hairline text-ink transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated sm:hidden"
-              aria-label="Abrir configuración"
-            >
-              <Settings2 className="h-4 w-4 text-ink-muted" />
+              <Settings2 className="h-4 w-4" />
             </button>
 
             <button
               type="button"
               onClick={toggleMobileCart}
-              className="relative flex h-10 items-center gap-2 rounded-sharp border border-hairline px-3 text-ink transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated lg:hidden"
+              className="relative flex h-9 w-9 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink lg:hidden"
               aria-label="Abrir cuenta"
             >
-              <Menu className="h-3.5 w-3.5 text-ink-muted" />
-              <span className="eyebrow">Cuenta</span>
+              <Menu className="h-4 w-4" />
               {cartTotals.itemsCount > 0 ? (
-                <span className="font-mono-tabular absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-sharp bg-champagne px-1 text-[10px] font-bold text-obsidian">
+                <span className="font-mono-tabular absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-sharp bg-champagne px-0.5 text-[9px] font-bold text-obsidian">
                   {cartTotals.itemsCount}
                 </span>
               ) : null}
