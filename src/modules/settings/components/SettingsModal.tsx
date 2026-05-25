@@ -84,7 +84,7 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
     <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <Dialog.Portal>
         {/* Overlay con blur y oscurecimiento del fondo */}
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-[#020202]/84 backdrop-blur-md transition-opacity duration-200 data-[state=open]:animate-fade-in" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-[#020202]/96 backdrop-blur-md transition-opacity duration-200 data-[state=open]:animate-fade-in" />
         
         {/* Contenedor del Modal Glassmorphic Obsidian */}
         <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-white/5 bg-obsidian/75 shadow-2xl backdrop-blur-md transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">

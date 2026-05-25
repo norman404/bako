@@ -2,6 +2,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Save } from "lucide-react";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const SUPPORTED_LOCALES = [
   { value: "es-MX", label: "Español (México)" },
@@ -19,15 +21,6 @@ const SUPPORTED_CURRENCIES = [
   { value: "BRL", label: "BRL (R$ - Real Brasileño)" },
 ];
 
-const FIELD_INPUT_CLASS = [
-  "h-9 w-full rounded-card border border-hairline bg-obsidian px-3",
-  "text-[13px] text-ink outline-none",
-  "placeholder:text-ink-dim",
-  "transition-colors duration-150",
-  "focus-visible:border-champagne/40 focus-visible:ring-1 focus-visible:ring-champagne/20",
-].join(" ");
-
-const FIELD_LABEL_CLASS = "grid gap-1 text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim";
 
 export function SystemSettingsPanel() {
   const { locale: currentLocale, currency: currentCurrency, updateSettings, isLoading } = useSettingsStore();
@@ -55,35 +48,37 @@ export function SystemSettingsPanel() {
 
       <div className="mt-2.5 max-w-lg">
         <form className="grid gap-4" onSubmit={handleSubmit}>
-          <label className={FIELD_LABEL_CLASS}>
-            Idioma / Región (Locale)
-            <select
-              value={locale}
-              onChange={(e) => setLocale(e.target.value)}
-              className={FIELD_INPUT_CLASS}
-            >
-              {SUPPORTED_LOCALES.map((item) => (
-                <option key={item.value} value={item.value} className="bg-obsidian text-ink">
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid gap-1.5">
+            <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
+              Idioma / Región (Locale)
+            </Label>
+            <Select value={locale} onValueChange={setLocale}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_LOCALES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <label className={FIELD_LABEL_CLASS}>
-            Moneda / Divisa
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className={FIELD_INPUT_CLASS}
-            >
-              {SUPPORTED_CURRENCIES.map((item) => (
-                <option key={item.value} value={item.value} className="bg-obsidian text-ink">
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid gap-1.5">
+            <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
+              Moneda / Divisa
+            </Label>
+            <Select value={currency} onValueChange={setCurrency}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SUPPORTED_CURRENCIES.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="flex items-center justify-end border-t border-hairline pt-4 mt-2">
             <button

@@ -49,10 +49,56 @@ function TurnoSummaryPanel() {
 
       {metricsQuery.isLoading ? (
         <div className="grid gap-2.5 xl:grid-cols-[1.05fr_0.95fr]">
-          <div className="panel-solid-muted min-h-[156px] rounded-card border border-hairline animate-pulse" />
+          {/* Resumen skeleton */}
+          <div className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+            <div className="mb-2.5 flex items-center justify-between border-b border-hairline pb-2">
+              <div className="h-4 w-20 animate-pulse rounded-card bg-obsidian-elevated" />
+              <div className="h-3 w-24 animate-pulse rounded-card bg-obsidian-elevated" />
+            </div>
+            <div className="grid gap-2 pt-1">
+              <div className="h-8 w-32 animate-pulse rounded-card bg-obsidian-elevated" />
+              <div className="h-6 w-24 animate-pulse rounded-card bg-obsidian-elevated" />
+              <div className="h-5 w-16 animate-pulse rounded-card bg-obsidian-elevated" />
+              <div className="h-5 w-16 animate-pulse rounded-card bg-obsidian-elevated" />
+            </div>
+          </div>
           <div className="grid gap-2.5">
-            <div className="panel-solid-muted min-h-[104px] rounded-card border border-hairline animate-pulse" />
-            <div className="panel-solid-muted min-h-[104px] rounded-card border border-hairline animate-pulse" />
+            {/* Medios de pago skeleton */}
+            <div className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+              <div className="mb-2.5 flex items-center justify-between border-b border-hairline pb-2">
+                <div className="h-4 w-28 animate-pulse rounded-card bg-obsidian-elevated" />
+              </div>
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-16 animate-pulse rounded-card bg-obsidian-elevated" />
+                    <div className="h-3 w-20 animate-pulse rounded-card bg-obsidian-elevated" />
+                  </div>
+                  <div className="h-1.5 rounded-full bg-obsidian-elevated animate-pulse" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-14 animate-pulse rounded-card bg-obsidian-elevated" />
+                    <div className="h-3 w-20 animate-pulse rounded-card bg-obsidian-elevated" />
+                  </div>
+                  <div className="h-1.5 rounded-full bg-obsidian-elevated animate-pulse" />
+                </div>
+              </div>
+            </div>
+            {/* Top productos skeleton */}
+            <div className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+              <div className="mb-2.5 flex items-center justify-between border-b border-hairline pb-2">
+                <div className="h-4 w-24 animate-pulse rounded-card bg-obsidian-elevated" />
+              </div>
+              <div className="space-y-2 pt-1">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="h-4 flex-1 animate-pulse rounded-card bg-obsidian-elevated" />
+                    <div className="h-4 w-10 animate-pulse rounded-card bg-obsidian-elevated" />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       ) : null}
@@ -117,7 +163,7 @@ function TurnoSummaryPanel() {
                     </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-obsidian">
-                    <div className="h-full rounded-full bg-champagne" style={{ width: `${cashShare}%` }} />
+                    <div className="h-full rounded-full bg-champagne transition-[width] duration-500 ease-out" style={{ width: `${cashShare}%` }} />
                   </div>
                 </div>
 
@@ -129,7 +175,7 @@ function TurnoSummaryPanel() {
                     </span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-obsidian">
-                    <div className="h-full rounded-full bg-ink" style={{ width: `${cardShare}%` }} />
+                    <div className="h-full rounded-full bg-ink transition-[width] duration-500 ease-out" style={{ width: `${cardShare}%` }} />
                   </div>
                 </div>
               </div>

@@ -104,7 +104,7 @@ function Cart({
                   <button
                     type="button"
                     onClick={() => onRemoveItem(item.product.id)}
-                    className="flex h-8 w-8 items-center justify-center text-ink-dim opacity-0 transition-opacity duration-150 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
+                    className="flex h-8 w-8 items-center justify-center text-ink-dim opacity-40 transition-opacity duration-150 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
                     aria-label={`Eliminar ${item.product.name}`}
                   >
                     <X className="h-3.5 w-3.5" />

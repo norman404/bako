@@ -38,7 +38,7 @@ function SegmentedControl({ options, activeValue, onSelect, className }: Segment
                 className={cn(
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-card border transition-colors duration-150",
                   isActive
-                    ? "border-champagne/45 bg-[#0f0f10]/70 text-champagne"
+                    ? "border-champagne/45 bg-obsidian-raised/70 text-champagne"
                     : "border-hairline bg-obsidian text-ink-dim"
                 )}
               >

@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import type { Category } from "@/modules/menu/domain/category";
 import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
@@ -48,9 +49,12 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart }: Pr
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sharp border border-hairline bg-obsidian text-2xl leading-none">
                 <span>{product.image}</span>
               </div>
-              <span className="font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-ink-dim">
-                {product.prepTimeMinutes}m
-              </span>
+              <div className="flex flex-col items-end gap-1.5">
+                {product.isPopular ? <Badge>Popular</Badge> : null}
+                <span className="font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-ink-dim">
+                  {product.prepTimeMinutes}m
+                </span>
+              </div>
             </div>
 
             <div className="flex flex-1 flex-col justify-end gap-4">

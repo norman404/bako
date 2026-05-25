@@ -75,8 +75,9 @@ export function PosPage() {
     })),
   );
 
-  const { data: products = [] } = useProducts();
-  const { data: categories = [] } = useCategories();
+  const { data: products = [], isLoading: isProductsLoading } = useProducts();
+  const { data: categories = [], isLoading: isCategoriesLoading } = useCategories();
+  const isLoading = isProductsLoading || isCategoriesLoading;
   const createOrderMutation = useCreateOrder();
 
   const currentDateLabel = dayjs().format("DD MMM YYYY").toUpperCase();
@@ -234,18 +235,12 @@ export function PosPage() {
 
       <main className="flex min-h-0 flex-1 overflow-hidden lg:flex-row">
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-24 lg:pb-0">
-          <div className="border-b border-hairline px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-            <div>
-              <p className="eyebrow">Caja activa</p>
-              <h1 className="mt-2 font-display text-[28px] leading-none tracking-[-0.02em] text-ink">
-                Categorías, productos y <span className="text-champagne">carrito</span>
-              </h1>
-              <p className="mt-3 text-[12px] leading-snug text-ink-dim">
-                {products.length} producto{products.length === 1 ? "" : "s"} listos para cobrar.
-              </p>
-            </div>
+          <div className="border-b border-hairline px-4 py-3 sm:px-6 lg:px-8">
+            <p className="eyebrow">
+              {products.length} producto{products.length === 1 ? "" : "s"} · Caja activa
+            </p>
 
-            <div className="mt-4 -mx-1 px-1 sm:-mx-5 sm:px-5">
+            <div className="mt-3 -mx-1 px-1 sm:-mx-5 sm:px-5">
               <CategoryNav
                 categories={categories}
                 activeCategoryId={selectedCategory}
@@ -256,7 +251,17 @@ export function PosPage() {
           </div>
 
           <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-            {visibleProducts.length === 0 ? (
+            {isLoading ? (
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="animate-pulse rounded-card border border-hairline bg-obsidian-raised"
+                    style={{ minHeight: "140px" }}
+                  />
+                ))}
+              </div>
+            ) : visibleProducts.length === 0 ? (
               <section className="relative flex min-h-[50vh] flex-col items-center justify-center py-12 text-center">
                 <span className="font-display text-6xl leading-none text-ink-dim">⌕</span>
                 <p className="mt-6 text-[13px] font-medium uppercase tracking-[0.18em] text-ink-muted">
