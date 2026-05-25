@@ -18,7 +18,7 @@ export function CustomerCreateForm({
   onShowSearchCustomers,
 }: CustomerCreateFormProps) {
   return (
-    <div className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3 sm:px-4 sm:py-4">
+    <div className="rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
       <div className="flex flex-col gap-3 border-b border-hairline pb-2.5 lg:flex-row lg:items-center lg:justify-between">
         <h3 className="text-[15px] font-medium text-ink">
           Crear cliente nuevo

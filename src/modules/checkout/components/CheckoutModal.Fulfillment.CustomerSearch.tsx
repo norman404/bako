@@ -24,7 +24,7 @@ interface CustomerSearchPanelProps {
 
 const CUSTOMER_CARD_CLASS = [
   "w-full rounded-card border px-3 py-2.5 text-left transition-colors duration-150",
-  "hover:border-hairline hover:bg-white/[0.02]",
+  "hover:border-hairline hover:bg-surface-low",
 ].join(" ");
 
 export function CustomerSearchPanel({
@@ -39,7 +39,7 @@ export function CustomerSearchPanel({
   onStartNewCustomer,
 }: CustomerSearchPanelProps) {
   return (
-    <div className="space-y-3 rounded-card border border-hairline bg-white/[0.015] px-3 py-3 sm:px-4 sm:py-4">
+    <div className="space-y-3 rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
       <div className="grid gap-1">
         <Label htmlFor="customer-search">Buscar cliente</Label>
         <div className="relative">
@@ -105,7 +105,7 @@ export function CustomerSearchPanel({
                   className={[
                     CUSTOMER_CARD_CLASS,
                     isSelected
-                      ? "border-champagne/24 bg-white/[0.032]"
+                      ? "border-champagne/24 bg-surface-mid"
                       : "border-transparent bg-transparent",
                   ].join(" ")}
                 >

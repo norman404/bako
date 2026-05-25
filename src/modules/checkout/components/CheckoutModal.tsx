@@ -91,7 +91,7 @@ function CheckoutModal({
                 type="button"
                 onClick={handleCloseRequest}
                 disabled={isSubmitting}
-                className="flex h-8 w-8 items-center justify-center rounded-card text-ink-muted transition-colors duration-150 hover:bg-white/[0.04] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-8 w-8 items-center justify-center rounded-card text-ink-muted transition-colors duration-150 hover:bg-surface-mid hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
                 aria-label="Cerrar"
               >
                 <X className="h-4 w-4" />

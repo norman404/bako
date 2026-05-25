@@ -50,7 +50,7 @@ function TurnoSummaryPanel() {
       {metricsQuery.isLoading ? (
         <div className="grid gap-2.5 xl:grid-cols-[1.05fr_0.95fr]">
           {/* Resumen skeleton */}
-          <div className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+          <div className="rounded-card border border-hairline bg-surface-low px-3 py-3">
             <div className="mb-2.5 flex items-center justify-between border-b border-hairline pb-2">
               <div className="h-4 w-20 animate-pulse rounded-card bg-obsidian-elevated" />
               <div className="h-3 w-24 animate-pulse rounded-card bg-obsidian-elevated" />
@@ -64,7 +64,7 @@ function TurnoSummaryPanel() {
           </div>
           <div className="grid gap-2.5">
             {/* Medios de pago skeleton */}
-            <div className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+            <div className="rounded-card border border-hairline bg-surface-low px-3 py-3">
               <div className="mb-2.5 flex items-center justify-between border-b border-hairline pb-2">
                 <div className="h-4 w-28 animate-pulse rounded-card bg-obsidian-elevated" />
               </div>
@@ -86,7 +86,7 @@ function TurnoSummaryPanel() {
               </div>
             </div>
             {/* Top productos skeleton */}
-            <div className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+            <div className="rounded-card border border-hairline bg-surface-low px-3 py-3">
               <div className="mb-2.5 flex items-center justify-between border-b border-hairline pb-2">
                 <div className="h-4 w-24 animate-pulse rounded-card bg-obsidian-elevated" />
               </div>
@@ -105,7 +105,7 @@ function TurnoSummaryPanel() {
 
       {!metricsQuery.isLoading && metrics ? (
         <div className="grid gap-2.5 xl:grid-cols-[1fr_0.92fr]">
-          <section className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+          <section className="rounded-card border border-hairline bg-surface-low px-3 py-3">
             <div className="mb-2.5 flex items-center justify-between gap-3 border-b border-hairline pb-2">
               <h3 className="text-[15px] font-medium text-ink">Resumen</h3>
               <div className="flex items-center gap-2 text-[11px] text-ink-dim">
@@ -148,7 +148,7 @@ function TurnoSummaryPanel() {
           </section>
 
           <div className="grid gap-2.5">
-            <section className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+            <section className="rounded-card border border-hairline bg-surface-low px-3 py-3">
               <div className="mb-2.5 flex items-center justify-between gap-3 border-b border-hairline pb-2">
                 <h3 className="text-[15px] font-medium text-ink">Medios de pago</h3>
                 <CreditCard className="h-4 w-4 text-ink-dim" />
@@ -181,7 +181,7 @@ function TurnoSummaryPanel() {
               </div>
             </section>
 
-            <section className="rounded-card border border-hairline bg-white/[0.015] px-3 py-3">
+            <section className="rounded-card border border-hairline bg-surface-low px-3 py-3">
               <div className="mb-2.5 flex items-center justify-between gap-3 border-b border-hairline pb-2">
                 <h3 className="text-[15px] font-medium text-ink">Top productos</h3>
                 <Wallet className="h-4 w-4 text-ink-dim" />

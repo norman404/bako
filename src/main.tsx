@@ -19,10 +19,10 @@ const root = createRoot(rootElement);
 async function bootstrap() {
   // Renderizar splash de carga minimalista ultra-premium (Midnight Obsidian + Champagne)
   root.render(
-    <div className="flex h-screen w-screen items-center justify-center bg-[#0a0a0b] text-[#e8d5a8] select-none">
+    <div className="flex h-screen w-screen items-center justify-center bg-obsidian text-champagne select-none">
       <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e8d5a8] border-t-transparent" />
-        <p className="text-[11px] font-light tracking-[0.2em] uppercase text-[rgba(244,241,234,0.60)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-champagne border-t-transparent" />
+        <p className="text-[11px] font-light tracking-[0.2em] uppercase text-ink-muted">
           Inicializando Bako POS...
         </p>
       </div>
@@ -46,10 +46,10 @@ async function bootstrap() {
   } catch (error) {
     console.error("Bootstrapping failed critically:", error);
     root.render(
-      <div className="flex h-screen w-screen items-center justify-center bg-[#0a0a0b] text-[#bc8456] p-8 text-center select-none">
-        <div className="max-w-md border border-[rgba(255,255,255,0.06)] bg-[#111113] p-6 rounded-[8px] shadow-2xl">
+      <div className="flex h-screen w-screen items-center justify-center bg-obsidian text-danger p-8 text-center select-none">
+        <div className="max-w-md border border-hairline bg-obsidian-raised p-6 rounded-[8px] shadow-2xl">
           <h1 className="text-lg font-bold tracking-tight mb-2">Error Crítico de Inicialización</h1>
-          <p className="text-xs opacity-75 leading-relaxed text-[rgba(244,241,234,0.60)]">
+          <p className="text-xs opacity-75 leading-relaxed text-ink-muted">
             No se pudo arrancar la base de datos o el sistema de almacenamiento local. Por favor, reiniciá la aplicación.
           </p>
         </div>

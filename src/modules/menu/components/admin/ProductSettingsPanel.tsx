@@ -113,8 +113,8 @@ function getListButtonClass(isActive: boolean): string {
   return [
     "w-full rounded-card border px-2.5 py-2 text-left transition-[border-color,background-color] duration-150",
     isActive
-      ? "border-champagne/24 bg-white/[0.032]"
-      : "border-transparent hover:border-hairline hover:bg-white/[0.02]",
+      ? "border-champagne/24 bg-surface-mid"
+      : "border-transparent hover:border-hairline hover:bg-surface-low",
   ].join(" ");
 }
 
@@ -266,7 +266,7 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
                       }
                       void handleArchive(product);
                     }}
-                    className="flex h-auto min-h-[68px] w-8 shrink-0 items-center justify-center rounded-card text-ink-dim transition-colors duration-150 hover:bg-white/[0.04] hover:text-danger disabled:cursor-not-allowed disabled:opacity-40"
+                    className="flex h-auto min-h-[68px] w-8 shrink-0 items-center justify-center rounded-card text-ink-dim transition-colors duration-150 hover:bg-surface-mid hover:text-danger disabled:cursor-not-allowed disabled:opacity-40"
                     aria-label={`Archivar ${product.name}`}
                     disabled={isArchivePending}
                   >

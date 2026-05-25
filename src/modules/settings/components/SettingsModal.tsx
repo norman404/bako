@@ -71,10 +71,10 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
     <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <Dialog.Portal>
         {/* Overlay con blur y oscurecimiento del fondo */}
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-[#020202]/96 backdrop-blur-md transition-opacity duration-200 data-[state=open]:animate-fade-in" />
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-crust/96 backdrop-blur-md transition-opacity duration-200 data-[state=open]:animate-fade-in" />
         
         {/* Contenedor del Modal Glassmorphic Obsidian */}
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-white/5 bg-obsidian/75 shadow-2xl backdrop-blur-md transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
+        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-hairline bg-obsidian/75 shadow-2xl backdrop-blur-md transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
           
           <header className="flex items-center gap-3 border-b border-hairline px-4 py-2.5 sm:px-5">
             <Dialog.Title className="sr-only">Configuración</Dialog.Title>
@@ -93,7 +93,7 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-white/[0.04] hover:text-ink"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-hairline text-ink-muted transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink"
                 aria-label="Cerrar configuración"
               >
                 <X className="h-4 w-4" />
@@ -125,8 +125,8 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
                     className={[
                       "flex shrink-0 items-center gap-2 rounded-card px-3 py-2 text-left transition-[background-color,color] duration-150",
                       isActive
-                        ? "bg-white/[0.045] text-ink"
-                        : "text-ink-muted hover:bg-white/[0.028] hover:text-ink",
+                        ? "bg-obsidian-elevated text-ink"
+                        : "text-ink-muted hover:bg-obsidian-raised hover:text-ink",
                     ].join(" ")}
                   >
                     <SectionIcon

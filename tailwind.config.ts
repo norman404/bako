@@ -24,6 +24,15 @@ export default {
           dim: "#9273c4",
         },
         danger: "#f38ba8",     // mocha red
+        crust: "#11111b",           // mocha crust — para overlays
+        surface1: "#45475a",        // mocha surface1 — hover secundario
+        "champagne-light": "#d4b5ff", // mauve claro — hover del botón primary
+        "danger-light": "#f5a0b5",  // red claro — hover texto danger
+        surface: {
+          low: "rgba(205,214,244,0.025)",   // subtle card bg
+          mid: "rgba(205,214,244,0.04)",    // hover / active items
+          high: "rgba(205,214,244,0.06)",   // focus states
+        },
 
         background: "#181825",
         foreground: "#cdd6f4",
