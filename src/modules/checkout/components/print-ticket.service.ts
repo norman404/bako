@@ -1,3 +1,5 @@
+import { ResultAsync, errAsync } from "neverthrow";
+
 import { buildPrintTicketHtml, type PrintOrderOptions } from "@/modules/checkout/lib/print-ticket-template";
 
 const PRINT_WINDOW_RENDER_DELAY_MS = 160;
@@ -28,9 +30,9 @@ function normalizePrintError(error: unknown): Error {
   return new Error("No pudimos lanzar la impresión del ticket.");
 }
 
-export async function printOrder(input: PrintOrderOptions): Promise<void> {
+export function printOrder(input: PrintOrderOptions): ResultAsync<void, Error> {
   if (typeof window === "undefined") {
-    throw new Error("La impresión del ticket solo está disponible desde la caja.");
+    return errAsync(new Error("La impresión del ticket solo está disponible desde la caja."));
   }
 
   const printWindow = window.open(
@@ -40,10 +42,10 @@ export async function printOrder(input: PrintOrderOptions): Promise<void> {
   );
 
   if (!printWindow) {
-    throw new Error("No pudimos abrir la ventana de impresión del ticket.");
+    return errAsync(new Error("No pudimos abrir la ventana de impresión del ticket."));
   }
 
-  try {
+  const printAsync = async (): Promise<void> => {
     printWindow.document.open();
     printWindow.document.write(buildPrintTicketHtml(input));
     printWindow.document.close();
@@ -57,11 +59,12 @@ export async function printOrder(input: PrintOrderOptions): Promise<void> {
     schedulePrintWindowClose(printWindow);
     printWindow.focus();
     printWindow.print();
-  } catch (error) {
+  };
+
+  return ResultAsync.fromPromise(printAsync(), (error) => {
     if (!printWindow.closed) {
       printWindow.close();
     }
-
-    throw normalizePrintError(error);
-  }
+    return normalizePrintError(error);
+  });
 }

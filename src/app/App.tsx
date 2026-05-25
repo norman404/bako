@@ -130,38 +130,31 @@ export function App() {
   const handleConfirmCheckout = async (input: CreateOrderInput) => {
     const createdOrder = await createOrderMutation.mutateAsync(input);
 
-    let printError: Error | null = null;
-
-    try {
-      const productNameById: Record<string, string> = {};
-      for (const item of synchronizedCartItems) {
-        productNameById[item.product.id] = item.product.name;
-      }
-
-      await printOrder({
-        ticketNumber: createdOrder.ticketNumber,
-        createdAt: createdOrder.createdAt,
-        total: createdOrder.total,
-        items: input.items.map((item) => ({
-          name: productNameById[item.productId] ?? "Producto",
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-        })),
-        paymentMethod: createdOrder.payment.method,
-        paymentAmount: createdOrder.payment.amount,
-        fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
-        customer: createdOrder.customer
-          ? {
-              name: createdOrder.customer.name,
-              phone: createdOrder.customer.phone,
-              address: createdOrder.customer.address,
-            }
-          : null,
-      });
-    } catch (error) {
-      printError =
-        error instanceof Error ? error : new Error("No pudimos lanzar la impresión del ticket.");
+    const productNameById: Record<string, string> = {};
+    for (const item of synchronizedCartItems) {
+      productNameById[item.product.id] = item.product.name;
     }
+
+    const printResult = await printOrder({
+      ticketNumber: createdOrder.ticketNumber,
+      createdAt: createdOrder.createdAt,
+      total: createdOrder.total,
+      items: input.items.map((item) => ({
+        name: productNameById[item.productId] ?? "Producto",
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
+      paymentMethod: createdOrder.payment.method,
+      paymentAmount: createdOrder.payment.amount,
+      fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
+      customer: createdOrder.customer
+        ? {
+            name: createdOrder.customer.name,
+            phone: createdOrder.customer.phone,
+            address: createdOrder.customer.address,
+          }
+        : null,
+    });
 
     handleClearCart();
     closeCheckoutModal();
@@ -173,11 +166,11 @@ export function App() {
         : `${cartTotals.itemsCount} productos cobrados en caja`,
     });
 
-    if (printError) {
+    printResult.mapErr((printError) => {
       toast.error("La venta quedó guardada, pero no pudimos imprimir el ticket", {
         description: printError.message,
       });
-    }
+    });
   };
 
   return (
