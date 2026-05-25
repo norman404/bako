@@ -74,7 +74,7 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
         <Dialog.Overlay className="fixed inset-0 z-50 bg-crust/96 backdrop-blur-md transition-opacity duration-200 data-[state=open]:animate-fade-in" />
         
         {/* Contenedor del Modal Glassmorphic Obsidian */}
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-hairline bg-obsidian/75 shadow-2xl backdrop-blur-md transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
+        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-hairline modal-shell-solid shadow-2xl transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
           
           <header className="flex items-center gap-3 border-b border-hairline px-4 py-2.5 sm:px-5">
             <Dialog.Title className="sr-only">Configuración</Dialog.Title>
