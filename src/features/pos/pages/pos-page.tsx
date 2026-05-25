@@ -1,0 +1,364 @@
+import dayjs from "dayjs";
+import { Menu, Settings2, X } from "lucide-react";
+import { toast } from "sonner";
+import { useShallow } from "zustand/react/shallow";
+
+import { CheckoutModal } from "@/features/checkout/components/checkout-modal";
+import { printOrder } from "@/features/checkout/components/print-ticket";
+import { useCreateOrder, type CreateOrderInput } from "@/features/checkout/hooks/use-checkout";
+import { CategoryNav } from "@/features/menu/components/category-nav";
+import { ProductGrid } from "@/features/menu/components/product-grid";
+import { filterProductsByCategory } from "@/features/menu/domain/product-filters";
+import { sortProductsForMenu } from "@/features/menu/domain/product-order";
+import type { Product } from "@/features/menu/domain/product";
+import { useCategories } from "@/features/menu/hooks/use-categories";
+import { useProducts } from "@/features/menu/hooks/use-products";
+import { Cart } from "@/features/order/components/cart";
+import { calculateCartTotals } from "@/features/order/domain/cart";
+import { useOrderStore } from "@/features/order/store/order-store";
+import { SettingsModal } from "@/features/settings/components/settings-modal";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { POS_CATEGORY_FILTER, usePosStore } from "@/features/pos/store/pos-store";
+import { formatPosCurrency } from "@/shared/lib/currency";
+
+export function PosPage() {
+  // Suscribirse de manera reactiva a los cambios de locale o currency del Zustand store para forzar un re-render instantáneo de todo el POS
+  useSettingsStore();
+
+  const {
+    selectedCategory,
+    setSelectedCategory,
+    checkoutSessionKey,
+    isCheckoutOpen,
+    openCheckoutModal,
+    closeCheckoutModal,
+    isMobileCartOpen,
+    openMobileCart,
+    closeMobileCart,
+    toggleMobileCart,
+    isSettingsOpen,
+    openSettings,
+    closeSettings,
+  } = usePosStore(
+    useShallow((state) => ({
+      selectedCategory: state.selectedCategory,
+      setSelectedCategory: state.setSelectedCategory,
+      checkoutSessionKey: state.checkoutSessionKey,
+      isCheckoutOpen: state.isCheckoutOpen,
+      openCheckoutModal: state.openCheckout,
+      closeCheckoutModal: state.closeCheckout,
+      isMobileCartOpen: state.isMobileCartOpen,
+      openMobileCart: state.openMobileCart,
+      closeMobileCart: state.closeMobileCart,
+      toggleMobileCart: state.toggleMobileCart,
+      isSettingsOpen: state.isSettingsOpen,
+      openSettings: state.openSettings,
+      closeSettings: state.closeSettings,
+    })),
+  );
+
+  const {
+    currentOrder,
+    addItem,
+    handleIncreaseQuantity,
+    handleDecreaseQuantity,
+    handleRemoveItem,
+    handleClearCart,
+  } = useOrderStore(
+    useShallow((state) => ({
+      currentOrder: state.currentOrder,
+      addItem: state.addItem,
+      handleIncreaseQuantity: state.incrementItemQuantity,
+      handleDecreaseQuantity: state.decrementItemQuantity,
+      handleRemoveItem: state.removeItem,
+      handleClearCart: state.clearOrder,
+    })),
+  );
+
+  const { data: products = [] } = useProducts();
+  const { data: categories = [] } = useCategories();
+  const createOrderMutation = useCreateOrder();
+
+  const currentDateLabel = dayjs().format("DD MMM YYYY").toUpperCase();
+  const currentTimeLabel = dayjs().format("HH:mm");
+
+  const orderedProducts = sortProductsForMenu(products, categories);
+  const visibleProducts = filterProductsByCategory(orderedProducts, selectedCategory);
+  const synchronizedCartItems = currentOrder.map((item) => {
+    const currentProduct = products.find((product) => product.id === item.product.id);
+    return currentProduct ? { ...item, product: currentProduct } : item;
+  });
+  const cartTotals = calculateCartTotals(synchronizedCartItems);
+
+  const productCountByCategory: Record<string, number> = {};
+  for (const product of products) {
+    productCountByCategory[product.categoryId] = (productCountByCategory[product.categoryId] ?? 0) + 1;
+  }
+
+  const emptyStateTitle =
+    selectedCategory === POS_CATEGORY_FILTER.ALL
+      ? "Todavía no hay productos cargados"
+      : "No hay productos en esta categoría";
+  const emptyStateHint =
+    selectedCategory === POS_CATEGORY_FILTER.ALL
+      ? "Abrí configuración para cargar el menú inicial."
+      : "Probá cambiar de categoría o revisá la configuración del menú.";
+
+  const handleAddToCart = (product: Product) => {
+    const currentItem = currentOrder.find((item) => item.product.id === product.id);
+
+    addItem(product);
+
+    toast.success(`${product.name} agregado al ticket`, {
+      description: currentItem ? `Cantidad: ${currentItem.quantity + 1}` : "Listo para cobrar",
+    });
+  };
+
+  const openCheckout = () => {
+    if (synchronizedCartItems.length === 0) {
+      return;
+    }
+
+    openCheckoutModal();
+  };
+
+  const handleConfirmCheckout = async (input: CreateOrderInput) => {
+    const createdOrder = await createOrderMutation.mutateAsync(input);
+
+    let printError: Error | null = null;
+
+    try {
+      const productNameById: Record<string, string> = {};
+      for (const item of synchronizedCartItems) {
+        productNameById[item.product.id] = item.product.name;
+      }
+
+      await printOrder({
+        ticketNumber: createdOrder.ticketNumber,
+        createdAt: createdOrder.createdAt,
+        total: createdOrder.total,
+        items: input.items.map((item) => ({
+          name: productNameById[item.productId] ?? "Producto",
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
+        paymentMethod: createdOrder.payment.method,
+        paymentAmount: createdOrder.payment.amount,
+        fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
+        customer: createdOrder.customer
+          ? {
+              name: createdOrder.customer.name,
+              phone: createdOrder.customer.phone,
+              address: createdOrder.customer.address,
+            }
+          : null,
+      });
+    } catch (error) {
+      printError =
+        error instanceof Error ? error : new Error("No pudimos lanzar la impresión del ticket.");
+    }
+
+    handleClearCart();
+    closeCheckoutModal();
+    closeMobileCart();
+
+    toast.success(`Pedido #${createdOrder.ticketNumber} guardado`, {
+      description: createdOrder.customer
+        ? `${createdOrder.customer.name} · ${createdOrder.customer.phone}`
+        : `${cartTotals.itemsCount} productos cobrados en caja`,
+    });
+
+    if (printError) {
+      toast.error("La venta quedó guardada, pero no pudimos imprimir el ticket", {
+        description: printError.message,
+      });
+    }
+  };
+
+  return (
+    <div className="flex h-dvh flex-col overflow-hidden bg-obsidian text-ink">
+      <header className="border-b border-hairline bg-obsidian">
+        <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-baseline gap-4 sm:gap-6">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-display text-[26px] leading-none tracking-[-0.02em] text-ink">
+                coffee
+              </span>
+              <span className="text-[26px] font-medium leading-none tracking-[-0.02em] text-champagne">
+                pos
+              </span>
+            </div>
+            <span className="hidden h-3 w-px bg-hairline-strong lg:block" />
+            <span className="hidden font-mono-tabular text-[11px] tracking-[0.18em] text-ink-dim lg:inline">
+              {currentDateLabel} · {currentTimeLabel}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={openSettings}
+              className="hidden h-10 items-center gap-2 rounded-sharp border border-hairline px-3 text-ink transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated sm:inline-flex"
+              aria-label="Abrir configuración"
+            >
+              <Settings2 className="h-3.5 w-3.5 text-ink-muted" />
+              <span className="eyebrow">Configuración</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={openSettings}
+              className="flex h-10 w-10 items-center justify-center rounded-sharp border border-hairline text-ink transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated sm:hidden"
+              aria-label="Abrir configuración"
+            >
+              <Settings2 className="h-4 w-4 text-ink-muted" />
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleMobileCart}
+              className="relative flex h-10 items-center gap-2 rounded-sharp border border-hairline px-3 text-ink transition-colors duration-150 hover:border-hairline-strong hover:bg-obsidian-elevated lg:hidden"
+              aria-label="Abrir cuenta"
+            >
+              <Menu className="h-3.5 w-3.5 text-ink-muted" />
+              <span className="eyebrow">Cuenta</span>
+              {cartTotals.itemsCount > 0 ? (
+                <span className="font-mono-tabular absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-sharp bg-champagne px-1 text-[10px] font-bold text-obsidian">
+                  {cartTotals.itemsCount}
+                </span>
+              ) : null}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex min-h-0 flex-1 overflow-hidden lg:flex-row">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-24 lg:pb-0">
+          <div className="border-b border-hairline px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
+            <div>
+              <p className="eyebrow">Caja activa</p>
+              <h1 className="mt-2 font-display text-[28px] leading-none tracking-[-0.02em] text-ink">
+                Categorías, productos y <span className="text-champagne">carrito</span>
+              </h1>
+              <p className="mt-3 text-[12px] leading-snug text-ink-dim">
+                {products.length} producto{products.length === 1 ? "" : "s"} listos para cobrar.
+              </p>
+            </div>
+
+            <div className="mt-4 -mx-1 px-1 sm:-mx-5 sm:px-5">
+              <CategoryNav
+                categories={categories}
+                activeCategoryId={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                productCountByCategory={productCountByCategory}
+              />
+            </div>
+          </div>
+
+          <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+            {visibleProducts.length === 0 ? (
+              <section className="relative flex min-h-[50vh] flex-col items-center justify-center py-12 text-center">
+                <span className="font-display text-6xl leading-none text-ink-dim">⌕</span>
+                <p className="mt-6 text-[13px] font-medium uppercase tracking-[0.18em] text-ink-muted">
+                  {emptyStateTitle}
+                </p>
+                <p className="mt-2 eyebrow">{emptyStateHint}</p>
+              </section>
+            ) : (
+              <ProductGrid
+                products={visibleProducts}
+                categories={categories}
+                activeCategoryId={POS_CATEGORY_FILTER.ALL}
+                onAddToCart={handleAddToCart}
+              />
+            )}
+          </div>
+        </section>
+
+        <aside className="hidden w-[30%] min-h-0 min-w-0 overflow-hidden border-l border-hairline bg-obsidian-raised lg:block">
+          <Cart
+            items={synchronizedCartItems}
+            onIncreaseQuantity={handleIncreaseQuantity}
+            onDecreaseQuantity={handleDecreaseQuantity}
+            onRemoveItem={handleRemoveItem}
+            onClearCart={handleClearCart}
+            onCheckout={openCheckout}
+          />
+        </aside>
+      </main>
+
+      {cartTotals.itemsCount > 0 && !isMobileCartOpen ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-obsidian/95 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-3 backdrop-blur lg:hidden">
+          <button
+            type="button"
+            onClick={openMobileCart}
+            className="group relative flex h-16 w-full items-center justify-between overflow-hidden rounded-sharp border border-champagne/30 bg-obsidian-raised px-4 text-ink transition-colors duration-150 hover:border-champagne/60"
+          >
+            <span className="flex items-center gap-3">
+              <span className="font-mono-tabular flex h-9 w-9 items-center justify-center rounded-sharp bg-champagne text-[12px] font-bold text-obsidian">
+                {String(cartTotals.itemsCount).padStart(2, "0")}
+              </span>
+              <span className="flex flex-col items-start leading-none">
+                <span className="eyebrow">Ver comanda</span>
+                <span className="mt-1.5 text-[14px] font-bold text-ink">Tu cuenta</span>
+              </span>
+            </span>
+            <span className="font-mono-tabular text-[18px] font-medium tracking-tight text-champagne">
+              {formatPosCurrency(cartTotals.total)}
+            </span>
+          </button>
+        </div>
+      ) : null}
+
+      {isMobileCartOpen ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            type="button"
+            aria-label="Cerrar carrito"
+            className="absolute inset-0 bg-obsidian/80 backdrop-blur-sm animate-fade-in"
+            onClick={closeMobileCart}
+          />
+          <div className="absolute inset-x-2 bottom-2 top-12 animate-modal-in">
+            <button
+              type="button"
+              onClick={closeMobileCart}
+              className="absolute -top-10 right-0 z-10 flex h-9 w-9 items-center justify-center rounded-sharp border border-hairline-strong bg-obsidian-raised text-ink"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <Cart
+              items={synchronizedCartItems}
+              onIncreaseQuantity={handleIncreaseQuantity}
+              onDecreaseQuantity={handleDecreaseQuantity}
+              onRemoveItem={handleRemoveItem}
+              onClearCart={handleClearCart}
+              onCheckout={() => {
+                closeMobileCart();
+                openCheckout();
+              }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <CheckoutModal
+        key={checkoutSessionKey}
+        open={isCheckoutOpen}
+        items={synchronizedCartItems}
+        isSubmitting={createOrderMutation.isPending}
+        onClose={closeCheckoutModal}
+        onConfirmCheckout={handleConfirmCheckout}
+      />
+
+      {isSettingsOpen ? (
+        <SettingsModal
+          open={isSettingsOpen}
+          onClose={closeSettings}
+          categories={categories}
+          products={products}
+        />
+      ) : null}
+    </div>
+  );
+}
