@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   CHECKOUT_FULFILLMENT_TYPE,
-  orderDrizzleRepository,
   type CheckoutCustomer,
   type CheckoutCustomerInput,
   type CheckoutFulfillmentType,
   type CreateOrderInput,
-} from "@/modules/checkout/persistence/order-drizzle.repository";
+} from "@/modules/checkout/domain/order";
+import { orderDrizzleRepository } from "@/modules/checkout/persistence/order-drizzle.repository";
+import { createOrder } from "@/modules/checkout/use-cases/create-order";
+import { listCustomers } from "@/modules/checkout/use-cases/list-customers";
 
 export const CHECKOUT_CUSTOMERS_QUERY_KEY = ["checkout", "customers"] as const;
 
@@ -31,7 +33,7 @@ export function useCustomers({ search = "", enabled = true }: UseCustomersOption
     queryKey: [...CHECKOUT_CUSTOMERS_QUERY_KEY, normalizedSearch],
     enabled,
     queryFn: async () => {
-      const result = await orderDrizzleRepository.listCustomers(normalizedSearch);
+      const result = await listCustomers(orderDrizzleRepository, normalizedSearch);
       if (result.isErr()) {
         throw result.error;
       }
@@ -46,7 +48,7 @@ export function useCreateOrder() {
 
   return useMutation({
     mutationFn: async (input: CreateOrderInput) => {
-      const result = await orderDrizzleRepository.createOrder(input);
+      const result = await createOrder(orderDrizzleRepository, input);
       if (result.isErr()) {
         throw result.error;
       }

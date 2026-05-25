@@ -1,4 +1,4 @@
-export { printOrder } from "@/modules/checkout/components/print-ticket.service";
+export { printOrder } from "@/modules/checkout/adapters/print-ticket.adapter";
 export {
   PRINT_TICKET_FULFILLMENT_TYPE,
   PRINT_TICKET_PAYMENT_METHOD,

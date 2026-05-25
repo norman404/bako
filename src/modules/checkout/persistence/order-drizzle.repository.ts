@@ -17,60 +17,52 @@ import {
   type PaymentInsert,
   type PaymentRow,
 } from "@/shared/db/schema";
+import {
+  CHECKOUT_FULFILLMENT_TYPE,
+  CHECKOUT_PAYMENT_METHOD,
+  calculateOrderTotal,
+  type CheckoutCustomer,
+  type CheckoutCustomerInput,
+  type CheckoutFulfillmentType,
+  type CheckoutOrder,
+  type CheckoutOrderItem,
+  type CheckoutOrderItemInput,
+  type CheckoutPayment,
+  type CheckoutPaymentInput,
+  type CheckoutPaymentMethod,
+  type CreateOrderInput,
+} from "../domain/order";
+import {
+  type PosMetrics,
+  type PosMetricsTopProduct,
+} from "../domain/metrics";
+import { CheckoutPersistenceError } from "../domain/errors";
+
+export {
+  CHECKOUT_FULFILLMENT_TYPE,
+  CHECKOUT_PAYMENT_METHOD,
+  type CheckoutFulfillmentType,
+  type CheckoutPaymentMethod,
+  type CheckoutCustomerInput,
+  type CreateOrderInput,
+  type CheckoutCustomer,
+  type CheckoutOrder,
+} from "../domain/order";
+export type { PosMetrics } from "../domain/metrics";
+export { CheckoutPersistenceError } from "../domain/errors";
 
 const CUSTOMER_LIST_LIMIT = {
   RECENT: 6,
   SEARCH: 8,
 } as const;
 
-export const CHECKOUT_FULFILLMENT_TYPE = {
-  LOCAL: "local",
-  DELIVERY: "delivery",
-} as const;
-
-export type CheckoutFulfillmentType =
-  (typeof CHECKOUT_FULFILLMENT_TYPE)[keyof typeof CHECKOUT_FULFILLMENT_TYPE];
-
-export const CHECKOUT_PAYMENT_METHOD = {
-  CASH: "cash",
-  CARD: "card",
-} as const;
-
-export type CheckoutPaymentMethod =
-  (typeof CHECKOUT_PAYMENT_METHOD)[keyof typeof CHECKOUT_PAYMENT_METHOD];
-
 const CHECKOUT_PAYMENT_METHOD_VALUES = new Set<CheckoutPaymentMethod>(
   Object.values(CHECKOUT_PAYMENT_METHOD),
 );
 
-export interface CheckoutCustomerInput {
-  name: string;
-  phone: string;
-  address: string;
-}
-
-export interface CheckoutOrderItemInput {
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-}
-
-export interface CheckoutPaymentInput {
-  method: CheckoutPaymentMethod;
-  amount: number;
-}
-
 interface NormalizedCheckoutPaymentInput {
   method: string;
   amount: number;
-}
-
-export interface CreateOrderInput {
-  items: CheckoutOrderItemInput[];
-  fulfillmentType?: CheckoutFulfillmentType;
-  customerId?: string | null;
-  customer?: CheckoutCustomerInput | null;
-  payment: CheckoutPaymentInput;
 }
 
 interface NormalizedCreateOrderInput {
@@ -79,65 +71,6 @@ interface NormalizedCreateOrderInput {
   customerId: string | null;
   customer: CheckoutCustomerInput | null;
   payment: NormalizedCheckoutPaymentInput;
-}
-
-export interface CheckoutCustomer {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface CheckoutOrderItem {
-  id: string;
-  orderId: string;
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  createdAt: Date;
-}
-
-export interface CheckoutPayment {
-  id: string;
-  orderId: string;
-  method: CheckoutPaymentMethod;
-  amount: number;
-  createdAt: Date;
-}
-
-export interface CheckoutOrder {
-  id: string;
-  ticketNumber: number;
-  customerId: string | null;
-  total: number;
-  createdAt: Date;
-  customer: CheckoutCustomer | null;
-  items: CheckoutOrderItem[];
-  payment: CheckoutPayment;
-}
-
-export interface PosMetricsPaymentBreakdown {
-  cashSales: number;
-  cardSales: number;
-}
-
-export interface PosMetricsTopProduct {
-  productId: string;
-  productName: string;
-  quantitySold: number;
-  sales: number;
-}
-
-export interface PosMetrics {
-  sales: number;
-  tickets: number;
-  averageTicket: number;
-  itemsSold: number;
-  paymentBreakdown: PosMetricsPaymentBreakdown;
-  topProducts: PosMetricsTopProduct[];
-  updatedAt: Date;
 }
 
 interface TodayDateRange {
@@ -155,15 +88,6 @@ interface PosMetricItemRow {
   productName: string | null;
   quantity: number;
   unitPrice: number;
-}
-
-export class CheckoutPersistenceError extends Error {
-  readonly kind = "CheckoutPersistenceError";
-
-  constructor(message: string) {
-    super(message);
-    this.name = "CheckoutPersistenceError";
-  }
 }
 
 function formatUnknownError(cause: unknown): string {
@@ -311,10 +235,6 @@ function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrd
       amount: input.payment?.amount ?? Number.NaN,
     },
   };
-}
-
-function calculateOrderTotal(items: CheckoutOrderItemInput[]): number {
-  return items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
 }
 
 function rowToCheckoutCustomer(row: CustomerRow): CheckoutCustomer {
@@ -610,7 +530,7 @@ function buildPosMetrics(orderRows: PosMetricOrderRow[], itemRows: PosMetricItem
 }
 
 export const orderDrizzleRepository = {
-  getTodayPosMetrics(): ResultAsync<PosMetrics, CheckoutPersistenceError> {
+  getTodayMetrics(): ResultAsync<PosMetrics, CheckoutPersistenceError> {
     return ResultAsync.fromPromise(
       (async () => {
         const todayDateRange = getTodayDateRange();

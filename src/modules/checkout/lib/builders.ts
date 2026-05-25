@@ -1,28 +1,23 @@
-import type {
-  CheckoutCustomer,
-  CheckoutCustomerInput,
-  CheckoutFulfillmentType,
-  CreateOrderInput,
-} from "@/modules/checkout/hooks/use-checkout";
+import {
+  CHECKOUT_FULFILLMENT_TYPE,
+  CHECKOUT_PAYMENT_METHOD,
+  type CheckoutCustomer,
+  type CheckoutCustomerInput,
+  type CheckoutFulfillmentType,
+  type CheckoutPaymentMethod,
+  type CreateOrderInput,
+} from "@/modules/checkout/domain/order";
 import { parsePaymentAmountInput } from "@/modules/checkout/lib/formatters";
 import type { CartItem } from "@/modules/order/domain/cart";
 import { formatPosCurrency } from "@/lib/currency";
+
+export { CHECKOUT_PAYMENT_METHOD, type CheckoutPaymentMethod } from "@/modules/checkout/domain/order";
 
 export interface CheckoutCustomerFormState {
   name: string;
   phone: string;
   address: string;
 }
-
-export const CHECKOUT_PAYMENT_METHOD = {
-  CASH: "cash",
-  CARD: "card",
-} as const;
-
-export type CheckoutPaymentMethod =
-  (typeof CHECKOUT_PAYMENT_METHOD)[keyof typeof CHECKOUT_PAYMENT_METHOD];
-
-const CHECKOUT_LOCAL_FULFILLMENT_TYPE = "local";
 
 function buildOrderItemsInput(items: CartItem[]): CreateOrderInput["items"] {
   return items.map((item) => ({
@@ -134,7 +129,7 @@ export function buildCreateOrderInput(
 
   const normalizedItems = buildOrderItemsInput(items);
 
-  if (fulfillmentType === CHECKOUT_LOCAL_FULFILLMENT_TYPE) {
+  if (fulfillmentType === CHECKOUT_FULFILLMENT_TYPE.LOCAL) {
     return {
       items: normalizedItems,
       fulfillmentType,
