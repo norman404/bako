@@ -30,14 +30,13 @@ export function SystemSettingsPanel() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    try {
-      await updateSettings(locale, currency);
-      toast.success("Configuración regional actualizada", {
+    const result = await updateSettings(locale, currency);
+    result.match(
+      () => toast.success("Configuración regional actualizada", {
         description: `Región: ${locale} · Divisa: ${currency}`,
-      });
-    } catch (error) {
-      toast.error("No se pudo guardar la configuración");
-    }
+      }),
+      () => toast.error("No se pudo guardar la configuración"),
+    );
   };
 
   return (
