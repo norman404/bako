@@ -55,7 +55,7 @@ export function SystemSettingsPanel() {
               {t('system.localeLabel')}
             </Label>
             <Select value={locale} onValueChange={setLocale}>
-              <SelectTrigger>
+              <SelectTrigger data-testid="locale-select-trigger">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -71,7 +71,7 @@ export function SystemSettingsPanel() {
               {t('system.currencyLabel')}
             </Label>
             <Select value={currency} onValueChange={setCurrency}>
-              <SelectTrigger>
+              <SelectTrigger data-testid="currency-select-trigger">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
