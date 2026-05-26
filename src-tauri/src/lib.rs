@@ -41,6 +41,18 @@ pub fn run() {
             sql: include_str!("../migrations/0006_category_colors.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "feature_flags",
+            sql: include_str!("../migrations/0007_feature_flags.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 8,
+            description: "menus",
+            sql: include_str!("../migrations/0008_menus.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
