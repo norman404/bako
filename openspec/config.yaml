@@ -1,0 +1,42 @@
+## System configuration
+
+# Language settings for natural language processing
+language: es-AR
+
+# Development environment settings
+dev:
+  # Enable automatic reloading during development
+  auto_reload: true
+  # Log level: debug, info, warning, error
+  log_level: debug
+
+# Testing configuration
+test:
+  # Enable test mode
+  enabled: true
+  # Run tests in parallel
+  parallel: true
+  # Show detailed test output
+  verbose: true
+
+# Project structure
+paths:
+  # Root directory for specifications
+  specs_dir: openspec/specs
+  # Root directory for changes
+  changes_dir: openspec/changes
+
+# Change management
+changes:
+  # Automatically archive completed changes
+  auto_archive: true
+  # Archive directory
+  archive_dir: openspec/changes/archive
+
+# Strict TDD mode
+strict_tdd: true
+
+# Stack
+type: react
+test_runner: vitest
+build_tool: vite
