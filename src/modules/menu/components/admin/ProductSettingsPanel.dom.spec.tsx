@@ -38,6 +38,7 @@ const BASE_CATEGORIES = [
     id: "coffee",
     name: "Café",
     description: "Bebidas calientes",
+    color: null,
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
     deletedAt: null,

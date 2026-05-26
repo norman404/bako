@@ -35,6 +35,12 @@ pub fn run() {
             sql: include_str!("../migrations/0005_system_settings.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "category_colors",
+            sql: include_str!("../migrations/0006_category_colors.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

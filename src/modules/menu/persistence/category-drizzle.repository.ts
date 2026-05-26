@@ -12,6 +12,7 @@ function rowToCategory(row: CategoryRow): Category {
     id: row.id,
     name: row.name,
     description: row.description,
+    color: row.color ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
@@ -38,6 +39,7 @@ function normalizeCategoryInput(input: CategoryCreateInput): CategoryCreateInput
   return {
     name: input.name.trim(),
     description: input.description.trim(),
+    color: input.color?.trim() || null,
   };
 }
 
@@ -117,6 +119,7 @@ export const categoryDrizzleRepository: CategoryRepository = {
           id: categoryId,
           name: normalizedInput.name,
           description: normalizedInput.description,
+          color: normalizedInput.color,
           createdAt: now,
           updatedAt: now,
         })
@@ -148,6 +151,7 @@ export const categoryDrizzleRepository: CategoryRepository = {
           .set({
             name: normalizedInput.name,
             description: normalizedInput.description,
+            color: normalizedInput.color,
             updatedAt: now,
           })
           .where(and(eq(categories.id, id), isNull(categories.deletedAt)))

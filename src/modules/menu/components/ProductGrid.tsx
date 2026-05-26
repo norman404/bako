@@ -1,5 +1,3 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/Button";
 import type { Category } from "@/modules/menu/domain/category";
 import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
@@ -18,6 +16,8 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart }: Pr
   const { t } = useTranslation('menu');
   const visibleProducts = filterProductsByCategory(sortProductsForMenu(products, categories), activeCategoryId);
 
+  const categoryById = new Map(categories.map((c) => [c.id, c]));
+
   if (visibleProducts.length === 0) {
     return (
       <section className="relative flex min-h-[50vh] flex-col items-center justify-center py-12">
@@ -32,48 +32,29 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart }: Pr
 
   return (
     <section className="relative">
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {visibleProducts.map((product) => (
-          <Button
-            key={product.id}
-            variant="ghost"
-            onClick={() => onAddToCart(product)}
-            aria-label={t('productGrid.addAriaLabel', { productName: product.name })}
-            className="group relative flex min-h-[140px] flex-col items-stretch gap-5 text-left touch-manipulation rounded-card border border-hairline bg-obsidian-raised p-6 hover:-translate-y-0.5 hover:border-hairline-strong hover:bg-obsidian-elevated active:bg-obsidian"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sharp border border-hairline bg-obsidian text-2xl leading-none">
-                <span>{product.image}</span>
-              </div>
-              <div className="flex flex-col items-end gap-1.5">
-                {product.isPopular ? <Badge>{t('productGrid.popularBadge')}</Badge> : null}
-                <span className="font-mono-tabular text-[10px] uppercase tracking-[0.18em] text-ink-dim">
-                  {product.prepTimeMinutes}{t('productGrid.timeUnit')}
-                </span>
-              </div>
-            </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {visibleProducts.map((product) => {
+          const category = categoryById.get(product.categoryId);
+          const color = category?.color;
 
-            <div className="flex flex-1 flex-col justify-end gap-4">
-              <div className="flex flex-col gap-1.5">
-                <h3 className="font-display text-[22px] leading-tight tracking-tight text-ink">
-                  {product.name}
-                </h3>
-                {product.description ? (
-                  <p className="text-[12px] leading-snug text-ink-dim line-clamp-2">
-                    {product.description}
-                  </p>
-                ) : null}
-              </div>
+          return (
+            <button
+              key={product.id}
+              onClick={() => onAddToCart(product)}
+              aria-label={t('productGrid.addAriaLabel', { productName: product.name })}
+              className="group relative flex flex-col items-stretch gap-2 rounded-card border border-hairline bg-obsidian-raised p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-hairline-strong hover:bg-obsidian-elevated active:bg-obsidian"
+              style={color ? { borderLeftColor: color, borderLeftWidth: '3px' } : undefined}
+            >
+              <h3 className="font-display text-[16px] leading-tight tracking-tight text-ink">
+                {product.name}
+              </h3>
 
-              <div className="flex items-baseline justify-between gap-2 border-t border-hairline pt-4">
-                <span className="eyebrow">{t('productGrid.priceLabel')}</span>
-                <span className="font-mono-tabular text-[18px] tracking-tight text-ink transition-colors group-hover:text-champagne">
-                  {formatPosCurrency(product.price)}
-                </span>
-              </div>
-            </div>
-          </Button>
-        ))}
+              <span className="font-mono-tabular text-[14px] tracking-tight text-ink-dim transition-colors group-hover:text-champagne">
+                {formatPosCurrency(product.price)}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );

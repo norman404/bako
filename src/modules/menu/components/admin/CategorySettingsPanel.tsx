@@ -30,12 +30,14 @@ interface CategorySettingsPanelProps {
 interface CategoryFormState {
   name: string;
   description: string;
+  color: string;
 }
 
 function buildEmptyFormState(): CategoryFormState {
   return {
     name: "",
     description: "",
+    color: "",
   };
 }
 
@@ -43,6 +45,7 @@ function buildFormStateFromCategory(category: Category): CategoryFormState {
   return {
     name: category.name,
     description: category.description,
+    color: category.color ?? "",
   };
 }
 
@@ -57,6 +60,7 @@ function toCategoryPayload(formState: CategoryFormState): CategoryCreateInput | 
   return {
     name,
     description,
+    color: formState.color.trim() || null,
   };
 }
 
@@ -215,12 +219,10 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
               <Input
                 id="category-name"
                 value={formState.name}
-                onInput={(event) =>
-                  setFormState((previous) => ({
-                    ...previous,
-                    name: event.currentTarget.value,
-                  }))
-                }
+                onInput={(event) => {
+                  const value = event.currentTarget.value;
+                  setFormState((previous) => ({ ...previous, name: value }));
+                }}
                 placeholder="Bebidas calientes"
               />
             </FormField>
@@ -229,14 +231,24 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
               <Textarea
                 id="category-description"
                 value={formState.description}
-                onInput={(event) =>
-                  setFormState((previous) => ({
-                    ...previous,
-                    description: event.currentTarget.value,
-                  }))
-                }
-                className="min-h-[132px]"
+                onInput={(event) => {
+                  const value = event.currentTarget.value;
+                  setFormState((previous) => ({ ...previous, description: value }));
+                }}
+                className="min-h-[80px]"
                 placeholder="Espacios del menú para bebidas, comidas y postres"
+              />
+            </FormField>
+
+            <FormField label="Color (hex opcional)" htmlFor="category-color">
+              <Input
+                id="category-color"
+                value={formState.color}
+                onInput={(event) => {
+                  const value = event.currentTarget.value;
+                  setFormState((previous) => ({ ...previous, color: value }));
+                }}
+                placeholder="#C8E6C9"
               />
             </FormField>
 

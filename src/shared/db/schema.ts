@@ -6,6 +6,7 @@ export const categories = sqliteTable(
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     description: text("description").notNull(),
+    color: text("color"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),

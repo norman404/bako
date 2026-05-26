@@ -17,6 +17,7 @@ export interface ProductUpsertInput {
 export interface CategoryCreateInput {
   name: string;
   description: string;
+  color?: string | null;
 }
 
 export interface ProductRepository {

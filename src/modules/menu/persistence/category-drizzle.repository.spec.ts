@@ -44,6 +44,7 @@ function buildCategoryRow(overrides: Partial<CategoryRow> = {}): CategoryRow {
     id: overrides.id ?? "category-1",
     name: overrides.name ?? "Bebidas calientes",
     description: overrides.description ?? "Café, tés y chocolate",
+    color: overrides.color ?? null,
     createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
     deletedAt: overrides.deletedAt ?? null,

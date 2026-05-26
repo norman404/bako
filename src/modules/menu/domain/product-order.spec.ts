@@ -9,6 +9,7 @@ function buildCategory(id: string, name: string): Category {
     id,
     name,
     description: `${name} description`,
+    color: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     deletedAt: null,
