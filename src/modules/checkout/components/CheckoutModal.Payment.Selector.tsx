@@ -1,22 +1,25 @@
-import { CreditCard, Wallet } from 'lucide-react'
+import { CreditCard, Wallet } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import {
   CHECKOUT_PAYMENT_METHOD,
   type CheckoutPaymentMethod
-} from '@/modules/checkout/lib/builders'
-
-const PAYMENT_OPTIONS = [
-  { value: CHECKOUT_PAYMENT_METHOD.CASH, label: 'Efectivo', icon: Wallet },
-  { value: CHECKOUT_PAYMENT_METHOD.CARD, label: 'Tarjeta', icon: CreditCard },
-]
+} from '@/modules/checkout/lib/builders';
 
 interface CheckoutPaymentMethodSelectorProps {
-  isCashPayment: boolean
-  onPaymentMethodChange: (method: CheckoutPaymentMethod) => void
+  isCashPayment: boolean;
+  onPaymentMethodChange: (method: CheckoutPaymentMethod) => void;
 }
 
 function CheckoutPaymentMethodSelector({ isCashPayment, onPaymentMethodChange }: CheckoutPaymentMethodSelectorProps) {
+  const { t } = useTranslation('checkout');
+  
+  const PAYMENT_OPTIONS = [
+    { value: CHECKOUT_PAYMENT_METHOD.CASH, label: t('payment.cash'), icon: Wallet },
+    { value: CHECKOUT_PAYMENT_METHOD.CARD, label: t('payment.card'), icon: CreditCard },
+  ];
+  
   return (
     <SegmentedControl
       options={PAYMENT_OPTIONS}
@@ -24,7 +27,7 @@ function CheckoutPaymentMethodSelector({ isCashPayment, onPaymentMethodChange }:
       onSelect={(value) => onPaymentMethodChange(value as CheckoutPaymentMethod)}
       className="mt-3"
     />
-  )
+  );
 }
 
 export { CheckoutPaymentMethodSelector }

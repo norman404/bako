@@ -1,0 +1,17 @@
+{
+  "cart": {
+    "eyebrow": "Comanda",
+    "headerLa": "La",
+    "headerCuenta": "Cuenta",
+    "clearAriaLabel": "Vaciar comanda",
+    "clearButton": "Vaciar",
+    "emptyTitle": "Aún no hay productos",
+    "emptyHint": "Seleccioná del menú",
+    "decreaseAriaLabel": "Disminuir {{productName}}",
+    "increaseAriaLabel": "Aumentar {{productName}}",
+    "removeAriaLabel": "Eliminar {{productName}}",
+    "productsLabel": "Productos",
+    "totalLabel": "Total",
+    "payButton": "Pagar"
+  }
+}

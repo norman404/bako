@@ -1,20 +1,24 @@
-import type { SVGProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("lucide-react", () => {
+vi.mock("lucide-react", async () => {
+  const React = await import("react");
   const createIcon = (name: string) => {
-    return function Icon(props: SVGProps<SVGSVGElement>) {
-      return <svg aria-hidden="true" data-icon={name} {...props} />;
-    };
+    return React.forwardRef(function Icon(props: any, ref: any) {
+      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
+    });
   };
 
-  return {
-    CreditCard: createIcon("CreditCard"),
-    Package: createIcon("Package"),
-    Receipt: createIcon("Receipt"),
-    RefreshCw: createIcon("RefreshCw"),
-    Wallet: createIcon("Wallet"),
-  };
+  return new Proxy({}, {
+    get(target: any, prop: string | symbol) {
+      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
+        return target[prop];
+      }
+      if (!target[prop]) {
+        target[prop] = createIcon(prop);
+      }
+      return target[prop];
+    }
+  });
 });
 
 import * as turnoMetricsHooks from "@/modules/turno/hooks/use-turno-metrics";

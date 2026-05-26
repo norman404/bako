@@ -3,6 +3,7 @@ import type {
   CheckoutFulfillmentType,
 } from "@/modules/checkout/hooks/use-checkout";
 import type { CheckoutCustomerFormState } from "@/modules/checkout/lib/builders";
+import { useTranslation } from "react-i18next";
 
 import { CustomerCreateForm } from "./CheckoutModal.Fulfillment.CustomerCreate";
 import { CheckoutDeliveryHeader } from "./CheckoutModal.Fulfillment.DeliveryHeader";
@@ -54,10 +55,12 @@ function CheckoutModalFulfillmentPanel({
   onCustomerFieldChange,
   formError,
 }: CheckoutModalFulfillmentPanelProps) {
+  const { t } = useTranslation('checkout');
+  
   return (
     <section className="rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
       <div className="flex flex-col gap-3 border-b border-hairline pb-2.5 lg:flex-row lg:items-center lg:justify-between">
-        <h3 className="text-[15px] font-medium text-ink">Entrega</h3>
+        <h3 className="text-[15px] font-medium text-ink">{t('fulfillment.title')}</h3>
 
         <CheckoutFulfillmentSelector
           fulfillmentType={fulfillmentType}

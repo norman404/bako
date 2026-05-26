@@ -1,4 +1,5 @@
 import { LoaderCircle, MapPin, Phone } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
 import { Button } from "@/components/ui/Button";
@@ -40,14 +41,16 @@ export function CustomerSearchPanel({
   onSelectCustomer,
   onStartNewCustomer,
 }: CustomerSearchPanelProps) {
+  const { t } = useTranslation('checkout');
+  
   return (
     <div className="space-y-3 rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
-      <FormField label="Buscar cliente" htmlFor="customer-search">
+      <FormField label={t('customerSearch.label')} htmlFor="customer-search">
         <SearchInput
           id="customer-search"
           value={customerSearch}
           onInput={(event) => onCustomerSearchChange(event.currentTarget.value)}
-          placeholder="Nombre, teléfono o dirección"
+          placeholder={t('customerSearch.placeholder')}
         />
       </FormField>
 
@@ -57,27 +60,27 @@ export function CustomerSearchPanel({
             {customerSectionLabel}
           </p>
           {selectedCustomerId ? (
-            <Badge>Cliente seleccionado</Badge>
+            <Badge>{t('customerSearch.selectedBadge')}</Badge>
           ) : null}
         </div>
 
         {customerQuery.isPending ? (
           <div className="flex items-center gap-2 rounded-card border border-hairline px-3 py-2.5 text-[12px] text-ink-dim">
             <LoaderCircle className="h-4 w-4 animate-spin text-champagne" />
-            Buscando clientes...
+            {t('customerSearch.loading')}
           </div>
         ) : customerQuery.isError ? (
           <p className="rounded-card border border-danger/40 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
             {customerQuery.error instanceof Error
               ? customerQuery.error.message
-              : "No pudimos cargar clientes guardados"}
+              : t('customerSearch.error')}
           </p>
         ) : customerOptions.length === 0 ? (
           <EmptyState className="px-3 py-3 text-left">
             <p className="text-[12px] leading-snug text-ink-dim">
               {trimmedCustomerSearch.length > 0
-                ? 'No encontramos clientes con esa búsqueda. Probá con otro dato o tocá "Nuevo cliente".'
-                : "Todavía no hay clientes guardados para delivery."}
+                ? t('customerSearch.emptySearch')
+                : t('customerSearch.emptyState')}
             </p>
             <Button
               type="button"
@@ -86,7 +89,7 @@ export function CustomerSearchPanel({
               onClick={onStartNewCustomer}
               className="mt-2.5 h-8 px-3"
             >
-              Nuevo cliente
+              {t('customerSearch.newButton')}
             </Button>
           </EmptyState>
         ) : (
@@ -122,7 +125,7 @@ export function CustomerSearchPanel({
                     </div>
                     {isSelected ? (
                       <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-champagne">
-                        ACTIVO
+                        {t('customerSearch.activeLabel')}
                       </span>
                     ) : null}
                   </div>

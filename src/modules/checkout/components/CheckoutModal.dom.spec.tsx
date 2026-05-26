@@ -1,41 +1,25 @@
 import { okAsync } from "neverthrow";
-import type { SVGProps } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("lucide-react", () => {
-  const iconNames = {
-    BIKE: "Bike",
-    CREDIT_CARD: "CreditCard",
-    HOUSE: "House",
-    LOADER_CIRCLE: "LoaderCircle",
-    MAP_PIN: "MapPin",
-    PHONE: "Phone",
-    PLUS: "Plus",
-    SEARCH: "Search",
-    USER_ROUND: "UserRound",
-    WALLET: "Wallet",
-    X: "X",
-  } as const;
-
+vi.mock("lucide-react", async () => {
+  const React = await import("react");
   const createIcon = (name: string) => {
-    return function Icon(props: SVGProps<SVGSVGElement>) {
-      return <svg aria-hidden="true" data-icon={name} {...props} />;
-    };
+    return React.forwardRef(function Icon(props: any, ref: any) {
+      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
+    });
   };
 
-  return {
-    Bike: createIcon(iconNames.BIKE),
-    CreditCard: createIcon(iconNames.CREDIT_CARD),
-    House: createIcon(iconNames.HOUSE),
-    LoaderCircle: createIcon(iconNames.LOADER_CIRCLE),
-    MapPin: createIcon(iconNames.MAP_PIN),
-    Phone: createIcon(iconNames.PHONE),
-    Plus: createIcon(iconNames.PLUS),
-    Search: createIcon(iconNames.SEARCH),
-    UserRound: createIcon(iconNames.USER_ROUND),
-    Wallet: createIcon(iconNames.WALLET),
-    X: createIcon(iconNames.X),
-  };
+  return new Proxy({}, {
+    get(target: any, prop: string | symbol) {
+      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
+        return target[prop];
+      }
+      if (!target[prop]) {
+        target[prop] = createIcon(prop);
+      }
+      return target[prop];
+    }
+  });
 });
 
 import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";

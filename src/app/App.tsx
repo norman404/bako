@@ -1,6 +1,7 @@
 import { Menu, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -25,6 +26,8 @@ import { formatPosCurrency } from "@/lib/currency";
 import { IS_MAC } from "@/lib/platform";
 
 export function App() {
+  const { t } = useTranslation('app');
+  
   // Suscribirse de manera reactiva a los cambios de locale o currency del Zustand store para forzar un re-render instantáneo de todo el POS
   useSettingsStore();
 
@@ -105,20 +108,20 @@ export function App() {
 
   const emptyStateTitle =
     selectedCategory === POS_CATEGORY_FILTER.ALL
-      ? "Todavía no hay productos cargados"
-      : "No hay productos en esta categoría";
+      ? t('empty.noProducts')
+      : t('empty.noProductsInCategory');
   const emptyStateHint =
     selectedCategory === POS_CATEGORY_FILTER.ALL
-      ? "Abrí configuración para cargar el menú inicial."
-      : "Probá cambiar de categoría o revisá la configuración del menú.";
+      ? t('empty.setupHint')
+      : t('empty.changeCategoryHint');
 
   const handleAddToCart = (product: Product) => {
     const currentItem = currentOrder.find((item) => item.product.id === product.id);
 
     addItem(product);
 
-    toast.success(`${product.name} agregado al ticket`, {
-      description: currentItem ? `Cantidad: ${currentItem.quantity + 1}` : "Listo para cobrar",
+    toast.success(t('toast.productAdded', { productName: product.name }), {
+      description: currentItem ? t('toast.quantityUpdated', { quantity: currentItem.quantity + 1 }) : t('toast.readyToPay'),
     });
   };
 
@@ -163,14 +166,14 @@ export function App() {
     closeCheckoutModal();
     closeMobileCart();
 
-    toast.success(`Pedido #${createdOrder.ticketNumber} guardado`, {
+    toast.success(t('toast.orderSaved', { ticketNumber: createdOrder.ticketNumber }), {
       description: createdOrder.customer
-        ? `${createdOrder.customer.name} · ${createdOrder.customer.phone}`
-        : `${cartTotals.itemsCount} productos cobrados en caja`,
+        ? t('toast.orderCustomerInfo', { customerName: createdOrder.customer.name, customerPhone: createdOrder.customer.phone })
+        : t('toast.orderItemsCount', { itemsCount: cartTotals.itemsCount }),
     });
 
     printResult.mapErr((printError) => {
-      toast.error("La venta quedó guardada, pero no pudimos imprimir el ticket", {
+      toast.error(t('toast.printError'), {
         description: printError.message,
       });
     });
@@ -185,7 +188,7 @@ export function App() {
         >
           {/* Title — absolute center */}
           <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 font-display text-[14px] font-semibold tracking-[-0.01em] text-ink">
-            Bako
+            {t('header.title')}
           </span>
 
           {/* Search + actions — right */}
@@ -193,11 +196,11 @@ export function App() {
             <div className="relative w-44 sm:w-60">
               <SearchInput
                 type="search"
-                placeholder="Buscar productos..."
+                placeholder={t('search.placeholder')}
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 className="h-7 pr-8 w-full"
-                aria-label="Buscar productos"
+                aria-label={t('search.ariaLabel')}
               />
               {productSearch ? (
                 <Button
@@ -205,7 +208,7 @@ export function App() {
                   size="icon"
                   onClick={clearProductSearch}
                   className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-sharp text-ink-dim hover:text-ink"
-                  aria-label="Limpiar búsqueda"
+                  aria-label={t('search.clearAriaLabel')}
                 >
                   <X className="h-3 w-3" />
                 </Button>
@@ -217,7 +220,7 @@ export function App() {
               size="icon"
               onClick={openSettings}
               className="h-7 w-7 rounded-card text-ink-muted hover:bg-obsidian-elevated hover:text-ink"
-              aria-label="Abrir configuración"
+              aria-label={t('headerActions.settingsAriaLabel')}
             >
               <Settings className="h-3.5 w-3.5" />
             </Button>
@@ -227,7 +230,7 @@ export function App() {
               size="icon"
               onClick={toggleMobileCart}
               className="relative h-7 w-7 rounded-card border border-hairline text-ink-muted hover:border-hairline-strong hover:bg-obsidian-elevated hover:text-ink lg:hidden"
-              aria-label="Abrir cuenta"
+              aria-label={t('headerActions.cartAriaLabel')}
             >
               <Menu className="h-3.5 w-3.5" />
               {cartTotals.itemsCount > 0 ? (
@@ -307,8 +310,8 @@ export function App() {
                 {String(cartTotals.itemsCount).padStart(2, "0")}
               </span>
               <span className="flex flex-col items-start leading-none">
-                <span className="eyebrow">Ver comanda</span>
-                <span className="mt-1.5 text-[14px] font-bold text-ink">Tu cuenta</span>
+                <span className="eyebrow">{t('cart.viewTicket')}</span>
+                <span className="mt-1.5 text-[14px] font-bold text-ink">{t('cart.yourAccount')}</span>
               </span>
             </span>
             <span className="font-mono-tabular text-[18px] font-medium tracking-tight text-champagne">
@@ -322,7 +325,7 @@ export function App() {
         <div className="fixed inset-0 z-40 lg:hidden">
           <button
             type="button"
-            aria-label="Cerrar carrito"
+            aria-label={t('cart.closeAriaLabel')}
             className="absolute inset-0 bg-obsidian/80 backdrop-blur-sm animate-fade-in"
             onClick={closeMobileCart}
           />
@@ -332,7 +335,7 @@ export function App() {
               size="icon"
               onClick={closeMobileCart}
               className="absolute -top-10 right-0 z-10 rounded-sharp border border-hairline-strong bg-obsidian-raised text-ink"
-              aria-label="Cerrar"
+              aria-label={t('cart.closeButton')}
             >
               <X className="h-4 w-4" />
             </Button>

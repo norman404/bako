@@ -1,56 +1,58 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const SUPPORTED_LOCALES = [
-  { value: "es-MX", label: "Español (México)" },
-  { value: "es-AR", label: "Español (Argentina)" },
-  { value: "en-US", label: "English (United States)" },
-  { value: "es-ES", label: "Español (España)" },
-  { value: "pt-BR", label: "Português (Brasil)" },
-];
-
-const SUPPORTED_CURRENCIES = [
-  { value: "MXN", label: "MXN ($ - Peso Mexicano)" },
-  { value: "ARS", label: "ARS ($ - Peso Argentino)" },
-  { value: "USD", label: "USD ($ - Dólar Estadounidense)" },
-  { value: "EUR", label: "EUR (€ - Euro)" },
-  { value: "BRL", label: "BRL (R$ - Real Brasileño)" },
-];
-
 
 export function SystemSettingsPanel() {
+  const { t } = useTranslation('settings');
   const { locale: currentLocale, currency: currentCurrency, updateSettings, isLoading } = useSettingsStore();
 
   const [locale, setLocale] = useState(currentLocale);
   const [currency, setCurrency] = useState(currentCurrency);
 
+  const SUPPORTED_LOCALES = [
+    { value: "es-MX", label: t('locales.esMX') },
+    { value: "es-AR", label: t('locales.esAR') },
+    { value: "en-US", label: t('locales.enUS') },
+    { value: "es-ES", label: t('locales.esES') },
+    { value: "pt-BR", label: t('locales.ptBR') },
+  ];
+
+  const SUPPORTED_CURRENCIES = [
+    { value: "MXN", label: t('currencies.mxn') },
+    { value: "ARS", label: t('currencies.ars') },
+    { value: "USD", label: t('currencies.usd') },
+    { value: "EUR", label: t('currencies.eur') },
+    { value: "BRL", label: t('currencies.brl') },
+  ];
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const result = await updateSettings(locale, currency);
     result.match(
-      () => toast.success("Configuración regional actualizada", {
-        description: `Región: ${locale} · Divisa: ${currency}`,
+      () => toast.success(t('system.saveSuccess'), {
+        description: t('system.saveSuccessDesc', { locale, currency }),
       }),
-      () => toast.error("No se pudo guardar la configuración"),
+      () => toast.error(t('system.saveError')),
     );
   };
 
   return (
     <div className="grid min-h-full grid-rows-[auto_1fr] gap-3">
       <header className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
-        <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">Sistema</h2>
+        <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">{t('system.title')}</h2>
       </header>
 
       <div className="mt-2.5 max-w-lg">
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <div className="grid gap-1.5">
             <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-              Idioma / Región (Locale)
+              {t('system.localeLabel')}
             </Label>
             <Select value={locale} onValueChange={setLocale}>
               <SelectTrigger>
@@ -66,7 +68,7 @@ export function SystemSettingsPanel() {
 
           <div className="grid gap-1.5">
             <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-              Moneda / Divisa
+              {t('system.currencyLabel')}
             </Label>
             <Select value={currency} onValueChange={setCurrency}>
               <SelectTrigger>
@@ -89,7 +91,7 @@ export function SystemSettingsPanel() {
               disabled={isLoading}
             >
               <Save className="h-3.5 w-3.5" />
-              Guardar cambios
+              {t('system.saveButton')}
             </Button>
           </div>
         </form>

@@ -1,0 +1,36 @@
+{
+  "modal": {
+    "title": "Configuración",
+    "closeAriaLabel": "Cerrar configuración",
+    "sectionsAriaLabel": "Secciones de configuración"
+  },
+  "sections": {
+    "products": "Productos",
+    "categories": "Categorías",
+    "system": "Sistema",
+    "turno": "Turno"
+  },
+  "system": {
+    "title": "Sistema",
+    "localeLabel": "Idioma / Región (Locale)",
+    "currencyLabel": "Moneda / Divisa",
+    "saveButton": "Guardar cambios",
+    "saveSuccess": "Configuración regional actualizada",
+    "saveSuccessDesc": "Región: {{locale}} · Divisa: {{currency}}",
+    "saveError": "No se pudo guardar la configuración"
+  },
+  "locales": {
+    "esMX": "Español (México)",
+    "esAR": "Español (Argentina)",
+    "enUS": "English (United States)",
+    "esES": "Español (España)",
+    "ptBR": "Português (Brasil)"
+  },
+  "currencies": {
+    "mxn": "MXN ($ - Peso Mexicano)",
+    "ars": "ARS ($ - Peso Argentino)",
+    "usd": "USD ($ - Dólar Estadounidense)",
+    "eur": "EUR (€ - Euro)",
+    "brl": "BRL (R$ - Real Brasileño)"
+  }
+}

@@ -1,5 +1,6 @@
 import type { CartItem, CartTotals } from "@/modules/order/domain/cart";
 import { formatPosCurrency } from "@/lib/currency";
+import { useTranslation } from "react-i18next";
 
 interface CheckoutModalOrderSummaryProps {
   items: CartItem[];
@@ -10,10 +11,12 @@ function CheckoutModalOrderSummary({
   items,
   totals,
 }: CheckoutModalOrderSummaryProps) {
+  const { t } = useTranslation('checkout');
+  
   return (
     <section className="rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
       <div className="flex items-center justify-between gap-3 border-b border-hairline pb-2.5">
-        <h3 className="text-[15px] font-medium text-ink">Cuenta</h3>
+        <h3 className="text-[15px] font-medium text-ink">{t('orderSummary.title')}</h3>
         <span className="font-mono-tabular text-[20px] font-semibold tracking-[-0.02em] text-champagne sm:text-[22px]">
           {formatPosCurrency(totals.total)}
         </span>

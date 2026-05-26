@@ -1,0 +1,25 @@
+{
+  "panel": {
+    "title": "Turno",
+    "refreshButton": "Refrescar",
+    "error": "No pudimos cargar el turno."
+  },
+  "summary": {
+    "title": "Resumen",
+    "sales": "Ventas",
+    "average": "Promedio",
+    "tickets": "Tickets",
+    "items": "Items",
+    "ticketsLabel": "{{count}} tickets"
+  },
+  "paymentMethods": {
+    "title": "Medios de pago",
+    "cash": "Efectivo",
+    "card": "Tarjeta"
+  },
+  "topProducts": {
+    "title": "Top productos",
+    "empty": "Sin ventas.",
+    "unitSuffix": "uds."
+  }
+}

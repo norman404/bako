@@ -1,5 +1,6 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { Dialog, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
@@ -26,6 +27,7 @@ function CheckoutModal({
   onClose,
   onConfirmCheckout,
 }: CheckoutModalProps) {
+  const { t } = useTranslation('checkout');
   const totals = calculateCartTotals(items);
 
   const {
@@ -76,7 +78,7 @@ function CheckoutModal({
       <DialogPortal>
         <DialogOverlay />
         <DialogPrimitive.Content
-          aria-label="Confirmar checkout"
+          aria-label={t('modal.ariaLabel')}
           className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-5 lg:p-6"
           onInteractOutside={(event) => {
             if (isSubmitting) event.preventDefault();
@@ -85,7 +87,7 @@ function CheckoutModal({
           <div className="modal-shell-solid flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[50rem] flex-col overflow-hidden rounded-modal border border-hairline animate-modal-in sm:max-h-[calc(100dvh-3rem)]">
             <header className="flex items-center justify-between border-b border-hairline px-4 py-3 sm:px-5">
               <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink sm:text-[22px]">
-                Cobro
+                {t('modal.title')}
               </h2>
 
               <Button
@@ -94,7 +96,7 @@ function CheckoutModal({
                 onClick={handleCloseRequest}
                 disabled={isSubmitting}
                 className="h-8 w-8 rounded-card text-ink-muted hover:bg-surface-mid hover:text-ink"
-                aria-label="Cerrar"
+                aria-label={t('modal.closeAriaLabel')}
               >
                 <X className="h-4 w-4" />
               </Button>

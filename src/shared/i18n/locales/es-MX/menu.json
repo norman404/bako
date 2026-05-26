@@ -1,0 +1,15 @@
+{
+  "productGrid": {
+    "emptySymbol": "∅",
+    "emptyTitle": "La carta está vacía en esta sección",
+    "emptyHint": "Probá otra categoría",
+    "popularBadge": "Popular",
+    "priceLabel": "Precio",
+    "addAriaLabel": "Agregar {{productName}}",
+    "timeUnit": "m"
+  },
+  "categoryNav": {
+    "ariaLabel": "Filtrar productos por categoría",
+    "all": "Todo"
+  }
+}

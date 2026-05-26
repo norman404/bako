@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
+import { I18nProvider, createTestI18n } from "@/shared/i18n/test-utils";
 
 const TEST_QUERY_CLIENT_DEFAULT_OPTIONS = {
   queries: {
@@ -31,8 +32,14 @@ export function createTestQueryClient(): QueryClient {
 }
 
 function createWrapper(queryClient: QueryClient) {
+  const testI18n = createTestI18n();
+  
   return function Wrapper({ children }: WrapperProps): ReactElement {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    return (
+      <I18nProvider i18n={testI18n}>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </I18nProvider>
+    );
   };
 }
 

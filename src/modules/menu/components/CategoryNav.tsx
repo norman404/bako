@@ -1,6 +1,7 @@
 import type { Category } from "@/modules/menu/domain/category";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface CategoryNavProps {
   categories: Category[];
@@ -15,16 +16,17 @@ function CategoryNav({
   onCategoryChange,
   productCountByCategory,
 }: CategoryNavProps) {
+  const { t } = useTranslation('menu');
   const totalCount = Object.values(productCountByCategory ?? {}).reduce((sum, n) => sum + n, 0);
 
   return (
     <nav
-      aria-label="Filtrar productos por categoría"
+      aria-label={t('categoryNav.ariaLabel')}
       className="scrollbar-none flex items-center gap-1 overflow-x-auto"
     >
       <CategoryItem
         id="all"
-        label="Todo"
+        label={t('categoryNav.all')}
         count={totalCount}
         active={activeCategoryId === "all"}
         onSelect={onCategoryChange}

@@ -1,21 +1,24 @@
-import type { SVGProps } from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("lucide-react", () => {
+vi.mock("lucide-react", async () => {
+  const React = await import("react");
   const createIcon = (name: string) => {
-    return function Icon(props: SVGProps<SVGSVGElement>) {
-      return <svg aria-hidden="true" data-icon={name} {...props} />;
-    };
+    return React.forwardRef(function Icon(props: any, ref: any) {
+      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
+    });
   };
 
-  return {
-    BarChart3: createIcon("BarChart3"),
-    LayoutGrid: createIcon("LayoutGrid"),
-    Package: createIcon("Package"),
-    X: createIcon("X"),
-    Globe: createIcon("Globe"),
-    Save: createIcon("Save"),
-  };
+  return new Proxy({}, {
+    get(target: any, prop: string | symbol) {
+      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
+        return target[prop];
+      }
+      if (!target[prop]) {
+        target[prop] = createIcon(prop);
+      }
+      return target[prop];
+    }
+  });
 });
 
 vi.mock("sonner", () => ({

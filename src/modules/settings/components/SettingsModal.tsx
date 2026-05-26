@@ -1,6 +1,7 @@
 import { BarChart3, LayoutGrid, Package, X, Globe, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 
@@ -33,41 +34,42 @@ interface SettingsSectionDefinition {
   icon: LucideIcon;
 }
 
-const SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
-  { id: SETTINGS_SECTION.PRODUCTS, label: "Productos", icon: Package },
-  { id: SETTINGS_SECTION.CATEGORIES, label: "Categorías", icon: LayoutGrid },
-  { id: SETTINGS_SECTION.SYSTEM, label: "Sistema", icon: Globe },
-  { id: SETTINGS_SECTION.TURNO, label: "Turno", icon: BarChart3 },
-];
-
-function renderSectionPanel(
-  activeSection: SettingsSection,
-  props: Pick<SettingsModalProps, "categories" | "products">,
-  onOpenCategories: () => void,
-) {
-  if (activeSection === SETTINGS_SECTION.PRODUCTS) {
-    return (
-      <ProductSettingsPanel
-        categories={props.categories}
-        products={props.products}
-        onManageCategories={onOpenCategories}
-      />
-    );
-  }
-
-  if (activeSection === SETTINGS_SECTION.CATEGORIES) {
-    return <CategorySettingsPanel categories={props.categories} />;
-  }
-
-  if (activeSection === SETTINGS_SECTION.SYSTEM) {
-    return <SystemSettingsPanel />;
-  }
-
-  return <TurnoSummaryPanel />;
-}
-
 function SettingsModal({ open, onClose, categories, products }: SettingsModalProps) {
+  const { t } = useTranslation('settings');
   const [activeSection, setActiveSection] = useState<SettingsSection>(SETTINGS_SECTION.PRODUCTS);
+
+  const SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
+    { id: SETTINGS_SECTION.PRODUCTS, label: t('sections.products'), icon: Package },
+    { id: SETTINGS_SECTION.CATEGORIES, label: t('sections.categories'), icon: LayoutGrid },
+    { id: SETTINGS_SECTION.SYSTEM, label: t('sections.system'), icon: Globe },
+    { id: SETTINGS_SECTION.TURNO, label: t('sections.turno'), icon: BarChart3 },
+  ];
+
+  function renderSectionPanel(
+    activeSection: SettingsSection,
+    props: Pick<SettingsModalProps, "categories" | "products">,
+    onOpenCategories: () => void,
+  ) {
+    if (activeSection === SETTINGS_SECTION.PRODUCTS) {
+      return (
+        <ProductSettingsPanel
+          categories={props.categories}
+          products={props.products}
+          onManageCategories={onOpenCategories}
+        />
+      );
+    }
+
+    if (activeSection === SETTINGS_SECTION.CATEGORIES) {
+      return <CategorySettingsPanel categories={props.categories} />;
+    }
+
+    if (activeSection === SETTINGS_SECTION.SYSTEM) {
+      return <SystemSettingsPanel />;
+    }
+
+    return <TurnoSummaryPanel />;
+  }
 
   return (
     <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
@@ -79,13 +81,13 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
         <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-hairline modal-shell-solid shadow-2xl transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
           
           <header className="flex items-center justify-between border-b border-hairline px-4 py-2.5 sm:px-5">
-            <Dialog.Title className="text-[13px] font-semibold tracking-wide text-ink">Configuración</Dialog.Title>
+            <Dialog.Title className="text-[13px] font-semibold tracking-wide text-ink">{t('modal.title')}</Dialog.Title>
 
             <Dialog.Close asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Cerrar configuración"
+                aria-label={t('modal.closeAriaLabel')}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -98,7 +100,7 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
             {/* Left sidebar nav */}
             <nav
               role="tablist"
-              aria-label="Secciones de configuración"
+              aria-label={t('modal.sectionsAriaLabel')}
               aria-orientation="vertical"
               className="flex flex-col gap-0.5 border-r border-hairline p-2 overflow-y-auto"
             >

@@ -1,9 +1,10 @@
-import { Wallet } from 'lucide-react'
+import { Wallet } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-import { formatPaymentAmountInput } from '@/modules/checkout/lib/formatters'
-import { formatPosCurrency } from '@/lib/currency'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { formatPaymentAmountInput } from '@/modules/checkout/lib/formatters';
+import { formatPosCurrency } from '@/lib/currency';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface CheckoutPaymentAmountBlockProps {
   isCashPayment: boolean
@@ -18,10 +19,12 @@ function CheckoutPaymentAmountBlock({
   onCashInputChange,
   total
 }: CheckoutPaymentAmountBlockProps) {
+  const { t } = useTranslation('checkout');
+  
   if (isCashPayment) {
     return (
       <div className="grid gap-1 mt-3">
-        <Label htmlFor="cash-amount">Recibido</Label>
+        <Label htmlFor="cash-amount">{t('payment.receivedLabel')}</Label>
         <div className="relative">
           <Wallet className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-dim" />
           <Input
@@ -34,17 +37,17 @@ function CheckoutPaymentAmountBlock({
           />
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="mt-3 rounded-card border border-hairline bg-obsidian px-3 py-2.5">
       <div className="flex items-center justify-between gap-3 text-[11px] text-ink-muted">
-        <span>Cobro exacto</span>
+        <span>{t('payment.exactPayment')}</span>
         <span className="font-mono-tabular text-ink">{formatPosCurrency(total)}</span>
       </div>
     </div>
-  )
+  );
 }
 
 export { CheckoutPaymentAmountBlock }
