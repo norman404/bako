@@ -1,1 +1,17 @@
-{}
+{
+  "cart": {
+    "eyebrow": "Ticket",
+    "headerLa": "The",
+    "headerCuenta": "Account",
+    "clearAriaLabel": "Clear ticket",
+    "clearButton": "Clear",
+    "emptyTitle": "No products yet",
+    "emptyHint": "Select from the menu",
+    "decreaseAriaLabel": "Decrease {{productName}}",
+    "increaseAriaLabel": "Increase {{productName}}",
+    "removeAriaLabel": "Remove {{productName}}",
+    "productsLabel": "Products",
+    "totalLabel": "Total",
+    "payButton": "Pay"
+  }
+}

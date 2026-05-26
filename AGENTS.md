@@ -197,3 +197,42 @@ pnpm test:dom         # DOM tests
 | `pos` | — | — | — | — | Solo UI state (correcto así) |
 | `turno` | — | — | — | — | Consume use-cases de checkout |
 | `settings` | — | — | — | — | Solo UI state + config |
+
+---
+
+## Sistema de migraciones de base de datos
+
+Las migraciones SQLite son manejadas **exclusivamente por Tauri** a través del plugin `tauri_plugin_sql` en `src-tauri/src/lib.rs`. No existe ni debe existir un runner de migraciones en TypeScript/JavaScript.
+
+### Cómo funciona
+
+- Tauri ejecuta las migraciones automáticamente al iniciar la app.
+- Guarda un **checksum** de cada archivo `.sql` aplicado en la base de datos.
+- Si modificás un archivo `.sql` que ya fue aplicado, Tauri falla con: `migration N was previously applied but has been modified`.
+
+### Cómo agregar una nueva tabla/migración
+
+1. **Crear un nuevo archivo `.sql`** en `src-tauri/migrations/` con número secuencial:
+   ```
+   src-tauri/migrations/0005_system_settings.sql
+   ```
+
+2. **Registrar la migración en `src-tauri/src/lib.rs`**:
+   ```rust
+   Migration {
+       version: 5,
+       description: "system_settings",
+       sql: include_str!("../migrations/0005_system_settings.sql"),
+       kind: MigrationKind::Up,
+   },
+   ```
+
+3. **NO tocar archivos `.sql` anteriores.** Nunca. Si necesitás cambiar algo de una tabla existente, creá una migración nueva (ej: `0006_alter_products_add_column.sql`).
+
+### Regla de oro
+
+> **Una migración aplicada es inmutable.** Si la tocás, rompés la base de datos de los usuarios que ya la tienen.
+
+### Caso real que ocurrió en el proyecto
+
+Se agregó la tabla `system_settings` al schema TypeScript (`src/shared/db/schema.ts`) pero se omitió la migración SQL. Al intentar leer/escribir settings, la app fallaba con `no such table: system_settings`. La solución fue crear la migración `0005_system_settings.sql` y registrarla en `lib.rs` — **no modificar migraciones existentes ni agregar un runner en TypeScript**.

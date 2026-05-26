@@ -1,1 +1,42 @@
-{}
+{
+  "splash": {
+    "loading": "Initializing Bako POS..."
+  },
+  "error": {
+    "title": "Critical Initialization Error",
+    "description": "Could not start the database or local storage system. Please restart the application."
+  },
+  "empty": {
+    "noProducts": "No products loaded yet",
+    "noProductsInCategory": "No products in this category",
+    "setupHint": "Open settings to load the initial menu.",
+    "changeCategoryHint": "Try changing category or check the menu settings."
+  },
+  "toast": {
+    "productAdded": "{{productName}} added to ticket",
+    "quantityUpdated": "Quantity: {{quantity}}",
+    "readyToPay": "Ready to pay",
+    "orderSaved": "Order #{{ticketNumber}} saved",
+    "orderCustomerInfo": "{{customerName}} · {{customerPhone}}",
+    "orderItemsCount": "{{itemsCount}} products charged at register",
+    "printError": "Sale was saved, but we could not print the ticket"
+  },
+  "header": {
+    "title": "Bako"
+  },
+  "search": {
+    "placeholder": "Search products...",
+    "ariaLabel": "Search products",
+    "clearAriaLabel": "Clear search"
+  },
+  "headerActions": {
+    "settingsAriaLabel": "Open settings",
+    "cartAriaLabel": "Open account"
+  },
+  "cart": {
+    "viewTicket": "View ticket",
+    "yourAccount": "Your account",
+    "closeAriaLabel": "Close cart",
+    "closeButton": "Close"
+  }
+}

@@ -1,1 +1,25 @@
-{}
+{
+  "panel": {
+    "title": "Shift",
+    "refreshButton": "Refresh",
+    "error": "Could not load the shift."
+  },
+  "summary": {
+    "title": "Summary",
+    "sales": "Sales",
+    "average": "Average",
+    "tickets": "Tickets",
+    "items": "Items",
+    "ticketsLabel": "{{count}} tickets"
+  },
+  "paymentMethods": {
+    "title": "Payment methods",
+    "cash": "Cash",
+    "card": "Card"
+  },
+  "topProducts": {
+    "title": "Top products",
+    "empty": "No sales.",
+    "unitSuffix": "units"
+  }
+}

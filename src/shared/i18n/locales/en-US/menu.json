@@ -1,1 +1,15 @@
-{}
+{
+  "productGrid": {
+    "emptySymbol": "∅",
+    "emptyTitle": "The menu is empty in this section",
+    "emptyHint": "Try another category",
+    "popularBadge": "Popular",
+    "priceLabel": "Price",
+    "addAriaLabel": "Add {{productName}}",
+    "timeUnit": "m"
+  },
+  "categoryNav": {
+    "ariaLabel": "Filter products by category",
+    "all": "All"
+  }
+}

@@ -29,6 +29,12 @@ pub fn run() {
             sql: include_str!("../migrations/0003_payments.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "system_settings",
+            sql: include_str!("../migrations/0005_system_settings.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

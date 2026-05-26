@@ -1,1 +1,36 @@
-{}
+{
+  "modal": {
+    "title": "Settings",
+    "closeAriaLabel": "Close settings",
+    "sectionsAriaLabel": "Settings sections"
+  },
+  "sections": {
+    "products": "Products",
+    "categories": "Categories",
+    "system": "System",
+    "turno": "Shift"
+  },
+  "system": {
+    "title": "System",
+    "localeLabel": "Language / Region (Locale)",
+    "currencyLabel": "Currency",
+    "saveButton": "Save changes",
+    "saveSuccess": "Regional settings updated",
+    "saveSuccessDesc": "Region: {{locale}} · Currency: {{currency}}",
+    "saveError": "Could not save settings"
+  },
+  "locales": {
+    "esMX": "Español (México)",
+    "esAR": "Español (Argentina)",
+    "enUS": "English (United States)",
+    "esES": "Español (España)",
+    "ptBR": "Português (Brasil)"
+  },
+  "currencies": {
+    "mxn": "MXN ($ - Mexican Peso)",
+    "ars": "ARS ($ - Argentine Peso)",
+    "usd": "USD ($ - US Dollar)",
+    "eur": "EUR (€ - Euro)",
+    "brl": "BRL (R$ - Brazilian Real)"
+  }
+}

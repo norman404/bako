@@ -1,1 +1,60 @@
-{}
+{
+  "footer": {
+    "cancel": "Cancel",
+    "pay": "Pay",
+    "saving": "Saving"
+  },
+  "modal": {
+    "ariaLabel": "Confirm checkout",
+    "title": "Charge",
+    "closeAriaLabel": "Close"
+  },
+  "fulfillment": {
+    "title": "Delivery",
+    "local": "In-store",
+    "delivery": "Delivery"
+  },
+  "payment": {
+    "title": "Payment",
+    "cash": "Cash",
+    "card": "Card",
+    "receivedLabel": "Received",
+    "exactPayment": "Exact payment",
+    "summary": {
+      "total": "Final total",
+      "cashReceived": "Cash received",
+      "cardPayment": "Card payment",
+      "change": "Change",
+      "dash": "—"
+    }
+  },
+  "delivery": {
+    "headerText": "Choose a saved one or add a new one",
+    "searchButton": "Search customer",
+    "newButton": "New customer"
+  },
+  "orderSummary": {
+    "title": "Account"
+  },
+  "customerSearch": {
+    "label": "Search customer",
+    "placeholder": "Name, phone or address",
+    "selectedBadge": "Selected customer",
+    "loading": "Searching customers...",
+    "error": "Could not load saved customers",
+    "emptySearch": "We didn't find customers with that search. Try another detail or tap \"New customer\".",
+    "emptyState": "No saved customers for delivery yet.",
+    "newButton": "New customer",
+    "activeLabel": "ACTIVE"
+  },
+  "customerCreate": {
+    "title": "Create new customer",
+    "backButton": "Back to search",
+    "nameLabel": "Customer",
+    "namePlaceholder": "Valentina Suárez",
+    "phoneLabel": "Phone",
+    "phonePlaceholder": "11 5555 5555",
+    "addressLabel": "Address",
+    "addressPlaceholder": "Av. Siempre Viva 742, Door B"
+  }
+}
