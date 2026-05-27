@@ -2,6 +2,7 @@ import { Menu, Settings, X } from "lucide-react";
 import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -10,26 +11,34 @@ import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
 import { CategoryNav } from "@/modules/menu/components/CategoryNav";
+import { MenuSelector } from "@/modules/menu/components/MenuSelector";
 import { ProductGrid } from "@/modules/menu/components/ProductGrid";
 import { filterProductsByCategory, filterProductsByName } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
 import type { Product } from "@/modules/menu/domain/product";
 import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useProducts } from "@/modules/menu/hooks/use-products";
+import { useMenus } from "@/modules/menu/hooks/use-menus";
 import { Cart } from "@/modules/order/components/Cart";
 import { calculateCartTotals } from "@/modules/order/domain/cart";
 import { useOrderStore } from "@/modules/order/store/order-store";
 import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos/store/pos-store";
 import { formatPosCurrency } from "@/lib/currency";
 import { IS_MAC } from "@/lib/platform";
 
 export function App() {
-  const { t } = useTranslation('app');
-  
+  const { t } = useTranslation(['app', 'menu']);
+
   // Suscribirse de manera reactiva a los cambios de locale o currency del Zustand store para forzar un re-render instantáneo de todo el POS
   useSettingsStore();
+
+  // Read feature flags (sync from Zustand store)
+  const { flags } = useFeatureFlagsStore();
+  const categoriesEnabled = flags.categories_enabled ?? false;
+  const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
 
   const {
     selectedCategory,
@@ -87,13 +96,41 @@ export function App() {
     })),
   );
 
-  const { data: products = [], isLoading: isProductsLoading } = useProducts();
-  const { data: categories = [], isLoading: isCategoriesLoading } = useCategories();
+  // Conditional data fetching based on feature flags
+  const { data: menus = [] } = useMenus();
+
+  // Select default menu or first available menu (derived state)
+  const defaultMenu = menus.find((m) => m.isDefault) ?? menus[0];
+  const defaultMenuId = defaultMenu?.id ?? null;
+
+  const [selectedMenuId, setSelectedMenuId] = useState<string | null>(null);
+
+  // Sync selectedMenuId with defaultMenuId when it changes (only if not manually set)
+  const activeMenuId = selectedMenuId ?? defaultMenuId;
+
+  // If multiple menus are enabled, use menu-specific hooks, otherwise use global hooks
+  const { data: productsByMenu = [], isLoading: isProductsByMenuLoading } = useProducts(
+    multipleMenusEnabled && activeMenuId ? [activeMenuId] : undefined
+  );
+  const { data: productsGlobal = [], isLoading: isProductsGlobalLoading } = useProducts();
+
+  const { data: categoriesByMenu = [], isLoading: isCategoriesByMenuLoading } = useCategories(
+    multipleMenusEnabled && activeMenuId ? activeMenuId : undefined
+  );
+  const { data: categoriesGlobal = [], isLoading: isCategoriesGlobalLoading } = useCategories();
+
+  const products = multipleMenusEnabled ? productsByMenu : productsGlobal;
+  const categories = multipleMenusEnabled ? categoriesByMenu : categoriesGlobal;
+  const isProductsLoading = multipleMenusEnabled ? isProductsByMenuLoading : isProductsGlobalLoading;
+  const isCategoriesLoading = multipleMenusEnabled ? isCategoriesByMenuLoading : isCategoriesGlobalLoading;
   const isLoading = isProductsLoading || isCategoriesLoading;
+
   const createOrderMutation = useCreateOrder();
 
   const orderedProducts = sortProductsForMenu(products, categories);
-  const categoryFilteredProducts = filterProductsByCategory(orderedProducts, selectedCategory);
+  const categoryFilteredProducts = categoriesEnabled
+    ? filterProductsByCategory(orderedProducts, selectedCategory)
+    : orderedProducts;
   const visibleProducts = filterProductsByName(categoryFilteredProducts, productSearch);
   const synchronizedCartItems = currentOrder.map((item) => {
     const currentProduct = products.find((product) => product.id === item.product.id);
@@ -245,18 +282,40 @@ export function App() {
 
       <main className="flex min-h-0 flex-1 overflow-hidden lg:flex-row">
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-24 lg:pb-0">
-          <div className="border-b border-hairline px-4 py-3 sm:px-6 lg:px-8">
-            <div className="mt-3 -mx-1 px-1 sm:-mx-5 sm:px-5">
-              <CategoryNav
-                categories={categories}
-                activeCategoryId={selectedCategory}
-                onCategoryChange={setSelectedCategory}
-                productCountByCategory={productCountByCategory}
-              />
+          {(multipleMenusEnabled && menus.length > 0) || categoriesEnabled ? (
+            <div className="px-4 py-3 sm:px-6 lg:px-8">
+              {multipleMenusEnabled && menus.length > 0 ? (
+                <div>
+                  <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                    {t("menu:sectionTitles.menu")}
+                  </h2>
+                  <MenuSelector
+                    menus={menus}
+                    selectedMenuId={activeMenuId}
+                    onSelect={setSelectedMenuId}
+                  />
+                </div>
+              ) : null}
+              {categoriesEnabled ? (
+                <div className={multipleMenusEnabled && menus.length > 0 ? "mt-3 -mx-1 px-1 sm:-mx-5 sm:px-5" : "-mx-1 px-1 sm:-mx-5 sm:px-5"}>
+                  <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                    {t("menu:sectionTitles.categories")}
+                  </h2>
+                  <CategoryNav
+                    categories={categories}
+                    activeCategoryId={selectedCategory}
+                    onCategoryChange={setSelectedCategory}
+                    productCountByCategory={productCountByCategory}
+                  />
+                </div>
+              ) : null}
             </div>
-          </div>
+          ) : null}
 
-          <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-4 sm:px-4 lg:px-6 lg:py-6">
+            <h2 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+              {t("menu:sectionTitles.products")}
+            </h2>
             {isLoading ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -369,6 +428,7 @@ export function App() {
           onClose={closeSettings}
           categories={categories}
           products={products}
+          menus={menus}
         />
       ) : null}
     </div>

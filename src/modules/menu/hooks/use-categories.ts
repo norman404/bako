@@ -7,11 +7,11 @@ import { listCategories } from "@/modules/menu/use-cases/list-categories";
 
 export const MENU_CATEGORIES_QUERY_KEY = ["menu", "categories"] as const;
 
-export function useCategories() {
+export function useCategories(menuId?: string) {
   return useQuery({
-    queryKey: MENU_CATEGORIES_QUERY_KEY,
+    queryKey: menuId ? [...MENU_CATEGORIES_QUERY_KEY, "menu", menuId] : MENU_CATEGORIES_QUERY_KEY,
     queryFn: async () => {
-      const result = await listCategories(categoryDrizzleRepository);
+      const result = await listCategories(categoryDrizzleRepository, menuId);
       if (result.isErr()) {
         throw result.error;
       }

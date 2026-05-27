@@ -1,11 +1,11 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 
 import type { Category } from "@/modules/menu/domain/category";
 import { CategoryNotFoundError, MenuDomainError } from "@/modules/menu/domain/errors";
 import type { CategoryCreateInput, CategoryRepository } from "@/modules/menu/domain/ports";
 import { db } from "@/shared/db/client";
-import { categories, type CategoryRow, products } from "@/shared/db/schema";
+import { categories, type CategoryRow, productMenus, products } from "@/shared/db/schema";
 
 function rowToCategory(row: CategoryRow): Category {
   return {
@@ -13,6 +13,7 @@ function rowToCategory(row: CategoryRow): Category {
     name: row.name,
     description: row.description,
     color: row.color ?? null,
+    menuId: row.menuId ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
@@ -40,6 +41,7 @@ function normalizeCategoryInput(input: CategoryCreateInput): CategoryCreateInput
     name: input.name.trim(),
     description: input.description.trim(),
     color: input.color?.trim() || null,
+    menuId: input.menuId ?? null,
   };
 }
 
@@ -91,9 +93,37 @@ function ensureCategoryHasNoActiveProducts(categoryId: string): ResultAsync<void
 }
 
 export const categoryDrizzleRepository: CategoryRepository = {
-  list() {
+  list(menuId?: string) {
     return ResultAsync.fromPromise(
-      db.select().from(categories).where(isNull(categories.deletedAt)),
+      (async () => {
+        if (menuId) {
+          // Find categories that have products in this menu
+          const categoryIdRows = await db
+            .select({ categoryId: products.categoryId })
+            .from(products)
+            .innerJoin(productMenus, eq(productMenus.productId, products.id))
+            .where(and(
+              eq(productMenus.menuId, menuId),
+              isNull(products.deletedAt),
+            ));
+
+          const categoryIds = [...new Set(categoryIdRows.map((row) => row.categoryId).filter(Boolean))];
+
+          if (categoryIds.length === 0) {
+            return [];
+          }
+
+          return db
+            .select()
+            .from(categories)
+            .where(and(
+              inArray(categories.id, categoryIds),
+              isNull(categories.deletedAt),
+            ));
+        }
+
+        return db.select().from(categories).where(isNull(categories.deletedAt));
+      })(),
       wrapDbError("Failed to list categories"),
     ).map((rows) => rows.map(rowToCategory));
   },
@@ -120,6 +150,7 @@ export const categoryDrizzleRepository: CategoryRepository = {
           name: normalizedInput.name,
           description: normalizedInput.description,
           color: normalizedInput.color,
+          menuId: normalizedInput.menuId,
           createdAt: now,
           updatedAt: now,
         })
@@ -147,13 +178,14 @@ export const categoryDrizzleRepository: CategoryRepository = {
     return loadActiveCategoryRowById(id, "Failed to find category").andThen(() =>
       ResultAsync.fromPromise(
         db
-          .update(categories)
-          .set({
-            name: normalizedInput.name,
-            description: normalizedInput.description,
-            color: normalizedInput.color,
-            updatedAt: now,
-          })
+        .update(categories)
+        .set({
+          name: normalizedInput.name,
+          description: normalizedInput.description,
+          color: normalizedInput.color,
+          menuId: normalizedInput.menuId,
+          updatedAt: now,
+        })
           .where(and(eq(categories.id, id), isNull(categories.deletedAt)))
           .returning(),
         wrapDbError("Failed to update category"),

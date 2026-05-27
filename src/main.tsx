@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { App } from "./app/App";
 import { initDatabase } from "./shared/db/client";
 import { useSettingsStore } from "./modules/settings/store/settings-store";
+import { useFeatureFlagsStore } from "./modules/feature-flags/store/feature-flags-store";
 import { initI18n, I18nProvider, i18n } from "./shared/i18n";
 import { wireI18nWithSettings } from "./shared/i18n/sync-with-settings";
 import "./styles/app.css";
@@ -38,14 +39,17 @@ async function bootstrap() {
     // 2. Hidratar Store de Zustand desde SQLite
     await useSettingsStore.getState().initializeSettings();
     
-    // 3. Inicializar i18n con el locale del store
+    // 3. Hidratar feature flags desde SQLite
+    await useFeatureFlagsStore.getState().initializeFeatureFlags();
+    
+    // 4. Inicializar i18n con el locale del store
     const currentLocale = useSettingsStore.getState().locale;
     await initI18n({ lng: currentLocale });
     
-    // 4. Conectar i18n con cambios de settings
+    // 5. Conectar i18n con cambios de settings
     wireI18nWithSettings(i18n);
     
-    // 5. Montar aplicación real
+    // 6. Montar aplicación real
     root.render(
       <I18nProvider>
         <QueryClientProvider client={queryClient}>

@@ -6,6 +6,7 @@ import type { CategoryRepository } from "@/modules/menu/domain/ports";
 
 export function listCategories(
   repository: CategoryRepository,
+  menuId?: string,
 ): ResultAsync<Category[], MenuDomainError> {
-  return repository.list();
+  return repository.list(menuId);
 }

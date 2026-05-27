@@ -1,4 +1,4 @@
-import { BarChart3, LayoutGrid, Package, X, Globe, type LucideIcon } from "lucide-react";
+import { BarChart3, LayoutGrid, Package, X, Globe, Flag, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
@@ -7,16 +7,22 @@ import { Button } from "@/components/ui/Button";
 
 import type { Category } from "@/modules/menu/domain/category";
 import type { Product } from "@/modules/menu/domain/product";
+import type { Menu } from "@/modules/menu/domain/menu";
 import { CategorySettingsPanel } from "@/modules/menu/components/admin/CategorySettingsPanel";
 import { ProductSettingsPanel } from "@/modules/menu/components/admin/ProductSettingsPanel";
+import { MenuSettingsPanel } from "@/modules/menu/components/admin/MenuSettingsPanel";
 import { TurnoSummaryPanel } from "@/modules/turno/components/TurnoSummaryPanel";
+import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { SystemSettingsPanel } from "./SystemSettingsPanel";
+import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 
 const SETTINGS_SECTION = {
   PRODUCTS: "products",
   CATEGORIES: "categories",
+  MENUS: "menus",
   SYSTEM: "system",
   TURNO: "turno",
+  FEATURES: "features",
 } as const;
 
 type SettingsSection = (typeof SETTINGS_SECTION)[keyof typeof SETTINGS_SECTION];
@@ -26,6 +32,7 @@ interface SettingsModalProps {
   onClose: () => void;
   categories: Category[];
   products: Product[];
+  menus: Menu[];
 }
 
 interface SettingsSectionDefinition {
@@ -34,20 +41,33 @@ interface SettingsSectionDefinition {
   icon: LucideIcon;
 }
 
-function SettingsModal({ open, onClose, categories, products }: SettingsModalProps) {
+function SettingsModal({ open, onClose, categories, products, menus }: SettingsModalProps) {
   const { t } = useTranslation('settings');
+  const { flags } = useFeatureFlagsStore();
+  const categoriesEnabled = flags.categories_enabled ?? false;
+  const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
+
   const [activeSection, setActiveSection] = useState<SettingsSection>(SETTINGS_SECTION.PRODUCTS);
 
   const SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
     { id: SETTINGS_SECTION.PRODUCTS, label: t('sections.products'), icon: Package },
-    { id: SETTINGS_SECTION.CATEGORIES, label: t('sections.categories'), icon: LayoutGrid },
+    ...(categoriesEnabled ? [{ id: SETTINGS_SECTION.CATEGORIES, label: t('sections.categories'), icon: LayoutGrid }] : []),
+    ...(multipleMenusEnabled ? [{ id: SETTINGS_SECTION.MENUS, label: t('sections.menus'), icon: UtensilsCrossed }] : []),
     { id: SETTINGS_SECTION.SYSTEM, label: t('sections.system'), icon: Globe },
     { id: SETTINGS_SECTION.TURNO, label: t('sections.turno'), icon: BarChart3 },
+    { id: SETTINGS_SECTION.FEATURES, label: t('sections.features'), icon: Flag },
   ];
+
+  // If categories/menus are disabled and the active section is CATEGORIES/MENUS, switch to PRODUCTS
+  const effectiveActiveSection = 
+    (!categoriesEnabled && activeSection === SETTINGS_SECTION.CATEGORIES) ||
+    (!multipleMenusEnabled && activeSection === SETTINGS_SECTION.MENUS)
+      ? SETTINGS_SECTION.PRODUCTS
+      : activeSection;
 
   function renderSectionPanel(
     activeSection: SettingsSection,
-    props: Pick<SettingsModalProps, "categories" | "products">,
+    props: Pick<SettingsModalProps, "categories" | "products" | "menus">,
     onOpenCategories: () => void,
   ) {
     if (activeSection === SETTINGS_SECTION.PRODUCTS) {
@@ -64,8 +84,16 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
       return <CategorySettingsPanel categories={props.categories} />;
     }
 
+    if (activeSection === SETTINGS_SECTION.MENUS) {
+      return <MenuSettingsPanel menus={props.menus} />;
+    }
+
     if (activeSection === SETTINGS_SECTION.SYSTEM) {
       return <SystemSettingsPanel />;
+    }
+
+    if (activeSection === SETTINGS_SECTION.FEATURES) {
+      return <FeatureFlagsPanel />;
     }
 
     return <TurnoSummaryPanel />;
@@ -106,7 +134,7 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
             >
               {SETTINGS_SECTIONS.map((section) => {
                 const SectionIcon = section.icon;
-                const isActive = activeSection === section.id;
+                const isActive = effectiveActiveSection === section.id;
 
                 return (
                   <Button
@@ -138,13 +166,13 @@ function SettingsModal({ open, onClose, categories, products }: SettingsModalPro
 
             {/* Content panel */}
             <section
-              id={`settings-panel-${activeSection}`}
+              id={`settings-panel-${effectiveActiveSection}`}
               role="tabpanel"
-              aria-labelledby={`settings-tab-${activeSection}`}
+              aria-labelledby={`settings-tab-${effectiveActiveSection}`}
               className="min-h-0 overflow-hidden"
             >
               <div className="scrollbar-thin h-full overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
-                {renderSectionPanel(activeSection, { categories, products }, () => {
+                {renderSectionPanel(effectiveActiveSection, { categories, products, menus }, () => {
                   setActiveSection(SETTINGS_SECTION.CATEGORIES);
                 })}
               </div>

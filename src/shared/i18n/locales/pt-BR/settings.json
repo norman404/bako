@@ -1,1 +1,82 @@
-{}
+{
+  "modal": {
+    "title": "Configurações",
+    "closeAriaLabel": "Fechar configurações",
+    "sectionsAriaLabel": "Seções de configurações"
+  },
+  "sections": {
+    "products": "Produtos",
+    "categories": "Categorias",
+    "menus": "Cardápios",
+    "system": "Sistema",
+    "turno": "Turno",
+    "features": "Recursos"
+  },
+  "system": {
+    "title": "Sistema",
+    "localeLabel": "Idioma / Região (Locale)",
+    "currencyLabel": "Moeda",
+    "saveButton": "Salvar alterações",
+    "saveSuccess": "Configurações regionais atualizadas",
+    "saveSuccessDesc": "Região: {{locale}} · Moeda: {{currency}}",
+    "saveError": "Não foi possível salvar as configurações"
+  },
+  "locales": {
+    "esMX": "Español (México)",
+    "esAR": "Español (Argentina)",
+    "enUS": "English (United States)",
+    "esES": "Español (España)",
+    "ptBR": "Português (Brasil)"
+  },
+  "currencies": {
+    "mxn": "MXN ($ - Peso Mexicano)",
+    "ars": "ARS ($ - Peso Argentino)",
+    "usd": "USD ($ - Dólar Americano)",
+    "eur": "EUR (€ - Euro)",
+    "brl": "BRL (R$ - Real Brasileiro)"
+  },
+  "featureFlags": {
+    "title": "Módulos e funcionalidades",
+    "description": "Ative ou desative funcionalidades de cada módulo",
+    "updateSuccess": "Configuração atualizada",
+    "updateError": "Não foi possível salvar a configuração",
+    "modules": {
+      "menu": {
+        "name": "Menu",
+        "description": "Como os produtos são organizados e exibidos"
+      }
+    },
+    "flags": {
+      "categories_enabled": {
+        "label": "Categorias",
+        "description": "Organizar produtos por categorias",
+        "updated": "Categorias {{value, select, true {habilitadas} other {desabilitadas}}}"
+      },
+      "multiple_menus_enabled": {
+        "label": "Múltiplos menus",
+        "description": "Gerenciar vários menus (comidas, bebidas, etc.)",
+        "updated": "Múltiplos menus {{value, select, true {habilitados} other {desabilitados}}}"
+      }
+    }
+  },
+  "menus": {
+    "title": "Cardápios",
+    "createNew": "Criar cardápio",
+    "editMenu": "Editar cardápio",
+    "nameLabel": "Nome",
+    "namePlaceholder": "Ex: Cardápio de café da manhã",
+    "defaultLabel": "Cardápio padrão",
+    "defaultDescription": "Este cardápio é selecionado automaticamente",
+    "saveButton": "Salvar",
+    "createButton": "Criar cardápio",
+    "deleteButton": "Excluir",
+    "emptyState": "Sem cardápios. Crie o primeiro.",
+    "createSuccess": "Cardápio criado",
+    "updateSuccess": "Cardápio atualizado",
+    "deleteSuccess": "Cardápio excluído",
+    "error": "Não foi possível salvar o cardápio",
+    "deleteError": "Não foi possível excluir o cardápio",
+    "confirmDelete": "Excluir {{name}}? Produtos e categorias atribuídos ficarão sem cardápio.",
+    "cannotDeleteDefault": "Não é possível excluir o cardápio padrão. Designe outro como padrão primeiro."
+  }
+}

@@ -32,6 +32,7 @@ function buildProduct(id: string, price: number): Product {
     prepTimeMinutes: 5,
     image: "☕",
     isPopular: false,
+    menuIds: [],
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
     deletedAt: null,

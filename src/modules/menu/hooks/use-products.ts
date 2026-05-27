@@ -6,11 +6,11 @@ import { listProducts } from "@/modules/menu/use-cases/list-products";
 
 export const MENU_PRODUCTS_QUERY_KEY = ["menu", "products"] as const;
 
-export function useProducts() {
+export function useProducts(menuIds?: string[]) {
   return useQuery({
-    queryKey: MENU_PRODUCTS_QUERY_KEY,
+    queryKey: menuIds ? [...MENU_PRODUCTS_QUERY_KEY, "menuIds", menuIds] : MENU_PRODUCTS_QUERY_KEY,
     queryFn: async () => {
-      const result = await listProducts(productDrizzleRepository);
+      const result = await listProducts(productDrizzleRepository, menuIds);
       if (result.isErr()) {
         throw result.error;
       }

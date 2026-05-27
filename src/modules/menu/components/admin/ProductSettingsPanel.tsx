@@ -11,11 +11,13 @@ import {
   useCreateProduct,
   useUpdateProduct,
 } from "@/modules/menu/hooks/use-products";
+import { useMenus } from "@/modules/menu/hooks/use-menus";
 import {
   formatProductPriceInput,
   parseProductPriceInput,
 } from "@/modules/menu/lib/product-price";
 import { formatPosCurrency } from "@/lib/currency";
+import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -46,6 +48,7 @@ interface ProductSettingsPanelProps {
 
 interface ProductFormState {
   categoryId: string;
+  menuIds: string[];
   name: string;
   description: string;
   price: string;
@@ -57,6 +60,7 @@ interface ProductFormState {
 function buildEmptyFormState(defaultCategoryId: string): ProductFormState {
   return {
     categoryId: defaultCategoryId,
+    menuIds: [],
     name: "",
     description: "",
     price: "",
@@ -69,6 +73,7 @@ function buildEmptyFormState(defaultCategoryId: string): ProductFormState {
 function buildFormStateFromProduct(product: Product): ProductFormState {
   return {
     categoryId: product.categoryId,
+    menuIds: product.menuIds,
     name: product.name,
     description: product.description,
     price: formatProductPriceInput(product.price),
@@ -103,6 +108,7 @@ function toProductPayload(
 
   return {
     categoryId,
+    menuIds: formState.menuIds,
     name,
     description,
     price,
@@ -122,6 +128,12 @@ function getListButtonClass(isActive: boolean): string {
 }
 
 function ProductSettingsPanel({ categories, products, onManageCategories }: ProductSettingsPanelProps) {
+  const { flags } = useFeatureFlagsStore();
+  const categoriesEnabled = flags.categories_enabled ?? false;
+  const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
+
+  const { data: menus = [] } = useMenus();
+
   const createProductMutation = useCreateProduct();
   const updateProductMutation = useUpdateProduct();
   const archiveProductMutation = useArchiveProduct();
@@ -292,37 +304,67 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
           {!hasCategories ? (
             <div className="mt-3 flex items-center justify-between gap-3 rounded-card border border-hairline px-3 py-2">
               <p className="text-[12px] text-ink-muted">Creá una categoría primero.</p>
-              <Button
-                variant="ghost"
-                size="small"
-                onClick={onManageCategories}
-                className="rounded-card border border-hairline"
-              >
-                Categorías
-              </Button>
+              {categoriesEnabled && (
+                <Button
+                  variant="ghost"
+                  size="small"
+                  onClick={onManageCategories}
+                  className="rounded-card border border-hairline"
+                >
+                  Categorías
+                </Button>
+              )}
             </div>
           ) : null}
 
           <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
-            <FormField label="Categoría" htmlFor="product-category">
-              <Select
-                value={formState.categoryId || defaultCategoryId}
-                onValueChange={(value) =>
-                  setFormState((previous) => ({ ...previous, categoryId: value }))
-                }
-              >
-                <SelectTrigger id="product-category">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
+            {multipleMenusEnabled && (
+              <FormField label="Menús" htmlFor="product-menus">
+                <div className="space-y-2">
+                  {menus.map((menu) => (
+                    <div key={menu.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`menu-${menu.id}`}
+                        checked={formState.menuIds.includes(menu.id)}
+                        onCheckedChange={(checked) => {
+                          setFormState((previous) => ({
+                            ...previous,
+                            menuIds: checked
+                              ? [...previous.menuIds, menu.id]
+                              : previous.menuIds.filter((id) => id !== menu.id),
+                          }));
+                        }}
+                      />
+                      <label htmlFor={`menu-${menu.id}`} className="text-[12px] text-ink cursor-pointer">
+                        {menu.name}
+                      </label>
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-            </FormField>
+                </div>
+              </FormField>
+            )}
+
+            {categoriesEnabled && (
+              <FormField label="Categoría" htmlFor="product-category">
+                <Select
+                  value={formState.categoryId || defaultCategoryId}
+                  onValueChange={(value) =>
+                    setFormState((previous) => ({ ...previous, categoryId: value }))
+                  }
+                >
+                  <SelectTrigger id="product-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            )}
 
             <FormField label="Nombre" htmlFor="product-name">
               <Input

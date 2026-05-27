@@ -1,1 +1,82 @@
-{}
+{
+  "modal": {
+    "title": "Configuración",
+    "closeAriaLabel": "Cerrar configuración",
+    "sectionsAriaLabel": "Secciones de configuración"
+  },
+  "sections": {
+    "products": "Productos",
+    "categories": "Categorías",
+    "menus": "Menús",
+    "system": "Sistema",
+    "turno": "Turno",
+    "features": "Características"
+  },
+  "system": {
+    "title": "Sistema",
+    "localeLabel": "Idioma / Región (Locale)",
+    "currencyLabel": "Moneda",
+    "saveButton": "Guardar cambios",
+    "saveSuccess": "Configuración regional actualizada",
+    "saveSuccessDesc": "Región: {{locale}} · Moneda: {{currency}}",
+    "saveError": "No se pudo guardar la configuración"
+  },
+  "locales": {
+    "esMX": "Español (México)",
+    "esAR": "Español (Argentina)",
+    "enUS": "English (United States)",
+    "esES": "Español (España)",
+    "ptBR": "Português (Brasil)"
+  },
+  "currencies": {
+    "mxn": "MXN ($ - Peso Mexicano)",
+    "ars": "ARS ($ - Peso Argentino)",
+    "usd": "USD ($ - Dólar Estadounidense)",
+    "eur": "EUR (€ - Euro)",
+    "brl": "BRL (R$ - Real Brasileño)"
+  },
+  "featureFlags": {
+    "title": "Módulos y funcionalidades",
+    "description": "Activa o desactiva funcionalidades de cada módulo",
+    "updateSuccess": "Configuración actualizada",
+    "updateError": "No se pudo guardar la configuración",
+    "modules": {
+      "menu": {
+        "name": "Menú",
+        "description": "Cómo se organizan y muestran los productos"
+      }
+    },
+    "flags": {
+      "categories_enabled": {
+        "label": "Categorías",
+        "description": "Organizar productos por categorías",
+        "updated": "Categorías {{value, select, true {habilitadas} other {deshabilitadas}}}"
+      },
+      "multiple_menus_enabled": {
+        "label": "Múltiples menús",
+        "description": "Gestionar varios menús (comidas, bebidas, etc.)",
+        "updated": "Múltiples menús {{value, select, true {habilitados} other {deshabilitados}}}"
+      }
+    }
+  },
+  "menus": {
+    "title": "Menús",
+    "createNew": "Crear menú",
+    "editMenu": "Editar menú",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Ej: Menú de desayunos",
+    "defaultLabel": "Menú por defecto",
+    "defaultDescription": "Este menú se selecciona automáticamente",
+    "saveButton": "Guardar",
+    "createButton": "Crear menú",
+    "deleteButton": "Eliminar",
+    "emptyState": "No hay menús. Creá el primero.",
+    "createSuccess": "Menú creado",
+    "updateSuccess": "Menú actualizado",
+    "deleteSuccess": "Menú eliminado",
+    "error": "No se pudo guardar el menú",
+    "deleteError": "No se pudo eliminar el menú",
+    "confirmDelete": "¿Eliminar {{name}}? Los productos y categorías asignados quedarán sin menú.",
+    "cannotDeleteDefault": "No se puede eliminar el menú por defecto. Designá otro como default primero."
+  }
+}

@@ -1,5 +1,13 @@
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
+export const menus = sqliteTable("menus", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 export const categories = sqliteTable(
   "categories",
   {
@@ -7,6 +15,7 @@ export const categories = sqliteTable(
     name: text("name").notNull(),
     description: text("description").notNull(),
     color: text("color"),
+    menuId: text("menu_id").references(() => menus.id),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
@@ -21,6 +30,7 @@ export const products = sqliteTable(
     categoryId: text("category_id")
       .notNull()
       .references(() => categories.id),
+    menuId: text("menu_id").references(() => menus.id),
     name: text("name").notNull(),
     description: text("description").notNull(),
     price: integer("price").notNull(),
@@ -35,6 +45,19 @@ export const products = sqliteTable(
     index("idx_products_category_id").on(table.categoryId),
     index("idx_products_deleted_at").on(table.deletedAt),
   ],
+);
+
+export const productMenus = sqliteTable(
+  "product_menus",
+  {
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    menuId: text("menu_id")
+      .notNull()
+      .references(() => menus.id, { onDelete: "cascade" }),
+  },
+  (table) => [index("idx_product_menus_menu_id").on(table.menuId)],
 );
 
 export const customers = sqliteTable(
@@ -104,20 +127,6 @@ export const orderItems = sqliteTable(
   ],
 );
 
-export type CategoryRow = typeof categories.$inferSelect;
-export type ProductRow = typeof products.$inferSelect;
-export type CustomerRow = typeof customers.$inferSelect;
-export type OrderRow = typeof orders.$inferSelect;
-export type PaymentRow = typeof payments.$inferSelect;
-export type OrderItemRow = typeof orderItems.$inferSelect;
-
-export type CategoryInsert = typeof categories.$inferInsert;
-export type ProductInsert = typeof products.$inferInsert;
-export type CustomerInsert = typeof customers.$inferInsert;
-export type OrderInsert = typeof orders.$inferInsert;
-export type PaymentInsert = typeof payments.$inferInsert;
-export type OrderItemInsert = typeof orderItems.$inferInsert;
-
 export const systemSettings = sqliteTable("system_settings", {
   id: text("id").primaryKey().$defaultFn(() => "current"),
   locale: text("locale").notNull(),
@@ -125,6 +134,32 @@ export const systemSettings = sqliteTable("system_settings", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+export const featureFlags = sqliteTable("feature_flags", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+export type MenuRow = typeof menus.$inferSelect;
+export type CategoryRow = typeof categories.$inferSelect;
+export type ProductRow = typeof products.$inferSelect;
+export type ProductMenuRow = typeof productMenus.$inferSelect;
+export type CustomerRow = typeof customers.$inferSelect;
+export type OrderRow = typeof orders.$inferSelect;
+export type PaymentRow = typeof payments.$inferSelect;
+export type OrderItemRow = typeof orderItems.$inferSelect;
 export type SystemSettingsRow = typeof systemSettings.$inferSelect;
+export type FeatureFlagRow = typeof featureFlags.$inferSelect;
+
+export type MenuInsert = typeof menus.$inferInsert;
+export type CategoryInsert = typeof categories.$inferInsert;
+export type ProductInsert = typeof products.$inferInsert;
+export type ProductMenuInsert = typeof productMenus.$inferInsert;
+export type CustomerInsert = typeof customers.$inferInsert;
+export type OrderInsert = typeof orders.$inferInsert;
+export type PaymentInsert = typeof payments.$inferInsert;
+export type OrderItemInsert = typeof orderItems.$inferInsert;
 export type SystemSettingsInsert = typeof systemSettings.$inferInsert;
+export type FeatureFlagInsert = typeof featureFlags.$inferInsert;
+
 

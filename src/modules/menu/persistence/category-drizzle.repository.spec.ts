@@ -4,10 +4,18 @@ import type { CategoryCreateInput } from "@/modules/menu/domain/ports";
 import type { CategoryRow } from "@/shared/db/schema";
 
 const dbMocks = vi.hoisted(() => {
-  const selectLimitMock = vi.fn<() => Promise<CategoryRow[]>>();
-  const selectWhereMock = vi.fn(() => ({ limit: selectLimitMock }));
-  const selectOrderByMock = vi.fn(() => ({ where: selectWhereMock }));
-  const selectMock = vi.fn(() => ({ from: () => ({ where: selectWhereMock, orderBy: selectOrderByMock }) }));
+  const selectLimitMock = vi.fn<any>(() => Promise.resolve([]));
+  const selectWhereMock = vi.fn<any>(() => ({ limit: selectLimitMock }));
+  const selectOrderByMock = vi.fn<any>(() => ({ where: selectWhereMock }));
+  // Support for: selectDistinct().from().innerJoin().where()
+  const innerJoinWhereMock = vi.fn<any>(() => Promise.resolve([]));
+  const selectMock = vi.fn<any>(() => ({
+    from: () => ({
+      where: selectWhereMock,
+      orderBy: selectOrderByMock,
+      innerJoin: () => ({ where: innerJoinWhereMock }),
+    }),
+  }));
 
   const insertReturningMock = vi.fn<() => Promise<CategoryRow[]>>();
   const insertValuesMock = vi.fn<(values: Partial<CategoryRow>) => { returning: typeof insertReturningMock }>(
@@ -15,12 +23,26 @@ const dbMocks = vi.hoisted(() => {
   );
   const insertMock = vi.fn(() => ({ values: insertValuesMock }));
 
+  const updateReturningMock = vi.fn<() => Promise<CategoryRow[]>>();
+  const updateWhereMock = vi.fn(() => ({ returning: updateReturningMock }));
+  const updateSetMock = vi.fn<(values: Partial<CategoryRow>) => { where: typeof updateWhereMock }>(
+    () => ({ where: updateWhereMock }),
+  );
+  const updateMock = vi.fn(() => ({ set: updateSetMock }));
+
   return {
     selectLimitMock,
+    selectWhereMock,
+    selectOrderByMock,
     selectMock,
+    innerJoinWhereMock,
     insertReturningMock,
     insertValuesMock,
     insertMock,
+    updateReturningMock,
+    updateWhereMock,
+    updateSetMock,
+    updateMock,
   };
 });
 
@@ -28,6 +50,7 @@ vi.mock("@/shared/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,
+    update: dbMocks.updateMock,
   },
 }));
 
@@ -37,6 +60,7 @@ import { categoryDrizzleRepository } from "@/modules/menu/persistence/category-d
 const validInput: CategoryCreateInput = {
   name: "Bebidas calientes",
   description: "Café, tés y chocolate",
+  menuId: null,
 };
 
 function buildCategoryRow(overrides: Partial<CategoryRow> = {}): CategoryRow {
@@ -45,6 +69,7 @@ function buildCategoryRow(overrides: Partial<CategoryRow> = {}): CategoryRow {
     name: overrides.name ?? "Bebidas calientes",
     description: overrides.description ?? "Café, tés y chocolate",
     color: overrides.color ?? null,
+    menuId: overrides.menuId ?? null,
     createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
     deletedAt: overrides.deletedAt ?? null,
@@ -112,5 +137,62 @@ describe("categoryDrizzleRepository", () => {
     }
 
     expect(result.error).toBeInstanceOf(CategoryNotFoundError);
+  });
+
+  it("list() returns all active categories when no menuId provided", async () => {
+    const category1 = buildCategoryRow({ id: "cat-1", name: "Bebidas", menuId: "menu-1" });
+    const category2 = buildCategoryRow({ id: "cat-2", name: "Comidas", menuId: null });
+
+    dbMocks.selectMock.mockReturnValueOnce({
+      from: () => ({
+        where: vi.fn(() => Promise.resolve([category1, category2])),
+        orderBy: vi.fn(),
+      }),
+    });
+
+    const result = await categoryDrizzleRepository.list();
+
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    expect(result.value).toHaveLength(2);
+    expect(result.value[0]!.id).toBe("cat-1");
+    expect(result.value[1]!.id).toBe("cat-2");
+  });
+
+  it("list(menuId) returns only categories that have products in the specified menu", async () => {
+    const category1 = buildCategoryRow({ id: "cat-1", name: "Bebidas", menuId: null });
+
+    // First query: selectDistinct categoryIds → returns [{ categoryId: "cat-1" }]
+    dbMocks.innerJoinWhereMock.mockReturnValueOnce(Promise.resolve([{ categoryId: "cat-1" }]));
+
+    // Second query: select categories by id
+    dbMocks.selectWhereMock.mockReturnValueOnce(Promise.resolve([category1]));
+
+    const result = await categoryDrizzleRepository.list("menu-1");
+
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    expect(result.value).toHaveLength(1);
+    expect(result.value[0]!.id).toBe("cat-1");
+  });
+
+  it("list(menuId) returns empty array when no categories have products in the menu", async () => {
+    // First query: selectDistinct returns empty
+    dbMocks.innerJoinWhereMock.mockReturnValueOnce(Promise.resolve([]));
+
+    const result = await categoryDrizzleRepository.list("menu-empty");
+
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    expect(result.value).toHaveLength(0);
   });
 });

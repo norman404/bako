@@ -1,16 +1,17 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 
 import { MenuDomainError, ProductNotFoundError } from "@/modules/menu/domain/errors";
 import type { ProductRepository, ProductUpsertInput } from "@/modules/menu/domain/ports";
 import type { Product } from "@/modules/menu/domain/product";
 import { db } from "@/shared/db/client";
-import { products, type ProductRow } from "@/shared/db/schema";
+import { productMenus, products, type ProductRow } from "@/shared/db/schema";
 
-function rowToProduct(row: ProductRow): Product {
+function rowToProduct(row: ProductRow, menuIds: string[] = []): Product {
   return {
     id: row.id,
     categoryId: row.categoryId,
+    menuIds,
     name: row.name,
     description: row.description,
     price: row.price,
@@ -28,6 +29,10 @@ function wrapDbError(context: string) {
 }
 
 function validateProductInput(input: ProductUpsertInput): MenuDomainError | null {
+  if (input.menuIds.length === 0) {
+    return new MenuDomainError("Product must belong to at least one menu");
+  }
+
   if (input.categoryId.trim().length === 0) {
     return new MenuDomainError("Category is required");
   }
@@ -65,13 +70,32 @@ async function findActiveProductRowById(id: string): Promise<ProductRow | undefi
   return rows[0];
 }
 
+async function loadMenuIdsForProduct(productId: string): Promise<string[]> {
+  const rows = await db
+    .select({ menuId: productMenus.menuId })
+    .from(productMenus)
+    .where(eq(productMenus.productId, productId));
+
+  return rows.map((row) => row.menuId);
+}
+
 function loadActiveProductById(id: string, context: string): ResultAsync<Product, MenuDomainError> {
-  return ResultAsync.fromPromise(findActiveProductRowById(id), wrapDbError(context)).andThen((row) => {
+  return ResultAsync.fromPromise(
+    findActiveProductRowById(id).then(async (row) => {
+      if (!row) {
+        return { row: undefined, menuIds: [] };
+      }
+
+      const menuIds = await loadMenuIdsForProduct(id);
+      return { row, menuIds };
+    }),
+    wrapDbError(context),
+  ).andThen(({ row, menuIds }) => {
     if (!row) {
       return errAsync(new ProductNotFoundError(id));
     }
 
-    return okAsync(rowToProduct(row));
+    return okAsync(rowToProduct(row, menuIds));
   });
 }
 
@@ -86,11 +110,57 @@ function normalizeProductInput(input: ProductUpsertInput): ProductUpsertInput {
 }
 
 export const productDrizzleRepository: ProductRepository = {
-  list() {
+  list(menuIds?: string[]) {
     return ResultAsync.fromPromise(
-      db.select().from(products).where(isNull(products.deletedAt)),
+      (async () => {
+        let productRows: ProductRow[];
+
+        if (menuIds && menuIds.length > 0) {
+          // Query productMenus to find productIds for the given menuIds
+          const productMenuRows = await db
+            .select({ productId: productMenus.productId })
+            .from(productMenus)
+            .where(inArray(productMenus.menuId, menuIds));
+
+          const productIds = [...new Set(productMenuRows.map((row) => row.productId))];
+
+          if (productIds.length === 0) {
+            return [];
+          }
+
+          // Query products for those productIds
+          productRows = await db
+            .select()
+            .from(products)
+            .where(and(inArray(products.id, productIds), isNull(products.deletedAt)));
+        } else {
+          // Query all active products
+          productRows = await db.select().from(products).where(isNull(products.deletedAt));
+        }
+
+        // Load menuIds for each product
+        const productIds = productRows.map((row) => row.id);
+        if (productIds.length === 0) {
+          return [];
+        }
+
+        const allProductMenuRows = await db
+          .select()
+          .from(productMenus)
+          .where(inArray(productMenus.productId, productIds));
+
+        // Group menuIds by productId
+        const menuIdsByProductId = new Map<string, string[]>();
+        for (const row of allProductMenuRows) {
+          const existing = menuIdsByProductId.get(row.productId) ?? [];
+          existing.push(row.menuId);
+          menuIdsByProductId.set(row.productId, existing);
+        }
+
+        return productRows.map((row) => rowToProduct(row, menuIdsByProductId.get(row.id) ?? []));
+      })(),
       wrapDbError("Failed to list products"),
-    ).map((rows) => rows.map(rowToProduct));
+    );
   },
 
   findById(id: string) {
@@ -108,30 +178,41 @@ export const productDrizzleRepository: ProductRepository = {
     const now = new Date();
 
     return ResultAsync.fromPromise(
-      db
-        .insert(products)
-        .values({
-          id: productId,
-          categoryId: normalizedInput.categoryId,
-          name: normalizedInput.name,
-          description: normalizedInput.description,
-          price: normalizedInput.price,
-          prepTimeMinutes: normalizedInput.prepTimeMinutes,
-          image: normalizedInput.image,
-          isPopular: normalizedInput.isPopular,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .returning(),
-      wrapDbError("Failed to create product"),
-    ).andThen((rows) => {
-      const [createdProduct] = rows;
-      if (!createdProduct) {
-        return errAsync(new ProductNotFoundError(productId));
-      }
+      (async () => {
+        // Insert product (WITHOUT menuId)
+        const productRows = await db
+          .insert(products)
+          .values({
+            id: productId,
+            categoryId: normalizedInput.categoryId,
+            name: normalizedInput.name,
+            description: normalizedInput.description,
+            price: normalizedInput.price,
+            prepTimeMinutes: normalizedInput.prepTimeMinutes,
+            image: normalizedInput.image,
+            isPopular: normalizedInput.isPopular,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .returning();
 
-      return okAsync(rowToProduct(createdProduct));
-    });
+        const [createdProduct] = productRows;
+        if (!createdProduct) {
+          throw new ProductNotFoundError(productId);
+        }
+
+        // Insert product-menu associations
+        const productMenuValues = normalizedInput.menuIds.map((menuId) => ({
+          productId,
+          menuId,
+        }));
+
+        await db.insert(productMenus).values(productMenuValues);
+
+        return { product: createdProduct, menuIds: normalizedInput.menuIds };
+      })(),
+      wrapDbError("Failed to create product"),
+    ).andThen(({ product, menuIds }) => okAsync(rowToProduct(product, menuIds)));
   },
 
   update(id: string, input: ProductUpsertInput) {
@@ -144,29 +225,43 @@ export const productDrizzleRepository: ProductRepository = {
     const now = new Date();
 
     return ResultAsync.fromPromise(
-      db
-        .update(products)
-        .set({
-          categoryId: normalizedInput.categoryId,
-          name: normalizedInput.name,
-          description: normalizedInput.description,
-          price: normalizedInput.price,
-          prepTimeMinutes: normalizedInput.prepTimeMinutes,
-          image: normalizedInput.image,
-          isPopular: normalizedInput.isPopular,
-          updatedAt: now,
-        })
-        .where(and(eq(products.id, id), isNull(products.deletedAt)))
-        .returning(),
-      wrapDbError("Failed to update product"),
-    ).andThen((rows) => {
-      const [updatedProduct] = rows;
-      if (!updatedProduct) {
-        return errAsync(new ProductNotFoundError(id));
-      }
+      (async () => {
+        // Update product (WITHOUT menuId)
+        const productRows = await db
+          .update(products)
+          .set({
+            categoryId: normalizedInput.categoryId,
+            name: normalizedInput.name,
+            description: normalizedInput.description,
+            price: normalizedInput.price,
+            prepTimeMinutes: normalizedInput.prepTimeMinutes,
+            image: normalizedInput.image,
+            isPopular: normalizedInput.isPopular,
+            updatedAt: now,
+          })
+          .where(and(eq(products.id, id), isNull(products.deletedAt)))
+          .returning();
 
-      return okAsync(rowToProduct(updatedProduct));
-    });
+        const [updatedProduct] = productRows;
+        if (!updatedProduct) {
+          throw new ProductNotFoundError(id);
+        }
+
+        // Delete old product-menu associations
+        await db.delete(productMenus).where(eq(productMenus.productId, id));
+
+        // Insert new product-menu associations
+        const productMenuValues = normalizedInput.menuIds.map((menuId) => ({
+          productId: id,
+          menuId,
+        }));
+
+        await db.insert(productMenus).values(productMenuValues);
+
+        return { product: updatedProduct, menuIds: normalizedInput.menuIds };
+      })(),
+      wrapDbError("Failed to update product"),
+    ).andThen(({ product, menuIds }) => okAsync(rowToProduct(product, menuIds)));
   },
 
   archive(id: string) {

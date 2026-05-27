@@ -9,12 +9,21 @@ import {
   useCreateCategory,
   useUpdateCategory,
 } from "@/modules/menu/hooks/use-categories";
+import { useMenus } from "@/modules/menu/hooks/use-menus";
+import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormError } from "@/components/ui/FormError";
 import { FormField } from "@/components/ui/FormField";
 import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
 
 const CATEGORY_FORM_MODE = {
   CREATE: "create",
@@ -31,6 +40,7 @@ interface CategoryFormState {
   name: string;
   description: string;
   color: string;
+  menuId: string;
 }
 
 function buildEmptyFormState(): CategoryFormState {
@@ -38,6 +48,7 @@ function buildEmptyFormState(): CategoryFormState {
     name: "",
     description: "",
     color: "",
+    menuId: "",
   };
 }
 
@@ -46,6 +57,7 @@ function buildFormStateFromCategory(category: Category): CategoryFormState {
     name: category.name,
     description: category.description,
     color: category.color ?? "",
+    menuId: category.menuId ?? "",
   };
 }
 
@@ -61,6 +73,7 @@ function toCategoryPayload(formState: CategoryFormState): CategoryCreateInput | 
     name,
     description,
     color: formState.color.trim() || null,
+    menuId: formState.menuId.trim() || null,
   };
 }
 
@@ -74,6 +87,10 @@ function getListButtonClass(isActive: boolean): string {
 }
 
 function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
+  const { flags } = useFeatureFlagsStore();
+  const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
+  const { data: menus = [] } = useMenus();
+
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
   const archiveCategoryMutation = useArchiveCategory();
@@ -215,6 +232,28 @@ function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
           </div>
 
           <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
+            {multipleMenusEnabled && (
+              <FormField label="Menú" htmlFor="category-menu">
+                <Select
+                  value={formState.menuId}
+                  onValueChange={(value) =>
+                    setFormState((previous) => ({ ...previous, menuId: value }))
+                  }
+                >
+                  <SelectTrigger id="category-menu">
+                    <SelectValue placeholder="Seleccionar menú" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {menus.map((menu) => (
+                      <SelectItem key={menu.id} value={menu.id}>
+                        {menu.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            )}
+
             <FormField label="Nombre" htmlFor="category-name">
               <Input
                 id="category-name"

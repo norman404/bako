@@ -11,5 +11,16 @@
   "categoryNav": {
     "ariaLabel": "Filter products by category",
     "all": "All"
+  },
+  "menuSelector": {
+    "label": "Menu",
+    "placeholder": "Select a menu",
+    "ariaLabel": "Select menu",
+    "default": "Default"
+  },
+  "sectionTitles": {
+    "menu": "Menu",
+    "categories": "Categories",
+    "products": "Products"
   }
 }

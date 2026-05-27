@@ -7,8 +7,10 @@
   "sections": {
     "products": "Products",
     "categories": "Categories",
+    "menus": "Menus",
     "system": "System",
-    "turno": "Shift"
+    "turno": "Shift",
+    "features": "Features"
   },
   "system": {
     "title": "System",
@@ -32,5 +34,49 @@
     "usd": "USD ($ - US Dollar)",
     "eur": "EUR (€ - Euro)",
     "brl": "BRL (R$ - Brazilian Real)"
+  },
+  "featureFlags": {
+    "title": "Modules and features",
+    "description": "Enable or disable features for each module",
+    "updateSuccess": "Settings updated",
+    "updateError": "Could not save settings",
+    "modules": {
+      "menu": {
+        "name": "Menu",
+        "description": "How products are organized and displayed"
+      }
+    },
+    "flags": {
+      "categories_enabled": {
+        "label": "Categories",
+        "description": "Organize products by categories",
+        "updated": "Categories {{value, select, true {enabled} other {disabled}}}"
+      },
+      "multiple_menus_enabled": {
+        "label": "Multiple menus",
+        "description": "Manage multiple menus (food, drinks, etc.)",
+        "updated": "Multiple menus {{value, select, true {enabled} other {disabled}}}"
+      }
+    }
+  },
+  "menus": {
+    "title": "Menus",
+    "createNew": "Create menu",
+    "editMenu": "Edit menu",
+    "nameLabel": "Name",
+    "namePlaceholder": "E.g.: Breakfast menu",
+    "defaultLabel": "Default menu",
+    "defaultDescription": "This menu is automatically selected",
+    "saveButton": "Save",
+    "createButton": "Create menu",
+    "deleteButton": "Delete",
+    "emptyState": "No menus. Create the first one.",
+    "createSuccess": "Menu created",
+    "updateSuccess": "Menu updated",
+    "deleteSuccess": "Menu deleted",
+    "error": "Could not save menu",
+    "deleteError": "Could not delete menu",
+    "confirmDelete": "Delete {{name}}? Assigned products and categories will be left without a menu.",
+    "cannotDeleteDefault": "Cannot delete the default menu. Designate another one as default first."
   }
 }

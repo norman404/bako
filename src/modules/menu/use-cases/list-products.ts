@@ -6,6 +6,7 @@ import type { Product } from "@/modules/menu/domain/product";
 
 export function listProducts(
   repository: ProductRepository,
+  menuIds?: string[],
 ): ResultAsync<Product[], MenuDomainError> {
-  return repository.list();
+  return repository.list(menuIds);
 }

@@ -1,1 +1,26 @@
-{}
+{
+  "productGrid": {
+    "emptySymbol": "∅",
+    "emptyTitle": "El menú está vacío en esta sección",
+    "emptyHint": "Probá otra categoría",
+    "popularBadge": "Popular",
+    "priceLabel": "Precio",
+    "addAriaLabel": "Agregar {{productName}}",
+    "timeUnit": "m"
+  },
+  "categoryNav": {
+    "ariaLabel": "Filtrar productos por categoría",
+    "all": "Todo"
+  },
+  "menuSelector": {
+    "label": "Menú",
+    "placeholder": "Seleccionar menú",
+    "ariaLabel": "Seleccionar menú",
+    "default": "Por defecto"
+  },
+  "sectionTitles": {
+    "menu": "Menú",
+    "categories": "Categorías",
+    "products": "Artículos"
+  }
+}

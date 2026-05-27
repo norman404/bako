@@ -53,6 +53,21 @@ vi.mock("@/modules/turno/components/TurnoSummaryPanel", () => ({
   ),
 }));
 
+vi.mock("./FeatureFlagsPanel", () => ({
+  FeatureFlagsPanel: () => (
+    <section aria-label="Panel de características">
+      <h2>Características</h2>
+    </section>
+  ),
+}));
+
+vi.mock("@/modules/feature-flags/store/feature-flags-store", () => ({
+  useFeatureFlagsStore: vi.fn(() => ({
+    flags: { categories_enabled: true, multiple_menus_enabled: false },
+    isLoading: false,
+  })),
+}));
+
 import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { fireEvent, renderWithProviders, screen, within } from "@/test/test-utils";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
@@ -68,11 +83,12 @@ const BASE_CATEGORIES = [
     name: "Café",
     description: "Bebidas calientes",
     color: null,
+    menuId: null,
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
     deletedAt: null,
   },
-] as const;
+];
 
 const BASE_PRODUCTS = [
   {
@@ -84,11 +100,12 @@ const BASE_PRODUCTS = [
     prepTimeMinutes: 4,
     image: "☕",
     isPopular: true,
+    menuIds: [] as string[],
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
     deletedAt: null,
   },
-] as const;
+];
 
 function renderSettingsModal(overrides: Partial<SettingsModalProps> = {}) {
   renderWithProviders(
@@ -97,6 +114,7 @@ function renderSettingsModal(overrides: Partial<SettingsModalProps> = {}) {
       onClose={overrides.onClose ?? vi.fn()}
       categories={overrides.categories ?? [...BASE_CATEGORIES]}
       products={overrides.products ?? [...BASE_PRODUCTS]}
+      menus={overrides.menus ?? []}
     />,
   );
 }
@@ -129,6 +147,7 @@ describe("SettingsModal (settings feature)", () => {
     expect(screen.getByRole("tab", { name: /categorías/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /sistema/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /turno/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /características/i })).toBeInTheDocument();
 
     const activePanel = screen.getByRole("tabpanel");
     expect(within(activePanel).getByRole("heading", { name: /productos/i })).toBeInTheDocument();
@@ -195,5 +214,20 @@ describe("SettingsModal (settings feature)", () => {
 
     // Assert
     expect(onCloseMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("should switch to the Features section and render feature flags panel", () => {
+    // CASE: operator goes to the features settings to manage feature flags
+    // VALIDATES: features panel renders when switching to features tab
+
+    // Arrange
+    renderSettingsModal();
+
+    // Act - switch to Features panel
+    fireEvent.click(screen.getByRole("tab", { name: /características/i }));
+
+    // Assert
+    const activePanel = screen.getByRole("tabpanel");
+    expect(within(activePanel).getByRole("heading", { name: /^características$/i })).toBeInTheDocument();
   });
 });

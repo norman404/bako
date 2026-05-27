@@ -13,3 +13,9 @@ export class CategoryNotFoundError extends MenuDomainError {
     super(`Category not found: ${categoryId}`);
   }
 }
+
+export class MenuNotFoundError extends MenuDomainError {
+  constructor(menuId: string) {
+    super(`Menu not found: ${menuId}`);
+  }
+}
