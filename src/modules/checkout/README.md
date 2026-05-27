@@ -16,7 +16,7 @@ checkout/
     order.ts          ← tipos y funciones puras del dominio
     errors.ts         ← CheckoutPersistenceError
     metrics.ts        ← tipos de métricas del turno (PosMetrics)
-  ports.ts            ← interfaz OrderRepository
+    ports.ts          ← interfaz OrderRepository
   use-cases/
     create-order.ts
     list-customers.ts

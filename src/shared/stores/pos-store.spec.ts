@@ -8,7 +8,7 @@ describe("usePosStore", () => {
     // VALIDATES: the store no longer exposes dead dashboard and manager flags/actions.
 
     // Arrange
-    const state = usePosStore.getState() as Record<string, unknown>;
+    const state = usePosStore.getState() as unknown as Record<string, unknown>;
 
     // Act
     const dashboardStateExists = "isDashboardOpen" in state;

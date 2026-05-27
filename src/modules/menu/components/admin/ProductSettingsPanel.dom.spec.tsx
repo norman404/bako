@@ -67,17 +67,17 @@ function mockProductMutations() {
   vi.spyOn(productHooks, "useCreateProduct").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as CreateProductResult);
+  } as unknown as CreateProductResult);
 
   vi.spyOn(productHooks, "useUpdateProduct").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as UpdateProductResult);
+  } as unknown as UpdateProductResult);
 
   vi.spyOn(productHooks, "useArchiveProduct").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as ArchiveProductResult);
+  } as unknown as ArchiveProductResult);
 }
 
 function renderProductSettingsPanel(overrides: Partial<ProductSettingsPanelProps> = {}) {

@@ -24,10 +24,10 @@ describe("listMenus", () => {
       },
     ];
 
-    const mockRepository: MenuRepository = {
+    const mockRepository = {
       list: vi.fn(() => okAsync(mockMenus)),
       create: vi.fn(),
-    };
+    } as unknown as MenuRepository;
 
     const result = await listMenus(mockRepository);
 

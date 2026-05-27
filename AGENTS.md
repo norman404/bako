@@ -19,17 +19,17 @@ El proyecto sigue Clean Architecture adaptada al frontend, organizada **por feat
 Las capas externas dependen de las internas. **Nunca al revés.**
 
 ```
-domain ← ports ← use-cases ← persistence
-                            ↑
-                           hooks  (inyectan persistence, llaman use-cases)
-                            ↑
-                         components  (solo UI, reciben callbacks)
+domain/ (entidades + ports) ← use-cases ← persistence
+                                         ↑
+                                        hooks  (inyectan persistence, llaman use-cases)
+                                         ↑
+                                      components  (solo UI, reciben callbacks)
 ```
 
-- `domain/` no importa nada del proyecto (solo shared-kernel / `src/lib/`)
-- `ports.ts` depende solo de `domain/`
-- `use-cases/` depende solo de `ports.ts` y `domain/`
-- `persistence/` implementa los ports de `domain/`, importa de `domain/` y `shared/db/`
+- `domain/` no importa nada del proyecto (solo `src/lib/` y `neverthrow`)
+- `domain/ports.ts` depende solo de tipos de `domain/`
+- `use-cases/` depende solo de `domain/ports.ts` y `domain/`
+- `persistence/` implementa los ports, importa de `domain/` y `src/shared/db/`
 - `hooks/` inyecta el repositorio concreto y llama los use-cases
 - `components/` solo UI: recibe datos y callbacks, sin lógica de negocio
 
@@ -39,10 +39,11 @@ domain ← ports ← use-cases ← persistence
 - Un hook importa directamente un repository y ejecuta lógica → **debe ir en use-case**
 - Tipos de dominio definidos dentro de `persistence/` → **deben vivir en `domain/`**
 - Un adapter/service vive en `components/` → **moverlo a `adapters/`**
+- `ports.ts` está en la raíz del módulo en vez de en `domain/` → **moverlo a `domain/ports.ts`**
 
 ---
 
-## Estructura de un módulo
+## Estructura canónica de un módulo
 
 ```
 modules/<feature>/
@@ -50,44 +51,73 @@ modules/<feature>/
     <entity>.ts        ← tipos + funciones puras (sin side-effects)
     errors.ts          ← clases de error del módulo
     ports.ts           ← interfaces de repositorios y servicios externos
-  use-cases/
-    <action>.ts        ← función pura: recibe port como parámetro, delega
-  persistence/
+  use-cases/           ← opcional; solo si hay lógica de negocio real
+    <action>.ts        ← función pura: recibe port como parámetro, retorna ResultAsync
+  persistence/         ← opcional; solo si el módulo persiste datos
     <entity>-drizzle.repository.ts  ← implementa los ports con Drizzle
-  adapters/
-    <service>.adapter.ts  ← adapters a APIs del sistema (window, impresión, etc.)
-  hooks/
-    use-<feature>.ts   ← DI + React Query/Zustand binding, sin lógica propia
-  components/
-    <Feature>.tsx      ← UI pura, recibe props y callbacks
-  lib/
-    <helpers>.ts       ← utilidades puras específicas del módulo
-  index.ts             ← public API del módulo (solo exports intencionales)
+  adapters/            ← opcional; adapters a APIs del sistema (window, impresión, etc.)
+    <service>.adapter.ts
+  hooks/               ← opcional; DI + React Query/Zustand binding, sin lógica propia
+    use-<feature>.ts
+  store/               ← opcional; Zustand store para UI state efímero
+    <feature>-store.ts
+  components/          ← opcional; UI pura, recibe props y callbacks
+    <Feature>.tsx
+  lib/                 ← opcional; utilidades puras específicas del módulo
+    <helpers>.ts
+  index.ts             ← public API del módulo (solo exports intencionales y mínimos)
+  README.md            ← descripción, estructura, veredicto y dependencias
 ```
 
-No todas las carpetas son obligatorias. Si el módulo no tiene adapters externos, no necesita `adapters/`. Si es solo UI state, alcanza con `store/`.
+**Reglas sobre `ports.ts`:**
+- Vive SIEMPRE en `domain/ports.ts`, nunca en la raíz del módulo.
+- Solo puede ser importado desde `use-cases/`, `persistence/`, y `hooks/`.
+
+**Reglas sobre `index.ts`:**
+- Expone solo lo que otros módulos necesitan consumir.
+- No re-exporta todo indiscriminadamente. Exports intencionales.
+
+**Módulos que no necesitan todas las capas:**
+- Si no hay persistencia (ej: `order`, `settings`) → no necesitan `domain/ports.ts`, `use-cases/`, ni `persistence/`.
+- Si solo tiene UI state → alcanza con `store/` + `components/`.
 
 ---
 
-## Referencia: módulo `menu` (el más completo)
+## Referencia: módulo `menu` (modelo de referencia)
 
 ```
 modules/menu/
   domain/
-    product.ts         ← type Product, funciones puras
+    product.ts         ← type Product, funciones puras (filterProductsByCategory, etc.)
     category.ts        ← type Category
-    errors.ts          ← MenuDomainError
-    ports.ts           ← ProductRepository, CategoryRepository (interfaces)
+    menu.ts            ← type Menu
+    errors.ts          ← MenuDomainError, ProductNotFoundError, etc.
+    ports.ts           ← ProductRepository, CategoryRepository, MenuRepository
   use-cases/
     list-products.ts
     list-categories.ts
+    list-menus.ts
     create-category.ts
   persistence/
     product-drizzle.repository.ts
     category-drizzle.repository.ts
+    menu-drizzle.repository.ts
   hooks/
     use-products.ts
     use-categories.ts
+    use-menus.ts
+  components/
+    ProductGrid.tsx
+    CategoryNav.tsx
+    MenuSelector.tsx
+    admin/
+      ProductSettingsPanel.tsx
+      CategorySettingsPanel.tsx
+      MenuSettingsPanel.tsx
+  lib/
+    product-price.ts
+  index.ts
+  README.md
 ```
 
 ---
@@ -96,10 +126,10 @@ modules/menu/
 
 **Escenario:** quiero un use-case `cancelOrder` en el módulo `checkout`.
 
-### 1. Definir el contrato en `ports.ts` (si no existe)
+### 1. Definir el contrato en `domain/ports.ts`
 
 ```typescript
-// modules/checkout/ports.ts
+// modules/checkout/domain/ports.ts
 export interface OrderRepository {
   createOrder(input: CreateOrderInput): ResultAsync<CheckoutOrder, CheckoutPersistenceError>;
   listCustomers(search?: string): ResultAsync<CheckoutCustomer[], CheckoutPersistenceError>;
@@ -115,7 +145,7 @@ export interface OrderRepository {
 // modules/checkout/use-cases/cancel-order.ts
 import type { ResultAsync } from "neverthrow";
 import type { CheckoutPersistenceError } from "@/modules/checkout/domain/errors";
-import type { OrderRepository } from "@/modules/checkout/ports";
+import type { OrderRepository } from "@/modules/checkout/domain/ports";
 
 export function cancelOrder(
   repository: OrderRepository,
@@ -191,12 +221,16 @@ pnpm test:dom         # DOM tests
 
 | Módulo | domain/ | ports.ts | use-cases/ | persistence/ | Notas |
 |--------|---------|----------|------------|--------------|-------|
-| `menu` | ✅ | ✅ | ✅ | ✅ | Modelo de referencia |
-| `checkout` | ✅ | ✅ | ✅ | ✅ | Completo |
+| `menu` | ✅ | `domain/ports.ts` ✅ | ✅ | ✅ | Modelo de referencia |
+| `checkout` | ✅ | `domain/ports.ts` ✅ | ✅ | ✅ | Completo |
 | `order` | ✅ | — | — | — | Solo domain + Zustand store |
-| `pos` | — | — | — | — | Solo UI state (correcto así) |
-| `turno` | — | — | — | — | Consume use-cases de checkout |
 | `settings` | — | — | — | — | Solo UI state + config |
+| `feature-flags` | ✅ | `domain/ports.ts` ✅ | ✅ | ✅ | Completo con optimistic updates |
+
+**Shared (cross-cutting):**
+- `src/shared/db/` — cliente y schema Drizzle, usados por los repos de todos los módulos
+- `src/shared/stores/` — Zustand stores de UI state global (ej: `pos-store.ts`)
+- `src/shared/i18n/` — configuración i18n y locales
 
 ---
 

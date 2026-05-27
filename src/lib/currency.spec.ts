@@ -73,7 +73,7 @@ describe("Currency & Sorting Library", () => {
       const items = ["a", "Z", "ä"];
       
       // Let's check English vs Swedish/German
-      const sortedEn = sortStrings(items);
+      sortStrings(items);
       
       useSettingsStore.setState({ locale: "sv" }); // Swedish (ä is sorted at the end of the alphabet after z)
       const sortedSv = sortStrings(items);

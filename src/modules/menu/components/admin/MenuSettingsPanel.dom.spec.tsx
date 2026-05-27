@@ -54,17 +54,17 @@ function mockMenuMutations() {
   vi.spyOn(menuHooks, "useCreateMenu").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as CreateMenuResult);
+  } as unknown as CreateMenuResult);
 
   vi.spyOn(menuHooks, "useUpdateMenu").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as UpdateMenuResult);
+  } as unknown as UpdateMenuResult);
 
   vi.spyOn(menuHooks, "useDeleteMenu").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as DeleteMenuResult);
+  } as unknown as DeleteMenuResult);
 }
 
 function renderMenuSettingsPanel(overrides: Partial<MenuSettingsPanelProps> = {}) {

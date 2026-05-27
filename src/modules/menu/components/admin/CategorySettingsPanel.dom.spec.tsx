@@ -50,17 +50,17 @@ function mockCategoryMutations() {
   vi.spyOn(categoryHooks, "useCreateCategory").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as CreateCategoryResult);
+  } as unknown as CreateCategoryResult);
 
   vi.spyOn(categoryHooks, "useUpdateCategory").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as UpdateCategoryResult);
+  } as unknown as UpdateCategoryResult);
 
   vi.spyOn(categoryHooks, "useArchiveCategory").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
-  } as ArchiveCategoryResult);
+  } as unknown as ArchiveCategoryResult);
 }
 
 function renderCategorySettingsPanel(overrides: Partial<CategorySettingsPanelProps> = {}) {

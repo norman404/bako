@@ -1,5 +1,4 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import userEvent from "@testing-library/user-event";
 
 vi.mock("lucide-react", async () => {
   const React = await import("react");
