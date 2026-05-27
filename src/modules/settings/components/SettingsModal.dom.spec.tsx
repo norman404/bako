@@ -45,14 +45,6 @@ vi.mock("@/modules/menu/components/admin/CategorySettingsPanel", () => ({
   ),
 }));
 
-vi.mock("@/modules/turno/components/TurnoSummaryPanel", () => ({
-  TurnoSummaryPanel: () => (
-    <section aria-label="Panel de turno">
-      <h2>Turno</h2>
-    </section>
-  ),
-}));
-
 vi.mock("./FeatureFlagsPanel", () => ({
   FeatureFlagsPanel: () => (
     <section aria-label="Panel de características">
@@ -146,7 +138,6 @@ describe("SettingsModal (settings feature)", () => {
     expect(screen.getByRole("tab", { name: /productos/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /categorías/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /sistema/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /turno/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /características/i })).toBeInTheDocument();
 
     const activePanel = screen.getByRole("tabpanel");
@@ -155,7 +146,7 @@ describe("SettingsModal (settings feature)", () => {
 
   it("should switch sections when the operator changes the sidebar selection", () => {
     // CASE: the operator moves across settings sections from the left navigation.
-    // VALIDATES: the settings shell orchestrates menu admin and turno panels from other features.
+    // VALIDATES: the settings shell orchestrates menu admin and system panels from other features.
 
     // Arrange
     renderSettingsModal();
@@ -168,11 +159,11 @@ describe("SettingsModal (settings feature)", () => {
     expect(within(activePanel).getByRole("heading", { name: /^categorías$/i })).toBeInTheDocument();
 
     // Act
-    fireEvent.click(screen.getByRole("tab", { name: /turno/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /sistema/i }));
 
     // Assert
     activePanel = screen.getByRole("tabpanel");
-    expect(within(activePanel).getByRole("heading", { name: /^turno$/i })).toBeInTheDocument();
+    expect(within(activePanel).getByRole("heading", { name: /^sistema$/i })).toBeInTheDocument();
   });
 
   it("should switch to the Sistema section and update regional configurations", async () => {

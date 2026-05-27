@@ -1,4 +1,4 @@
-import { BarChart3, LayoutGrid, Package, X, Globe, Flag, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { LayoutGrid, Package, X, Globe, Flag, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,6 @@ import type { Menu } from "@/modules/menu/domain/menu";
 import { CategorySettingsPanel } from "@/modules/menu/components/admin/CategorySettingsPanel";
 import { ProductSettingsPanel } from "@/modules/menu/components/admin/ProductSettingsPanel";
 import { MenuSettingsPanel } from "@/modules/menu/components/admin/MenuSettingsPanel";
-import { TurnoSummaryPanel } from "@/modules/turno/components/TurnoSummaryPanel";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { SystemSettingsPanel } from "./SystemSettingsPanel";
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
@@ -21,7 +20,6 @@ const SETTINGS_SECTION = {
   CATEGORIES: "categories",
   MENUS: "menus",
   SYSTEM: "system",
-  TURNO: "turno",
   FEATURES: "features",
 } as const;
 
@@ -54,7 +52,6 @@ function SettingsModal({ open, onClose, categories, products, menus }: SettingsM
     ...(categoriesEnabled ? [{ id: SETTINGS_SECTION.CATEGORIES, label: t('sections.categories'), icon: LayoutGrid }] : []),
     ...(multipleMenusEnabled ? [{ id: SETTINGS_SECTION.MENUS, label: t('sections.menus'), icon: UtensilsCrossed }] : []),
     { id: SETTINGS_SECTION.SYSTEM, label: t('sections.system'), icon: Globe },
-    { id: SETTINGS_SECTION.TURNO, label: t('sections.turno'), icon: BarChart3 },
     { id: SETTINGS_SECTION.FEATURES, label: t('sections.features'), icon: Flag },
   ];
 
@@ -93,10 +90,8 @@ function SettingsModal({ open, onClose, categories, products, menus }: SettingsM
     }
 
     if (activeSection === SETTINGS_SECTION.FEATURES) {
-      return <FeatureFlagsPanel />;
-    }
-
-    return <TurnoSummaryPanel />;
+    return <FeatureFlagsPanel />;
+  }
   }
 
   return (
