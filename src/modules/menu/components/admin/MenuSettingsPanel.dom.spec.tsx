@@ -31,8 +31,6 @@ type CreateMenuResult = ReturnType<typeof menuHooks.useCreateMenu>;
 type UpdateMenuResult = ReturnType<typeof menuHooks.useUpdateMenu>;
 type DeleteMenuResult = ReturnType<typeof menuHooks.useDeleteMenu>;
 
-type MenuSettingsPanelProps = Parameters<typeof MenuSettingsPanel>[0];
-
 const BASE_MENUS = [
   {
     id: "menu-1",
@@ -50,7 +48,14 @@ const BASE_MENUS = [
   },
 ] as const;
 
-function mockMenuMutations() {
+function mockMenuMutations(menus = [...BASE_MENUS]) {
+  // Mock hooks de lectura
+  vi.spyOn(menuHooks, "useMenus").mockReturnValue({
+    data: menus,
+    isLoading: false,
+  } as any);
+
+  // Mock hooks de mutación
   vi.spyOn(menuHooks, "useCreateMenu").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
@@ -67,10 +72,8 @@ function mockMenuMutations() {
   } as unknown as DeleteMenuResult);
 }
 
-function renderMenuSettingsPanel(overrides: Partial<MenuSettingsPanelProps> = {}) {
-  renderWithProviders(
-    <MenuSettingsPanel menus={overrides.menus ?? [...BASE_MENUS]} />,
-  );
+function renderMenuSettingsPanel() {
+  renderWithProviders(<MenuSettingsPanel />);
 }
 
 describe("MenuSettingsPanel", () => {
@@ -152,10 +155,10 @@ describe("MenuSettingsPanel", () => {
   it("should show empty state when no menus", () => {
     // CASE: no menus exist
     // VALIDATES: empty state message is shown
-    mockMenuMutations();
+    mockMenuMutations([]);
 
     // Arrange
-    renderMenuSettingsPanel({ menus: [] });
+    renderMenuSettingsPanel();
 
     // Assert
     expect(screen.getByText(/no hay menús/i)).toBeInTheDocument();

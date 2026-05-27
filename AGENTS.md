@@ -234,6 +234,92 @@ pnpm test:dom         # DOM tests
 
 ---
 
+## Plugin/Registry pattern — Módulos autónomos
+
+Cada módulo es independiente. Para registrarse en configuraciones, declara su propio `manifest.ts`. `SettingsModal` no conoce ningún módulo — itera el registry dinámicamente.
+
+### Contrato `ModuleManifest`
+
+```typescript
+// modules/settings/domain/module-manifest.ts
+export interface ModuleManifest {
+  id: string;
+  flagKey?: string;                        // si tiene feature flag (clave en la tabla feature_flags)
+  settingsPanel?: React.ComponentType;     // si tiene pantalla de configuración propia
+  settingsLabel?: string;
+  settingsIcon?: LucideIcon;
+}
+```
+
+### Cómo registrar un módulo nuevo
+
+**1. Crear `src/modules/<modulo>/manifest.ts`:**
+
+```typescript
+import { SomeIcon } from "lucide-react";
+import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import { MiPanel } from "./components/MiPanel";
+
+export const miModuloManifest: ModuleManifest = {
+  id: "mi-modulo",
+  flagKey: "mi_modulo_enabled",  // opcional
+  settingsPanel: MiPanel,         // opcional
+  settingsLabel: "Mi Módulo",
+  settingsIcon: SomeIcon,
+};
+```
+
+**2. Agregar al registry en `src/app/module-registry.ts`:**
+
+```typescript
+import { miModuloManifest } from "@/modules/mi-modulo/manifest";
+
+export const MODULE_REGISTRY: ModuleManifest[] = [
+  // ...existentes
+  miModuloManifest,
+];
+```
+
+**Eso es todo.** No se toca `SettingsModal`. No se toca `App.tsx`. No hay dependencias inversas.
+
+### Regla de dependencias del registry
+
+```
+modules/<X>/manifest.ts  →  settings/domain/module-manifest.ts  (solo el contrato)
+        ↓
+app/module-registry.ts   →  agrupa los manifests
+        ↓
+App.tsx                  →  pasa registry={MODULE_REGISTRY} a <SettingsModal>
+        ↑
+settings/components/SettingsModal.tsx  →  itera registry, nunca importa módulos
+```
+
+`settings` NUNCA importa desde `menu`, `checkout`, ni ningún otro módulo de negocio.
+
+### Paneles de configuración deben ser autosuficientes
+
+Un `settingsPanel` registrado en el manifest **no recibe props de datos**. Debe obtener lo que necesita via sus propios hooks internamente:
+
+```typescript
+// ✅ Correcto — autosuficiente
+function MiSettingsPanel() {
+  const { data: items = [] } = useMisItems();
+  return <div>...</div>;
+}
+
+// ❌ Incorrecto — acoplado al caller
+function MiSettingsPanel({ items }: { items: Item[] }) { ... }
+```
+
+### Feature flags de módulo
+
+Si el módulo tiene `flagKey`, el tab de configuración solo aparece cuando ese flag está activo. El flag se persiste en la tabla `feature_flags` de SQLite y se lee desde `useFeatureFlagsStore`. Para agregar un flag nuevo:
+
+1. Insertar el valor default en `src/modules/feature-flags/store/feature-flags-store.ts` → `DEFAULT_FLAGS`
+2. Crear la migración SQL si la tabla necesita el valor inicial (ver sección de migraciones)
+
+---
+
 ## Sistema de migraciones de base de datos
 
 Las migraciones SQLite son manejadas **exclusivamente por Tauri** a través del plugin `tauri_plugin_sql` en `src-tauri/src/lib.rs`. No existe ni debe existir un runner de migraciones en TypeScript/JavaScript.

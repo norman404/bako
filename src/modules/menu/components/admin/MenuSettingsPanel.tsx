@@ -9,6 +9,7 @@ import {
   useCreateMenu,
   useUpdateMenu,
   useDeleteMenu,
+  useMenus,
 } from "@/modules/menu/hooks/use-menus";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +24,6 @@ const MENU_FORM_MODE = {
 } as const;
 
 type MenuFormMode = (typeof MENU_FORM_MODE)[keyof typeof MENU_FORM_MODE];
-
-interface MenuSettingsPanelProps {
-  menus: Menu[];
-}
 
 interface MenuFormState {
   name: string;
@@ -69,8 +66,9 @@ function getListButtonClass(isActive: boolean): string {
   ].join(" ");
 }
 
-function MenuSettingsPanel({ menus }: MenuSettingsPanelProps) {
+function MenuSettingsPanel() {
   const { t } = useTranslation('settings');
+  const { data: menus = [] } = useMenus();
   const createMenuMutation = useCreateMenu();
   const updateMenuMutation = useUpdateMenu();
   const deleteMenuMutation = useDeleteMenu();

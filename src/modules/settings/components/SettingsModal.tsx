@@ -1,98 +1,57 @@
-import { LayoutGrid, Package, X, Globe, Flag, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { X, Globe, Flag, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 
-import type { Category } from "@/modules/menu/domain/category";
-import type { Product } from "@/modules/menu/domain/product";
-import type { Menu } from "@/modules/menu/domain/menu";
-import { CategorySettingsPanel } from "@/modules/menu/components/admin/CategorySettingsPanel";
-import { ProductSettingsPanel } from "@/modules/menu/components/admin/ProductSettingsPanel";
-import { MenuSettingsPanel } from "@/modules/menu/components/admin/MenuSettingsPanel";
+import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { SystemSettingsPanel } from "./SystemSettingsPanel";
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 
-const SETTINGS_SECTION = {
-  PRODUCTS: "products",
-  CATEGORIES: "categories",
-  MENUS: "menus",
-  SYSTEM: "system",
-  FEATURES: "features",
-} as const;
-
-type SettingsSection = (typeof SETTINGS_SECTION)[keyof typeof SETTINGS_SECTION];
-
 interface SettingsModalProps {
   open: boolean;
   onClose: () => void;
-  categories: Category[];
-  products: Product[];
-  menus: Menu[];
+  registry: ModuleManifest[];
 }
 
-interface SettingsSectionDefinition {
-  id: SettingsSection;
+interface SettingsTabDefinition {
+  id: string;
   label: string;
   icon: LucideIcon;
+  Panel: React.ComponentType;
 }
 
-function SettingsModal({ open, onClose, categories, products, menus }: SettingsModalProps) {
+function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
   const { t } = useTranslation('settings');
   const { flags } = useFeatureFlagsStore();
-  const categoriesEnabled = flags.categories_enabled ?? false;
-  const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
 
-  const [activeSection, setActiveSection] = useState<SettingsSection>(SETTINGS_SECTION.PRODUCTS);
+  // Build tabs from registry: only modules with settingsPanel, filtered by flagKey
+  const moduleTabs: SettingsTabDefinition[] = registry
+    .filter((manifest) => {
+      // Must have a settingsPanel to appear as a tab
+      if (!manifest.settingsPanel) return false;
+      // If it has a flagKey, only show if the flag is enabled
+      if (manifest.flagKey && !flags[manifest.flagKey]) return false;
+      return true;
+    })
+    .map((manifest) => ({
+      id: manifest.id,
+      label: manifest.settingsLabel ?? manifest.id,
+      icon: manifest.settingsIcon ?? Globe,
+      Panel: manifest.settingsPanel!,
+    }));
 
-  const SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
-    { id: SETTINGS_SECTION.PRODUCTS, label: t('sections.products'), icon: Package },
-    ...(categoriesEnabled ? [{ id: SETTINGS_SECTION.CATEGORIES, label: t('sections.categories'), icon: LayoutGrid }] : []),
-    ...(multipleMenusEnabled ? [{ id: SETTINGS_SECTION.MENUS, label: t('sections.menus'), icon: UtensilsCrossed }] : []),
-    { id: SETTINGS_SECTION.SYSTEM, label: t('sections.system'), icon: Globe },
-    { id: SETTINGS_SECTION.FEATURES, label: t('sections.features'), icon: Flag },
+  // Add system tabs (hardcoded, not from registry)
+  const systemTabs: SettingsTabDefinition[] = [
+    { id: "system", label: t('sections.system'), icon: Globe, Panel: SystemSettingsPanel },
+    { id: "features", label: t('sections.features'), icon: Flag, Panel: FeatureFlagsPanel },
   ];
 
-  // If categories/menus are disabled and the active section is CATEGORIES/MENUS, switch to PRODUCTS
-  const effectiveActiveSection = 
-    (!categoriesEnabled && activeSection === SETTINGS_SECTION.CATEGORIES) ||
-    (!multipleMenusEnabled && activeSection === SETTINGS_SECTION.MENUS)
-      ? SETTINGS_SECTION.PRODUCTS
-      : activeSection;
+  const allTabs = [...moduleTabs, ...systemTabs];
 
-  function renderSectionPanel(
-    activeSection: SettingsSection,
-    props: Pick<SettingsModalProps, "categories" | "products" | "menus">,
-    onOpenCategories: () => void,
-  ) {
-    if (activeSection === SETTINGS_SECTION.PRODUCTS) {
-      return (
-        <ProductSettingsPanel
-          categories={props.categories}
-          products={props.products}
-          onManageCategories={onOpenCategories}
-        />
-      );
-    }
-
-    if (activeSection === SETTINGS_SECTION.CATEGORIES) {
-      return <CategorySettingsPanel categories={props.categories} />;
-    }
-
-    if (activeSection === SETTINGS_SECTION.MENUS) {
-      return <MenuSettingsPanel menus={props.menus} />;
-    }
-
-    if (activeSection === SETTINGS_SECTION.SYSTEM) {
-      return <SystemSettingsPanel />;
-    }
-
-    if (activeSection === SETTINGS_SECTION.FEATURES) {
-    return <FeatureFlagsPanel />;
-  }
-  }
+  const [activeSection, setActiveSection] = useState<string>(allTabs[0]?.id ?? "system");
 
   return (
     <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
@@ -127,32 +86,32 @@ function SettingsModal({ open, onClose, categories, products, menus }: SettingsM
               aria-orientation="vertical"
               className="flex flex-col gap-0.5 border-r border-hairline p-2 overflow-y-auto"
             >
-              {SETTINGS_SECTIONS.map((section) => {
-                const SectionIcon = section.icon;
-                const isActive = effectiveActiveSection === section.id;
+              {allTabs.map((tab) => {
+                const TabIcon = tab.icon;
+                const isActive = activeSection === tab.id;
 
                 return (
                   <Button
-                    key={section.id}
+                    key={tab.id}
                     role="tab"
                     aria-selected={isActive}
-                    aria-controls={`settings-panel-${section.id}`}
-                    id={`settings-tab-${section.id}`}
-                    onClick={() => setActiveSection(section.id)}
+                    aria-controls={`settings-panel-${tab.id}`}
+                    id={`settings-tab-${tab.id}`}
+                    onClick={() => setActiveSection(tab.id)}
                     variant="ghost"
                     className={[
                       "w-full justify-start gap-2.5 rounded-card px-3 py-2.5",
                       isActive ? "bg-obsidian-elevated text-ink" : "text-ink-muted",
                     ].join(" ")}
                   >
-                    <SectionIcon
+                    <TabIcon
                       className={[
                         "h-4 w-4 shrink-0 transition-colors duration-150",
                         isActive ? "text-champagne" : "text-ink-dim",
                       ].join(" ")}
                     />
                     <span className="text-[12px] font-medium tracking-[0.01em]">
-                      {section.label}
+                      {tab.label}
                     </span>
                   </Button>
                 );
@@ -161,15 +120,18 @@ function SettingsModal({ open, onClose, categories, products, menus }: SettingsM
 
             {/* Content panel */}
             <section
-              id={`settings-panel-${effectiveActiveSection}`}
+              id={`settings-panel-${activeSection}`}
               role="tabpanel"
-              aria-labelledby={`settings-tab-${effectiveActiveSection}`}
+              aria-labelledby={`settings-tab-${activeSection}`}
               className="min-h-0 overflow-hidden"
             >
               <div className="scrollbar-thin h-full overflow-y-auto px-3 py-3 sm:px-4 sm:py-4">
-                {renderSectionPanel(effectiveActiveSection, { categories, products, menus }, () => {
-                  setActiveSection(SETTINGS_SECTION.CATEGORIES);
-                })}
+                {(() => {
+                  const activeTab = allTabs.find((tab) => tab.id === activeSection);
+                  if (!activeTab) return null;
+                  const ActivePanel = activeTab.Panel;
+                  return <ActivePanel />;
+                })()}
               </div>
             </section>
           </div>
@@ -179,4 +141,4 @@ function SettingsModal({ open, onClose, categories, products, menus }: SettingsM
   );
 }
 
-export { SETTINGS_SECTION, SettingsModal };
+export { SettingsModal };

@@ -22,6 +22,7 @@ vi.mock("lucide-react", async () => {
 });
 
 import * as categoryHooks from "@/modules/menu/hooks/use-categories";
+import * as menuHooks from "@/modules/menu/hooks/use-menus";
 import { CategorySettingsPanel } from "@/modules/menu/components/admin/CategorySettingsPanel";
 import { fireEvent, renderWithProviders, screen } from "@/test/test-utils";
 
@@ -30,8 +31,6 @@ const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
 type CreateCategoryResult = ReturnType<typeof categoryHooks.useCreateCategory>;
 type UpdateCategoryResult = ReturnType<typeof categoryHooks.useUpdateCategory>;
 type ArchiveCategoryResult = ReturnType<typeof categoryHooks.useArchiveCategory>;
-
-type CategorySettingsPanelProps = Parameters<typeof CategorySettingsPanel>[0];
 
 const BASE_CATEGORIES = [
   {
@@ -46,7 +45,19 @@ const BASE_CATEGORIES = [
   },
 ] as const;
 
-function mockCategoryMutations() {
+function mockCategoryMutations(categories = [...BASE_CATEGORIES], menus: any[] = []) {
+  // Mock hooks de lectura
+  vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+    data: categories,
+    isLoading: false,
+  } as any);
+
+  vi.spyOn(menuHooks, "useMenus").mockReturnValue({
+    data: menus,
+    isLoading: false,
+  } as any);
+
+  // Mock hooks de mutación
   vi.spyOn(categoryHooks, "useCreateCategory").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
@@ -63,10 +74,8 @@ function mockCategoryMutations() {
   } as unknown as ArchiveCategoryResult);
 }
 
-function renderCategorySettingsPanel(overrides: Partial<CategorySettingsPanelProps> = {}) {
-  renderWithProviders(
-    <CategorySettingsPanel categories={overrides.categories ?? [...BASE_CATEGORIES]} />,
-  );
+function renderCategorySettingsPanel() {
+  renderWithProviders(<CategorySettingsPanel />);
 }
 
 describe("CategorySettingsPanel", () => {

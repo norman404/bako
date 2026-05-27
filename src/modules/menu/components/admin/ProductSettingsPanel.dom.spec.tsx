@@ -22,6 +22,8 @@ vi.mock("lucide-react", async () => {
 });
 
 import * as productHooks from "@/modules/menu/hooks/use-products";
+import * as categoryHooks from "@/modules/menu/hooks/use-categories";
+import * as menuHooks from "@/modules/menu/hooks/use-menus";
 import { ProductSettingsPanel } from "@/modules/menu/components/admin/ProductSettingsPanel";
 import { fireEvent, renderWithProviders, screen } from "@/test/test-utils";
 
@@ -30,8 +32,6 @@ const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
 type CreateProductResult = ReturnType<typeof productHooks.useCreateProduct>;
 type UpdateProductResult = ReturnType<typeof productHooks.useUpdateProduct>;
 type ArchiveProductResult = ReturnType<typeof productHooks.useArchiveProduct>;
-
-type ProductSettingsPanelProps = Parameters<typeof ProductSettingsPanel>[0];
 
 const BASE_CATEGORIES = [
   {
@@ -63,7 +63,24 @@ const BASE_PRODUCTS = [
   },
 ];
 
-function mockProductMutations() {
+function mockProductMutations(categories = BASE_CATEGORIES, products = BASE_PRODUCTS, menus: any[] = []) {
+  // Mock hooks de lectura
+  vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+    data: categories,
+    isLoading: false,
+  } as any);
+
+  vi.spyOn(productHooks, "useProducts").mockReturnValue({
+    data: products,
+    isLoading: false,
+  } as any);
+
+  vi.spyOn(menuHooks, "useMenus").mockReturnValue({
+    data: menus,
+    isLoading: false,
+  } as any);
+
+  // Mock hooks de mutación
   vi.spyOn(productHooks, "useCreateProduct").mockReturnValue({
     isPending: false,
     mutateAsync: vi.fn(),
@@ -80,14 +97,8 @@ function mockProductMutations() {
   } as unknown as ArchiveProductResult);
 }
 
-function renderProductSettingsPanel(overrides: Partial<ProductSettingsPanelProps> = {}) {
-  renderWithProviders(
-    <ProductSettingsPanel
-      categories={overrides.categories ?? [...BASE_CATEGORIES]}
-      products={overrides.products ?? [...BASE_PRODUCTS]}
-      onManageCategories={overrides.onManageCategories ?? vi.fn()}
-    />,
-  );
+function renderProductSettingsPanel() {
+  renderWithProviders(<ProductSettingsPanel />);
 }
 
 describe("ProductSettingsPanel", () => {

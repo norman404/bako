@@ -28,6 +28,7 @@ import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flag
 import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
 import { formatPosCurrency } from "@/lib/currency";
 import { IS_MAC } from "@/lib/platform";
+import { MODULE_REGISTRY } from "@/app/module-registry";
 
 export function App() {
   const { t } = useTranslation(['app', 'menu']);
@@ -426,9 +427,7 @@ export function App() {
         <SettingsModal
           open={isSettingsOpen}
           onClose={closeSettings}
-          categories={categories}
-          products={products}
-          menus={menus}
+          registry={MODULE_REGISTRY}
         />
       ) : null}
     </div>

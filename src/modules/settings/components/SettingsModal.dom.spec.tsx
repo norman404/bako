@@ -63,49 +63,16 @@ import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { fireEvent, renderWithProviders, screen, within } from "@/test/test-utils";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { DEFAULT_CURRENCY_CONFIG } from "@/lib/currency-config";
-
-const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
+import { MODULE_REGISTRY } from "@/app/module-registry";
 
 type SettingsModalProps = Parameters<typeof SettingsModal>[0];
-
-const BASE_CATEGORIES = [
-  {
-    id: "coffee",
-    name: "Café",
-    description: "Bebidas calientes",
-    color: null,
-    menuId: null,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-  },
-];
-
-const BASE_PRODUCTS = [
-  {
-    id: "flat-white",
-    categoryId: "coffee",
-    name: "Flat white",
-    description: "Doble shot con leche vaporizada",
-    price: 6500,
-    prepTimeMinutes: 4,
-    image: "☕",
-    isPopular: true,
-    menuIds: [] as string[],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-  },
-];
 
 function renderSettingsModal(overrides: Partial<SettingsModalProps> = {}) {
   renderWithProviders(
     <SettingsModal
       open={overrides.open ?? true}
       onClose={overrides.onClose ?? vi.fn()}
-      categories={overrides.categories ?? [...BASE_CATEGORIES]}
-      products={overrides.products ?? [...BASE_PRODUCTS]}
-      menus={overrides.menus ?? []}
+      registry={overrides.registry ?? MODULE_REGISTRY}
     />,
   );
 }

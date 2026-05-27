@@ -2,7 +2,6 @@ import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
-import type { Category } from "@/modules/menu/domain/category";
 import type { Product } from "@/modules/menu/domain/product";
 import type { ProductUpsertInput } from "@/modules/menu/domain/ports";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
@@ -12,6 +11,8 @@ import {
   useUpdateProduct,
 } from "@/modules/menu/hooks/use-products";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
+import { useCategories } from "@/modules/menu/hooks/use-categories";
+import { useProducts } from "@/modules/menu/hooks/use-products";
 import {
   formatProductPriceInput,
   parseProductPriceInput,
@@ -39,12 +40,6 @@ const PRODUCT_FORM_MODE = {
 } as const;
 
 type ProductFormMode = (typeof PRODUCT_FORM_MODE)[keyof typeof PRODUCT_FORM_MODE];
-
-interface ProductSettingsPanelProps {
-  categories: Category[];
-  products: Product[];
-  onManageCategories: () => void;
-}
 
 interface ProductFormState {
   categoryId: string;
@@ -127,11 +122,13 @@ function getListButtonClass(isActive: boolean): string {
   ].join(" ");
 }
 
-function ProductSettingsPanel({ categories, products, onManageCategories }: ProductSettingsPanelProps) {
+function ProductSettingsPanel() {
   const { flags } = useFeatureFlagsStore();
   const categoriesEnabled = flags.categories_enabled ?? false;
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
 
+  const { data: categories = [] } = useCategories();
+  const { data: products = [] } = useProducts();
   const { data: menus = [] } = useMenus();
 
   const createProductMutation = useCreateProduct();
@@ -302,18 +299,8 @@ function ProductSettingsPanel({ categories, products, onManageCategories }: Prod
           </div>
 
           {!hasCategories ? (
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-card border border-hairline px-3 py-2">
+            <div className="mt-3 rounded-card border border-hairline px-3 py-2">
               <p className="text-[12px] text-ink-muted">Creá una categoría primero.</p>
-              {categoriesEnabled && (
-                <Button
-                  variant="ghost"
-                  size="small"
-                  onClick={onManageCategories}
-                  className="rounded-card border border-hairline"
-                >
-                  Categorías
-                </Button>
-              )}
             </div>
           ) : null}
 

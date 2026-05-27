@@ -4,13 +4,13 @@ import type { FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag
 import type { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
 import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
 
-const DEFAULT_FLAGS: Record<FeatureFlagKey, boolean> = {
+const DEFAULT_FLAGS: Record<string, boolean> = {
   categories_enabled: false,
   multiple_menus_enabled: false,
 };
 
 interface FeatureFlagsState {
-  flags: Record<FeatureFlagKey, boolean>;
+  flags: Record<string, boolean>;
   isLoading: boolean;
   initializeFeatureFlags: () => ResultAsync<void, never>;
   setFlag: (key: FeatureFlagKey, value: boolean) => ResultAsync<void, FeatureFlagPersistenceError>;
@@ -48,7 +48,7 @@ export const useFeatureFlagsStore = create<FeatureFlagsState>((set, get) => ({
           acc[flag.key] = flag.value;
           return acc;
         },
-        {} as Record<FeatureFlagKey, boolean>,
+        {} as Record<string, boolean>,
       );
 
       set({ flags: flagsMap, isLoading: false });

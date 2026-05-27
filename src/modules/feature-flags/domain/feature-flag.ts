@@ -1,4 +1,4 @@
-export type FeatureFlagKey = "categories_enabled" | "multiple_menus_enabled";
+export type FeatureFlagKey = string;
 
 export interface FeatureFlag {
   key: FeatureFlagKey;

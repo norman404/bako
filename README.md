@@ -30,14 +30,22 @@ La interfaz corre en Vite y persiste datos localmente en **SQLite** mediante `@t
 ```txt
 src/
 ├── app/
-├── features/
+│   ├── App.tsx
+│   └── module-registry.ts   ← registro central de módulos
+├── modules/
 │   ├── checkout/
+│   │   └── manifest.ts      ← ModuleManifest del módulo
+│   ├── feature-flags/
 │   ├── menu/
+│   │   └── manifest.ts
 │   ├── order/
-│   ├── pos/
-│   ├── settings/
-│   └── turno/
+│   └── settings/
+│       └── domain/
+│           └── module-manifest.ts  ← contrato ModuleManifest
 ├── shared/
+│   ├── db/                  ← cliente y schema Drizzle
+│   ├── stores/              ← Zustand stores de UI global
+│   └── i18n/
 └── main.tsx
 
 src-tauri/
@@ -47,10 +55,27 @@ src-tauri/
 └── tauri.conf.json
 ```
 
+## Arquitectura: Plugin/Registry pattern
+
+Cada módulo es autónomo. Para aparecer en el panel de configuración, declara su propio `manifest.ts`:
+
+```typescript
+// modules/mi-modulo/manifest.ts
+export const miModuloManifest: ModuleManifest = {
+  id: "mi-modulo",
+  flagKey: "mi_modulo_enabled",  // opcional — activa/desactiva el módulo
+  settingsPanel: MiPanel,         // opcional — pantalla de configuración
+  settingsLabel: "Mi Módulo",
+  settingsIcon: SomeIcon,
+};
+```
+
+Luego se registra en `src/app/module-registry.ts`. `SettingsModal` no conoce ningún módulo — itera el registry dinámicamente.
+
 ## Base de datos local
 
 La app usa una base SQLite local llamada `bako.db`.
-La inicialización ocurre en `src/shared/infrastructure/db/client.ts`.
+La inicialización ocurre en `src/shared/db/`.
 
 ## Scripts
 

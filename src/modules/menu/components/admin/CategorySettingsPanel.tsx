@@ -9,6 +9,7 @@ import {
   useCreateCategory,
   useUpdateCategory,
 } from "@/modules/menu/hooks/use-categories";
+import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { Button } from "@/components/ui/Button";
@@ -31,10 +32,6 @@ const CATEGORY_FORM_MODE = {
 } as const;
 
 type CategoryFormMode = (typeof CATEGORY_FORM_MODE)[keyof typeof CATEGORY_FORM_MODE];
-
-interface CategorySettingsPanelProps {
-  categories: Category[];
-}
 
 interface CategoryFormState {
   name: string;
@@ -86,9 +83,10 @@ function getListButtonClass(isActive: boolean): string {
   ].join(" ");
 }
 
-function CategorySettingsPanel({ categories }: CategorySettingsPanelProps) {
+function CategorySettingsPanel() {
   const { flags } = useFeatureFlagsStore();
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
+  const { data: categories = [] } = useCategories();
   const { data: menus = [] } = useMenus();
 
   const createCategoryMutation = useCreateCategory();
