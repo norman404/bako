@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos/store/pos-store";
+import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
 
 describe("usePosStore", () => {
   it("should omit legacy dashboard and manager state from the pos ui store", () => {

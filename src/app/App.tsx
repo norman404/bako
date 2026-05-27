@@ -25,7 +25,7 @@ import { useOrderStore } from "@/modules/order/store/order-store";
 import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
-import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos/store/pos-store";
+import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
 import { formatPosCurrency } from "@/lib/currency";
 import { IS_MAC } from "@/lib/platform";
 
