@@ -1,5 +1,8 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
+mod commands;
+mod print;
+
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -65,6 +68,12 @@ pub fn run() {
             sql: include_str!("../migrations/0010_delivery_persons.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 11,
+            description: "printer_settings",
+            sql: include_str!("../migrations/0011_printer_settings.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
@@ -74,6 +83,7 @@ pub fn run() {
                 .add_migrations("sqlite:bako.db", migrations)
                 .build(),
         )
+        .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::test_printer])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

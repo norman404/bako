@@ -9,6 +9,8 @@ describe("Currency & Sorting Library", () => {
     useSettingsStore.setState({
       locale: DEFAULT_CURRENCY_CONFIG.locale,
       currency: DEFAULT_CURRENCY_CONFIG.currency,
+      printerType: "none",
+      printerAddress: null,
       isLoading: false,
     });
   });
@@ -59,7 +61,7 @@ describe("Currency & Sorting Library", () => {
 
   describe("sortStrings (Locale-Aware Sorting)", () => {
     it("sorts alphabetically respecting Spanish collation", () => {
-      useSettingsStore.setState({ locale: "es" });
+      useSettingsStore.setState({ locale: "es", currency: "MXN", printerType: "none", printerAddress: null });
       const items = ["Zorra", "Árbol", "Barco"];
       const sorted = sortStrings(items);
       
@@ -69,13 +71,13 @@ describe("Currency & Sorting Library", () => {
 
     it("reacts dynamically to changed locale in the store", () => {
       // In some locales, character sorting is different. Let's verify sortStrings uses active locale.
-      useSettingsStore.setState({ locale: "en" });
+      useSettingsStore.setState({ locale: "en", currency: "MXN", printerType: "none", printerAddress: null });
       const items = ["a", "Z", "ä"];
       
       // Let's check English vs Swedish/German
       sortStrings(items);
       
-      useSettingsStore.setState({ locale: "sv" }); // Swedish (ä is sorted at the end of the alphabet after z)
+      useSettingsStore.setState({ locale: "sv", currency: "MXN", printerType: "none", printerAddress: null }); // Swedish (ä is sorted at the end of the alphabet after z)
       const sortedSv = sortStrings(items);
       
       // They should differ since Swedish sorts ä after z

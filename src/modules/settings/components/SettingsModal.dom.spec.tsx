@@ -83,6 +83,8 @@ describe("SettingsModal (settings feature)", () => {
     useSettingsStore.setState({
       locale: DEFAULT_CURRENCY_CONFIG.locale,
       currency: DEFAULT_CURRENCY_CONFIG.currency,
+      printerType: "none",
+      printerAddress: null,
       isLoading: false,
     });
     vi.clearAllMocks();

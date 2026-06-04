@@ -1,70 +1,69 @@
-import { ResultAsync, errAsync } from "neverthrow";
+import { ResultAsync, okAsync } from "neverthrow";
+import { invoke } from "@tauri-apps/api/core";
 
-import { buildPrintTicketHtml, type PrintOrderOptions } from "@/modules/checkout/lib/print-ticket-template";
+import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
 
-const PRINT_WINDOW_RENDER_DELAY_MS = 160;
-const PRINT_WINDOW_CLOSE_DELAY_MS = 1_000;
-
-function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds);
-  });
+interface PrintTicketPayload {
+  printerType: string;
+  printerAddress: string;
+  ticketNumber: number;
+  createdAt: string;
+  total: number;
+  items: Array<{ name: string; quantity: number; unitPrice: number }>;
+  paymentMethod: string;
+  paymentAmount: number;
+  fulfillmentType: string;
+  customer: { name: string; phone: string; address: string } | null;
 }
 
-function schedulePrintWindowClose(printWindow: Window): void {
-  const closeWindow = () => {
-    if (!printWindow.closed) {
-      printWindow.close();
-    }
+function buildPayload(input: PrintOrderOptions, printerType: string, printerAddress: string): PrintTicketPayload {
+  return {
+    printerType,
+    printerAddress,
+    ticketNumber: input.ticketNumber,
+    createdAt: input.createdAt.toISOString(),
+    total: input.total,
+    items: input.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    })),
+    paymentMethod: input.paymentMethod,
+    paymentAmount: input.paymentAmount,
+    fulfillmentType: input.fulfillmentType,
+    customer: input.customer,
   };
-
-  printWindow.addEventListener("afterprint", closeWindow, { once: true });
-  window.setTimeout(closeWindow, PRINT_WINDOW_CLOSE_DELAY_MS);
-}
-
-function normalizePrintError(error: unknown): Error {
-  if (error instanceof Error) {
-    return error;
-  }
-
-  return new Error("No pudimos lanzar la impresión del ticket.");
 }
 
 export function printOrder(input: PrintOrderOptions): ResultAsync<void, Error> {
-  if (typeof window === "undefined") {
-    return errAsync(new Error("La impresión del ticket solo está disponible desde la caja."));
+  const { printerType, printerAddress } = useSettingsStore.getState();
+
+  if (printerType === "none" || !printerType) {
+    return okAsync(undefined);
   }
 
-  const printWindow = window.open(
-    "",
-    `coffee-pos-ticket-${input.ticketNumber}`,
-    "width=420,height=720",
-  );
+  const payload = buildPayload(input, printerType, printerAddress ?? "");
 
-  if (!printWindow) {
-    return errAsync(new Error("No pudimos abrir la ventana de impresión del ticket."));
-  }
-
-  const printAsync = async (): Promise<void> => {
-    printWindow.document.open();
-    printWindow.document.write(buildPrintTicketHtml(input));
-    printWindow.document.close();
-
-    await delay(PRINT_WINDOW_RENDER_DELAY_MS);
-
-    if (printWindow.closed) {
-      throw new Error("La ventana de impresión se cerró antes de iniciar la impresión.");
-    }
-
-    schedulePrintWindowClose(printWindow);
-    printWindow.focus();
-    printWindow.print();
+  const invokeAsync = async (): Promise<void> => {
+    await invoke("print_ticket", payload as unknown as Record<string, unknown>);
   };
 
-  return ResultAsync.fromPromise(printAsync(), (error) => {
-    if (!printWindow.closed) {
-      printWindow.close();
-    }
-    return normalizePrintError(error);
+  return ResultAsync.fromPromise(invokeAsync(), (error) => {
+    if (error instanceof Error) return error;
+    return new Error(String(error));
+  });
+}
+
+export async function testPrinter(): Promise<void> {
+  const { printerType, printerAddress } = useSettingsStore.getState();
+
+  if (printerType === "none" || !printerType) {
+    throw new Error("No hay impresora configurada.");
+  }
+
+  await invoke("test_printer", {
+    printerType,
+    printerAddress: printerAddress ?? "",
   });
 }

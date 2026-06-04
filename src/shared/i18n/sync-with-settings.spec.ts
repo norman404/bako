@@ -6,7 +6,7 @@ import { useSettingsStore } from '@/modules/settings/store/settings-store';
 describe('wireI18nWithSettings', () => {
   beforeEach(() => {
     // Reset store state
-    useSettingsStore.setState({ locale: 'es-MX', currency: 'MXN', isLoading: false });
+    useSettingsStore.setState({ locale: 'es-MX', currency: 'MXN', printerType: 'none', printerAddress: null, isLoading: false });
     
     // Mock i18next changeLanguage
     vi.spyOn(i18next, 'changeLanguage').mockImplementation(async (lng?: string) => {
@@ -19,7 +19,7 @@ describe('wireI18nWithSettings', () => {
     wireI18nWithSettings(i18next);
 
     // Change locale in store
-    useSettingsStore.setState({ locale: 'pt-BR' });
+    useSettingsStore.setState({ locale: 'pt-BR', currency: 'MXN', printerType: 'none', printerAddress: null });
 
     // Wait for async changeLanguage
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -34,7 +34,7 @@ describe('wireI18nWithSettings', () => {
     vi.clearAllMocks();
 
     // Set same locale
-    useSettingsStore.setState({ locale: 'es-MX' });
+    useSettingsStore.setState({ locale: 'es-MX', currency: 'MXN', printerType: 'none', printerAddress: null });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 

@@ -147,6 +147,8 @@ export const systemSettings = sqliteTable("system_settings", {
   id: text("id").primaryKey().$defaultFn(() => "current"),
   locale: text("locale").notNull(),
   currency: text("currency").notNull(),
+  printerType: text("printer_type"),
+  printerAddress: text("printer_address"),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 

@@ -5,23 +5,30 @@ import { db } from "@/shared/db/client";
 import { systemSettings } from "@/shared/db/schema";
 import { DEFAULT_CURRENCY_CONFIG } from "@/lib/currency-config";
 
+type PrinterType = "usb" | "network" | "none";
+
 interface SettingsState {
   locale: string;
   currency: string;
+  printerType: PrinterType;
+  printerAddress: string | null;
   isLoading: boolean;
   initializeSettings: () => ResultAsync<void, never>;
   updateSettings: (locale: string, currency: string) => ResultAsync<void, Error>;
+  updatePrinterSettings: (printerType: PrinterType, printerAddress: string | null) => ResultAsync<void, Error>;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   locale: DEFAULT_CURRENCY_CONFIG.locale,
   currency: DEFAULT_CURRENCY_CONFIG.currency,
+  printerType: "none",
+  printerAddress: null,
   isLoading: true,
 
   initializeSettings: (): ResultAsync<void, never> => {
     const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
     if (!isTauri) {
-      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, isLoading: false });
+      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, isLoading: false });
       return okAsync(undefined);
     }
 
@@ -33,11 +40,20 @@ export const useSettingsStore = create<SettingsState>((set) => ({
           id: "current",
           locale: DEFAULT_CURRENCY_CONFIG.locale,
           currency: DEFAULT_CURRENCY_CONFIG.currency,
+          printerType: "none",
+          printerAddress: null,
           updatedAt: now,
         });
-        set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, isLoading: false });
+        set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, isLoading: false });
       } else {
-        set({ locale: result[0].locale, currency: result[0].currency, isLoading: false });
+        const row = result[0];
+        set({
+          locale: row.locale,
+          currency: row.currency,
+          printerType: (row.printerType as PrinterType) ?? "none",
+          printerAddress: row.printerAddress ?? null,
+          isLoading: false,
+        });
       }
     };
 
@@ -46,7 +62,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
       (error) => (error instanceof Error ? error : new Error(String(error))),
     ).orElse((error) => {
       console.warn("Tauri IPC SQLite not available. Activating Vitest/Node fallback.", error);
-      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, isLoading: false });
+      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, isLoading: false });
       return okAsync(undefined);
     });
   },
@@ -60,9 +76,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     }
 
     const now = new Date();
+    const { printerType, printerAddress } = get();
     const dbOperation = db
       .insert(systemSettings)
-      .values({ id: "current", locale, currency, updatedAt: now })
+      .values({ id: "current", locale, currency, printerType, printerAddress, updatedAt: now })
       .onConflictDoUpdate({
         target: systemSettings.id,
         set: { locale, currency, updatedAt: now },
@@ -74,6 +91,33 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     return ResultAsync.fromPromise(
       dbOperation,
       (error) => (error instanceof Error ? error : new Error("Failed to persist settings")),
+    );
+  },
+
+  updatePrinterSettings: (printerType: PrinterType, printerAddress: string | null): ResultAsync<void, Error> => {
+    set({ isLoading: true });
+    const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+    if (!isTauri) {
+      set({ printerType, printerAddress, isLoading: false });
+      return okAsync(undefined);
+    }
+
+    const now = new Date();
+    const { locale, currency } = get();
+    const dbOperation = db
+      .insert(systemSettings)
+      .values({ id: "current", locale, currency, printerType, printerAddress, updatedAt: now })
+      .onConflictDoUpdate({
+        target: systemSettings.id,
+        set: { printerType, printerAddress, updatedAt: now },
+      })
+      .then(() => {
+        set({ printerType, printerAddress, isLoading: false });
+      });
+
+    return ResultAsync.fromPromise(
+      dbOperation,
+      (error) => (error instanceof Error ? error : new Error("Failed to persist printer settings")),
     );
   },
 }));
