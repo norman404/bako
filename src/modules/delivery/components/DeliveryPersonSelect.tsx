@@ -1,3 +1,4 @@
+import { ColorInput } from "@/shared/components/ColorInput";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -95,10 +96,11 @@ function DeliveryPersonSelect({ value, onChange }: DeliveryPersonSelectProps) {
             value={quickName}
             onInput={(event) => setQuickName(event.currentTarget.value)}
           />
-          <Input
-            placeholder={t("form.colorPlaceholder")}
+          <ColorInput
+            id="quick-delivery-person-color"
             value={quickColor}
-            onInput={(event) => setQuickColor(event.currentTarget.value)}
+            onChange={(value) => setQuickColor(value)}
+            placeholder={t("form.colorPlaceholder")}
           />
           <div className="flex items-center gap-2">
             <Button

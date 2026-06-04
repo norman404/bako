@@ -1,3 +1,4 @@
+import { ColorInput } from "@/shared/components/ColorInput";
 import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -231,31 +232,15 @@ function DeliveryPersonSettingsPanel() {
               />
             </FormField>
 
-            <div className="grid gap-1">
-              <div className="flex items-center gap-2">
-                <label
-                  htmlFor="delivery-person-color"
-                  className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim leading-none"
-                >
-                  {t("form.color")}
-                </label>
-                {formState.color ? (
-                  <span
-                    className="h-4 w-4 rounded-full inline-block"
-                    style={{ backgroundColor: formState.color }}
-                  />
-                ) : null}
-              </div>
-              <Input
-                id="delivery-person-color"
-                value={formState.color}
-                onInput={(event) => {
-                  const value = event.currentTarget.value;
-                  setFormState((previous) => ({ ...previous, color: value }));
-                }}
-                placeholder={t("form.colorPlaceholder")}
-              />
-            </div>
+            <ColorInput
+              id="delivery-person-color"
+              value={formState.color}
+              onChange={(value) =>
+                setFormState((previous) => ({ ...previous, color: value }))
+              }
+              label={t("form.color")}
+              placeholder={t("form.colorPlaceholder")}
+            />
 
             <FormField label={t("form.phone")} htmlFor="delivery-person-phone">
               <Input

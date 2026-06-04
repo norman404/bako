@@ -1,3 +1,4 @@
+import { ColorInput } from "@/shared/components/ColorInput";
 import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -277,17 +278,15 @@ function CategorySettingsPanel() {
               />
             </FormField>
 
-            <FormField label="Color (hex opcional)" htmlFor="category-color">
-              <Input
-                id="category-color"
-                value={formState.color}
-                onInput={(event) => {
-                  const value = event.currentTarget.value;
-                  setFormState((previous) => ({ ...previous, color: value }));
-                }}
-                placeholder="#C8E6C9"
-              />
-            </FormField>
+            <ColorInput
+              id="category-color"
+              value={formState.color}
+              onChange={(value) =>
+                setFormState((previous) => ({ ...previous, color: value }))
+              }
+              label="Color (hex opcional)"
+              placeholder="#C8E6C9"
+            />
 
             <FormError message={formError} />
 
