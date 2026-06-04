@@ -1,5 +1,6 @@
 export { ProductGrid } from './components/ProductGrid'
 export { CategoryNav } from './components/CategoryNav'
+export { ProductSearch } from './components/ProductSearch'
 
 // Domain
 export type { Menu } from './domain/menu'
@@ -12,3 +13,7 @@ export { MenuDomainError, MenuNotFoundError, CategoryNotFoundError, ProductNotFo
 export { useMenus, useCreateMenu } from './hooks/use-menus'
 export { useCategories, useCreateCategory, useUpdateCategory, useArchiveCategory } from './hooks/use-categories'
 export { useProducts, useCreateProduct, useUpdateProduct, useArchiveProduct } from './hooks/use-products'
+export { useFilteredProducts } from './hooks/use-filtered-products'
+
+// Store
+export { useMenuStore } from './store/menu-store'

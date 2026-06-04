@@ -70,6 +70,7 @@ interface NormalizedCreateOrderInput {
   fulfillmentType: CheckoutFulfillmentType;
   customerId: string | null;
   customer: CheckoutCustomerInput | null;
+  deliveryPersonId: string | null;
   payment: NormalizedCheckoutPaymentInput;
 }
 
@@ -189,6 +190,10 @@ function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPe
       return new CheckoutPersistenceError("Local orders cannot include delivery customer data");
     }
 
+    if (input.deliveryPersonId !== null) {
+      return new CheckoutPersistenceError("Local orders cannot have a delivery person");
+    }
+
     return null;
   }
 
@@ -228,6 +233,7 @@ function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrd
     fulfillmentType,
     customerId: normalizedCustomerId.length > 0 ? normalizedCustomerId : null,
     customer: normalizedCustomer,
+    deliveryPersonId: input.deliveryPersonId?.trim() || null,
     payment: {
       method: String(input.payment?.method ?? "")
         .trim()
@@ -279,6 +285,7 @@ function rowToCheckoutOrder(
     id: row.id,
     ticketNumber: row.ticketNumber,
     customerId: row.customerId,
+    deliveryPersonId: row.deliveryPersonId ?? null,
     total: row.total,
     createdAt: row.createdAt,
     customer: customerRow ? rowToCheckoutCustomer(customerRow) : null,
@@ -357,6 +364,7 @@ async function createOrderRow(
   tx: DatabaseClient,
   ticketNumber: number,
   customerId: string | null,
+  deliveryPersonId: string | null,
   total: number,
   now: Date,
 ): Promise<OrderRow> {
@@ -364,6 +372,7 @@ async function createOrderRow(
     id: crypto.randomUUID(),
     ticketNumber,
     customerId,
+    deliveryPersonId,
     total,
     createdAt: now,
   };
@@ -576,7 +585,7 @@ export const orderDrizzleRepository = {
           : normalizedInput.customer
             ? await createCustomerRow(tx, normalizedInput.customer, now)
             : null;
-        const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, total, now);
+        const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, normalizedInput.deliveryPersonId, total, now);
         const paymentRow = await createPaymentRow(tx, orderRow.id, payment, now);
         const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
 

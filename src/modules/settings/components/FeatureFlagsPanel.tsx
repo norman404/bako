@@ -16,6 +16,10 @@ const MODULES: ModuleConfig[] = [
     id: "menu",
     flags: ["categories_enabled", "multiple_menus_enabled"],
   },
+  {
+    id: "delivery",
+    flags: ["delivery_enabled"],
+  },
 ];
 
 export function FeatureFlagsPanel() {

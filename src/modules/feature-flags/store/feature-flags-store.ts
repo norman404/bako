@@ -7,6 +7,7 @@ import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistenc
 const DEFAULT_FLAGS: Record<string, boolean> = {
   categories_enabled: false,
   multiple_menus_enabled: false,
+  delivery_enabled: false,
 };
 
 interface FeatureFlagsState {

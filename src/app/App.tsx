@@ -5,20 +5,18 @@ import { useTranslation } from "react-i18next";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { SearchInput } from "@/components/ui/SearchInput";
 
 import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
+import { DeliveryPersonSelect } from "@/modules/delivery";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
 import { CategoryNav } from "@/modules/menu/components/CategoryNav";
 import { MenuSelector } from "@/modules/menu/components/MenuSelector";
 import { ProductGrid } from "@/modules/menu/components/ProductGrid";
-import { filterProductsByCategory, filterProductsByName } from "@/modules/menu/domain/product-filters";
-import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
+import { ProductSearch } from "@/modules/menu/components/ProductSearch";
 import type { Product } from "@/modules/menu/domain/product";
-import { useCategories } from "@/modules/menu/hooks/use-categories";
-import { useProducts } from "@/modules/menu/hooks/use-products";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
+import { useFilteredProducts } from "@/modules/menu/hooks/use-filtered-products";
 import { Cart } from "@/modules/order/components/Cart";
 import { calculateCartTotals } from "@/modules/order/domain/cart";
 import { useOrderStore } from "@/modules/order/store/order-store";
@@ -40,6 +38,7 @@ export function App() {
   const { flags } = useFeatureFlagsStore();
   const categoriesEnabled = flags.categories_enabled ?? false;
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
+  const deliveryEnabled = flags.delivery_enabled ?? false;
 
   const {
     selectedCategory,
@@ -55,9 +54,6 @@ export function App() {
     isSettingsOpen,
     openSettings,
     closeSettings,
-    productSearch,
-    setProductSearch,
-    clearProductSearch,
   } = usePosStore(
     useShallow((state) => ({
       selectedCategory: state.selectedCategory,
@@ -73,9 +69,6 @@ export function App() {
       isSettingsOpen: state.isSettingsOpen,
       openSettings: state.openSettings,
       closeSettings: state.closeSettings,
-      productSearch: state.productSearch,
-      setProductSearch: state.setProductSearch,
-      clearProductSearch: state.clearProductSearch,
     })),
   );
 
@@ -109,40 +102,19 @@ export function App() {
   // Sync selectedMenuId with defaultMenuId when it changes (only if not manually set)
   const activeMenuId = selectedMenuId ?? defaultMenuId;
 
-  // If multiple menus are enabled, use menu-specific hooks, otherwise use global hooks
-  const { data: productsByMenu = [], isLoading: isProductsByMenuLoading } = useProducts(
-    multipleMenusEnabled && activeMenuId ? [activeMenuId] : undefined
-  );
-  const { data: productsGlobal = [], isLoading: isProductsGlobalLoading } = useProducts();
-
-  const { data: categoriesByMenu = [], isLoading: isCategoriesByMenuLoading } = useCategories(
-    multipleMenusEnabled && activeMenuId ? activeMenuId : undefined
-  );
-  const { data: categoriesGlobal = [], isLoading: isCategoriesGlobalLoading } = useCategories();
-
-  const products = multipleMenusEnabled ? productsByMenu : productsGlobal;
-  const categories = multipleMenusEnabled ? categoriesByMenu : categoriesGlobal;
-  const isProductsLoading = multipleMenusEnabled ? isProductsByMenuLoading : isProductsGlobalLoading;
-  const isCategoriesLoading = multipleMenusEnabled ? isCategoriesByMenuLoading : isCategoriesGlobalLoading;
-  const isLoading = isProductsLoading || isCategoriesLoading;
+  const { products, categories, visibleProducts, productCountByCategory, isLoading } =
+    useFilteredProducts({
+      menuId: multipleMenusEnabled ? activeMenuId : null,
+      categoriesEnabled,
+    });
 
   const createOrderMutation = useCreateOrder();
 
-  const orderedProducts = sortProductsForMenu(products, categories);
-  const categoryFilteredProducts = categoriesEnabled
-    ? filterProductsByCategory(orderedProducts, selectedCategory)
-    : orderedProducts;
-  const visibleProducts = filterProductsByName(categoryFilteredProducts, productSearch);
   const synchronizedCartItems = currentOrder.map((item) => {
     const currentProduct = products.find((product) => product.id === item.product.id);
     return currentProduct ? { ...item, product: currentProduct } : item;
   });
   const cartTotals = calculateCartTotals(synchronizedCartItems);
-
-  const productCountByCategory: Record<string, number> = {};
-  for (const product of products) {
-    productCountByCategory[product.categoryId] = (productCountByCategory[product.categoryId] ?? 0) + 1;
-  }
 
   const emptyStateTitle =
     selectedCategory === POS_CATEGORY_FILTER.ALL
@@ -231,28 +203,6 @@ export function App() {
 
           {/* Search + actions — right */}
           <div className="ml-auto flex items-center gap-1.5">
-            <div className="relative w-44 sm:w-60">
-              <SearchInput
-                type="search"
-                placeholder={t('search.placeholder')}
-                value={productSearch}
-                onChange={(e) => setProductSearch(e.target.value)}
-                className="h-7 pr-8 w-full"
-                aria-label={t('search.ariaLabel')}
-              />
-              {productSearch ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={clearProductSearch}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-sharp text-ink-dim hover:text-ink"
-                  aria-label={t('search.clearAriaLabel')}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              ) : null}
-            </div>
-
             <Button
               variant="ghost"
               size="icon"
@@ -283,6 +233,10 @@ export function App() {
 
       <main className="flex min-h-0 flex-1 overflow-hidden lg:flex-row">
         <section className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pb-24 lg:pb-0">
+          <div className="px-4 pt-3 sm:px-6 lg:px-8">
+            <ProductSearch className="w-full" />
+          </div>
+
           {(multipleMenusEnabled && menus.length > 0) || categoriesEnabled ? (
             <div className="px-4 py-3 sm:px-6 lg:px-8">
               {multipleMenusEnabled && menus.length > 0 ? (
@@ -421,6 +375,13 @@ export function App() {
         isSubmitting={createOrderMutation.isPending}
         onClose={closeCheckoutModal}
         onConfirmCheckout={handleConfirmCheckout}
+        renderDeliveryPersonSelect={
+          deliveryEnabled
+            ? ({ value, onChange }) => (
+                <DeliveryPersonSelect value={value} onChange={onChange} />
+              )
+            : undefined
+        }
       />
 
       {isSettingsOpen ? (

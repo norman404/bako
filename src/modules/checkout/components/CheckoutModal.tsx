@@ -1,9 +1,10 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
-import { Dialog, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
+import { Dialog, DialogPortal, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
 import { CheckoutModalFooterActions } from "@/modules/checkout/components/CheckoutModal.Footer";
 import { CheckoutModalFulfillmentPanel } from "@/modules/checkout/components/CheckoutModal.Fulfillment";
 import { CheckoutModalOrderSummary } from "@/modules/checkout/components/CheckoutModal.OrderSummary";
@@ -18,6 +19,10 @@ interface CheckoutModalProps {
   isSubmitting?: boolean;
   onClose: () => void;
   onConfirmCheckout: (input: CreateOrderInput) => Promise<void>;
+  renderDeliveryPersonSelect?: (props: {
+    value: string | null;
+    onChange: (id: string | null) => void;
+  }) => React.ReactNode;
 }
 
 function CheckoutModal({
@@ -26,6 +31,7 @@ function CheckoutModal({
   isSubmitting = false,
   onClose,
   onConfirmCheckout,
+  renderDeliveryPersonSelect,
 }: CheckoutModalProps) {
   const { t } = useTranslation('checkout');
   const totals = calculateCartTotals(items);
@@ -37,6 +43,7 @@ function CheckoutModal({
     selectedCustomerId,
     customerForm,
     formError,
+    deliveryPersonId,
     isDelivery,
     isSearchCustomerMode,
     isNewCustomerMode,
@@ -51,6 +58,7 @@ function CheckoutModal({
     customerSectionLabel,
     handleCloseRequest,
     handleFulfillmentChange,
+    handleDeliveryPersonChange,
     handlePaymentMethodChange,
     handleSelectCustomer,
     handleShowSearchCustomers,
@@ -84,6 +92,7 @@ function CheckoutModal({
             if (isSubmitting) event.preventDefault();
           }}
         >
+          <DialogTitle className="sr-only">{t('modal.title')}</DialogTitle>
           <div className="modal-shell-solid flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[50rem] flex-col overflow-hidden rounded-modal border border-hairline animate-modal-in sm:max-h-[calc(100dvh-3rem)]">
             <header className="flex items-center justify-between border-b border-hairline px-4 py-3 sm:px-5">
               <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink sm:text-[22px]">
@@ -139,6 +148,9 @@ function CheckoutModal({
                 customerForm={customerForm}
                 onCustomerFieldChange={handleCustomerFieldChange}
                 formError={formError}
+                renderDeliveryPersonSelect={renderDeliveryPersonSelect}
+                deliveryPersonId={deliveryPersonId}
+                onDeliveryPersonChange={handleDeliveryPersonChange}
               />
             </div>
 

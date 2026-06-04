@@ -27,6 +27,17 @@ describe("usePosStore", () => {
     expect(categoryManagerActionExists).toBe(false);
   });
 
+  it("should omit productSearch state — it now lives in menu-store", () => {
+    // CASE: productSearch was moved to the menu module's own store.
+    // VALIDATES: pos-store no longer leaks search concerns.
+
+    const state = usePosStore.getState() as unknown as Record<string, unknown>;
+
+    expect("productSearch" in state).toBe(false);
+    expect("setProductSearch" in state).toBe(false);
+    expect("clearProductSearch" in state).toBe(false);
+  });
+
   it("should keep the active settings, checkout, and mobile cart flows working", () => {
     // CASE: the POS page still depends on the live caja ui actions after cleanup.
     // VALIDATES: the remaining public store API keeps current behavior intact.
@@ -34,7 +45,6 @@ describe("usePosStore", () => {
     // Arrange
     usePosStore.setState({
       selectedCategory: POS_CATEGORY_FILTER.ALL,
-      productSearch: "",
       isCheckoutOpen: false,
       checkoutSessionKey: 0,
       isMobileCartOpen: false,
@@ -43,15 +53,13 @@ describe("usePosStore", () => {
 
     // Act
     usePosStore.getState().setSelectedCategory("coffee");
-    usePosStore.getState().setProductSearch("flat");
     usePosStore.getState().openCheckout();
     usePosStore.getState().openMobileCart();
     usePosStore.getState().openSettings();
 
     // Assert
     const state = usePosStore.getState();
-    expect(state.selectedCategory).toBe(POS_CATEGORY_FILTER.ALL);
-    expect(state.productSearch).toBe("flat");
+    expect(state.selectedCategory).toBe("coffee");
     expect(state.isCheckoutOpen).toBe(true);
     expect(state.checkoutSessionKey).toBe(1);
     expect(state.isMobileCartOpen).toBe(true);

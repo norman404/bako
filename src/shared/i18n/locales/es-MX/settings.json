@@ -44,6 +44,10 @@
       "menu": {
         "name": "Menú",
         "description": "Cómo se organizan y muestran los productos"
+      },
+      "delivery": {
+        "name": "Repartidores",
+        "description": "Gestión de repartidores y corte por entrega"
       }
     },
     "flags": {
@@ -56,6 +60,11 @@
         "label": "Múltiples menús",
         "description": "Gestionar varios menús (comidas, bebidas, etc.)",
         "updated": "Múltiples menús {{value, select, true {habilitados} other {deshabilitados}}}"
+      },
+      "delivery_enabled": {
+        "label": "Repartidores",
+        "description": "Habilitar módulo de repartidores y corte por entrega",
+        "updated": "Repartidores {{value, select, true {habilitados} other {deshabilitados}}}"
       }
     }
   },

@@ -1,0 +1,43 @@
+{
+  "panel": {
+    "title": "Delivery Persons",
+    "new": "New",
+    "empty": "No delivery persons",
+    "createTitle": "New delivery person",
+    "editTitle": "Edit delivery person"
+  },
+  "form": {
+    "name": "Name",
+    "namePlaceholder": "Driver name",
+    "color": "Color (hex)",
+    "colorPlaceholder": "#FF5733",
+    "phone": "Phone (optional)",
+    "phonePlaceholder": "555-1234-5678",
+    "save": "Save changes",
+    "create": "Create delivery person",
+    "validation": {
+      "nameRequired": "Name is required",
+      "colorRequired": "Color is required (format: #RRGGBB)",
+      "genericError": "Could not save delivery person"
+    },
+    "archiveConfirm": "Archive {{name}}?",
+    "archiveError": "Could not archive delivery person"
+  },
+  "select": {
+    "label": "Delivery person",
+    "placeholder": "Select delivery person (optional)",
+    "noOptions": "No active delivery persons",
+    "quickCreate": "New delivery person",
+    "creating": "Creating..."
+  },
+  "cut": {
+    "title": "Delivery cut",
+    "subtitle": "Day summary",
+    "empty": "No deliveries recorded today",
+    "orders": "Orders",
+    "total": "Total",
+    "summary": "Day total",
+    "refreshButton": "Refresh",
+    "generatedAt": "Updated at {{time}}"
+  }
+}

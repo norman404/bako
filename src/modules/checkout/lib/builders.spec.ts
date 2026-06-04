@@ -186,6 +186,7 @@ describe("checkout builders", () => {
         ],
         fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.DELIVERY,
         customerId: "customer-1",
+        deliveryPersonId: null,
         payment: {
           method: CHECKOUT_PAYMENT_METHOD.CASH,
           amount: total,
@@ -219,8 +220,61 @@ describe("checkout builders", () => {
           phone: "11 5555 5555",
           address: "Av. Siempre Viva 742",
         },
+        deliveryPersonId: null,
         payment: {
           method: CHECKOUT_PAYMENT_METHOD.CASH,
+          amount: total,
+        },
+      });
+    });
+
+    it("includes deliveryPersonId in delivery order when provided", () => {
+      const payload = buildCreateOrderInput(
+        items,
+        CHECKOUT_FULFILLMENT_TYPE.DELIVERY,
+        "customer-1",
+        buildEmptyCustomerFormState(),
+        CHECKOUT_PAYMENT_METHOD.CASH,
+        "68",
+        total,
+        "dp-123",
+      );
+
+      expect(payload).toEqual({
+        items: [
+          { productId: "product-1", quantity: 2, unitPrice: 2500 },
+          { productId: "product-2", quantity: 1, unitPrice: 1800 },
+        ],
+        fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.DELIVERY,
+        customerId: "customer-1",
+        deliveryPersonId: "dp-123",
+        payment: {
+          method: CHECKOUT_PAYMENT_METHOD.CASH,
+          amount: total,
+        },
+      });
+    });
+
+    it("does not include deliveryPersonId in local orders even when provided", () => {
+      const payload = buildCreateOrderInput(
+        items,
+        CHECKOUT_FULFILLMENT_TYPE.LOCAL,
+        null,
+        buildEmptyCustomerFormState(),
+        CHECKOUT_PAYMENT_METHOD.CARD,
+        "",
+        total,
+        "dp-123",
+      );
+
+      expect(payload).toEqual({
+        items: [
+          { productId: "product-1", quantity: 2, unitPrice: 2500 },
+          { productId: "product-2", quantity: 1, unitPrice: 1800 },
+        ],
+        fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.LOCAL,
+        payment: {
+          method: CHECKOUT_PAYMENT_METHOD.CARD,
           amount: total,
         },
       });

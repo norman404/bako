@@ -36,6 +36,7 @@ export interface CreateOrderInput {
   fulfillmentType?: CheckoutFulfillmentType;
   customerId?: string | null;
   customer?: CheckoutCustomerInput | null;
+  deliveryPersonId?: string | null;
   payment: CheckoutPaymentInput;
 }
 
@@ -69,6 +70,7 @@ export interface CheckoutOrder {
   id: string;
   ticketNumber: number;
   customerId: string | null;
+  deliveryPersonId: string | null;
   total: number;
   createdAt: Date;
   customer: CheckoutCustomer | null;

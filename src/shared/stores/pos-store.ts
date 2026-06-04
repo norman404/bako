@@ -6,7 +6,6 @@ const POS_CATEGORY_FILTER = {
 
 interface PosUiState {
   selectedCategory: string;
-  productSearch: string;
   isCheckoutOpen: boolean;
   checkoutSessionKey: number;
   isMobileCartOpen: boolean;
@@ -15,8 +14,6 @@ interface PosUiState {
 
 interface PosUiActions {
   setSelectedCategory: (categoryId: string) => void;
-  setProductSearch: (productSearch: string) => void;
-  clearProductSearch: () => void;
   openCheckout: () => void;
   closeCheckout: () => void;
   openMobileCart: () => void;
@@ -31,7 +28,6 @@ type PosStore = PosUiState & PosUiActions;
 
 const initialPosUiState: PosUiState = {
   selectedCategory: POS_CATEGORY_FILTER.ALL,
-  productSearch: "",
   isCheckoutOpen: false,
   checkoutSessionKey: 0,
   isMobileCartOpen: false,
@@ -42,15 +38,6 @@ const usePosStore = create<PosStore>((set) => ({
   ...initialPosUiState,
 
   setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
-
-  setProductSearch: (productSearch) =>
-    set((state) => ({
-      productSearch,
-      selectedCategory:
-        productSearch.trim().length > 0 ? POS_CATEGORY_FILTER.ALL : state.selectedCategory,
-    })),
-
-  clearProductSearch: () => set({ productSearch: "" }),
 
   openCheckout: () =>
     set((state) => ({

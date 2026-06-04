@@ -60,6 +60,20 @@ export const productMenus = sqliteTable(
   (table) => [index("idx_product_menus_menu_id").on(table.menuId)],
 );
 
+export const deliveryPersons = sqliteTable(
+  "delivery_persons",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    color: text("color").notNull(),
+    phone: text("phone"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("idx_delivery_persons_deleted_at").on(table.deletedAt)],
+);
+
 export const customers = sqliteTable(
   "customers",
   {
@@ -79,12 +93,14 @@ export const orders = sqliteTable(
     id: text("id").primaryKey(),
     ticketNumber: integer("ticket_number").notNull(),
     customerId: text("customer_id").references(() => customers.id),
+    deliveryPersonId: text("delivery_person_id").references(() => deliveryPersons.id),
     total: integer("total").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
     uniqueIndex("idx_orders_ticket_number").on(table.ticketNumber),
     index("idx_orders_customer_id").on(table.customerId),
+    index("idx_orders_delivery_person_id").on(table.deliveryPersonId),
     index("idx_orders_created_at").on(table.createdAt),
   ],
 );
@@ -142,6 +158,7 @@ export const featureFlags = sqliteTable("feature_flags", {
 
 export type MenuRow = typeof menus.$inferSelect;
 export type CategoryRow = typeof categories.$inferSelect;
+export type DeliveryPersonRow = typeof deliveryPersons.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
 export type ProductMenuRow = typeof productMenus.$inferSelect;
 export type CustomerRow = typeof customers.$inferSelect;
@@ -153,6 +170,7 @@ export type FeatureFlagRow = typeof featureFlags.$inferSelect;
 
 export type MenuInsert = typeof menus.$inferInsert;
 export type CategoryInsert = typeof categories.$inferInsert;
+export type DeliveryPersonInsert = typeof deliveryPersons.$inferInsert;
 export type ProductInsert = typeof products.$inferInsert;
 export type ProductMenuInsert = typeof productMenus.$inferInsert;
 export type CustomerInsert = typeof customers.$inferInsert;

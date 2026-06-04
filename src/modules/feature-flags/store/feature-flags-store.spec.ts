@@ -16,7 +16,7 @@ describe("useFeatureFlagsStore", () => {
     vi.clearAllMocks();
     // Reset store state
     useFeatureFlagsStore.setState({
-      flags: { categories_enabled: false, multiple_menus_enabled: false },
+      flags: { categories_enabled: false, multiple_menus_enabled: false, delivery_enabled: false },
       isLoading: true,
     });
   });
@@ -29,6 +29,7 @@ describe("useFeatureFlagsStore", () => {
       expect(useFeatureFlagsStore.getState().flags).toEqual({
         categories_enabled: false,
         multiple_menus_enabled: false,
+        delivery_enabled: false,
       });
       expect(useFeatureFlagsStore.getState().isLoading).toBe(false);
       // Should NOT call repository in Node environment
@@ -39,7 +40,7 @@ describe("useFeatureFlagsStore", () => {
   describe("setFlag", () => {
     it("should update flag value in store synchronously", () => {
       useFeatureFlagsStore.setState({
-        flags: { categories_enabled: false, multiple_menus_enabled: false },
+        flags: { categories_enabled: false, multiple_menus_enabled: false, delivery_enabled: false },
         isLoading: false,
       });
 
@@ -50,7 +51,7 @@ describe("useFeatureFlagsStore", () => {
 
     it("should not persist to repository in non-Tauri environment", async () => {
       useFeatureFlagsStore.setState({
-        flags: { categories_enabled: false, multiple_menus_enabled: false },
+        flags: { categories_enabled: false, multiple_menus_enabled: false, delivery_enabled: false },
         isLoading: false,
       });
 

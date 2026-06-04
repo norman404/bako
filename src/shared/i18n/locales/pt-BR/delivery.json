@@ -1,0 +1,43 @@
+{
+  "panel": {
+    "title": "Entregadores",
+    "new": "Novo",
+    "empty": "Sem entregadores",
+    "createTitle": "Novo entregador",
+    "editTitle": "Editar entregador"
+  },
+  "form": {
+    "name": "Nome",
+    "namePlaceholder": "Nome do entregador",
+    "color": "Cor (hex)",
+    "colorPlaceholder": "#FF5733",
+    "phone": "Telefone (opcional)",
+    "phonePlaceholder": "11 9999-9999",
+    "save": "Salvar alterações",
+    "create": "Criar entregador",
+    "validation": {
+      "nameRequired": "O nome é obrigatório",
+      "colorRequired": "A cor é obrigatória (formato: #RRGGBB)",
+      "genericError": "Não foi possível salvar o entregador"
+    },
+    "archiveConfirm": "Arquivar {{name}}?",
+    "archiveError": "Não foi possível arquivar o entregador"
+  },
+  "select": {
+    "label": "Entregador",
+    "placeholder": "Selecionar entregador (opcional)",
+    "noOptions": "Sem entregadores ativos",
+    "quickCreate": "Novo entregador",
+    "creating": "Criando..."
+  },
+  "cut": {
+    "title": "Fechamento por entregador",
+    "subtitle": "Resumo do dia",
+    "empty": "Sem entregas registradas hoje",
+    "orders": "Pedidos",
+    "total": "Total",
+    "summary": "Total do dia",
+    "refreshButton": "Atualizar",
+    "generatedAt": "Atualizado às {{time}}"
+  }
+}

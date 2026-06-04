@@ -3,6 +3,7 @@ import type {
   CheckoutFulfillmentType,
 } from "@/modules/checkout/hooks/use-checkout";
 import type { CheckoutCustomerFormState } from "@/modules/checkout/lib/builders";
+import React from "react";
 import { useTranslation } from "react-i18next";
 
 import { CustomerCreateForm } from "./CheckoutModal.Fulfillment.CustomerCreate";
@@ -33,6 +34,12 @@ interface CheckoutModalFulfillmentPanelProps {
   customerForm: CheckoutCustomerFormState;
   onCustomerFieldChange: (field: keyof CheckoutCustomerFormState, value: string) => void;
   formError: string | null;
+  renderDeliveryPersonSelect?: (props: {
+    value: string | null;
+    onChange: (id: string | null) => void;
+  }) => React.ReactNode;
+  deliveryPersonId: string | null;
+  onDeliveryPersonChange: (id: string | null) => void;
 }
 
 function CheckoutModalFulfillmentPanel({
@@ -54,6 +61,9 @@ function CheckoutModalFulfillmentPanel({
   customerForm,
   onCustomerFieldChange,
   formError,
+  renderDeliveryPersonSelect,
+  deliveryPersonId,
+  onDeliveryPersonChange,
 }: CheckoutModalFulfillmentPanelProps) {
   const { t } = useTranslation('checkout');
   
@@ -70,6 +80,11 @@ function CheckoutModalFulfillmentPanel({
 
       {isDelivery ? (
         <div className="mt-3 space-y-4">
+          {renderDeliveryPersonSelect?.({
+            value: deliveryPersonId,
+            onChange: onDeliveryPersonChange,
+          })}
+
           <CheckoutDeliveryHeader
             isSearchCustomerMode={isSearchCustomerMode}
             isNewCustomerMode={isNewCustomerMode}
