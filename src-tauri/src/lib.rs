@@ -83,7 +83,7 @@ pub fn run() {
                 .add_migrations("sqlite:bako.db", migrations)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::test_printer])
+        .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::test_printer, commands::list_usb_printers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

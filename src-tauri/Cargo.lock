@@ -250,6 +250,7 @@ name = "bako"
 version = "0.1.0"
 dependencies = [
  "escpos",
+ "nusb",
  "serde",
  "serde_json",
  "tauri",
@@ -1097,6 +1098,7 @@ dependencies = [
  "log",
  "nusb",
  "spin 0.10.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

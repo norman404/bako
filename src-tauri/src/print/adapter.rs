@@ -4,6 +4,9 @@ use super::error::PrintError;
 use super::ticket::{build_ticket, TicketPayload};
 
 pub enum PrinterDriver {
+    #[cfg(target_os = "windows")]
+    Usb(escpos::driver::WindowsUsbPrintDriver),
+    #[cfg(not(target_os = "windows"))]
     Usb(escpos::driver::NativeUsbDriver),
     Network(escpos::driver::NetworkDriver),
     None,
@@ -33,12 +36,23 @@ pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Resul
     match printer_type {
         "usb" => {
             let (vid, pid) = parse_usb_address(printer_address)?;
-            let driver = escpos::driver::NativeUsbDriver::open(vid, pid).map_err(|e| PrintError::UsbError(e.to_string()))?;
-            Ok(PrinterDriver::Usb(driver))
+            #[cfg(target_os = "windows")]
+            {
+                let driver = escpos::driver::WindowsUsbPrintDriver::open(vid, pid)
+                    .map_err(|e| PrintError::UsbError(e.to_string()))?;
+                Ok(PrinterDriver::Usb(driver))
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let driver = escpos::driver::NativeUsbDriver::open(vid, pid)
+                    .map_err(|e| PrintError::UsbError(e.to_string()))?;
+                Ok(PrinterDriver::Usb(driver))
+            }
         }
         "network" => {
             let (ip, port) = parse_network_address(printer_address)?;
-            let driver = escpos::driver::NetworkDriver::open(&ip, port, None).map_err(|e| PrintError::NetworkError(e.to_string()))?;
+            let driver = escpos::driver::NetworkDriver::open(&ip, port, None)
+                .map_err(|e| PrintError::NetworkError(e.to_string()))?;
             Ok(PrinterDriver::Network(driver))
         }
         "none" => Ok(PrinterDriver::None),

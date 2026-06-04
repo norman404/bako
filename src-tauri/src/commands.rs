@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use crate::print::{create_printer_driver, print_ticket_with_driver, test_printer_with_driver, TicketPayload, TicketItem, TicketCustomer};
+use crate::print::usb_detection::detect_usb_printers;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -50,4 +51,10 @@ pub fn test_printer(input: TestPrinterInput) -> Result<(), String> {
 
     test_printer_with_driver(driver)
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn list_usb_printers() -> Result<Vec<crate::print::usb_detection::UsbPrinterInfo>, String> {
+    let printers = detect_usb_printers();
+    Ok(printers)
 }
