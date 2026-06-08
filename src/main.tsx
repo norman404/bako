@@ -54,7 +54,7 @@ async function bootstrap() {
       <I18nProvider>
         <QueryClientProvider client={queryClient}>
           <App />
-          <Toaster richColors closeButton position="top-right" />
+          <Toaster richColors closeButton position="bottom-left" />
         </QueryClientProvider>
       </I18nProvider>
     );

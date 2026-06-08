@@ -20,6 +20,10 @@ const MODULES: ModuleConfig[] = [
     id: "delivery",
     flags: ["delivery_enabled"],
   },
+  {
+    id: "shift",
+    flags: ["shift_management_enabled"],
+  },
 ];
 
 export function FeatureFlagsPanel() {

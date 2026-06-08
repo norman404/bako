@@ -44,6 +44,10 @@
       "menu": {
         "name": "Menu",
         "description": "How products are organized and displayed"
+      },
+      "shift": {
+        "name": "Shifts",
+        "description": "Shift management for sales"
       }
     },
     "flags": {
@@ -56,6 +60,11 @@
         "label": "Multiple menus",
         "description": "Manage multiple menus (food, drinks, etc.)",
         "updated": "Multiple menus {{value, select, true {enabled} other {disabled}}}"
+      },
+      "shift_management_enabled": {
+        "label": "Shift Management",
+        "description": "Enable opening and closing of sales shifts",
+        "updated": "Shift Management {{value, select, true {enabled} other {disabled}}}"
       }
     }
   },

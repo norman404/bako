@@ -22,6 +22,8 @@ import { calculateCartTotals } from "@/modules/order/domain/cart";
 import { useOrderStore } from "@/modules/order/store/order-store";
 import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { ShiftButton } from "@/modules/shift-reports";
+import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
 import { formatPosCurrency } from "@/lib/currency";
@@ -39,6 +41,10 @@ export function App() {
   const categoriesEnabled = flags.categories_enabled ?? false;
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
   const deliveryEnabled = flags.delivery_enabled ?? false;
+  const shiftManagementEnabled = flags.shift_management_enabled ?? false;
+
+  // Shift state
+  const { data: activeShift } = useActiveShift();
 
   const {
     selectedCategory,
@@ -140,11 +146,20 @@ export function App() {
       return;
     }
 
+    if (shiftManagementEnabled && !activeShift) {
+      toast.warning(t('shift:noActiveShiftAlert'));
+      return;
+    }
+
     openCheckoutModal();
   };
 
   const handleConfirmCheckout = async (input: CreateOrderInput) => {
-    const createdOrder = await createOrderMutation.mutateAsync(input);
+    const orderInput = shiftManagementEnabled && activeShift
+      ? { ...input, shiftId: activeShift.id }
+      : input;
+
+    const createdOrder = await createOrderMutation.mutateAsync(orderInput);
 
     const productNameById: Record<string, string> = {};
     for (const item of synchronizedCartItems) {
@@ -203,6 +218,10 @@ export function App() {
 
           {/* Search + actions — right */}
           <div className="ml-auto flex items-center gap-1.5">
+            {shiftManagementEnabled ? (
+              <ShiftButton />
+            ) : null}
+
             <Button
               variant="ghost"
               size="icon"

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use super::error::PrintError;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TicketItem {
     pub name: String,
     pub quantity: u32,
@@ -12,6 +13,7 @@ pub struct TicketItem {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TicketCustomer {
     pub name: String,
     pub phone: String,

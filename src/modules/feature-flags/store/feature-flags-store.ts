@@ -8,6 +8,7 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   categories_enabled: false,
   multiple_menus_enabled: false,
   delivery_enabled: false,
+  shift_management_enabled: false,
 };
 
 interface FeatureFlagsState {

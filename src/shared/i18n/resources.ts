@@ -8,6 +8,7 @@ import esMxMenu from './locales/es-MX/menu.json';
 import esMxCheckout from './locales/es-MX/checkout.json';
 import esMxOrder from './locales/es-MX/order.json';
 import esMxTurno from './locales/es-MX/turno.json';
+import esMxShift from './locales/es-MX/shift.json';
 import esMxDelivery from './locales/es-MX/delivery.json';
 
 // es-AR
@@ -18,6 +19,7 @@ import esArMenu from './locales/es-AR/menu.json';
 import esArCheckout from './locales/es-AR/checkout.json';
 import esArOrder from './locales/es-AR/order.json';
 import esArTurno from './locales/es-AR/turno.json';
+import esArShift from './locales/es-AR/shift.json';
 import esArDelivery from './locales/es-AR/delivery.json';
 
 // en-US
@@ -28,6 +30,7 @@ import enUsMenu from './locales/en-US/menu.json';
 import enUsCheckout from './locales/en-US/checkout.json';
 import enUsOrder from './locales/en-US/order.json';
 import enUsTurno from './locales/en-US/turno.json';
+import enUsShift from './locales/en-US/shift.json';
 import enUsDelivery from './locales/en-US/delivery.json';
 
 // es-ES
@@ -38,6 +41,7 @@ import esEsMenu from './locales/es-ES/menu.json';
 import esEsCheckout from './locales/es-ES/checkout.json';
 import esEsOrder from './locales/es-ES/order.json';
 import esEsTurno from './locales/es-ES/turno.json';
+import esEsShift from './locales/es-ES/shift.json';
 import esEsDelivery from './locales/es-ES/delivery.json';
 
 // pt-BR
@@ -48,6 +52,7 @@ import ptBrMenu from './locales/pt-BR/menu.json';
 import ptBrCheckout from './locales/pt-BR/checkout.json';
 import ptBrOrder from './locales/pt-BR/order.json';
 import ptBrTurno from './locales/pt-BR/turno.json';
+import ptBrShift from './locales/pt-BR/shift.json';
 import ptBrDelivery from './locales/pt-BR/delivery.json';
 
 export const resources: Resource = {
@@ -59,6 +64,7 @@ export const resources: Resource = {
     checkout: esMxCheckout,
     order: esMxOrder,
     turno: esMxTurno,
+    shift: esMxShift,
     delivery: esMxDelivery,
   },
   'es-AR': {
@@ -69,6 +75,7 @@ export const resources: Resource = {
     checkout: esArCheckout,
     order: esArOrder,
     turno: esArTurno,
+    shift: esArShift,
     delivery: esArDelivery,
   },
   'en-US': {
@@ -79,6 +86,7 @@ export const resources: Resource = {
     checkout: enUsCheckout,
     order: enUsOrder,
     turno: enUsTurno,
+    shift: enUsShift,
     delivery: enUsDelivery,
   },
   'es-ES': {
@@ -89,6 +97,7 @@ export const resources: Resource = {
     checkout: esEsCheckout,
     order: esEsOrder,
     turno: esEsTurno,
+    shift: esEsShift,
     delivery: esEsDelivery,
   },
   'pt-BR': {
@@ -99,6 +108,7 @@ export const resources: Resource = {
     checkout: ptBrCheckout,
     order: ptBrOrder,
     turno: ptBrTurno,
+    shift: ptBrShift,
     delivery: ptBrDelivery,
   },
 };

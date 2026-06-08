@@ -1,0 +1,19 @@
+{
+  "openShift": "Abrir turno",
+  "closeShift": "Fechar turno",
+  "activeShift": "Turno ativo",
+  "noActiveShiftAlert": "Você deve abrir um turno antes de realizar uma venda.",
+  "reportTitle": "Relatório do turno",
+  "openedAt": "Início",
+  "closedAt": "Encerramento",
+  "totalOrders": "Pedidos",
+  "totalSales": "Total vendido",
+  "cashTotal": "Dinheiro",
+  "cardTotal": "Cartão",
+  "emptyHistory": "Nenhum turno registrado",
+  "historyTitle": "Histórico de turnos",
+  "openButton": "Abrir turno",
+  "closeButton": "Fechar turno",
+  "confirmClose": "Tem certeza de que deseja fechar o turno atual?",
+  "confirmCloseDescription": "Ao fechar o turno será gerado o relatório de vendas."
+}
