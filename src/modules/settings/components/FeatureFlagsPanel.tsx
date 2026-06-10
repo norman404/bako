@@ -20,6 +20,10 @@ const MODULES: ModuleConfig[] = [
     id: "delivery",
     flags: ["delivery_enabled"],
   },
+  {
+    id: "shift",
+    flags: ["shift_management_enabled"],
+  },
 ];
 
 export function FeatureFlagsPanel() {
@@ -46,9 +50,9 @@ export function FeatureFlagsPanel() {
 
   return (
     <div className="grid min-h-full grid-rows-[auto_1fr] gap-3">
-      <header className="flex flex-col gap-1 border-b border-hairline pb-3">
-        <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">{t("featureFlags.title")}</h2>
-        <p className="text-[13px] text-ink-muted">{t("featureFlags.description")}</p>
+      <header className="flex flex-col gap-1 border-b border-border-strong pb-3">
+        <h2 className="font-display text-lg text-primary-strong">{t("featureFlags.title")}</h2>
+        <p className="text-sm text-text-muted">{t("featureFlags.description")}</p>
       </header>
 
       <div className="mt-2.5 max-w-lg">
@@ -56,10 +60,10 @@ export function FeatureFlagsPanel() {
           {MODULES.map((module) => (
             <section key={module.id} className="grid gap-3">
               <div className="grid gap-0.5">
-                <h3 className="text-[14px] font-semibold text-ink">
+                <h3 className="text-base font-semibold text-text">
                   {t(`featureFlags.modules.${module.id}.name`)}
                 </h3>
-                <p className="text-[12px] text-ink-muted">
+                <p className="text-xs text-text-muted">
                   {t(`featureFlags.modules.${module.id}.description`)}
                 </p>
               </div>
@@ -68,16 +72,16 @@ export function FeatureFlagsPanel() {
                 {module.flags.map((flag) => (
                   <div
                     key={flag}
-                    className="flex items-center justify-between rounded-card border border-hairline bg-obsidian-elevated p-4"
+                    className="flex items-center justify-between rounded-card border border-border bg-surface-raised p-4 shadow-card transition-colors duration-200 hover:border-border-strong"
                   >
                     <div className="grid gap-1">
                       <Label
                         htmlFor={`flag-${flag}`}
-                        className="cursor-pointer text-[13px] font-medium text-ink"
+                        className="cursor-pointer normal-case tracking-normal text-sm font-medium text-text"
                       >
                         {t(`featureFlags.flags.${flag}.label`)}
                       </Label>
-                      <p className="text-[11px] text-ink-muted">
+                      <p className="text-2xs text-text-muted">
                         {t(`featureFlags.flags.${flag}.description`)}
                       </p>
                     </div>

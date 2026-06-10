@@ -71,6 +71,7 @@ interface NormalizedCreateOrderInput {
   customerId: string | null;
   customer: CheckoutCustomerInput | null;
   deliveryPersonId: string | null;
+  shiftId: string | null;
   payment: NormalizedCheckoutPaymentInput;
 }
 
@@ -224,23 +225,24 @@ function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrd
       ? CHECKOUT_FULFILLMENT_TYPE.DELIVERY
       : CHECKOUT_FULFILLMENT_TYPE.LOCAL);
 
-  return {
-    items: input.items.map((item) => ({
-      productId: item.productId.trim(),
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-    })),
-    fulfillmentType,
-    customerId: normalizedCustomerId.length > 0 ? normalizedCustomerId : null,
-    customer: normalizedCustomer,
-    deliveryPersonId: input.deliveryPersonId?.trim() || null,
-    payment: {
-      method: String(input.payment?.method ?? "")
-        .trim()
-        .toLowerCase(),
-      amount: input.payment?.amount ?? Number.NaN,
-    },
-  };
+    return {
+      items: input.items.map((item) => ({
+        productId: item.productId.trim(),
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
+      fulfillmentType,
+      customerId: normalizedCustomerId.length > 0 ? normalizedCustomerId : null,
+      customer: normalizedCustomer,
+      deliveryPersonId: input.deliveryPersonId?.trim() || null,
+      shiftId: input.shiftId?.trim() || null,
+      payment: {
+        method: String(input.payment?.method ?? "")
+          .trim()
+          .toLowerCase(),
+        amount: input.payment?.amount ?? Number.NaN,
+      },
+    };
 }
 
 function rowToCheckoutCustomer(row: CustomerRow): CheckoutCustomer {
@@ -281,17 +283,18 @@ function rowToCheckoutOrder(
   customerRow: CustomerRow | null,
   paymentRow: PaymentRow,
 ): CheckoutOrder {
-  return {
-    id: row.id,
-    ticketNumber: row.ticketNumber,
-    customerId: row.customerId,
-    deliveryPersonId: row.deliveryPersonId ?? null,
-    total: row.total,
-    createdAt: row.createdAt,
-    customer: customerRow ? rowToCheckoutCustomer(customerRow) : null,
-    items: itemRows.map(rowToCheckoutOrderItem),
-    payment: rowToCheckoutPayment(paymentRow),
-  };
+    return {
+      id: row.id,
+      ticketNumber: row.ticketNumber,
+      customerId: row.customerId,
+      deliveryPersonId: row.deliveryPersonId ?? null,
+      shiftId: row.shiftId ?? null,
+      total: row.total,
+      createdAt: row.createdAt,
+      customer: customerRow ? rowToCheckoutCustomer(customerRow) : null,
+      items: itemRows.map(rowToCheckoutOrderItem),
+      payment: rowToCheckoutPayment(paymentRow),
+    };
 }
 
 async function loadNextTicketNumber(tx: DatabaseClient): Promise<number> {
@@ -365,6 +368,7 @@ async function createOrderRow(
   ticketNumber: number,
   customerId: string | null,
   deliveryPersonId: string | null,
+  shiftId: string | null,
   total: number,
   now: Date,
 ): Promise<OrderRow> {
@@ -373,6 +377,7 @@ async function createOrderRow(
     ticketNumber,
     customerId,
     deliveryPersonId,
+    shiftId,
     total,
     createdAt: now,
   };
@@ -585,7 +590,7 @@ export const orderDrizzleRepository = {
           : normalizedInput.customer
             ? await createCustomerRow(tx, normalizedInput.customer, now)
             : null;
-        const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, normalizedInput.deliveryPersonId, total, now);
+        const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, normalizedInput.deliveryPersonId, normalizedInput.shiftId, total, now);
         const paymentRow = await createPaymentRow(tx, orderRow.id, payment, now);
         const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
 

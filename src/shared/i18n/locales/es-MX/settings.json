@@ -48,6 +48,10 @@
       "delivery": {
         "name": "Repartidores",
         "description": "Gestión de repartidores y corte por entrega"
+      },
+      "shift": {
+        "name": "Turnos",
+        "description": "Gestión de turnos de venta"
       }
     },
     "flags": {
@@ -65,6 +69,11 @@
         "label": "Repartidores",
         "description": "Habilitar módulo de repartidores y corte por entrega",
         "updated": "Repartidores {{value, select, true {habilitados} other {deshabilitados}}}"
+      },
+      "shift_management_enabled": {
+        "label": "Sistema de turnos",
+        "description": "Habilitar apertura y cierre de turnos de venta",
+        "updated": "Sistema de turnos {{value, select, true {habilitado} other {deshabilitado}}}"
       }
     }
   },

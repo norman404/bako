@@ -26,21 +26,21 @@ function MenuSelector({ menus, selectedMenuId, onSelect }: MenuSelectorProps) {
           key={menu.id}
           onClick={() => onSelect(menu.id)}
           className={cn(
-            "relative shrink-0 select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
-            "hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne/60",
+            "relative shrink-0 cursor-pointer select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
+            "hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
             selectedMenuId === menu.id
-              ? "border-champagne/40 bg-obsidian-elevated font-bold text-ink"
-              : "border-hairline bg-obsidian-raised font-medium text-ink-dim hover:border-hairline-strong hover:text-ink-muted"
+              ? "border-primary bg-surface-sunken font-bold text-text"
+              : "border-border bg-surface-raised font-medium text-text-muted hover:border-border-strong hover:text-text"
           )}
         >
           <span className="flex items-baseline gap-2">
-            <span className="whitespace-nowrap text-[12px] uppercase tracking-[0.14em]">
+            <span className="whitespace-nowrap text-xs uppercase tracking-[0.14em]">
               {menu.name}
             </span>
             {menu.isDefault && (
               <span
                 className={cn(
-                  "font-mono-tabular text-[10px] tracking-wider",
+                  "font-mono-tabular text-2xs tracking-wider",
                   selectedMenuId === menu.id ? "opacity-100" : "opacity-60"
                 )}
               >

@@ -32,7 +32,7 @@ function ProductSearch({ className }: ProductSearchProps) {
             variant="ghost"
             size="icon"
             onClick={clearProductSearch}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-sharp text-ink-dim hover:text-ink"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-5 w-5 rounded-sharp text-text-dim hover:text-text"
             aria-label={t("search.clearAriaLabel")}
           >
             <X className="h-3 w-3" />

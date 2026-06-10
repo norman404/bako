@@ -87,6 +87,20 @@ export const customers = sqliteTable(
   (table) => [index("idx_customers_phone").on(table.phone)],
 );
 
+export const shifts = sqliteTable(
+  "shifts",
+  {
+    id: text("id").primaryKey(),
+    openedAt: integer("opened_at", { mode: "timestamp_ms" }).notNull(),
+    closedAt: integer("closed_at", { mode: "timestamp_ms" }),
+    status: text("status").notNull().default("active"),
+  },
+  (table) => [
+    index("idx_shifts_status").on(table.status),
+    index("idx_shifts_opened_at").on(table.openedAt),
+  ],
+);
+
 export const orders = sqliteTable(
   "orders",
   {
@@ -94,6 +108,7 @@ export const orders = sqliteTable(
     ticketNumber: integer("ticket_number").notNull(),
     customerId: text("customer_id").references(() => customers.id),
     deliveryPersonId: text("delivery_person_id").references(() => deliveryPersons.id),
+    shiftId: text("shift_id"),
     total: integer("total").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
@@ -101,6 +116,7 @@ export const orders = sqliteTable(
     uniqueIndex("idx_orders_ticket_number").on(table.ticketNumber),
     index("idx_orders_customer_id").on(table.customerId),
     index("idx_orders_delivery_person_id").on(table.deliveryPersonId),
+    index("idx_orders_shift_id").on(table.shiftId),
     index("idx_orders_created_at").on(table.createdAt),
   ],
 );
@@ -181,5 +197,7 @@ export type PaymentInsert = typeof payments.$inferInsert;
 export type OrderItemInsert = typeof orderItems.$inferInsert;
 export type SystemSettingsInsert = typeof systemSettings.$inferInsert;
 export type FeatureFlagInsert = typeof featureFlags.$inferInsert;
+export type ShiftRow = typeof shifts.$inferSelect;
+export type ShiftInsert = typeof shifts.$inferInsert;
 
 

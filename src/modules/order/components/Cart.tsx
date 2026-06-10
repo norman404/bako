@@ -1,4 +1,4 @@
-import { Minus, Plus, Trash2, X } from "lucide-react";
+import { Minus, Plus, ShoppingBasket, Trash2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { calculateCartTotals, type CartItem } from "@/modules/order/domain/cart";
@@ -28,14 +28,14 @@ function Cart({
   const totalItems = totals.itemsCount;
 
   return (
-    <aside className="flex h-full flex-col overflow-hidden bg-obsidian-raised text-ink">
+    <aside className="flex h-full flex-col overflow-hidden bg-surface-raised text-text">
       <header className="relative px-7 pb-5 pt-7">
         <div className="flex items-start justify-between">
           <div>
             <p className="eyebrow">{t('cart.eyebrow')}</p>
-            <h2 className="mt-2 text-[30px] leading-none tracking-[-0.02em] text-ink">
-              <span className="font-medium text-ink-muted">{t('cart.headerLa')}</span>{" "}
-              <span className="font-display text-champagne">{t('cart.headerCuenta')}</span>
+            <h2 className="font-display mt-2 text-xl leading-none text-primary-strong">
+              <span className="text-text-muted">{t('cart.headerLa')}</span>{" "}
+              <span>{t('cart.headerCuenta')}</span>
             </h2>
           </div>
           {!isEmpty ? (
@@ -43,7 +43,7 @@ function Cart({
               variant="ghost"
               size="small"
               onClick={onClearCart}
-              className="rounded-sharp border border-hairline text-ink-dim hover:border-danger/40 hover:text-danger"
+              className="rounded-sharp border border-border text-text-dim hover:border-danger/40 hover:text-danger"
               aria-label={t('cart.clearAriaLabel')}
             >
               <Trash2 className="h-3 w-3" />
@@ -53,13 +53,13 @@ function Cart({
         </div>
       </header>
 
-      <div className="mx-7 border-t border-hairline" />
+      <div className="mx-7 border-t border-border" />
 
       <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-7 py-5">
         {isEmpty ? (
           <div className="flex h-full min-h-44 flex-col items-center justify-center text-center">
-            <span className="font-display text-6xl leading-none text-ink-dim">00</span>
-            <p className="mt-5 text-[12px] font-medium uppercase tracking-[0.18em] text-ink-muted">
+            <ShoppingBasket className="h-14 w-14 text-text-dim" aria-hidden="true" />
+            <p className="mt-5 text-xs font-medium uppercase tracking-[0.18em] text-text-muted">
               {t('cart.emptyTitle')}
             </p>
             <p className="mt-2 eyebrow">{t('cart.emptyHint')}</p>
@@ -70,47 +70,47 @@ function Cart({
               <li key={item.product.id} className="group">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-[16px] font-bold leading-tight tracking-[-0.01em] text-ink">
+                    <h4 className="text-md font-bold leading-tight tracking-[-0.01em] text-text">
                       {item.product.name}
                     </h4>
-                    <p className="mt-1 font-mono-tabular text-[11px] text-ink-dim">
+                    <p className="mt-1 font-mono-tabular text-2xs text-text-dim">
                       × {formatPosCurrency(item.product.price)}
                     </p>
                   </div>
-                  <span className="font-mono-tabular text-[15px] tracking-tight text-ink">
+                  <span className="font-mono-tabular text-md tracking-tight text-text">
                     {formatPosCurrency(item.product.price * item.quantity)}
                   </span>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
-                  <div className="inline-flex items-center rounded-sharp border border-hairline-strong">
+                  <div className="inline-flex items-center rounded-sharp border border-border-strong">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => onDecreaseQuantity(item.product.id)}
-                      className="h-10 w-10 text-ink-muted hover:bg-obsidian-elevated hover:text-ink"
+                      className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
                       aria-label={t('cart.decreaseAriaLabel', { productName: item.product.name })}
                     >
-                      <Minus className="h-3.5 w-3.5" />
+                      <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="font-mono-tabular flex h-10 min-w-10 items-center justify-center border-x border-hairline-strong bg-champagne/10 px-2 text-center text-[13px] font-medium text-champagne">
+                    <span className="font-mono-tabular flex h-11 min-w-11 items-center justify-center border-x border-border-strong bg-primary/10 px-2 text-center text-sm font-semibold text-primary-strong">
                       {item.quantity}
                     </span>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => onIncreaseQuantity(item.product.id)}
-                      className="h-10 w-10 text-ink-muted hover:bg-obsidian-elevated hover:text-ink"
+                      className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
                       aria-label={t('cart.increaseAriaLabel', { productName: item.product.name })}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus className="h-4 w-4" />
                     </Button>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => onRemoveItem(item.product.id)}
-                    className="h-8 w-8 text-ink-dim opacity-40 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
+                    className="h-11 w-11 text-text-dim opacity-40 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
                     aria-label={t('cart.removeAriaLabel', { productName: item.product.name })}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -123,33 +123,34 @@ function Cart({
       </div>
 
       {!isEmpty ? (
-        <footer className="border-t border-hairline bg-obsidian-raised px-7 pb-7 pt-5">
-          <dl className="space-y-2 text-[12px]">
+        <footer className="border-t border-border bg-surface-raised px-7 pb-7 pt-5">
+          <dl className="space-y-2 text-xs">
             <div className="flex items-baseline">
               <dt className="eyebrow">{t('cart.productsLabel')}</dt>
               <span className="dotted-leader" />
-              <dd className="font-mono-tabular text-ink-muted">
+              <dd className="font-mono-tabular text-text-muted">
                 {String(totalItems).padStart(2, "0")}
               </dd>
             </div>
           </dl>
 
-          <div className="mt-5 flex items-baseline justify-between border-t border-hairline-strong pt-5">
-            <span className="text-[12px] font-medium uppercase tracking-[0.22em] text-ink-muted">
+          <div className="mt-5 flex items-baseline justify-between border-t border-border-strong pt-5">
+            <span className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">
               {t('cart.totalLabel')}
             </span>
-            <span className="font-mono-tabular text-[32px] font-bold leading-none tracking-[-0.02em] text-champagne">
+            <span className="font-mono-tabular text-display font-bold leading-none tracking-[-0.02em] text-text">
               {formatPosCurrency(totals.total)}
             </span>
           </div>
 
           <Button
+            variant="cta"
             size="large"
             onClick={onCheckout}
-            className="pay-cta mt-6 h-[72px] w-full justify-between px-5 text-obsidian"
+            className="mt-6 h-[72px] w-full justify-between px-5"
           >
-            <span className="text-[12px] font-black uppercase tracking-[0.28em]">{t('cart.payButton')}</span>
-            <span className="font-mono-tabular text-[18px] font-bold tracking-tight">
+            <span className="text-xs font-black uppercase tracking-[0.28em]">{t('cart.payButton')}</span>
+            <span className="font-mono-tabular text-lg font-bold tracking-tight">
               {formatPosCurrency(totals.total)}
             </span>
           </Button>

@@ -44,6 +44,10 @@
       "menu": {
         "name": "Menú",
         "description": "Cómo se organizan y muestran los productos"
+      },
+      "shift": {
+        "name": "Turnos",
+        "description": "Gestión de turnos de venta"
       }
     },
     "flags": {
@@ -56,6 +60,11 @@
         "label": "Múltiples menús",
         "description": "Gestionar varios menús (comidas, bebidas, etc.)",
         "updated": "Múltiples menús {{value, select, true {habilitados} other {deshabilitados}}}"
+      },
+      "shift_management_enabled": {
+        "label": "Sistema de turnos",
+        "description": "Habilitar apertura y cierre de turnos de venta",
+        "updated": "Sistema de turnos {{value, select, true {habilitado} other {deshabilitado}}}"
       }
     }
   },

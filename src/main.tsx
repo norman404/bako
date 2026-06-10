@@ -20,12 +20,12 @@ if (!rootElement) {
 const root = createRoot(rootElement);
 
 async function bootstrap() {
-  // Renderizar splash de carga minimalista ultra-premium (Midnight Obsidian + Champagne)
+  // Renderizar splash de carga minimalista (Catppuccin Macchiato)
   root.render(
-    <div className="flex h-screen w-screen items-center justify-center bg-obsidian text-champagne select-none">
+    <div className="flex h-screen w-screen items-center justify-center bg-surface text-primary select-none">
       <div className="flex flex-col items-center gap-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-champagne border-t-transparent" />
-        <p className="text-[11px] font-light tracking-[0.2em] uppercase text-ink-muted">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <p className="text-2xs font-light tracking-[0.2em] uppercase text-text-muted">
           {i18n.t('app:splash.loading')}
         </p>
       </div>
@@ -54,17 +54,17 @@ async function bootstrap() {
       <I18nProvider>
         <QueryClientProvider client={queryClient}>
           <App />
-          <Toaster richColors closeButton position="top-right" />
+          <Toaster theme="dark" richColors closeButton position="bottom-left" />
         </QueryClientProvider>
       </I18nProvider>
     );
   } catch (error) {
     console.error("Bootstrapping failed critically:", error);
     root.render(
-      <div className="flex h-screen w-screen items-center justify-center bg-obsidian text-danger p-8 text-center select-none">
-        <div className="max-w-md border border-hairline bg-obsidian-raised p-6 rounded-[8px] shadow-2xl">
+      <div className="flex h-screen w-screen items-center justify-center bg-surface text-danger p-8 text-center select-none">
+        <div className="max-w-md border border-border bg-surface-raised p-6 rounded-card shadow-modal">
           <h1 className="text-lg font-bold tracking-tight mb-2">{i18n.t('app:error.title')}</h1>
-          <p className="text-xs opacity-75 leading-relaxed text-ink-muted">
+          <p className="text-xs opacity-75 leading-relaxed text-text-muted">
             {i18n.t('app:error.description')}
           </p>
         </div>

@@ -1,46 +1,82 @@
 @import "tailwindcss";
 
+@theme {
+  /* === Paleta: Catppuccin Macchiato === */
+
+  /* === Superficies === */
+  --color-surface: #24273A;
+  --color-surface-raised: #24273A; /* cards = mismo bg; la elevación la dan borde + sombra */
+  --color-surface-sunken: #181926; /* crust */
+
+  /* === Marca === */
+  --color-primary: #C6A0F6; /* mauve */
+  --color-primary-strong: #D4B8F9; /* mauve aclarado — en dark el hover ACLARA */
+  --color-secondary: #B8C0E0; /* subtext1 */
+  --color-cta: #C6A0F6; /* mauve — accent del tema */
+  --color-cta-strong: #D4B8F9;
+
+  /* === Texto === */
+  --color-text: #F8F8FA;
+  --color-text-muted: #CAD3F5; /* text Macchiato */
+  --color-text-dim: #A5ADCB; /* subtext0 */
+  --color-on-primary: #24273A; /* base oscuro sobre mauve */
+  --color-on-cta: #24273A;
+
+  /* === Bordes === */
+  --color-border: #363A4F; /* surface0 — con card=bg, el borde ES la elevación */
+  --color-border-strong: #494D64; /* surface1 */
+  --color-ring: #C6A0F6;
+  --color-danger: #EE99A0; /* maroon */
+
+  /* === Estado === */
+  --color-success: #A6DA95;
+  --color-warning: #EED49F;
+
+  /* === Overlay === */
+  --color-scrim: #181926; /* crust — velo oscuro para modales */
+
+  /* === Tipografía === */
+  --font-sans: "Karla", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Playfair Display SC", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* === Escala tipográfica === */
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 24px;
+  --text-display: 32px;
+  --text-display-lg: 60px;
+
+  /* === Radios block-based === */
+  --radius-sharp: 0px;
+  --radius-card: 6px;
+  --radius-modal: 12px;
+
+  /* === Sombras dark tintadas (crust Macchiato) — en dark necesitan más fuerza === */
+  --shadow-card: 0 1px 3px rgba(24, 25, 38, 0.40), 0 1px 2px rgba(24, 25, 38, 0.30);
+  --shadow-raised: 0 8px 24px -8px rgba(24, 25, 38, 0.50);
+  --shadow-modal: 0 24px 64px -16px rgba(24, 25, 38, 0.60);
+}
+
 @layer base {
   :root {
     color-scheme: dark;
-
-    /* Catppuccin Mocha */
-    --obsidian: #181825;          /* mantle  — app bg */
-    --obsidian-raised: #1e1e2e;   /* base    — panels */
-    --obsidian-elevated: #313244; /* surface0 — elevated */
-
-    --hairline: rgba(205, 214, 244, 0.07);
-    --hairline-strong: rgba(205, 214, 244, 0.12);
-
-    --ink: #cdd6f4;
-    --ink-muted: rgba(205, 214, 244, 0.60);
-    --ink-dim: rgba(205, 214, 244, 0.38);
-
-    --champagne: #cba6f7;      /* mauve — primary accent */
-    --champagne-dim: #9273c4;  /* mauve dimmed */
-
-    --danger: #f38ba8;         /* mocha red */
-
-    --font-sans: "Satoshi", "Segoe UI", system-ui, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-
-    --background: var(--obsidian);
-    --foreground: var(--ink);
-    --border: var(--hairline);
-    --primary: var(--champagne);
-    --primary-foreground: var(--obsidian);
   }
 
   html {
-    background-color: var(--obsidian);
+    background-color: var(--color-surface);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
-    color: var(--ink);
+    color: var(--color-text);
     font-family: var(--font-sans);
-    background-color: var(--obsidian);
+    background-color: var(--color-surface);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overflow: hidden;
@@ -53,22 +89,22 @@
   }
 
   * {
-    border-color: var(--hairline);
+    border-color: var(--color-border);
   }
 
   ::selection {
-    background: rgba(203, 166, 247, 0.22);
-    color: var(--ink);
+    background: color-mix(in srgb, var(--color-primary) 28%, transparent);
+    color: var(--color-text);
   }
 }
 
 @layer utilities {
 
-  /* Display = Satoshi Black with tight tracking. Character via weight, not family. */
+  /* Display = serif block-based. Carácter via familia, sin tracking negativo. */
   .font-display {
-    font-family: var(--font-sans);
-    font-weight: 900;
-    letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: normal;
   }
 
   .font-mono-tabular {
@@ -82,27 +118,19 @@
     text-transform: uppercase;
     letter-spacing: 0.15em;
     font-size: 11px;
-    font-weight: 500;
-    color: var(--ink-dim);
-  }
-
-  .hairline {
-    border-color: var(--hairline);
+    font-weight: 700;
+    color: var(--color-text-muted);
   }
 
   .dotted-leader {
     flex: 1;
-    border-bottom: 1px dotted var(--hairline-strong);
+    border-bottom: 1px dotted var(--color-border-strong);
     margin: 0 0.5rem 0.25rem;
     min-width: 1rem;
   }
 
-  .dashed-divider {
-    border-top: 1px dashed var(--hairline-strong);
-  }
-
   /* Modal entrance — subtle scale + fade */
-  @keyframes obsidian-fade-in {
+  @keyframes bako-fade-in {
     from {
       opacity: 0;
     }
@@ -112,7 +140,7 @@
     }
   }
 
-  @keyframes obsidian-modal-in {
+  @keyframes bako-modal-in {
     from {
       opacity: 0;
       transform: scale(0.98);
@@ -125,56 +153,30 @@
   }
 
   .animate-fade-in {
-    animation: obsidian-fade-in 300ms ease-out both;
+    animation: bako-fade-in 300ms ease-out both;
   }
 
   .animate-modal-in {
-    animation: obsidian-modal-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: bako-modal-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   .modal-shell-solid {
-    background:
-      linear-gradient(180deg, rgba(49, 50, 68, 0.985) 0%, rgba(30, 30, 46, 0.985) 58%, rgba(24, 24, 37, 0.995) 100%);
-    box-shadow:
-      0 42px 120px -44px rgba(0, 0, 0, 1),
-      0 18px 36px -24px rgba(0, 0, 0, 0.8),
-      inset 0 1px 0 rgba(205, 214, 244, 0.05);
-  }
-
-  .panel-solid {
-    background:
-      linear-gradient(180deg, rgba(49, 50, 68, 0.95) 0%, rgba(30, 30, 46, 0.95) 100%);
-    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.04);
-  }
-
-  .panel-solid-muted {
-    background: rgba(24, 24, 37, 0.86);
-    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.03);
-  }
-
-  .pay-cta {
-    box-shadow:
-      0 22px 54px -26px rgba(203, 166, 247, 0.65),
-      0 10px 24px -18px rgba(203, 166, 247, 0.30),
-      inset 0 1px 0 rgba(255, 255, 255, 0.18);
-  }
-
-  .segmented-shell {
-    background: rgba(205, 214, 244, 0.03);
-    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.04);
+    /* Un pelo más claro que surface para despegar el modal del fondo oscuro */
+    background: color-mix(in srgb, var(--color-surface) 80%, #363A4F);
+    box-shadow: var(--shadow-modal);
+    border: 1px solid var(--color-border-strong);
   }
 
   .segmented-option-active {
-    border-color: rgba(203, 166, 247, 0.50);
-    background: linear-gradient(180deg, rgba(203, 166, 247, 0.20) 0%, rgba(203, 166, 247, 0.12) 100%);
-    box-shadow:
-      0 18px 40px -32px rgba(203, 166, 247, 0.70),
-      inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border-color: var(--color-primary);
   }
 
   .segmented-option-inactive {
-    background: rgba(24, 24, 37, 0.88);
-    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.03);
+    background: var(--color-surface-raised);
+    color: var(--color-text-muted);
+    border-color: var(--color-border);
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -183,7 +185,7 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: var(--hairline-strong);
+    background: var(--color-border-strong);
     border-radius: 3px;
   }
 
@@ -201,23 +203,24 @@
   }
 
   /* Named shadow utilities — centralizan los rgba de box-shadow */
+  /* Glow mauve sutil sobre fondo oscuro, no neón */
   .shadow-primary {
-    box-shadow:
-      0 18px 40px -24px rgba(203, 166, 247, 0.65),
-      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    box-shadow: 0 8px 20px -8px rgba(198, 160, 246, 0.30);
   }
 
   .shadow-primary-raised {
-    box-shadow:
-      0 22px 44px -24px rgba(203, 166, 247, 0.75),
-      inset 0 1px 0 rgba(255, 255, 255, 0.26);
+    box-shadow: 0 12px 28px -10px rgba(198, 160, 246, 0.38);
+  }
+
+  .shadow-cta {
+    box-shadow: 0 10px 28px -10px rgba(198, 160, 246, 0.35);
   }
 
   .shadow-inset-subtle {
-    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.05);
+    box-shadow: var(--shadow-card);
   }
 
   .shadow-inset-subtle-sm {
-    box-shadow: inset 0 1px 0 rgba(205, 214, 244, 0.04);
+    box-shadow: 0 1px 2px rgba(24, 25, 38, 0.30);
   }
 }

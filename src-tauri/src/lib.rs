@@ -74,6 +74,12 @@ pub fn run() {
             sql: include_str!("../migrations/0011_printer_settings.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 12,
+            description: "shifts",
+            sql: include_str!("../migrations/0012_shifts.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

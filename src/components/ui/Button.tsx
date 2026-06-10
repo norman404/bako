@@ -8,29 +8,27 @@ const buttonVariants = cva(
   [
     "inline-flex cursor-pointer gap-2",
     "rounded-sharp text-sm font-semibold",
-    "transition-[color,background-color,border-color,box-shadow,transform] duration-150 ease-out",
+    "transition-[color,background-color,border-color,box-shadow] duration-200 ease-out",
     "disabled:pointer-events-none disabled:opacity-40",
-    "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-champagne/60 focus-visible:ring-offset-2 focus-visible:ring-offset-obsidian",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
   ].join(" "),
   {
     variants: {
       variant: {
-        default:
-          "border border-champagne/70 bg-champagne text-obsidian shadow-primary hover:border-champagne hover:bg-champagne-light hover:shadow-primary-raised",
+        default: "bg-primary text-on-primary hover:bg-primary-strong",
         secondary:
-          "border border-hairline-strong bg-obsidian-elevated text-ink shadow-inset-subtle hover:border-champagne/35 hover:bg-surface1 hover:text-ink",
+          "border border-border bg-surface-raised text-text hover:border-border-strong hover:bg-surface-sunken",
         outline:
-          "border border-hairline-strong bg-transparent text-ink hover:border-champagne/40 hover:bg-obsidian-elevated hover:text-ink",
-        ghost:
-          "bg-transparent text-ink-muted hover:bg-obsidian-elevated hover:text-ink",
-        danger:
-          "border border-danger/45 bg-danger/10 text-danger shadow-inset-subtle-sm hover:bg-danger/16 hover:text-danger-light",
+          "border border-border-strong bg-transparent text-text hover:bg-surface-sunken",
+        ghost: "bg-transparent text-text-muted hover:bg-surface-sunken hover:text-text",
+        danger: "border border-danger/40 bg-transparent text-danger hover:bg-danger/10",
+        cta: "bg-cta text-on-cta font-bold shadow-cta hover:bg-cta-strong",
       },
       size: {
-        small: "h-8 px-3 text-[11px] uppercase tracking-[0.16em] whitespace-nowrap items-center justify-center",
+        small: "h-8 px-3 text-2xs uppercase tracking-[0.16em] whitespace-nowrap items-center justify-center",
         medium: "h-10 px-4 whitespace-nowrap items-center justify-center",
-        large: "h-14 px-6 text-[15px] whitespace-nowrap items-center justify-center",
+        large: "h-14 px-6 text-md whitespace-nowrap items-center justify-center",
         icon: "h-10 w-10 p-0 whitespace-nowrap items-center justify-center",
       },
     },

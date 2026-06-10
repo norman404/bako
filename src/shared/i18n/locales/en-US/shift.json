@@ -1,0 +1,19 @@
+{
+  "openShift": "Open shift",
+  "closeShift": "Close shift",
+  "activeShift": "Active shift",
+  "noActiveShiftAlert": "You must open a shift before making a sale.",
+  "reportTitle": "Shift report",
+  "openedAt": "Start",
+  "closedAt": "End",
+  "totalOrders": "Orders",
+  "totalSales": "Total sales",
+  "cashTotal": "Cash",
+  "cardTotal": "Card",
+  "emptyHistory": "No shifts recorded",
+  "historyTitle": "Shift history",
+  "openButton": "Open shift",
+  "closeButton": "Close shift",
+  "confirmClose": "Are you sure you want to close the current shift?",
+  "confirmCloseDescription": "Closing the shift will generate the sales report."
+}

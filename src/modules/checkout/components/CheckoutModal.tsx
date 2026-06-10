@@ -86,16 +86,15 @@ function CheckoutModal({
       <DialogPortal>
         <DialogOverlay />
         <DialogPrimitive.Content
-          aria-label={t('modal.ariaLabel')}
           className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-5 lg:p-6"
           onInteractOutside={(event) => {
             if (isSubmitting) event.preventDefault();
           }}
         >
-          <DialogTitle className="sr-only">{t('modal.title')}</DialogTitle>
-          <div className="modal-shell-solid flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[50rem] flex-col overflow-hidden rounded-modal border border-hairline animate-modal-in sm:max-h-[calc(100dvh-3rem)]">
-            <header className="flex items-center justify-between border-b border-hairline px-4 py-3 sm:px-5">
-              <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink sm:text-[22px]">
+          <DialogTitle className="sr-only">{t('modal.ariaLabel')}</DialogTitle>
+          <div className="modal-shell-solid flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[50rem] flex-col overflow-hidden rounded-modal animate-modal-in sm:max-h-[calc(100dvh-3rem)]">
+            <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-5">
+              <h2 className="font-display text-xl text-primary-strong">
                 {t('modal.title')}
               </h2>
 
@@ -104,7 +103,7 @@ function CheckoutModal({
                 size="icon"
                 onClick={handleCloseRequest}
                 disabled={isSubmitting}
-                className="h-8 w-8 rounded-card text-ink-muted hover:bg-surface-mid hover:text-ink"
+                className="rounded-card"
                 aria-label={t('modal.closeAriaLabel')}
               >
                 <X className="h-4 w-4" />

@@ -22,7 +22,13 @@ function buildPayload(input: PrintOrderOptions, printerType: string, printerAddr
     printerType,
     printerAddress,
     ticketNumber: input.ticketNumber,
-    createdAt: input.createdAt.toISOString(),
+    createdAt: input.createdAt.toLocaleString(undefined, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
     total: input.total,
     items: input.items.map((item) => ({
       name: item.name,
@@ -46,7 +52,7 @@ export function printOrder(input: PrintOrderOptions): ResultAsync<void, Error> {
   const payload = buildPayload(input, printerType, printerAddress ?? "");
 
   const invokeAsync = async (): Promise<void> => {
-    await invoke("print_ticket", payload as unknown as Record<string, unknown>);
+    await invoke("print_ticket", { input: payload });
   };
 
   return ResultAsync.fromPromise(invokeAsync(), (error) => {
@@ -63,7 +69,9 @@ export async function testPrinter(): Promise<void> {
   }
 
   await invoke("test_printer", {
-    printerType,
-    printerAddress: printerAddress ?? "",
+    input: {
+      printerType,
+      printerAddress: printerAddress ?? "",
+    },
   });
 }

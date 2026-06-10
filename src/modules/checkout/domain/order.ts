@@ -37,6 +37,7 @@ export interface CreateOrderInput {
   customerId?: string | null;
   customer?: CheckoutCustomerInput | null;
   deliveryPersonId?: string | null;
+  shiftId?: string | null;
   payment: CheckoutPaymentInput;
 }
 
@@ -71,6 +72,7 @@ export interface CheckoutOrder {
   ticketNumber: number;
   customerId: string | null;
   deliveryPersonId: string | null;
+  shiftId: string | null;
   total: number;
   createdAt: Date;
   customer: CheckoutCustomer | null;

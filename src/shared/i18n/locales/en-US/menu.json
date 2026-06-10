@@ -1,6 +1,5 @@
 {
   "productGrid": {
-    "emptySymbol": "∅",
     "emptyTitle": "The menu is empty in this section",
     "emptyHint": "Try another category",
     "popularBadge": "Popular",

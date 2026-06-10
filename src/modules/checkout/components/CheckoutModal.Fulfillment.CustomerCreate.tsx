@@ -21,9 +21,9 @@ export function CustomerCreateForm({
   const { t } = useTranslation('checkout');
   
   return (
-    <div className="rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
-      <div className="flex flex-col gap-3 border-b border-hairline pb-2.5 lg:flex-row lg:items-center lg:justify-between">
-        <h3 className="text-[15px] font-medium text-ink">
+    <div className="rounded-card border border-border bg-surface-raised px-3 py-3 sm:px-4 sm:py-4">
+      <div className="flex flex-col gap-3 border-b border-border pb-2.5 lg:flex-row lg:items-center lg:justify-between">
+        <h3 className="text-base font-medium text-text">
           {t('customerCreate.title')}
         </h3>
         <Button
@@ -31,7 +31,6 @@ export function CustomerCreateForm({
           variant="secondary"
           size="small"
           onClick={onShowSearchCustomers}
-          className="h-8 px-3 text-[10px] uppercase tracking-[0.16em]"
         >
           {t('customerCreate.backButton')}
         </Button>
@@ -63,7 +62,7 @@ export function CustomerCreateForm({
       <div className="mt-3">
         <FormField label={t('customerCreate.addressLabel')} htmlFor="create-customer-address">
           <div className="relative">
-            <MapPin className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-ink-dim" />
+            <MapPin className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-text-dim" />
             <Textarea
               id="create-customer-address"
               value={customerForm.address}
