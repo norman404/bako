@@ -20,18 +20,18 @@ function CheckoutDeliveryHeader({
   
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <h3 className="text-[15px] font-medium text-ink">
+      <h3 className="text-base font-medium text-text">
         {t('delivery.headerText')}
       </h3>
 
       <div className="grid w-full gap-2 sm:grid-cols-2 lg:max-w-[320px]">
         <Button
           type="button"
-          variant={isSearchCustomerMode ? "secondary" : "outline"}
+          variant={isSearchCustomerMode ? "default" : "outline"}
           size="medium"
           onClick={onShowSearchCustomers}
           aria-pressed={isSearchCustomerMode}
-          className="h-9 w-full justify-center px-4 text-[10px] uppercase tracking-[0.18em]"
+          className="h-11 w-full justify-center px-4 text-2xs uppercase tracking-[0.18em]"
         >
           <Search className="h-4 w-4" />
           {t('delivery.searchButton')}
@@ -42,7 +42,7 @@ function CheckoutDeliveryHeader({
           size="medium"
           onClick={onStartNewCustomer}
           aria-pressed={isNewCustomerMode}
-          className="h-9 w-full justify-center px-4 text-[10px] uppercase tracking-[0.18em]"
+          className="h-11 w-full justify-center px-4 text-2xs uppercase tracking-[0.18em]"
         >
           <Plus className="h-4 w-4" />
           {t('delivery.newButton')}

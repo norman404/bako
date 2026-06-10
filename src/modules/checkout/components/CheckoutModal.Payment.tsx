@@ -30,10 +30,10 @@ function CheckoutModalPaymentPanel({
   const { t } = useTranslation('checkout');
   
   return (
-    <div className="rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
-      <div className="flex items-center justify-between gap-3 border-b border-hairline pb-2.5">
-        <h3 className="text-[15px] font-medium text-ink">{t('payment.title')}</h3>
-        <span className="font-mono-tabular text-[20px] font-semibold tracking-[-0.02em] text-champagne">
+    <div className="rounded-card border border-border bg-surface-sunken px-3 py-3 sm:px-4 sm:py-4">
+      <div className="flex items-center justify-between gap-3 border-b border-border-strong pb-2.5">
+        <h3 className="text-md font-semibold text-text">{t('payment.title')}</h3>
+        <span className="font-mono-tabular text-xl font-semibold text-primary-strong">
           {formatPosCurrency(totals.total)}
         </span>
       </div>

@@ -59,10 +59,10 @@ function toMenuPayload(formState: MenuFormState): MenuCreateInput | null {
 
 function getListButtonClass(isActive: boolean): string {
   return [
-    "w-full rounded-card border px-2.5 py-2 text-left transition-[border-color,background-color] duration-150",
+    "w-full cursor-pointer rounded-card border px-2.5 py-2 text-left transition-[border-color,background-color] duration-200",
     isActive
-      ? "border-champagne/24 bg-surface-mid"
-      : "border-transparent hover:border-hairline hover:bg-surface-low",
+      ? "border-primary bg-primary/10 text-primary-strong"
+      : "border-transparent text-text hover:border-border-strong hover:bg-surface-sunken/50",
   ].join(" ");
 }
 
@@ -152,8 +152,8 @@ function MenuSettingsPanel() {
 
   return (
     <div className="grid min-h-full grid-rows-[auto_1fr] gap-3">
-      <header className="flex items-center justify-between gap-3 border-b border-hairline pb-3">
-        <h2 className="text-[20px] font-semibold tracking-[-0.02em] text-ink">{t('menus.title')}</h2>
+      <header className="flex items-center justify-between gap-3 border-b border-border-strong pb-3">
+        <h2 className="font-display text-lg text-primary-strong">{t('menus.title')}</h2>
 
         <Button
           variant="secondary"
@@ -166,7 +166,7 @@ function MenuSettingsPanel() {
       </header>
 
       <div className="grid min-h-0 gap-3 xl:grid-cols-[minmax(0,0.86fr)_minmax(300px,1.14fr)]">
-        <section className="min-h-0 overflow-hidden xl:border-r xl:border-hairline xl:pr-3">
+        <section className="min-h-0 overflow-hidden xl:border-r xl:border-border xl:pr-3">
           <div className="scrollbar-thin h-full space-y-1 overflow-y-auto pr-1">
             {menus.map((menu) => {
               const isActive = selectedMenuId === menu.id && mode === MENU_FORM_MODE.EDIT;
@@ -179,9 +179,9 @@ function MenuSettingsPanel() {
                     className={getListButtonClass(isActive)}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[12px] font-medium text-ink">{menu.name}</p>
+                      <p className="text-xs font-medium">{menu.name}</p>
                       {menu.isDefault ? (
-                        <span className="text-[10px] rounded-sm bg-champagne/20 px-1.5 py-0.5 text-champagne font-medium">
+                        <span className="text-2xs rounded-sm bg-primary/10 px-1.5 py-0.5 text-primary-strong font-medium">
                           Default
                         </span>
                       ) : null}
@@ -197,7 +197,7 @@ function MenuSettingsPanel() {
                       }
                       void handleDelete(menu);
                     }}
-                    className="h-auto min-h-[60px] w-8 rounded-card text-ink-dim hover:bg-surface-mid hover:text-danger"
+                    className="h-auto min-h-[60px] w-8 rounded-card text-text-dim hover:bg-surface-sunken hover:text-danger"
                     aria-label={t('menus.deleteButton')}
                     disabled={isDeletePending || menu.isDefault}
                   >
@@ -214,8 +214,8 @@ function MenuSettingsPanel() {
         </section>
 
         <section className="min-h-0 xl:pl-1">
-          <div className="border-b border-hairline pb-2.5">
-            <h3 className="text-[16px] font-medium tracking-[-0.02em] text-ink">
+          <div className="border-b border-border pb-2.5">
+            <h3 className="text-md font-semibold text-text">
               {mode === MENU_FORM_MODE.CREATE ? t('menus.createNew') : t('menus.editMenu')}
             </h3>
           </div>
@@ -242,7 +242,7 @@ function MenuSettingsPanel() {
                     setFormState((previous) => ({ ...previous, isDefault: checked === true }));
                   }}
                 />
-                <label htmlFor="menu-default" className="text-[12px] text-ink-dim cursor-pointer">
+                <label htmlFor="menu-default" className="text-xs text-text-dim cursor-pointer">
                   {t('menus.defaultDescription')}
                 </label>
               </div>
@@ -250,12 +250,11 @@ function MenuSettingsPanel() {
 
             <FormError message={formError} />
 
-            <div className="flex items-center justify-end border-t border-hairline pt-2.5">
+            <div className="flex items-center justify-end border-t border-border pt-2.5">
               <Button
                 type="submit"
                 variant="default"
                 size="small"
-                className="rounded-card bg-champagne text-obsidian hover:bg-champagne/90"
                 disabled={isSaving}
               >
                 {mode === MENU_FORM_MODE.CREATE ? t('menus.createButton') : t('menus.saveButton')}

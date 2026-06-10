@@ -9,7 +9,7 @@ interface EmptyStateProps {
 function EmptyState({ children, className }: EmptyStateProps) {
   return (
     <div className={cn(
-      "rounded-card border border-dashed border-hairline px-4 py-8 text-center text-[12px] text-ink-muted",
+      "rounded-card border border-dashed border-border-strong px-4 py-8 text-center text-xs text-text-muted",
       className
     )}>
       {children}

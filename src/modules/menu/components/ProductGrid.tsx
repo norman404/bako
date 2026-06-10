@@ -1,3 +1,5 @@
+import { SearchX } from "lucide-react";
+
 import type { Category } from "@/modules/menu/domain/category";
 import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
@@ -21,8 +23,8 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart }: Pr
   if (visibleProducts.length === 0) {
     return (
       <section className="relative flex min-h-[50vh] flex-col items-center justify-center py-12">
-        <span className="font-display text-6xl leading-none text-ink-dim">{t('productGrid.emptySymbol')}</span>
-        <p className="mt-6 text-[13px] font-medium uppercase tracking-[0.18em] text-ink-muted">
+        <SearchX className="h-12 w-12 text-text-dim" aria-hidden="true" />
+        <p className="mt-6 text-sm font-medium uppercase tracking-[0.18em] text-text-muted">
           {t('productGrid.emptyTitle')}
         </p>
         <p className="mt-2 eyebrow">{t('productGrid.emptyHint')}</p>
@@ -42,14 +44,14 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart }: Pr
               key={product.id}
               onClick={() => onAddToCart(product)}
               aria-label={t('productGrid.addAriaLabel', { productName: product.name })}
-              className="group relative flex flex-col items-stretch gap-2 rounded-card border border-hairline bg-obsidian-raised p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-hairline-strong hover:bg-obsidian-elevated active:bg-obsidian"
+              className="group relative flex cursor-pointer flex-col items-stretch gap-2 rounded-card border border-border bg-surface-raised p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:translate-y-0 active:bg-surface-sunken"
               style={color ? { borderLeftColor: color, borderLeftWidth: '3px' } : undefined}
             >
-              <h3 className="font-display text-[16px] leading-tight tracking-tight text-ink">
+              <h3 className="text-base font-bold leading-tight text-text">
                 {product.name}
               </h3>
 
-              <span className="font-mono-tabular text-[14px] tracking-tight text-ink-dim transition-colors group-hover:text-champagne">
+              <span className="font-mono-tabular text-md font-semibold tracking-tight text-text transition-colors duration-200 group-hover:text-primary-strong">
                 {formatPosCurrency(product.price)}
               </span>
             </button>

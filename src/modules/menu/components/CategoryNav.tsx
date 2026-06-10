@@ -1,4 +1,5 @@
 import type { Category } from "@/modules/menu/domain/category";
+import { categoryAccent } from "@/lib/color";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -55,42 +56,42 @@ interface CategoryItemProps {
 }
 
 function CategoryItem({ id, label, count, active, onSelect, color }: CategoryItemProps) {
-  const hasColor = !!color;
+  const accent = color ? categoryAccent(color) : null;
 
-  const dynamicStyles = hasColor
+  const dynamicStyles = accent
     ? {
-        backgroundColor: `${color}18`, // ~10% opacity
-        borderColor: active ? color : `${color}40`,
-        color: active ? color : undefined,
+        backgroundColor: accent.bg,
+        borderColor: active && color ? color : accent.border,
+        color: accent.text,
       }
-    : {};
+    : undefined;
 
   return (
     <button
       onClick={() => onSelect(id)}
       className={cn(
-        "relative shrink-0 select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
-        "hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-champagne/60",
+        "relative shrink-0 cursor-pointer select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
+        "hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
         active
           ? "font-bold"
           : "font-medium",
-        hasColor
+        accent
           ? ""
           : cn(
               active
-                ? "border-champagne/40 bg-obsidian-elevated text-ink"
-                : "border-hairline bg-obsidian-raised text-ink-dim hover:border-hairline-strong hover:text-ink-muted"
+                ? "border-primary bg-surface-sunken text-text"
+                : "border-border bg-surface-raised text-text-muted hover:border-border-strong hover:text-text"
             ),
       )}
       style={dynamicStyles}
     >
       <span className="flex items-baseline gap-2">
-        <span className="whitespace-nowrap text-[12px] uppercase tracking-[0.14em]">
+        <span className="whitespace-nowrap text-xs uppercase tracking-[0.14em]">
           {label}
         </span>
         <span
           className={cn(
-            "font-mono-tabular text-[10px] tracking-wider",
+            "font-mono-tabular text-2xs tracking-wider",
             active ? "opacity-100" : "opacity-60",
           )}
         >

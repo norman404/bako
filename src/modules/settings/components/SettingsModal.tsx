@@ -57,13 +57,13 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
     <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <Dialog.Portal>
         {/* Overlay con blur y oscurecimiento del fondo */}
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-crust/96 backdrop-blur-md transition-opacity duration-200 data-[state=open]:animate-fade-in" />
-        
-        {/* Contenedor del Modal Glassmorphic Obsidian */}
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal border border-hairline modal-shell-solid shadow-2xl transition-all duration-200 focus:outline-none text-ink grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
-          
-          <header className="flex items-center justify-between border-b border-hairline px-4 py-2.5 sm:px-5">
-            <Dialog.Title className="text-[13px] font-semibold tracking-wide text-ink">{t('modal.title')}</Dialog.Title>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-scrim/70 backdrop-blur-sm transition-opacity duration-200 data-[state=open]:animate-fade-in" />
+
+        {/* Contenedor del modal */}
+        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal modal-shell-solid transition-all duration-200 focus:outline-none text-text grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
+
+          <header className="flex items-center justify-between border-b border-border-strong px-4 py-2.5 sm:px-5">
+            <Dialog.Title className="font-display text-xl text-primary-strong">{t('modal.title')}</Dialog.Title>
 
             <Dialog.Close asChild>
               <Button
@@ -84,7 +84,7 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
               role="tablist"
               aria-label={t('modal.sectionsAriaLabel')}
               aria-orientation="vertical"
-              className="flex flex-col gap-0.5 border-r border-hairline p-2 overflow-y-auto"
+              className="flex flex-col gap-0.5 border-r border-border p-2 overflow-y-auto"
             >
               {allTabs.map((tab) => {
                 const TabIcon = tab.icon;
@@ -100,17 +100,19 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
                     onClick={() => setActiveSection(tab.id)}
                     variant="ghost"
                     className={[
-                      "w-full justify-start gap-2.5 rounded-card px-3 py-2.5",
-                      isActive ? "bg-obsidian-elevated text-ink" : "text-ink-muted",
+                      "w-full min-h-[44px] justify-start gap-2.5 rounded-sharp border-l-2 px-3 py-2.5",
+                      isActive
+                        ? "border-primary bg-primary/10 text-primary-strong hover:bg-primary/10 hover:text-primary-strong"
+                        : "border-transparent text-text-muted hover:bg-surface-sunken hover:text-text",
                     ].join(" ")}
                   >
                     <TabIcon
                       className={[
-                        "h-4 w-4 shrink-0 transition-colors duration-150",
-                        isActive ? "text-champagne" : "text-ink-dim",
+                        "h-4 w-4 shrink-0 transition-colors duration-200",
+                        isActive ? "text-primary-strong" : "text-text-dim",
                       ].join(" ")}
                     />
-                    <span className="text-[12px] font-medium tracking-[0.01em]">
+                    <span className="text-xs font-medium tracking-[0.01em]">
                       {tab.label}
                     </span>
                   </Button>

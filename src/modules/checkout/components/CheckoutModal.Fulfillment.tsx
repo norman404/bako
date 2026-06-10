@@ -68,9 +68,9 @@ function CheckoutModalFulfillmentPanel({
   const { t } = useTranslation('checkout');
   
   return (
-    <section className="rounded-card border border-hairline bg-surface-low px-3 py-3 sm:px-4 sm:py-4">
-      <div className="flex flex-col gap-3 border-b border-hairline pb-2.5 lg:flex-row lg:items-center lg:justify-between">
-        <h3 className="text-[15px] font-medium text-ink">{t('fulfillment.title')}</h3>
+    <section className="rounded-card border border-border bg-surface-sunken px-3 py-3 sm:px-4 sm:py-4">
+      <div className="flex flex-col gap-3 border-b border-border-strong pb-2.5 lg:flex-row lg:items-center lg:justify-between">
+        <h3 className="text-md font-semibold text-text">{t('fulfillment.title')}</h3>
 
         <CheckoutFulfillmentSelector
           fulfillmentType={fulfillmentType}
@@ -115,7 +115,7 @@ function CheckoutModalFulfillmentPanel({
       ) : null}
 
       {formError ? (
-        <p className="mt-3 rounded-card border border-danger/40 bg-danger/10 px-3 py-2.5 text-[12px] text-danger">
+        <p className="mt-3 rounded-card border border-danger/40 bg-danger/10 px-3 py-2.5 text-xs text-danger">
           {formError}
         </p>
       ) : null}

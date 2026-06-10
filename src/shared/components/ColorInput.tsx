@@ -14,9 +14,9 @@ interface ColorInputProps {
 const PRESET_COLORS = [
   "#f38ba8", "#fab387", "#f9e2af", "#a6e3a1", "#94e2d5",
   "#89dceb", "#74c7ec", "#cba6f7", "#f5c2e7", "#eba0ac",
-  "#d20f39", "#fe640b", "#df8e1d", "#40a02b", "#179299",
-  "#04a5e5", "#209fb5", "#8839ef", "#ea76cb", "#e64553",
-  "#6c7086", "#7f849c", "#9399b2", "#bac2de", "#cdd6f4",
+  "#ED8796", "#F5A97F", "#EED49F", "#A6DA95", "#8BD5CA",
+  "#91D7E3", "#7DC4E4", "#C6A0F6", "#F5BDE6", "#EE99A0",
+  "#6c7086", "#7f849c", "#9399b2", "#B8C0E0", "#CAD3F5",
 ];
 
 function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps) {
@@ -28,13 +28,13 @@ function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps
         <div className="flex items-center gap-2">
           <label
             htmlFor={id}
-            className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim leading-none"
+            className="text-2xs font-medium uppercase tracking-[0.16em] text-text-dim leading-none"
           >
             {label}
           </label>
           {value ? (
             <span
-              className="h-4 w-4 rounded-full inline-block border border-hairline"
+              className="h-4 w-4 rounded-full inline-block border border-border-strong"
               style={{ backgroundColor: value }}
             />
           ) : null}
@@ -47,15 +47,15 @@ function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps
             <button
               type="button"
               aria-label="Abrir selector de color"
-              className="h-9 w-9 shrink-0 rounded-card border border-hairline bg-obsidian-raised flex items-center justify-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-champagne/20"
+              className="h-9 w-9 shrink-0 cursor-pointer rounded-card border border-border bg-surface-raised flex items-center justify-center transition-colors duration-200 hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
             >
               {value ? (
                 <span
-                  className="h-5 w-5 rounded-full inline-block border border-hairline"
+                  className="h-5 w-5 rounded-full inline-block border border-border-strong"
                   style={{ backgroundColor: value }}
                 />
               ) : (
-                <span className="h-5 w-5 rounded-full inline-block border border-dashed border-ink-dim" />
+                <span className="h-5 w-5 rounded-full inline-block border border-dashed border-text-dim" />
               )}
             </button>
           </PopoverTrigger>
@@ -71,14 +71,14 @@ function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps
                     onChange(color);
                     setOpen(false);
                   }}
-                  className="h-8 w-8 rounded-full border border-hairline transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-champagne/40"
+                  className="h-8 w-8 cursor-pointer rounded-full border border-border-strong transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                   style={{ backgroundColor: color }}
                 />
               ))}
             </div>
 
-            <div className="mt-3 pt-2 border-t border-hairline">
-              <p className="text-[10px] text-ink-dim uppercase tracking-wider mb-1.5">
+            <div className="mt-3 pt-2 border-t border-border">
+              <p className="text-2xs text-text-dim uppercase tracking-wider mb-1.5">
                 Código personalizado
               </p>
               <Input
@@ -87,7 +87,6 @@ function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps
                   onChange(event.currentTarget.value);
                 }}
                 placeholder="#C8E6C9"
-                className="text-[13px]"
               />
             </div>
           </PopoverContent>

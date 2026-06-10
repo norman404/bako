@@ -64,23 +64,23 @@ function getStatusConfig(
 } {
   if (type === "none" || !type) {
     return {
-      color: "text-ink-muted",
-      bg: "bg-obsidian",
+      color: "text-text-muted",
+      bg: "bg-surface-sunken",
       icon: CircleOff,
       label: "No configurada",
     };
   }
   if (!address || address.trim() === "") {
     return {
-      color: "text-amber-400",
-      bg: "bg-amber-400/10",
+      color: "text-warning",
+      bg: "bg-warning/10",
       icon: AlertCircle,
       label: "Falta dirección",
     };
   }
   return {
-    color: "text-emerald-400",
-    bg: "bg-emerald-400/10",
+    color: "text-success",
+    bg: "bg-success/10",
     icon: CheckCircle2,
     label: "Configurada",
   };
@@ -163,7 +163,7 @@ export function PrinterSettingsCard() {
       await testPrinter();
       toast.success("Impresora respondió correctamente", {
         description: "El ticket de prueba se envió exitosamente",
-        icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
+        icon: <CheckCircle2 className="h-4 w-4 text-success" />,
       });
     } catch (e) {
       toast.error("No se pudo conectar con la impresora", {
@@ -174,18 +174,18 @@ export function PrinterSettingsCard() {
   };
 
   return (
-    <div className="rounded-card border border-hairline bg-obsidian-raised overflow-hidden">
+    <div className="rounded-card border border-border bg-surface-raised shadow-card overflow-hidden">
       {/* Header con status */}
-      <div className="flex items-center justify-between border-b border-hairline px-5 py-3.5">
+      <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sharp bg-surface1">
-            <Printer className="h-4 w-4 text-champagne" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-sharp bg-surface-sunken">
+            <Printer className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-[13px] font-semibold tracking-[-0.01em] text-ink">
+            <h3 className="text-sm font-semibold text-text">
               Impresora térmica
             </h3>
-            <p className="text-[11px] text-ink-dim">ESC/POS — tickets automáticos</p>
+            <p className="text-2xs text-text-dim">ESC/POS — tickets automáticos</p>
           </div>
         </div>
 
@@ -193,7 +193,7 @@ export function PrinterSettingsCard() {
           className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${status.bg}`}
         >
           <StatusIcon className={`h-3.5 w-3.5 ${status.color}`} />
-          <span className={`text-[10px] font-medium uppercase tracking-wider ${status.color}`}>
+          <span className={`text-2xs font-medium uppercase tracking-wider ${status.color}`}>
             {status.label}
           </span>
         </div>
@@ -203,9 +203,7 @@ export function PrinterSettingsCard() {
       <div className="grid gap-5 p-5">
         {/* Tipo de conexión */}
         <div className="grid gap-1.5">
-          <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-            Tipo de conexión
-          </Label>
+          <Label>Tipo de conexión</Label>
           <Select value={printerType} onValueChange={(v) => {
             const newType = v as "none" | "usb" | "network";
             setPrinterType(newType);
@@ -215,7 +213,7 @@ export function PrinterSettingsCard() {
             }
           }}>
             <SelectTrigger data-testid="printer-type-select">
-              <span className="text-ink">{PRINTER_OPTIONS.find((o) => o.value === printerType)?.label}</span>
+              <span className="text-text">{PRINTER_OPTIONS.find((o) => o.value === printerType)?.label}</span>
             </SelectTrigger>
             <SelectContent>
               {PRINTER_OPTIONS.map((option) => {
@@ -223,10 +221,10 @@ export function PrinterSettingsCard() {
                 return (
                   <SelectItem key={option.value} value={option.value}>
                     <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-ink-dim" />
+                      <Icon className="h-4 w-4 text-text-dim" />
                       <div className="flex flex-col">
                         <span>{option.label}</span>
-                        <span className="text-[10px] text-ink-muted">
+                        <span className="text-2xs text-text-muted">
                           {option.description}
                         </span>
                       </div>
@@ -243,9 +241,7 @@ export function PrinterSettingsCard() {
           <div className="grid gap-1.5 animate-fade-in">
             {usbPrinters.length === 0 ? (
               <>
-                <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-                  Detección automática
-                </Label>
+                <Label>Detección automática</Label>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
@@ -259,21 +255,19 @@ export function PrinterSettingsCard() {
                     {isScanning ? "Escaneando..." : "Buscar impresoras USB"}
                   </Button>
                 </div>
-                <p className="text-[11px] text-ink-muted leading-relaxed">
+                <p className="text-2xs text-text-muted leading-relaxed">
                   Conecta tu impresora térmica por USB y haz clic en "Buscar". El sistema detectará automáticamente el modelo.
                 </p>
               </>
             ) : (
               <>
-                <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-                  Impresoras detectadas
-                </Label>
+                <Label>Impresoras detectadas</Label>
                 <Select
                   value={printerAddress}
                   onValueChange={setPrinterAddress}
                 >
                   <SelectTrigger>
-                    <span className="text-ink truncate">
+                    <span className="text-text truncate">
                       {printerAddress
                         ? usbPrinters.find((p) => p.address === printerAddress)?.name ?? printerAddress
                         : "Seleccionar impresora..."}
@@ -283,8 +277,8 @@ export function PrinterSettingsCard() {
                     {usbPrinters.map((printer) => (
                       <SelectItem key={printer.address} value={printer.address}>
                         <div className="flex flex-col">
-                          <span className="text-ink">{printer.name}</span>
-                          <span className="text-[10px] text-ink-muted font-mono">
+                          <span className="text-text">{printer.name}</span>
+                          <span className="font-mono-tabular text-2xs text-text-muted">
                             {printer.address}
                           </span>
                         </div>
@@ -299,7 +293,7 @@ export function PrinterSettingsCard() {
                     size="small"
                     onClick={handleScanUsb}
                     disabled={isScanning}
-                    className="gap-1.5 text-[11px]"
+                    className="gap-1.5 text-2xs"
                   >
                     <Scan className={`h-3 w-3 ${isScanning ? "animate-spin" : ""}`} />
                     {isScanning ? "Escaneando..." : "Volver a buscar"}
@@ -309,11 +303,11 @@ export function PrinterSettingsCard() {
             )}
 
             {/* Info card USB */}
-            <div className="flex items-start gap-2 rounded-sharp bg-surface1/50 p-3 border border-hairline">
-              <Usb className="h-4 w-4 text-champagne shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 rounded-sharp bg-surface-sunken/50 p-3 border border-border">
+              <Usb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <div className="grid gap-0.5">
-                <span className="text-[11px] font-medium text-ink">Conexión USB directa</span>
-                <span className="text-[10px] text-ink-dim leading-relaxed">
+                <span className="text-2xs font-medium text-text">Conexión USB directa</span>
+                <span className="text-2xs text-text-dim leading-relaxed">
                   El sistema se comunica directamente con la impresora sin drivers del sistema operativo. Asegúrate de que la impresora esté conectada y encendida.
                 </span>
               </div>
@@ -324,30 +318,28 @@ export function PrinterSettingsCard() {
         {/* Network: input manual */}
         {printerType === "network" && (
           <div className="grid gap-1.5 animate-fade-in">
-            <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-              Dirección del dispositivo
-            </Label>
+            <Label>Dirección del dispositivo</Label>
             <div className="relative">
               <Input
                 data-testid="printer-address-input"
                 value={printerAddress}
                 onChange={(e) => setPrinterAddress(e.target.value)}
                 placeholder="192.168.1.100:9100"
-                className="pr-20 font-mono text-[13px]"
+                className="pr-20 font-mono-tabular text-sm"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-medium uppercase tracking-wider text-ink-muted">
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-2xs font-medium uppercase tracking-wider text-text-muted">
                 IP:PORT
               </span>
             </div>
-            <p className="text-[11px] text-ink-muted leading-relaxed">
+            <p className="text-2xs text-text-muted leading-relaxed">
               Ingresa la dirección IP y el puerto TCP separados por dos puntos. Puerto estándar ESC/POS: 9100.
             </p>
 
-            <div className="flex items-start gap-2 rounded-sharp bg-surface1/50 p-3 border border-hairline">
-              <Wifi className="h-4 w-4 text-champagne shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 rounded-sharp bg-surface-sunken/50 p-3 border border-border">
+              <Wifi className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <div className="grid gap-0.5">
-                <span className="text-[11px] font-medium text-ink">Conexión por red local</span>
-                <span className="text-[10px] text-ink-dim leading-relaxed">
+                <span className="text-2xs font-medium text-text">Conexión por red local</span>
+                <span className="text-2xs text-text-dim leading-relaxed">
                   La impresora debe estar en la misma red local con IP estática o asignada por DHCP. Puerto estándar: 9100.
                 </span>
               </div>
@@ -359,7 +351,7 @@ export function PrinterSettingsCard() {
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             {hasChanges && (
-              <span className="text-[11px] text-champagne">Cambios sin guardar</span>
+              <span className="text-2xs text-primary">Cambios sin guardar</span>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -380,7 +372,7 @@ export function PrinterSettingsCard() {
               size="small"
               onClick={handleSave}
               disabled={isLoading}
-              className="rounded-card bg-champagne text-obsidian hover:bg-champagne/90 gap-1.5"
+              className="gap-1.5"
             >
               <Save className="h-3.5 w-3.5" />
               Guardar

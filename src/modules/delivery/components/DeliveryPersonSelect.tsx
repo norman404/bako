@@ -73,7 +73,7 @@ function DeliveryPersonSelect({ value, onChange }: DeliveryPersonSelectProps) {
               </SelectItem>
             ))}
             {deliveryPersons.length === 0 && (
-              <div className="py-2 text-center text-xs text-ink-muted">
+              <div className="py-2 text-center text-xs text-text-dim">
                 {t("select.noOptions")}
               </div>
             )}
@@ -90,7 +90,7 @@ function DeliveryPersonSelect({ value, onChange }: DeliveryPersonSelectProps) {
           + {t("select.quickCreate")}
         </Button>
       ) : (
-        <div className="rounded-card border border-hairline p-2 space-y-2">
+        <div className="rounded-card border border-border bg-surface-sunken/50 p-2 space-y-2">
           <Input
             placeholder={t("form.namePlaceholder")}
             value={quickName}

@@ -59,24 +59,22 @@ export function GeneralSettingsCard() {
   };
 
   return (
-    <div className="rounded-card border border-hairline bg-obsidian-raised overflow-hidden">
-      <div className="flex items-center gap-3 border-b border-hairline px-5 py-3.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-sharp bg-surface1">
-          <Globe className="h-4 w-4 text-champagne" />
+    <div className="rounded-card border border-border bg-surface-raised shadow-card overflow-hidden">
+      <div className="flex items-center gap-3 border-b border-border px-5 py-3.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-sharp bg-surface-sunken">
+          <Globe className="h-4 w-4 text-primary" />
         </div>
         <div>
-          <h3 className="text-[13px] font-semibold tracking-[-0.01em] text-ink">
+          <h3 className="text-sm font-semibold text-text">
             {t("system.title")}
           </h3>
-          <p className="text-[11px] text-ink-dim">Idioma y moneda del sistema</p>
+          <p className="text-2xs text-text-dim">Idioma y moneda del sistema</p>
         </div>
       </div>
 
       <form className="grid gap-5 p-5" onSubmit={handleSubmit}>
         <div className="grid gap-1.5">
-          <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-            {t("system.localeLabel")}
-          </Label>
+          <Label>{t("system.localeLabel")}</Label>
           <Select value={locale} onValueChange={setLocale}>
             <SelectTrigger data-testid="locale-select-trigger">
               <SelectValue />
@@ -92,9 +90,7 @@ export function GeneralSettingsCard() {
         </div>
 
         <div className="grid gap-1.5">
-          <Label className="text-[9px] font-medium uppercase tracking-[0.16em] text-ink-dim">
-            {t("system.currencyLabel")}
-          </Label>
+          <Label>{t("system.currencyLabel")}</Label>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger data-testid="currency-select-trigger">
               <SelectValue />
@@ -111,14 +107,13 @@ export function GeneralSettingsCard() {
 
         <div className="flex items-center justify-end gap-2 pt-1">
           {hasChanges && (
-            <span className="text-[11px] text-champagne">Cambios sin guardar</span>
+            <span className="text-2xs text-primary">Cambios sin guardar</span>
           )}
           <Button
             type="submit"
             variant="default"
             size="small"
             disabled={isLoading || !hasChanges}
-            className="rounded-card bg-champagne text-obsidian hover:bg-champagne/90"
           >
             <Save className="h-3.5 w-3.5" />
             {t("system.saveButton")}
