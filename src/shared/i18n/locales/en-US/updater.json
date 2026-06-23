@@ -7,7 +7,8 @@
     "restartButton": "Restart now",
     "errorTitle": "Update check failed",
     "checkingTitle": "Checking for updates...",
-    "dismiss": "Close"
+    "dismiss": "Close",
+    "tryAgain": "Try again"
   },
   "panel": {
     "title": "Updates",

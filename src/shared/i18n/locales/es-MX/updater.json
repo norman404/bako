@@ -7,7 +7,8 @@
     "restartButton": "Reiniciar ahora",
     "errorTitle": "Error al buscar actualización",
     "checkingTitle": "Buscando actualizaciones...",
-    "dismiss": "Cerrar"
+    "dismiss": "Cerrar",
+    "tryAgain": "Reintentar"
   },
   "panel": {
     "title": "Actualizaciones",
