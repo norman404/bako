@@ -189,4 +189,13 @@ describe("SettingsModal (settings feature)", () => {
     const activePanel = screen.getByRole("tabpanel");
     expect(within(activePanel).getByRole("heading", { name: /^características$/i })).toBeInTheDocument();
   });
+
+  it("should render the updater tab from the module registry with its i18n label", () => {
+    // Regression net for the registry migration: the updater settings tab must
+    // keep rendering (now provided by the updater module manifest, not hardcoded
+    // in SettingsModal) with its translated label.
+    renderSettingsModal();
+
+    expect(screen.getByRole("tab", { name: /actualizaciones/i })).toBeInTheDocument();
+  });
 });

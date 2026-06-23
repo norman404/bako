@@ -25,9 +25,11 @@ import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { ShiftButton } from "@/modules/shift-reports";
 import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useUpdater, UpdateToast } from "@/modules/updater";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
 import { formatPosCurrency } from "@/lib/currency";
 import { IS_MAC } from "@/lib/platform";
+import { useMountEffect } from "@/lib/use-mount-effect";
 import { MODULE_REGISTRY } from "@/app/module-registry";
 
 export function App() {
@@ -42,6 +44,18 @@ export function App() {
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
   const deliveryEnabled = flags.delivery_enabled ?? false;
   const shiftManagementEnabled = flags.shift_management_enabled ?? false;
+
+  const updater = useUpdater();
+
+  // Trigger a background check for updates when the app mounts if auto updates
+  // are enabled. The single useUpdater instance owns the status, and UpdateToast
+  // renders it. This is the simplest wiring for a single-screen app without a
+  // global provider.
+  useMountEffect(() => {
+    if (flags.auto_update_enabled) {
+      updater.checkForUpdates();
+    }
+  });
 
   // Shift state
   const { data: activeShift } = useActiveShift();
@@ -410,6 +424,8 @@ export function App() {
           registry={MODULE_REGISTRY}
         />
       ) : null}
+
+      <UpdateToast updater={updater} />
     </div>
   );
 }

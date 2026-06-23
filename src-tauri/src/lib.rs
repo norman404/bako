@@ -80,15 +80,27 @@ pub fn run() {
             sql: include_str!("../migrations/0012_shifts.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 13,
+            description: "updater_flag",
+            sql: include_str!("../migrations/0013_updater_flag.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
         .plugin(
             SqlBuilder::default()
                 .add_migrations("sqlite:bako.db", migrations)
                 .build(),
         )
+        .setup(|app| {
+            #[cfg(desktop)]
+            app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::test_printer, commands::list_usb_printers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

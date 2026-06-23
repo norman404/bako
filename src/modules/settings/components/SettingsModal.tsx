@@ -38,7 +38,9 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
     })
     .map((manifest) => ({
       id: manifest.id,
-      label: manifest.settingsLabel ?? manifest.id,
+      label: manifest.settingsLabelKey
+        ? t(manifest.settingsLabelKey)
+        : (manifest.settingsLabel ?? manifest.id),
       icon: manifest.settingsIcon ?? Globe,
       Panel: manifest.settingsPanel!,
     }));

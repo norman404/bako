@@ -10,6 +10,7 @@ import esMxOrder from './locales/es-MX/order.json';
 import esMxTurno from './locales/es-MX/turno.json';
 import esMxShift from './locales/es-MX/shift.json';
 import esMxDelivery from './locales/es-MX/delivery.json';
+import esMxUpdater from './locales/es-MX/updater.json';
 
 // es-AR
 import esArCommon from './locales/es-AR/common.json';
@@ -21,6 +22,7 @@ import esArOrder from './locales/es-AR/order.json';
 import esArTurno from './locales/es-AR/turno.json';
 import esArShift from './locales/es-AR/shift.json';
 import esArDelivery from './locales/es-AR/delivery.json';
+import esArUpdater from './locales/es-AR/updater.json';
 
 // en-US
 import enUsCommon from './locales/en-US/common.json';
@@ -32,6 +34,7 @@ import enUsOrder from './locales/en-US/order.json';
 import enUsTurno from './locales/en-US/turno.json';
 import enUsShift from './locales/en-US/shift.json';
 import enUsDelivery from './locales/en-US/delivery.json';
+import enUsUpdater from './locales/en-US/updater.json';
 
 // es-ES
 import esEsCommon from './locales/es-ES/common.json';
@@ -43,6 +46,7 @@ import esEsOrder from './locales/es-ES/order.json';
 import esEsTurno from './locales/es-ES/turno.json';
 import esEsShift from './locales/es-ES/shift.json';
 import esEsDelivery from './locales/es-ES/delivery.json';
+import esEsUpdater from './locales/es-ES/updater.json';
 
 // pt-BR
 import ptBrCommon from './locales/pt-BR/common.json';
@@ -54,6 +58,7 @@ import ptBrOrder from './locales/pt-BR/order.json';
 import ptBrTurno from './locales/pt-BR/turno.json';
 import ptBrShift from './locales/pt-BR/shift.json';
 import ptBrDelivery from './locales/pt-BR/delivery.json';
+import ptBrUpdater from './locales/pt-BR/updater.json';
 
 export const resources: Resource = {
   'es-MX': {
@@ -66,6 +71,7 @@ export const resources: Resource = {
     turno: esMxTurno,
     shift: esMxShift,
     delivery: esMxDelivery,
+    updater: esMxUpdater,
   },
   'es-AR': {
     common: esArCommon,
@@ -77,6 +83,7 @@ export const resources: Resource = {
     turno: esArTurno,
     shift: esArShift,
     delivery: esArDelivery,
+    updater: esArUpdater,
   },
   'en-US': {
     common: enUsCommon,
@@ -88,6 +95,7 @@ export const resources: Resource = {
     turno: enUsTurno,
     shift: enUsShift,
     delivery: enUsDelivery,
+    updater: enUsUpdater,
   },
   'es-ES': {
     common: esEsCommon,
@@ -99,6 +107,7 @@ export const resources: Resource = {
     turno: esEsTurno,
     shift: esEsShift,
     delivery: esEsDelivery,
+    updater: esEsUpdater,
   },
   'pt-BR': {
     common: ptBrCommon,
@@ -110,5 +119,6 @@ export const resources: Resource = {
     turno: ptBrTurno,
     shift: ptBrShift,
     delivery: ptBrDelivery,
+    updater: ptBrUpdater,
   },
 };

@@ -1,0 +1,165 @@
+import { Download, RefreshCw, RotateCw, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+import { APP_VERSION } from "@/lib/app-version";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/Button";
+import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useUpdater } from "@/modules/updater";
+import {
+  UpdateStatus,
+  type UpdateInfo,
+} from "@/modules/updater/domain/update-status";
+
+function StatusMessage({ status }: { status: UpdateInfo }) {
+  const { t } = useTranslation("updater");
+
+  switch (status.kind) {
+    case UpdateStatus.Idle:
+      return <span className="text-sm text-text-muted">{t("panel.upToDate")}</span>;
+    case UpdateStatus.Checking:
+      return (
+        <span className="flex items-center gap-2 text-sm text-text-muted">
+          <RotateCw className="h-3.5 w-3.5 animate-spin" />
+          {t("panel.checking")}
+        </span>
+      );
+    case UpdateStatus.Available:
+      return (
+        <span className="text-sm font-medium text-primary-strong">
+          {t("panel.updateAvailable", { version: status.version })}
+        </span>
+      );
+    case UpdateStatus.Downloading:
+      return (
+        <div className="w-full max-w-xs">
+          <div className="mb-1 flex items-center justify-between text-xs">
+            <span className="text-text-muted">{t("panel.downloading")}</span>
+            <span className="font-medium text-text">{status.progress.percentage}%</span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-200"
+              style={{ width: `${status.progress.percentage}%` }}
+            />
+          </div>
+        </div>
+      );
+    case UpdateStatus.ReadyToInstall:
+      return (
+        <span className="text-sm font-medium text-success">
+          {t("panel.readyToRestart")}
+        </span>
+      );
+    case UpdateStatus.Error:
+      return <span className="text-sm text-danger">{t("panel.error", { message: status.message })}</span>;
+    default:
+      return null;
+  }
+}
+
+export function UpdateSettingsPanel() {
+  const { t } = useTranslation(["updater", "settings"]);
+  const updater = useUpdater();
+  const { flags, setFlag } = useFeatureFlagsStore();
+
+  const autoUpdateEnabled = flags.auto_update_enabled ?? true;
+
+  return (
+    <div className="grid gap-5 max-w-xl">
+      <section className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <Download className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-text">{t("updater:panel.title")}</h2>
+            <p className="text-xs text-text-muted">
+              {t("updater:panel.currentVersionLabel")}: {APP_VERSION}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
+              {t("updater:panel.autoUpdateLabel")}
+            </Label>
+            <p className="text-xs text-text-muted">{t("updater:panel.autoUpdateDescription")}</p>
+          </div>
+          <Checkbox
+            id="auto-update-enabled"
+            checked={autoUpdateEnabled}
+            onCheckedChange={(checked) => {
+              setFlag("auto_update_enabled", checked as boolean);
+            }}
+          />
+        </div>
+      </section>
+
+      <section className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <StatusMessage status={updater.status} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {updater.status.kind === UpdateStatus.Idle ||
+            updater.status.kind === UpdateStatus.Error ? (
+              <Button
+                variant="outline"
+                size="small"
+                onClick={() => updater.checkForUpdates()}
+                disabled={updater.isChecking}
+                className="gap-1.5"
+              >
+                <Search className="h-3.5 w-3.5" />
+                {t("updater:panel.checkButton")}
+              </Button>
+            ) : null}
+
+            {updater.status.kind === UpdateStatus.Available ? (
+              <Button
+                variant="default"
+                size="small"
+                onClick={() => updater.downloadAndInstall()}
+                disabled={updater.isDownloading}
+                className="gap-1.5"
+              >
+                <Download className="h-3.5 w-3.5" />
+                {t("updater:panel.downloadAndInstall")}
+              </Button>
+            ) : null}
+
+            {updater.status.kind === UpdateStatus.ReadyToInstall ? (
+              <Button
+                variant="default"
+                size="small"
+                onClick={() => updater.relaunch()}
+                className="gap-1.5"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                {t("updater:panel.restart")}
+              </Button>
+            ) : null}
+
+            {updater.status.kind === UpdateStatus.Error ? (
+              <Button
+                variant="outline"
+                size="small"
+                onClick={() => updater.checkForUpdates()}
+                className="gap-1.5"
+              >
+                <RotateCw className="h-3.5 w-3.5" />
+                {t("updater:panel.tryAgain")}
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

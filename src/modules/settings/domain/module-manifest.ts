@@ -5,6 +5,8 @@ export interface ModuleManifest {
   id: string;
   flagKey?: string;
   settingsPanel?: React.ComponentType;
+  /** Optional i18n key (resolved in the `settings` namespace) for the tab label. */
+  settingsLabelKey?: string;
   settingsLabel?: string;
   settingsIcon?: LucideIcon;
 }

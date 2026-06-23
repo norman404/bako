@@ -1,0 +1,28 @@
+{
+  "toast": {
+    "availableTitle": "Update available: {{version}}",
+    "updateButton": "Update now",
+    "downloadingTitle": "Downloading update...",
+    "readyTitle": "Ready to restart ({{version}})",
+    "restartButton": "Restart now",
+    "errorTitle": "Update check failed",
+    "checkingTitle": "Checking for updates...",
+    "dismiss": "Close"
+  },
+  "panel": {
+    "title": "Updates",
+    "currentVersionLabel": "Installed version",
+    "autoUpdateLabel": "Check for updates automatically",
+    "autoUpdateDescription": "When Bako starts, it checks whether a new version is available.",
+    "checkButton": "Check for updates now",
+    "checking": "Checking...",
+    "upToDate": "You're on the latest version",
+    "updateAvailable": "Version {{version}} available",
+    "downloadAndInstall": "Download and install",
+    "downloading": "Downloading...",
+    "readyToRestart": "Ready to restart",
+    "restart": "Restart now",
+    "error": "Error: {{message}}",
+    "tryAgain": "Try again"
+  }
+}

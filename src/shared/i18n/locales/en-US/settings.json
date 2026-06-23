@@ -10,7 +10,8 @@
     "menus": "Menus",
     "system": "System",
     "turno": "Shift",
-    "features": "Features"
+    "features": "Features",
+    "updater": "Updates"
   },
   "system": {
     "title": "System",

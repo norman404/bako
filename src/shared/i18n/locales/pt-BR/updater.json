@@ -1,0 +1,28 @@
+{
+  "toast": {
+    "availableTitle": "Atualização disponível: {{version}}",
+    "updateButton": "Atualizar agora",
+    "downloadingTitle": "Baixando atualização...",
+    "readyTitle": "Pronto para reiniciar ({{version}})",
+    "restartButton": "Reiniciar agora",
+    "errorTitle": "Erro ao buscar atualização",
+    "checkingTitle": "Buscando atualizações...",
+    "dismiss": "Fechar"
+  },
+  "panel": {
+    "title": "Atualizações",
+    "currentVersionLabel": "Versão instalada",
+    "autoUpdateLabel": "Buscar atualizações automaticamente",
+    "autoUpdateDescription": "Ao iniciar, o Bako verifica se há uma nova versão disponível.",
+    "checkButton": "Buscar atualizações agora",
+    "checking": "Buscando...",
+    "upToDate": "Você está na versão mais recente",
+    "updateAvailable": "Versão {{version}} disponível",
+    "downloadAndInstall": "Baixar e instalar",
+    "downloading": "Baixando...",
+    "readyToRestart": "Pronto para reiniciar",
+    "restart": "Reiniciar agora",
+    "error": "Erro: {{message}}",
+    "tryAgain": "Tentar novamente"
+  }
+}

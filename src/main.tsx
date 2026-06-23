@@ -41,11 +41,11 @@ async function bootstrap() {
     
     // 3. Hidratar feature flags desde SQLite
     await useFeatureFlagsStore.getState().initializeFeatureFlags();
-    
+
     // 4. Inicializar i18n con el locale del store
     const currentLocale = useSettingsStore.getState().locale;
     await initI18n({ lng: currentLocale });
-    
+
     // 5. Conectar i18n con cambios de settings
     wireI18nWithSettings(i18n);
     
