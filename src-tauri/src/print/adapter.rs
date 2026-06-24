@@ -35,15 +35,15 @@ fn parse_network_address(address: &str) -> Result<(String, u16), PrintError> {
 pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Result<PrinterDriver, PrintError> {
     match printer_type {
         "usb" => {
-            let (vid, pid) = parse_usb_address(printer_address)?;
             #[cfg(target_os = "windows")]
             {
-                let driver = escpos::driver::WindowsUsbPrintDriver::open(vid, pid)
+                let driver = escpos::driver::WindowsUsbPrintDriver::open(printer_address)
                     .map_err(|e| PrintError::UsbError(e.to_string()))?;
                 Ok(PrinterDriver::Usb(driver))
             }
             #[cfg(not(target_os = "windows"))]
             {
+                let (vid, pid) = parse_usb_address(printer_address)?;
                 let driver = escpos::driver::NativeUsbDriver::open(vid, pid)
                     .map_err(|e| PrintError::UsbError(e.to_string()))?;
                 Ok(PrinterDriver::Usb(driver))
