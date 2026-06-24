@@ -1,5 +1,7 @@
+import tauriConfig from "../../src-tauri/tauri.conf.json";
+
 /**
- * Current application version. Must stay in sync with `src-tauri/tauri.conf.json`
- * `version` field.
+ * Current application version, sourced from `src-tauri/tauri.conf.json`.
+ * Stays in sync automatically — no manual updates needed.
  */
-export const APP_VERSION = "0.1.0" as const;
+export const APP_VERSION = tauriConfig.version as string;
