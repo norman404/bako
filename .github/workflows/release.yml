@@ -65,6 +65,30 @@ jobs:
         with:
           tagName: app-v__VERSION__
           releaseName: 'Bako v__VERSION__'
+          releaseBody: '## Install instructions
+
+### macOS
+The app is unsigned (no Apple Developer certificate). When you open it for the first time, macOS will show "Bako is damaged and can''t be opened". To fix:
+
+**Option A — Terminal (recommended):**
+```bash
+xattr -cr /Applications/Bako.app
+```
+
+**Option B — Right-click open:**
+Right-click Bako.app → "Open" → confirm the dialog.
+
+After that, Bako will open normally.
+
+### Linux
+Make the AppImage executable:
+```bash
+chmod +x Bako_*.AppImage
+./Bako_*.AppImage
+```
+
+### Windows
+Run the .exe installer. If SmartScreen warns, click "More info" → "Run anyway".'
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
