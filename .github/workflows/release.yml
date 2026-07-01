@@ -56,6 +56,18 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
+      # ⚠️ NUNCA regenerar TAURI_SIGNING_PRIVATE_KEY ni cambiar la pubkey de
+      # src-tauri/tauri.conf.json sin coordinar un aviso a usuarios. La pubkey
+      # se compila DENTRO del binario en build-time y no se puede actualizar
+      # remotamente: rotar la clave orfana el auto-update de TODO lo que ya
+      # esté instalado. Incidente real: entre 2026-06-16 y 2026-06-23 la pubkey
+      # de tauri.conf.json quedó con bytes distintos a la clave privada real de
+      # este secret (el comentario de texto mentía sobre el key_id real),
+      # rompiendo el auto-update para todas las versiones v0.2.2-v0.2.6.
+      # Antes de tocar este secret o la pubkey: verificar con un round-trip
+      # (firmar un archivo con la clave nueva y comparar el key_id real de la
+      # firma contra el key_id real de la pubkey nueva, byte a byte — NO
+      # confiar en el comentario de texto del archivo .pub).
       - name: Build and release
         uses: tauri-apps/tauri-action@v0
         env:

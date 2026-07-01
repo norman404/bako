@@ -356,3 +356,24 @@ Las migraciones SQLite son manejadas **exclusivamente por Tauri** a través del 
 ### Caso real que ocurrió en el proyecto
 
 Se agregó la tabla `system_settings` al schema TypeScript (`src/shared/db/schema.ts`) pero se omitió la migración SQL. Al intentar leer/escribir settings, la app fallaba con `no such table: system_settings`. La solución fue crear la migración `0005_system_settings.sql` y registrarla en `lib.rs` — **no modificar migraciones existentes ni agregar un runner en TypeScript**.
+
+---
+
+## Sistema de actualizaciones (Tauri updater) — firma y llaves
+
+La `pubkey` del updater en `src-tauri/tauri.conf.json` se compila **dentro del binario en build-time**. No es un valor que se lea en runtime desde un servidor ni desde config remota: queda embebido en cada instalación existente el día que se compiló esa versión.
+
+### Cómo funciona
+
+- Cada release se firma con una clave privada (`TAURI_SIGNING_PRIVATE_KEY`, secret de GitHub Actions) que produce un archivo `.sig` por artefacto.
+- El binario instalado en la máquina del usuario valida esa firma contra la `pubkey` que quedó compilada dentro de él al momento del build.
+- Si la `pubkey` compilada no corresponde criptográficamente a la clave privada que firma los releases, el updater rechaza CUALQUIER actualización con un error de firma — sin importar qué tan reciente sea la versión candidata.
+- Rotar la `pubkey` en el repo **no actualiza nada retroactivamente**: toda instalación existente sigue con la `pubkey` vieja compilada hasta que un update válido logre instalarse. Si la rotación deja la config en un estado inconsistente, el auto-update queda huérfano para esas instalaciones — no hay forma remota de corregirlo salvo que el usuario reinstale manualmente.
+
+### Regla de oro
+
+> La `pubkey` y el secret `TAURI_SIGNING_PRIVATE_KEY` **nunca se rotan** sin coordinar antes un aviso a usuarios. Y cualquier cambio a la `pubkey` **debe verificarse con una prueba de round-trip antes de publicar**: firmar un archivo con la clave privada candidata y comparar el `key_id` real —los bytes `[2:10]` de la estructura minisign decodificada en base64, no el texto del comentario del archivo `.pub`— contra el `key_id` real de la pubkey candidata. Si no coinciden byte a byte, **no se publica**.
+
+### Caso real que ocurrió en el proyecto
+
+Entre los commits `522f478` y `93abc36` (2026-06-23) se rotó la keypair de firma dos veces en 20 minutos. La `pubkey` que quedó en `tauri.conf.json` tenía un comentario de texto que decía `4D64CCE2FA5847A3`, pero sus bytes reales correspondían a una clave distinta (`4D64CCE2FA584763`) — nadie verificó los bytes reales contra la firma real, solo se comparó visualmente el texto del comentario. El auto-update estuvo roto para todas las versiones v0.2.2 a v0.2.6 (2026-06-23 a 2026-06-30) sin que ningún build fallara — el error solo aparecía en runtime para el usuario final, como `The signature was created with a different key than the one provided`. La solución fue generar un keypair nuevo desde cero y verificarlo con round-trip antes de publicar (ver commit que corrige `src-tauri/tauri.conf.json` en esta misma fecha).
