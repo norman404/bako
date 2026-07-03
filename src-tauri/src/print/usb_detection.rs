@@ -10,8 +10,8 @@ pub struct UsbPrinterInfo {
     pub address: String,
 }
 
-/// Detecta impresoras USB conectadas filtrando por clase de impresora (0x07)
-/// o interfaces con clase de impresora. También incluye VIDs conocidos.
+/// Detects connected USB printers, filtering by printer class (0x07) or
+/// printer-class interfaces. Also includes known POS thermal-printer VIDs.
 pub fn detect_usb_printers() -> Vec<UsbPrinterInfo> {
     let devices_result = list_devices().wait();
 
@@ -25,7 +25,7 @@ pub fn detect_usb_printers() -> Vec<UsbPrinterInfo> {
         .map(|dev| {
             let vid = dev.vendor_id();
             let pid = dev.product_id();
-            let product = dev.product_string().unwrap_or("Impresora desconocida");
+            let product = dev.product_string().unwrap_or("Unknown printer");
             let manufacturer = dev.manufacturer_string().unwrap_or("");
 
             let name = if manufacturer.is_empty() {
@@ -45,23 +45,23 @@ pub fn detect_usb_printers() -> Vec<UsbPrinterInfo> {
 }
 
 fn is_likely_printer(dev: &nusb::DeviceInfo) -> bool {
-    // Clase de dispositivo: Printer (0x07)
+    // Device class: Printer (0x07)
     if dev.class() == 0x07 {
         return true;
     }
 
-    // Alguna interface con clase printer
+    // Any printer-class interface
     if dev.interfaces().any(|iface| iface.class() == 0x07) {
         return true;
     }
 
-    // VIDs conocidos de fabricantes de impresoras térmicas POS
+    // Known POS thermal-printer vendor IDs
     const KNOWN_POS_VIDS: &[u16] = &[
         0x04B8, // Epson
         0x1504, // Bixolon
         0x0DD4, // Star Micronics
         0x0A5F, // Zebra
-        0x1FC9, // NXP / genéricas
+        0x1FC9, // NXP / generic
         0x0416, // Winchiphead
         0x0483, // STMicroelectronics
         0x1A86, // QinHeng (CH340/CH341)

@@ -62,8 +62,8 @@ pub fn build_ticket<D: Driver>(printer: &mut Printer<D>, payload: &TicketPayload
     // Meta
     printer
         .justify(JustifyMode::LEFT).map_err(map_err)?
-        .writeln(&format!("Pedido: {}", payload.fulfillment_type)).map_err(map_err)?
-        .writeln(&format!("Pago:   {}", payload.payment_method)).map_err(map_err)?;
+        .writeln(&format!("Order: {}", payload.fulfillment_type)).map_err(map_err)?
+        .writeln(&format!("Payment: {}", payload.payment_method)).map_err(map_err)?;
 
     // Divider
     printer
@@ -89,13 +89,13 @@ pub fn build_ticket<D: Driver>(printer: &mut Printer<D>, payload: &TicketPayload
         .bold(true).map_err(map_err)?
         .writeln(&format!("Total: {}", format_cents(payload.total))).map_err(map_err)?
         .bold(false).map_err(map_err)?
-        .writeln(&format!("Recibido: {}", format_cents(payload.payment_amount))).map_err(map_err)?;
+        .writeln(&format!("Paid: {}", format_cents(payload.payment_amount))).map_err(map_err)?;
 
     // Change
     if payload.payment_method == "cash" {
         let change = payload.payment_amount.saturating_sub(payload.total);
         printer
-            .writeln(&format!("Cambio: {}", format_cents(change))).map_err(map_err)?;
+            .writeln(&format!("Change: {}", format_cents(change))).map_err(map_err)?;
     }
 
     // Customer
@@ -104,7 +104,7 @@ pub fn build_ticket<D: Driver>(printer: &mut Printer<D>, payload: &TicketPayload
             .justify(JustifyMode::LEFT).map_err(map_err)?
             .writeln("--------------------------------").map_err(map_err)?
             .bold(true).map_err(map_err)?
-            .writeln("Cliente").map_err(map_err)?
+            .writeln("Customer").map_err(map_err)?
             .bold(false).map_err(map_err)?
             .writeln(&customer.name).map_err(map_err)?
             .writeln(&customer.phone).map_err(map_err)?
@@ -114,7 +114,7 @@ pub fn build_ticket<D: Driver>(printer: &mut Printer<D>, payload: &TicketPayload
     // Footer
     printer
         .justify(JustifyMode::CENTER).map_err(map_err)?
-        .writeln("Gracias por tu compra").map_err(map_err)?
+        .writeln("Thank you for your purchase").map_err(map_err)?
         .print_cut().map_err(map_err)?;
 
     Ok(())
