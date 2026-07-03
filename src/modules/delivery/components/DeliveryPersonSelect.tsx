@@ -99,7 +99,7 @@ function DeliveryPersonSelect({ value, onChange }: DeliveryPersonSelectProps) {
           <ColorInput
             id="quick-delivery-person-color"
             value={quickColor}
-            onChange={(value) => setQuickColor(value)}
+            onChange={(color) => setQuickColor(color)}
             placeholder={t("form.colorPlaceholder")}
           />
           <div className="flex items-center gap-2">

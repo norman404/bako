@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
+  },
+  "rules": {
+    "no-underscore-dangle": [
+      "error",
+      { "allow": ["__TAURI_INTERNALS__", "_updateHandle"] }
+    ],
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-array-sort": "off"
+  }
+}
