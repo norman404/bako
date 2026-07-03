@@ -1,0 +1,273 @@
+# Contributing to Bako
+
+Thanks for your interest in contributing to Bako! This is a source-available project, and contributions of all kinds are welcome — bug fixes, features, docs, tests.
+
+Before you start, please read our [Code of Conduct](./CODE_OF_CONDUCT.md). By participating you agree to uphold it.
+
+> **License heads-up:** Bako is licensed under the [PolyForm Small Business License 1.0.0](./LICENSE) — **not** an OSI-approved open source license. Small businesses (< $1M USD revenue, < 100 employees), personal, educational, and noncommercial use are free; larger commercial use requires a separate license. See the [License](#license) section below for what this means for your contributions.
+
+---
+
+## Prerequisites
+
+You'll need these installed before you can build and run Bako:
+
+| Tool | Version | Notes |
+| --- | --- | --- |
+| **Node.js** | `20+` | Use [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to manage versions |
+| **pnpm** | `9+` | `corepack enable && corepack prepare pnpm@latest --activate` |
+| **Rust** | `stable` | Install via [rustup](https://rustup.rs/) — required by Tauri |
+| **Git** | any recent | |
+
+### OS-specific dependencies (Tauri 2)
+
+Bako is a Tauri 2 desktop app, so the Rust toolchain needs native GUI bindings:
+
+**macOS**
+```bash
+xcode-select --install        # Xcode Command Line Tools
+# Rust via rustup, plus CLang (bundled with Xcode/CLT)
+```
+
+**Linux (Debian/Ubuntu)**
+```bash
+sudo apt update
+sudo apt install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf build-essential curl wget file
+```
+
+**Windows**
+- [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+- [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/) (preinstalled on Windows 11)
+- Rust via rustup
+
+See the [Tauri 2 prerequisites guide](https://v2.tauri.app/start/prerequisites/) for full details.
+
+---
+
+## Getting Started
+
+```bash
+# 1. Fork the repo on GitHub, then:
+git clone https://github.com/<your-username>/bako.git
+cd bako
+
+# 2. Enable pnpm
+corepack enable
+
+# 3. Install JS dependencies
+pnpm install
+
+# 4. Run the full desktop app (compiles Rust + boots Vite)
+pnpm tauri dev
+```
+
+The first `pnpm tauri dev` will take a while because it compiles the Rust backend. Subsequent runs are much faster.
+
+Want just the web dev server (no Tauri shell)? `pnpm dev` boots Vite alone — useful for pure UI work, but any feature that hits SQLite or native APIs won't work in that mode.
+
+---
+
+## Development
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Vite dev server only (no Tauri/native APIs) |
+| `pnpm tauri dev` | Full desktop app — **recommended for feature work** |
+| `pnpm build` | Production build (`tsc` + `vite build`) |
+| `pnpm test` | Unit tests via Vitest |
+| `pnpm test:dom` | DOM tests via `@testing-library/react` |
+
+Bako uses **oxlint** as its linter — run `pnpm lint` before opening a PR. There is no formatter configured yet, so follow the style of surrounding code, and run `pnpm build` to catch type errors.
+
+---
+
+## Testing
+
+Tests are **co-located** with the implementation they cover, not in a separate `tests/` tree.
+
+### Naming conventions
+
+| File | Purpose |
+| --- | --- |
+| `*.spec.ts` | Unit test (pure logic — domain, use-cases, lib) |
+| `*.dom.spec.tsx` | DOM test using `@testing-library/react` (components, hooks with UI) |
+
+DOM tests run on a separate Vitest config (`vitest.dom.config.ts`) so they don't pollute the unit suite.
+
+### TDD is mandatory
+
+Every change follows **Red → Green → Refactor**. No exceptions.
+
+1. **Red** — Write the test for the *new* behavior. Run it. It **must fail** for the right reason (a real assertion failure, not a syntax error). A test that never fails proves nothing.
+2. **Green** — Write the minimum code to make the failing test pass. Nothing more.
+3. **Refactor** — Clean up while tests stay green. Re-run them.
+
+```bash
+# Target a single spec file during the cycle:
+pnpm test --testPathPattern=<spec-file>
+pnpm test:dom --testPathPattern=<dom-spec-file>
+```
+
+Tests for **existing** behavior should pass before you touch anything — they're your regression safety net.
+
+---
+
+## Project Architecture
+
+Bako follows **Clean Architecture organized by feature**, not by layer. Each module in `src/modules/<feature>/` is a vertical slice with its own internal layers.
+
+```
+domain/       ← entities + ports (pure, no framework deps)
+use-cases/    ← pure functions that take a port, return ResultAsync
+persistence/  ← port implementations (Drizzle + SQLite)
+hooks/        ← DI + React Query/Zustand binding, no business logic
+components/   ← pure UI, receive props + callbacks only
+```
+
+### Dependency rule (enforced, not optional)
+
+Dependencies point **inward only**. Never the other way.
+
+```
+domain ← use-cases ← persistence
+                      ↑
+                    hooks
+                      ↑
+                  components
+```
+
+- `domain/` imports nothing from the project (only `src/lib/` and `neverthrow`).
+- `components/` never import a repository or a use-case directly — they go through hooks.
+- `ports.ts` always lives at `domain/ports.ts`, never at the module root.
+
+The `menu` module (`src/modules/menu/`) is the reference implementation — read it when in doubt.
+
+> For the full rules, signals of breakage, and the canonical module structure, see [`AGENTS.md`](./AGENTS.md). It's the authoritative architecture guide.
+
+---
+
+## Commit Convention
+
+We use [Conventional Commits](https://www.conventionalcommits.org/). Keep the subject line short, imperative mood, lowercase after the type.
+
+### Types
+
+| Type | Use for |
+| --- | --- |
+| `feat` | New feature or capability |
+| `fix` | Bug fix |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `perf` | Performance improvement |
+| `docs` | Documentation only |
+| `test` | Adding or correcting tests |
+| `chore` | Tooling, deps, config, CI |
+| `style` | Formatting, whitespace (no logic change) |
+
+### Examples
+
+```
+feat(checkout): add cancel order use-case
+fix(menu): filter products by category case-insensitively
+refactor(order): extract price calculation to domain
+docs: add CONTRIBUTING.md
+chore: bump tauri to 2.1.0
+test(feature-flags): cover optimistic update rollback
+```
+
+### Scope
+
+Use the module name as scope when the change is scoped to a module: `feat(menu):`, `fix(checkout):`. Omit scope for cross-cutting changes.
+
+### AI attribution
+
+**Do not** add `Co-Authored-By` trailers, `Generated with Claude` lines, or any other AI-attribution footers to commits. Conventional commit messages only.
+
+---
+
+## Versioning
+
+Bako uses **CalVer**: `2026.M.x` — year, month, and release-of-the-month, with no leading zeros (semver tooling rejects them). Release tags follow the same scheme prefixed with `v`, e.g. `v2026.7.1`.
+
+---
+
+## Pull Requests
+
+### Branch naming
+
+Prefix the branch with the type, matching the commit type:
+
+```
+feat/<short-description>      # e.g. feat/cancel-order
+fix/<short-description>      # e.g. fix/menu-category-filter
+chore/<short-description>    # e.g. chore/upgrade-tauri
+docs/<short-description>
+refactor/<short-description>
+```
+
+### Before opening a PR
+
+- [ ] `pnpm build` passes (no type errors)
+- [ ] `pnpm test` and `pnpm test:dom` pass
+- [ ] New behavior is covered by tests written **first** (Red phase observed)
+- [ ] Commits follow Conventional Commits, no AI-attribution trailers
+- [ ] No unrelated formatting churn
+
+### PR description
+
+Include:
+
+- **What** — what the PR does, in one or two sentences
+- **Why** — the motivation / problem being solved
+- **How** — the approach, especially if non-obvious
+- **Testing** — how you verified it (which specs, manual steps)
+- **Breaking changes** — if any, call them out explicitly
+
+### Review & merge
+
+- One approval required for non-trivial changes.
+- We use **squash merge** — the PR title becomes the squashed commit message, so write it in Conventional Commits format.
+- Keep PRs focused. One concern per PR. If you're touching three modules, consider three PRs.
+
+---
+
+## Reporting Bugs
+
+Use the [GitHub issue tracker](https://github.com/norman404/bako/issues/new?template=bug_report.yml). The template will guide you through providing:
+
+- **Bako version** (found in *Settings → About* or `Cargo.toml`)
+- **OS and version** (macOS / Linux distro / Windows build)
+- **Steps to reproduce** — numbered, minimal
+- **Expected vs. actual behavior**
+- **Logs / screenshots** — Tauri logs live in the dev console (`pnpm tauri dev`) or the OS log directory in production
+
+The more reproducible, the faster we can triage.
+
+---
+
+## Feature Requests
+
+Open a [GitHub issue](https://github.com/norman404/bako/issues/new?template=feature_request.yml) labeled `enhancement`. Tell us:
+
+- The problem you're trying to solve (not just the solution you imagine)
+- Who benefits and when
+- Any alternatives you've considered
+
+For larger features, expect a discussion before implementation — we may ask you to write it up as a proposal first so we can align on scope and architecture before code is written.
+
+---
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the [PolyForm Small Business License 1.0.0](./LICENSE) that covers the project. You retain copyright to your contributions; you grant norman404 the right to use and redistribute them under that license.
+
+Because the PolyForm Small Business License is **not** OSI-approved open source, commercial use of Bako by larger businesses ($1M+ USD annual revenue) requires a separate commercial license from the maintainer. Small businesses, personal, educational, and noncommercial use remain free. If that's a concern for your contribution, raise it in the PR before you start work.
+
+---
+
+## Questions
+
+- **Architecture & internals** — read [`AGENTS.md`](./AGENTS.md) and the per-module `README.md` files under `src/modules/`.
+- **General questions** — [GitHub Discussions](https://github.com/norman404/bako/discussions) (if enabled) or open an issue with the `question` label.
+- **Security-sensitive issues** — do **not** open a public issue. Email the maintainer directly at [norman.torres.mx@gmail.com](mailto:norman.torres.mx@gmail.com).
+
+Happy hacking. 🛠️

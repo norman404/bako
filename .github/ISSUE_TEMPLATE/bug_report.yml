@@ -1,0 +1,81 @@
+name: Bug Report
+description: Report a bug in Bako
+title: "[Bug] "
+labels: ["bug", "triage"]
+assignees: []
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: "What happened?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: to-reproduce
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+      description: What actually happened.
+
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating System
+      description: Which OS are you running Bako on?
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+
+  - type: input
+    id: os-version
+    attributes:
+      label: OS Version
+      description: The version of your operating system.
+      placeholder: "e.g. macOS 14.5, Windows 11 23H2, Ubuntu 24.04"
+
+  - type: input
+    id: bako-version
+    attributes:
+      label: Bako Version
+      description: The version of Bako you are running (shown in the app's About section).
+      placeholder: "e.g. 0.2.8"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant log output. Paste in a code block for readability.
+      render: shell
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context, screenshots, or links about the bug here.
