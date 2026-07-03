@@ -1,6 +1,6 @@
 [package]
 name = "bako"
-version = "2026.7.1"
+version = "26.7.1"
 description = "Bako — desktop point of sale"
 authors = ["norman404"]
 edition = "2021"

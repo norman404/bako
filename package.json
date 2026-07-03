@@ -1,7 +1,7 @@
 {
   "name": "bako",
   "private": true,
-  "version": "2026.7.1",
+  "version": "26.7.1",
   "description": "Bako — desktop point of sale",
   "type": "module",
   "license": "PolyForm-Small-Business-1.0.0",

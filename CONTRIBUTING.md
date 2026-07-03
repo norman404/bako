@@ -186,7 +186,7 @@ Use the module name as scope when the change is scoped to a module: `feat(menu):
 
 ## Versioning
 
-Bako uses **CalVer**: `2026.M.x` — year, month, and release-of-the-month, with no leading zeros (semver tooling rejects them). Release tags follow the same scheme prefixed with `v`, e.g. `v2026.7.1`.
+Bako uses **CalVer**: `YY.M.x` — two-digit year, month, and release-of-the-month, with no leading zeros (semver tooling rejects them; Windows MSI also caps the major version at 255, which rules out four-digit years). Release tags follow the same scheme prefixed with `v`, e.g. `v26.7.1`.
 
 ---
 

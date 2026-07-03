@@ -90,7 +90,7 @@ pnpm dev
 pnpm tauri dev
 ```
 
-> **Versioning:** Bako releases use CalVer `YYYY.M.x` (year.month.release-of-the-month), tagged as `vYYYY.M.x`.
+> **Versioning:** Bako releases use CalVer `YY.M.x` (two-digit year.month.release-of-the-month), tagged as `vYY.M.x`.
 
 ---
 
