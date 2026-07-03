@@ -2,7 +2,22 @@
   "name": "bako",
   "private": true,
   "version": "0.2.8",
+  "description": "Bako — desktop point of sale",
   "type": "module",
+  "license": "PolyForm-Small-Business-1.0.0",
+  "author": "norman404",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/norman404/bako.git"
+  },
+  "homepage": "https://github.com/norman404/bako",
+  "bugs": {
+    "url": "https://github.com/norman404/bako/issues"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

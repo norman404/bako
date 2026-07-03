@@ -1,9 +1,11 @@
 [package]
 name = "bako"
 version = "0.2.8"
-description = "A Tauri App"
-authors = ["you"]
+description = "Bako — desktop point of sale"
+authors = ["norman404"]
 edition = "2021"
+license = "PolyForm-Small-Business-1.0.0"
+repository = "https://github.com/norman404/bako"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
