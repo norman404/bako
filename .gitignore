@@ -22,3 +22,39 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# macOS
+*.dmg
+*.app
+*.zip
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# TypeScript
+*.tsbuildinfo
+
+# Tauri build artifacts (root level)
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# AI assistant local config (keep .claude/settings.local.json ignored)
+.claude/settings.local.json
+
+# OS generated files
+.directory
+
+# Databases and secrets (preventive)
+*.db
+*.sqlite
+*.sqlite3
+*.key
+*.pem
+*.p12

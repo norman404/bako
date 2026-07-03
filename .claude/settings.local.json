@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(eza -la ~/.claude/)",
-      "Bash(eza -la /Users/norman404/git/norman404/Bako/.claude/)"
-    ]
-  }
-}
