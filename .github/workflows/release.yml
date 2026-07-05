@@ -13,10 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
           - platform: 'ubuntu-22.04'
             args: ''
           - platform: 'windows-latest'
@@ -38,9 +34,6 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: |
-            ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -78,19 +71,6 @@ jobs:
           tagName: v__VERSION__
           releaseName: 'Bako v__VERSION__'
           releaseBody: '## Install instructions
-
-### macOS
-The app is unsigned (no Apple Developer certificate). When you open it for the first time, macOS will show "Bako is damaged and can''t be opened". To fix:
-
-**Option A — Terminal (recommended):**
-```bash
-xattr -cr /Applications/Bako.app
-```
-
-**Option B — Right-click open:**
-Right-click Bako.app → "Open" → confirm the dialog.
-
-After that, Bako will open normally.
 
 ### Linux
 Make the AppImage executable:
