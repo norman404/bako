@@ -66,6 +66,11 @@
         "label": "Sistema de turnos",
         "description": "Habilitar apertura y cierre de turnos de venta",
         "updated": "Sistema de turnos {{value, select, true {habilitado} other {deshabilitado}}}"
+      },
+      "modifier_groups_enabled": {
+        "label": "Opciones de producto",
+        "description": "Personalizar productos con grupos de modificadores (nivel de hielo, comentarios, etc.)",
+        "updated": "Opciones de producto {{value, select, true {habilitadas} other {deshabilitadas}}}"
       }
     }
   },

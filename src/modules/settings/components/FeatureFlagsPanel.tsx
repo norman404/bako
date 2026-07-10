@@ -14,7 +14,7 @@ interface ModuleConfig {
 const MODULES: ModuleConfig[] = [
   {
     id: "menu",
-    flags: ["categories_enabled", "multiple_menus_enabled"],
+    flags: ["categories_enabled", "multiple_menus_enabled", "modifier_groups_enabled"],
   },
   {
     id: "delivery",

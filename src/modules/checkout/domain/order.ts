@@ -20,10 +20,20 @@ export interface CheckoutCustomerInput {
   address: string;
 }
 
+export interface CheckoutOrderItemModifierInput {
+  groupId: string;
+  groupName: string;
+  optionId: string | null;
+  optionName: string | null;
+  priceDelta: number;
+  textValue: string | null;
+}
+
 export interface CheckoutOrderItemInput {
   productId: string;
   quantity: number;
   unitPrice: number;
+  modifiers: CheckoutOrderItemModifierInput[];
 }
 
 export interface CheckoutPaymentInput {
@@ -50,12 +60,25 @@ export interface CheckoutCustomer {
   updatedAt: Date;
 }
 
+export interface CheckoutOrderItemModifier {
+  id: string;
+  orderItemId: string;
+  groupId: string | null;
+  groupName: string;
+  optionId: string | null;
+  optionName: string;
+  priceDelta: number;
+  textValue: string | null;
+  createdAt: Date;
+}
+
 export interface CheckoutOrderItem {
   id: string;
   orderId: string;
   productId: string;
   quantity: number;
   unitPrice: number;
+  modifiers: CheckoutOrderItemModifier[];
   createdAt: Date;
 }
 

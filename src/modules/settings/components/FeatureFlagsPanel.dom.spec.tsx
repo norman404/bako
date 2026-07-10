@@ -17,7 +17,7 @@ describe("FeatureFlagsPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useFeatureFlagsStore.setState({
-      flags: { categories_enabled: false, multiple_menus_enabled: false },
+      flags: { categories_enabled: false, multiple_menus_enabled: false, modifier_groups_enabled: false },
       isLoading: false,
     });
   });
@@ -36,11 +36,12 @@ describe("FeatureFlagsPanel", () => {
     expect(screen.getByText(/cómo se organizan y muestran los productos/i)).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /categorías/i })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /múltiples menús/i })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /opciones de producto/i })).toBeInTheDocument();
   });
 
   it("should show current flag states", () => {
     useFeatureFlagsStore.setState({
-      flags: { categories_enabled: true, multiple_menus_enabled: false },
+      flags: { categories_enabled: true, multiple_menus_enabled: false, modifier_groups_enabled: true },
       isLoading: false,
     });
 

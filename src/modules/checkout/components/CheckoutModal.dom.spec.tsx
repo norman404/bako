@@ -63,8 +63,10 @@ function buildProduct(id: string, price: number): Product {
 
 function buildCartItem(id = "product-1", price = 5500, quantity = 1): CartItem {
   return {
+    lineId: `line-${id}`,
     product: buildProduct(id, price),
     quantity,
+    selectedModifiers: [],
   };
 }
 

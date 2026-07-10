@@ -66,6 +66,11 @@
         "label": "Shift Management",
         "description": "Enable opening and closing of sales shifts",
         "updated": "Shift Management {{value, select, true {enabled} other {disabled}}}"
+      },
+      "modifier_groups_enabled": {
+        "label": "Product Options",
+        "description": "Customize products with modifier groups (ice level, comments, etc.)",
+        "updated": "Product Options {{value, select, true {enabled} other {disabled}}}"
       }
     }
   },

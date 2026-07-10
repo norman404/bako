@@ -2,14 +2,16 @@ import { Minus, Plus, ShoppingBasket, Trash2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { calculateCartTotals, type CartItem } from "@/modules/order/domain/cart";
+import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
+import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { Button } from "@/components/ui/Button";
 import { formatPosCurrency } from "@/lib/currency";
 
 interface CartProps {
   items: CartItem[];
-  onIncreaseQuantity: (productId: string) => void;
-  onDecreaseQuantity: (productId: string) => void;
-  onRemoveItem: (productId: string) => void;
+  onIncreaseQuantity: (lineId: string) => void;
+  onDecreaseQuantity: (lineId: string) => void;
+  onRemoveItem: (lineId: string) => void;
   onClearCart: () => void;
   onCheckout: () => void;
 }
@@ -23,6 +25,8 @@ function Cart({
   onCheckout,
 }: CartProps) {
   const { t } = useTranslation('order');
+  const { flags } = useFeatureFlagsStore();
+  const modifierGroupsEnabled = flags.modifier_groups_enabled ?? false;
   const totals = calculateCartTotals(items);
   const isEmpty = items.length === 0;
   const totalItems = totals.itemsCount;
@@ -66,19 +70,35 @@ function Cart({
           </div>
         ) : (
           <ul className="space-y-5">
-            {items.map((item) => (
-              <li key={item.product.id} className="group">
+            {items.map((item) => {
+              const unitPrice = calculateItemUnitPrice(item.product, item.selectedModifiers);
+              const hasModifiers = modifierGroupsEnabled && item.selectedModifiers.length > 0;
+
+              return (
+              <li key={item.lineId} className="group">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <h4 className="text-md font-bold leading-tight tracking-[-0.01em] text-text">
                       {item.product.name}
                     </h4>
                     <p className="mt-1 font-mono-tabular text-2xs text-text-dim">
-                      × {formatPosCurrency(item.product.price)}
+                      × {formatPosCurrency(unitPrice)}
                     </p>
+                    {hasModifiers && (
+                      <ul className="mt-1.5 flex flex-wrap gap-1">
+                        {item.selectedModifiers.map((modifier, index) => (
+                          <li
+                            key={`${modifier.groupId}-${index}`}
+                            className="inline-flex items-center gap-1 rounded-sharp bg-primary/10 px-1.5 py-0.5 text-2xs font-medium text-primary"
+                          >
+                            {modifier.optionName || modifier.textValue}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   <span className="font-mono-tabular text-md tracking-tight text-text">
-                    {formatPosCurrency(item.product.price * item.quantity)}
+                    {formatPosCurrency(unitPrice * item.quantity)}
                   </span>
                 </div>
 
@@ -87,7 +107,7 @@ function Cart({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onDecreaseQuantity(item.product.id)}
+                      onClick={() => onDecreaseQuantity(item.lineId)}
                       className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
                       aria-label={t('cart.decreaseAriaLabel', { productName: item.product.name })}
                     >
@@ -99,7 +119,7 @@ function Cart({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => onIncreaseQuantity(item.product.id)}
+                      onClick={() => onIncreaseQuantity(item.lineId)}
                       className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
                       aria-label={t('cart.increaseAriaLabel', { productName: item.product.name })}
                     >
@@ -109,7 +129,7 @@ function Cart({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => onRemoveItem(item.product.id)}
+                    onClick={() => onRemoveItem(item.lineId)}
                     className="h-11 w-11 text-text-dim opacity-40 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
                     aria-label={t('cart.removeAriaLabel', { productName: item.product.name })}
                   >
@@ -117,7 +137,8 @@ function Cart({
                   </Button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

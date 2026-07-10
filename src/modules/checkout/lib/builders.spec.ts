@@ -5,6 +5,7 @@ import {
   buildCustomerFormState,
   buildCustomerInput,
   buildEmptyCustomerFormState,
+  buildOrderItemsInput,
   buildPaymentInput,
   CHECKOUT_PAYMENT_METHOD,
   getPaymentValidationMessage,
@@ -12,6 +13,7 @@ import {
 } from "@/modules/checkout/lib/builders";
 import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
 import type { Product } from "@/modules/menu/domain/product";
+import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
 import type { CartItem } from "@/modules/order/domain/cart";
 import { formatPosCurrency } from "@/lib/currency";
 
@@ -41,8 +43,35 @@ function buildProduct(id: string, price: number): Product {
 
 function buildCartItem(id: string, price: number, quantity = 1): CartItem {
   return {
+    lineId: `line-${id}`,
     product: buildProduct(id, price),
     quantity,
+    selectedModifiers: [],
+  };
+}
+
+function buildSelectedModifier(overrides: Partial<SelectedModifier> = {}): SelectedModifier {
+  return {
+    groupId: overrides.groupId ?? "group-1",
+    groupName: overrides.groupName ?? "Nivel de hielo",
+    optionId: overrides.optionId ?? "option-1",
+    optionName: overrides.optionName ?? "Extra",
+    priceDelta: overrides.priceDelta ?? 0,
+    textValue: overrides.textValue ?? null,
+  };
+}
+
+function buildCartItemWithModifiers(
+  id: string,
+  price: number,
+  quantity: number,
+  modifiers: SelectedModifier[],
+): CartItem {
+  return {
+    lineId: `line-${id}`,
+    product: buildProduct(id, price),
+    quantity,
+    selectedModifiers: modifiers,
   };
 }
 
@@ -157,8 +186,8 @@ describe("checkout builders", () => {
 
       expect(payload).toEqual({
         items: [
-          { productId: "product-1", quantity: 2, unitPrice: 2500 },
-          { productId: "product-2", quantity: 1, unitPrice: 1800 },
+          { productId: "product-1", quantity: 2, unitPrice: 2500, modifiers: [] },
+          { productId: "product-2", quantity: 1, unitPrice: 1800, modifiers: [] },
         ],
         fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.LOCAL,
         payment: {
@@ -181,8 +210,8 @@ describe("checkout builders", () => {
 
       expect(payload).toEqual({
         items: [
-          { productId: "product-1", quantity: 2, unitPrice: 2500 },
-          { productId: "product-2", quantity: 1, unitPrice: 1800 },
+          { productId: "product-1", quantity: 2, unitPrice: 2500, modifiers: [] },
+          { productId: "product-2", quantity: 1, unitPrice: 1800, modifiers: [] },
         ],
         fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.DELIVERY,
         customerId: "customer-1",
@@ -211,8 +240,8 @@ describe("checkout builders", () => {
 
       expect(payload).toEqual({
         items: [
-          { productId: "product-1", quantity: 2, unitPrice: 2500 },
-          { productId: "product-2", quantity: 1, unitPrice: 1800 },
+          { productId: "product-1", quantity: 2, unitPrice: 2500, modifiers: [] },
+          { productId: "product-2", quantity: 1, unitPrice: 1800, modifiers: [] },
         ],
         fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.DELIVERY,
         customer: {
@@ -242,8 +271,8 @@ describe("checkout builders", () => {
 
       expect(payload).toEqual({
         items: [
-          { productId: "product-1", quantity: 2, unitPrice: 2500 },
-          { productId: "product-2", quantity: 1, unitPrice: 1800 },
+          { productId: "product-1", quantity: 2, unitPrice: 2500, modifiers: [] },
+          { productId: "product-2", quantity: 1, unitPrice: 1800, modifiers: [] },
         ],
         fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.DELIVERY,
         customerId: "customer-1",
@@ -269,8 +298,8 @@ describe("checkout builders", () => {
 
       expect(payload).toEqual({
         items: [
-          { productId: "product-1", quantity: 2, unitPrice: 2500 },
-          { productId: "product-2", quantity: 1, unitPrice: 1800 },
+          { productId: "product-1", quantity: 2, unitPrice: 2500, modifiers: [] },
+          { productId: "product-2", quantity: 1, unitPrice: 1800, modifiers: [] },
         ],
         fulfillmentType: CHECKOUT_FULFILLMENT_TYPE.LOCAL,
         payment: {
@@ -296,6 +325,88 @@ describe("checkout builders", () => {
           total,
         ),
       ).toBeNull();
+    });
+  });
+
+  describe("buildOrderItemsInput — modifier propagation", () => {
+    it("propagates modifiers and computes unitPrice as base price + sum of priceDeltas", () => {
+      const modifiers = [
+        buildSelectedModifier({ groupId: "g1", groupName: "Hielo", optionId: "o1", optionName: "Extra", priceDelta: 500 }),
+        buildSelectedModifier({ groupId: "g2", groupName: "Crema", optionId: "o2", optionName: "Crema", priceDelta: 300 }),
+      ];
+      const cartItems = [buildCartItemWithModifiers("cafe", 5000, 1, modifiers)];
+
+      const result = buildOrderItemsInput(cartItems);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.productId).toBe("cafe");
+      expect(result[0]!.quantity).toBe(1);
+      expect(result[0]!.unitPrice).toBe(5800);
+      expect(result[0]!.modifiers).toHaveLength(2);
+      expect(result[0]!.modifiers![0]).toEqual({
+        groupId: "g1",
+        groupName: "Hielo",
+        optionId: "o1",
+        optionName: "Extra",
+        priceDelta: 500,
+        textValue: null,
+      });
+      expect(result[0]!.modifiers![1]).toEqual({
+        groupId: "g2",
+        groupName: "Crema",
+        optionId: "o2",
+        optionName: "Crema",
+        priceDelta: 300,
+        textValue: null,
+      });
+    });
+
+    it("handles item without modifiers: unitPrice = product price, modifiers = []", () => {
+      const cartItems = [buildCartItem("te", 4000, 2)];
+
+      const result = buildOrderItemsInput(cartItems);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]!.unitPrice).toBe(4000);
+      expect(result[0]!.modifiers).toEqual([]);
+    });
+
+    it("ignores text modifier priceDelta (delta 0) but still propagates the text entry", () => {
+      const modifiers = [
+        buildSelectedModifier({
+          groupId: "g-comments",
+          groupName: "Comentarios",
+          optionId: null,
+          optionName: null,
+          priceDelta: 0,
+          textValue: "sin azúcar",
+        }),
+      ];
+      const cartItems = [buildCartItemWithModifiers("cafe", 5000, 1, modifiers)];
+
+      const result = buildOrderItemsInput(cartItems);
+
+      expect(result[0]!.unitPrice).toBe(5000);
+      expect(result[0]!.modifiers).toHaveLength(1);
+      expect(result[0]!.modifiers![0]!.textValue).toBe("sin azúcar");
+      expect(result[0]!.modifiers![0]!.priceDelta).toBe(0);
+    });
+
+    it("propagates modifiers across multiple items independently", () => {
+      const cartItems = [
+        buildCartItemWithModifiers("cafe", 5000, 1, [
+          buildSelectedModifier({ priceDelta: 500 }),
+        ]),
+        buildCartItem("te", 4000, 3),
+      ];
+
+      const result = buildOrderItemsInput(cartItems);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]!.unitPrice).toBe(5500);
+      expect(result[0]!.modifiers).toHaveLength(1);
+      expect(result[1]!.unitPrice).toBe(4000);
+      expect(result[1]!.modifiers).toEqual([]);
     });
   });
 });

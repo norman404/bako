@@ -8,6 +8,7 @@ import {
   type CreateOrderInput,
 } from "@/modules/checkout/domain/order";
 import { parsePaymentAmountInput } from "@/modules/checkout/lib/formatters";
+import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
 import type { CartItem } from "@/modules/order/domain/cart";
 import { formatPosCurrency } from "@/lib/currency";
 
@@ -19,11 +20,19 @@ export interface CheckoutCustomerFormState {
   address: string;
 }
 
-function buildOrderItemsInput(items: CartItem[]): CreateOrderInput["items"] {
+export function buildOrderItemsInput(items: CartItem[]): CreateOrderInput["items"] {
   return items.map((item) => ({
     productId: item.product.id,
     quantity: item.quantity,
-    unitPrice: item.product.price,
+    unitPrice: calculateItemUnitPrice(item.product, item.selectedModifiers),
+    modifiers: item.selectedModifiers.map((m) => ({
+      groupId: m.groupId,
+      groupName: m.groupName,
+      optionId: m.optionId,
+      optionName: m.optionName,
+      priceDelta: m.priceDelta,
+      textValue: m.textValue,
+    })),
   }));
 }
 

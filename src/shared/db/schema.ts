@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const menus = sqliteTable("menus", {
   id: text("id").primaryKey(),
@@ -58,6 +58,92 @@ export const productMenus = sqliteTable(
       .references(() => menus.id, { onDelete: "cascade" }),
   },
   (table) => [index("idx_product_menus_menu_id").on(table.menuId)],
+);
+
+export const modifierGroups = sqliteTable(
+  "modifier_groups",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    required: integer("required", { mode: "boolean" }).notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("idx_modifier_groups_deleted_at").on(table.deletedAt)],
+);
+
+export const modifierOptions = sqliteTable(
+  "modifier_options",
+  {
+    id: text("id").primaryKey(),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => modifierGroups.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    priceDelta: integer("price_delta").notNull().default(0),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    index("idx_modifier_options_group_id").on(table.groupId),
+    index("idx_modifier_options_deleted_at").on(table.deletedAt),
+  ],
+);
+
+export const categoryModifierGroups = sqliteTable(
+  "category_modifier_groups",
+  {
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => categories.id, { onDelete: "cascade" }),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => modifierGroups.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.categoryId, table.groupId] }),
+    index("idx_category_modifier_groups_group_id").on(table.groupId),
+  ],
+);
+
+export const productModifierGroups = sqliteTable(
+  "product_modifier_groups",
+  {
+    productId: text("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    groupId: text("group_id")
+      .notNull()
+      .references(() => modifierGroups.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.productId, table.groupId] }),
+    index("idx_product_modifier_groups_group_id").on(table.groupId),
+  ],
+);
+
+export const orderItemModifiers = sqliteTable(
+  "order_item_modifiers",
+  {
+    id: text("id").primaryKey(),
+    orderItemId: text("order_item_id")
+      .notNull()
+      .references(() => orderItems.id, { onDelete: "cascade" }),
+    groupId: text("group_id"),
+    groupName: text("group_name").notNull(),
+    optionId: text("option_id"),
+    optionName: text("option_name").notNull(),
+    priceDelta: integer("price_delta").notNull().default(0),
+    textValue: text("text_value"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("idx_order_item_modifiers_order_item_id").on(table.orderItemId)],
 );
 
 export const deliveryPersons = sqliteTable(
@@ -185,6 +271,11 @@ export type PaymentRow = typeof payments.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
 export type SystemSettingsRow = typeof systemSettings.$inferSelect;
 export type FeatureFlagRow = typeof featureFlags.$inferSelect;
+export type ModifierGroupRow = typeof modifierGroups.$inferSelect;
+export type ModifierOptionRow = typeof modifierOptions.$inferSelect;
+export type CategoryModifierGroupRow = typeof categoryModifierGroups.$inferSelect;
+export type ProductModifierGroupRow = typeof productModifierGroups.$inferSelect;
+export type OrderItemModifierRow = typeof orderItemModifiers.$inferSelect;
 
 export type MenuInsert = typeof menus.$inferInsert;
 export type CategoryInsert = typeof categories.$inferInsert;
@@ -199,5 +290,10 @@ export type SystemSettingsInsert = typeof systemSettings.$inferInsert;
 export type FeatureFlagInsert = typeof featureFlags.$inferInsert;
 export type ShiftRow = typeof shifts.$inferSelect;
 export type ShiftInsert = typeof shifts.$inferInsert;
+export type ModifierGroupInsert = typeof modifierGroups.$inferInsert;
+export type ModifierOptionInsert = typeof modifierOptions.$inferInsert;
+export type CategoryModifierGroupInsert = typeof categoryModifierGroups.$inferInsert;
+export type ProductModifierGroupInsert = typeof productModifierGroups.$inferInsert;
+export type OrderItemModifierInsert = typeof orderItemModifiers.$inferInsert;
 
 

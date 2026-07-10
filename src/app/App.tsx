@@ -12,11 +12,14 @@ import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
 import { CategoryNav } from "@/modules/menu/components/CategoryNav";
 import { MenuSelector } from "@/modules/menu/components/MenuSelector";
+import { ProductCustomizationDialog } from "@/modules/menu/components/ProductCustomizationDialog";
 import { ProductGrid } from "@/modules/menu/components/ProductGrid";
 import { ProductSearch } from "@/modules/menu/components/ProductSearch";
+import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
 import type { Product } from "@/modules/menu/domain/product";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
 import { useFilteredProducts } from "@/modules/menu/hooks/use-filtered-products";
+import { useProductModifierGroupsMap } from "@/modules/menu/hooks/use-modifier-groups";
 import { Cart } from "@/modules/order/components/Cart";
 import { calculateCartTotals } from "@/modules/order/domain/cart";
 import { useOrderStore } from "@/modules/order/store/order-store";
@@ -128,6 +131,14 @@ export function App() {
       categoriesEnabled,
     });
 
+  const modifierGroupsEnabled = flags.modifier_groups_enabled ?? false;
+  const productModifierGroups = useProductModifierGroupsMap(products);
+
+  const [customizationProduct, setCustomizationProduct] = useState<Product | null>(null);
+  const customizationGroups = customizationProduct
+    ? (productModifierGroups[customizationProduct.id] ?? [])
+    : [];
+
   const createOrderMutation = useCreateOrder();
 
   const synchronizedCartItems = currentOrder.map((item) => {
@@ -145,13 +156,41 @@ export function App() {
       ? t('empty.setupHint')
       : t('empty.changeCategoryHint');
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (product: Product, modifiers?: SelectedModifier[]) => {
+    if (modifiers && modifiers.length > 0) {
+      addItem(product, modifiers);
+      setCustomizationProduct(null);
+      toast.success(t('toast.productAdded', { productName: product.name }), {
+        description: t('toast.readyToPay'),
+      });
+      return;
+    }
+
+    if (modifierGroupsEnabled) {
+      const groups = productModifierGroups[product.id] ?? [];
+      if (groups.length > 0) {
+        setCustomizationProduct(product);
+        return;
+      }
+    }
+
     const currentItem = currentOrder.find((item) => item.product.id === product.id);
-
     addItem(product);
-
     toast.success(t('toast.productAdded', { productName: product.name }), {
       description: currentItem ? t('toast.quantityUpdated', { quantity: currentItem.quantity + 1 }) : t('toast.readyToPay'),
+    });
+  };
+
+  const handleCloseCustomizationDialog = () => {
+    setCustomizationProduct(null);
+  };
+
+  const handleConfirmCustomization = (modifiers: SelectedModifier[]) => {
+    if (!customizationProduct) return;
+    addItem(customizationProduct, modifiers);
+    setCustomizationProduct(null);
+    toast.success(t('toast.productAdded', { productName: customizationProduct.name }), {
+      description: t('toast.readyToPay'),
     });
   };
 
@@ -184,11 +223,19 @@ export function App() {
       ticketNumber: createdOrder.ticketNumber,
       createdAt: createdOrder.createdAt,
       total: createdOrder.total,
-      items: input.items.map((item) => ({
-        name: productNameById[item.productId] ?? "Producto",
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      })),
+      items: input.items.map((item) => {
+        const cartItem = synchronizedCartItems.find((c) => c.product.id === item.productId);
+        return {
+          name: productNameById[item.productId] ?? "Producto",
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          modifiers: (cartItem?.selectedModifiers ?? []).map((m) => ({
+            groupName: m.groupName,
+            optionName: m.optionName,
+            textValue: m.textValue,
+          })),
+        };
+      }),
       paymentMethod: createdOrder.payment.method,
       paymentAmount: createdOrder.payment.amount,
       fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
@@ -328,6 +375,7 @@ export function App() {
                 categories={categories}
                 activeCategoryId={POS_CATEGORY_FILTER.ALL}
                 onAddToCart={handleAddToCart}
+                productModifierGroups={productModifierGroups}
               />
             )}
           </div>
@@ -422,6 +470,16 @@ export function App() {
           open={isSettingsOpen}
           onClose={closeSettings}
           registry={MODULE_REGISTRY}
+        />
+      ) : null}
+
+      {customizationProduct !== null ? (
+        <ProductCustomizationDialog
+          product={customizationProduct}
+          groups={customizationGroups}
+          open={true}
+          onConfirm={handleConfirmCustomization}
+          onClose={handleCloseCustomizationDialog}
         />
       ) : null}
 

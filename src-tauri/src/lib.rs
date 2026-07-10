@@ -86,6 +86,18 @@ pub fn run() {
             sql: include_str!("../migrations/0013_updater_flag.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 14,
+            description: "product_modifiers",
+            sql: include_str!("../migrations/0014_product_modifiers.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 15,
+            description: "modifiers_flag_seed",
+            sql: include_str!("../migrations/0015_modifiers_flag_seed.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

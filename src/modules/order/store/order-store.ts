@@ -1,5 +1,6 @@
 import { create } from "zustand";
 
+import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
 import type { Product } from "@/modules/menu/domain/product";
 import {
   addItemToCart,
@@ -11,34 +12,34 @@ import {
 
 interface OrderStore {
   currentOrder: CartItem[];
-  addItem: (product: Product) => void;
-  incrementItemQuantity: (productId: string) => void;
-  decrementItemQuantity: (productId: string) => void;
-  removeItem: (productId: string) => void;
+  addItem: (product: Product, modifiers?: SelectedModifier[]) => void;
+  incrementItemQuantity: (lineId: string) => void;
+  decrementItemQuantity: (lineId: string) => void;
+  removeItem: (lineId: string) => void;
   clearOrder: () => void;
 }
 
 const useOrderStore = create<OrderStore>((set) => ({
   currentOrder: [],
 
-  addItem: (product) =>
+  addItem: (product, modifiers = []) =>
     set((state) => ({
-      currentOrder: addItemToCart(state.currentOrder, product),
+      currentOrder: addItemToCart(state.currentOrder, product, modifiers, crypto.randomUUID()),
     })),
 
-  incrementItemQuantity: (productId) =>
+  incrementItemQuantity: (lineId) =>
     set((state) => ({
-      currentOrder: incrementItemQuantity(state.currentOrder, productId),
+      currentOrder: incrementItemQuantity(state.currentOrder, lineId),
     })),
 
-  decrementItemQuantity: (productId) =>
+  decrementItemQuantity: (lineId) =>
     set((state) => ({
-      currentOrder: decrementItemQuantity(state.currentOrder, productId),
+      currentOrder: decrementItemQuantity(state.currentOrder, lineId),
     })),
 
-  removeItem: (productId) =>
+  removeItem: (lineId) =>
     set((state) => ({
-      currentOrder: removeItemFromCart(state.currentOrder, productId),
+      currentOrder: removeItemFromCart(state.currentOrder, lineId),
     })),
 
   clearOrder: () => set({ currentOrder: [] }),

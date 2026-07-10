@@ -21,5 +21,16 @@
     "menu": "Menú",
     "categories": "Categorías",
     "products": "Artículos"
+  },
+  "customizationDialog": {
+    "title": "Personalizar",
+    "addButton": "Agregar",
+    "cancelButton": "Cancelar",
+    "commentsPlaceholder": "Escribí un comentario…",
+    "requiredLabel": "Obligatorio",
+    "optionalLabel": "Opcional"
+  },
+  "modifierBadge": {
+    "label": "Personalizable"
   }
 }

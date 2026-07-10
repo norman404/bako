@@ -20,10 +20,17 @@ export interface PrintOrderCustomer {
   address: string;
 }
 
+export interface PrintOrderItemModifier {
+  groupName: string;
+  optionName: string | null;
+  textValue: string | null;
+}
+
 export interface PrintOrderItem {
   name: string;
   quantity: number;
   unitPrice: number;
+  modifiers: PrintOrderItemModifier[];
 }
 
 export interface PrintOrderOptions {

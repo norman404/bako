@@ -75,6 +75,11 @@
         "label": "Sistema de turnos",
         "description": "Habilitar apertura y cierre de turnos de venta",
         "updated": "Sistema de turnos {{value, select, true {habilitado} other {deshabilitado}}}"
+      },
+      "modifier_groups_enabled": {
+        "label": "Opciones de producto",
+        "description": "Personalizar productos con grupos de modificadores (nivel de hielo, comentarios, etc.)",
+        "updated": "Opciones de producto {{value, select, true {habilitadas} other {deshabilitadas}}}"
       }
     }
   },
@@ -97,5 +102,34 @@
     "deleteError": "No se pudo eliminar el menú",
     "confirmDelete": "¿Eliminar {{name}}? Los productos y categorías asignados quedarán sin menú.",
     "cannotDeleteDefault": "No se puede eliminar el menú por defecto. Designa otro como default primero."
+  },
+  "modifierGroups": {
+    "title": "Grupos de modificadores",
+    "createNew": "Crear grupo",
+    "editGroup": "Editar grupo",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Ej: Nivel de hielo",
+    "typeLabel": "Tipo",
+    "requiredLabel": "Requerido",
+    "sortOrderLabel": "Orden",
+    "optionsSection": "Opciones",
+    "addOption": "Agregar opción",
+    "optionNameLabel": "Nombre de la opción",
+    "optionPriceLabel": "Precio adicional",
+    "optionDefaultLabel": "Por defecto",
+    "saveButton": "Guardar",
+    "createButton": "Crear grupo",
+    "archiveButton": "Archivar {{name}}",
+    "emptyState": "No hay grupos de modificadores. Creá el primero.",
+    "assignmentSection": "Asignación",
+    "assignToCategory": "Asignar a categorías",
+    "assignToProduct": "Asignar a productos",
+    "error": "No se pudo guardar el grupo",
+    "archiveError": "No se pudo archivar el grupo",
+    "confirmArchive": "¿Archivar {{name}}?",
+    "typeSingle": "Selección única",
+    "typeMultiple": "Selección múltiple",
+    "typeText": "Texto libre",
+    "typeSingleText": "Opción + texto"
   }
 }

@@ -19,3 +19,15 @@ export class MenuNotFoundError extends MenuDomainError {
     super(`Menu not found: ${menuId}`);
   }
 }
+
+export class ModifierGroupNotFoundError extends MenuDomainError {
+  constructor(groupId: string) {
+    super(`Modifier group not found: ${groupId}`);
+  }
+}
+
+export class ModifierOptionNotFoundError extends MenuDomainError {
+  constructor(optionId: string) {
+    super(`Modifier option not found: ${optionId}`);
+  }
+}

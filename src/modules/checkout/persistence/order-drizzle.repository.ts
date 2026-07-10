@@ -1,10 +1,11 @@
-import { and, desc, eq, gte, like, lt, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lt, or } from "drizzle-orm";
 import { errAsync, ResultAsync } from "neverthrow";
 
 import { db, withTransaction, type DatabaseClient } from "@/shared/db/client";
 import {
   customers,
   orderItems,
+  orderItemModifiers,
   orders,
   payments,
   products,
@@ -12,6 +13,8 @@ import {
   type CustomerRow,
   type OrderInsert,
   type OrderItemInsert,
+  type OrderItemModifierInsert,
+  type OrderItemModifierRow,
   type OrderItemRow,
   type OrderRow,
   type PaymentInsert,
@@ -27,6 +30,7 @@ import {
   type CheckoutOrder,
   type CheckoutOrderItem,
   type CheckoutOrderItemInput,
+  type CheckoutOrderItemModifier,
   type CheckoutPayment,
   type CheckoutPaymentInput,
   type CheckoutPaymentMethod,
@@ -230,6 +234,14 @@ function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrd
         productId: item.productId.trim(),
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        modifiers: (item.modifiers ?? []).map((modifier) => ({
+          groupId: modifier.groupId,
+          groupName: modifier.groupName,
+          optionId: modifier.optionId,
+          optionName: modifier.optionName ?? "",
+          priceDelta: modifier.priceDelta,
+          textValue: modifier.textValue,
+        })),
       })),
       fulfillmentType,
       customerId: normalizedCustomerId.length > 0 ? normalizedCustomerId : null,
@@ -256,13 +268,14 @@ function rowToCheckoutCustomer(row: CustomerRow): CheckoutCustomer {
   };
 }
 
-function rowToCheckoutOrderItem(row: OrderItemRow): CheckoutOrderItem {
+function rowToCheckoutOrderItem(row: OrderItemRow, modifiers: CheckoutOrderItemModifier[]): CheckoutOrderItem {
   return {
     id: row.id,
     orderId: row.orderId,
     productId: row.productId,
     quantity: row.quantity,
     unitPrice: row.unitPrice,
+    modifiers,
     createdAt: row.createdAt,
   };
 }
@@ -277,9 +290,24 @@ function rowToCheckoutPayment(row: PaymentRow): CheckoutPayment {
   };
 }
 
+function rowToCheckoutOrderItemModifier(row: OrderItemModifierRow): CheckoutOrderItemModifier {
+  return {
+    id: row.id,
+    orderItemId: row.orderItemId,
+    groupId: row.groupId,
+    groupName: row.groupName,
+    optionId: row.optionId,
+    optionName: row.optionName,
+    priceDelta: row.priceDelta,
+    textValue: row.textValue,
+    createdAt: row.createdAt,
+  };
+}
+
 function rowToCheckoutOrder(
   row: OrderRow,
   itemRows: OrderItemRow[],
+  modifierRowsByItem: Map<string, OrderItemModifierRow[]>,
   customerRow: CustomerRow | null,
   paymentRow: PaymentRow,
 ): CheckoutOrder {
@@ -292,7 +320,12 @@ function rowToCheckoutOrder(
       total: row.total,
       createdAt: row.createdAt,
       customer: customerRow ? rowToCheckoutCustomer(customerRow) : null,
-      items: itemRows.map(rowToCheckoutOrderItem),
+      items: itemRows.map((itemRow) =>
+        rowToCheckoutOrderItem(
+          itemRow,
+          (modifierRowsByItem.get(itemRow.id) ?? []).map(rowToCheckoutOrderItemModifier),
+        ),
+      ),
       payment: rowToCheckoutPayment(paymentRow),
     };
 }
@@ -438,6 +471,38 @@ async function createOrderItemRows(
   return createdOrderItems;
 }
 
+async function createOrderItemModifiers(
+  tx: DatabaseClient,
+  orderItemRows: OrderItemRow[],
+  items: CheckoutOrderItemInput[],
+  now: Date,
+): Promise<void> {
+  const modifierValues: OrderItemModifierInsert[] = [];
+
+  orderItemRows.forEach((orderItemRow, index) => {
+    const item = items[index];
+    if (!item) return;
+
+    for (const modifier of item.modifiers ?? []) {
+      modifierValues.push({
+        id: crypto.randomUUID(),
+        orderItemId: orderItemRow.id,
+        groupId: modifier.groupId,
+        groupName: modifier.groupName,
+        optionId: modifier.optionId,
+        optionName: modifier.optionName ?? "",
+        priceDelta: modifier.priceDelta,
+        textValue: modifier.textValue,
+        createdAt: now,
+      });
+    }
+  });
+
+  if (modifierValues.length === 0) return;
+
+  await tx.insert(orderItemModifiers).values(modifierValues);
+}
+
 function getTodayDateRange(referenceDate: Date = new Date()): TodayDateRange {
   const start = new Date(referenceDate);
   start.setHours(0, 0, 0, 0);
@@ -543,6 +608,31 @@ function buildPosMetrics(orderRows: PosMetricOrderRow[], itemRows: PosMetricItem
   };
 }
 
+async function loadOrderItemModifierRows(
+  tx: DatabaseClient,
+  orderItemRows: OrderItemRow[],
+): Promise<Map<string, OrderItemModifierRow[]>> {
+  const orderItemIds = orderItemRows.map((row) => row.id);
+  if (orderItemIds.length === 0) {
+    return new Map();
+  }
+
+  const rows = await tx
+    .select()
+    .from(orderItemModifiers)
+    .where(inArray(orderItemModifiers.orderItemId, orderItemIds));
+
+  return rows.reduce((map, row) => {
+    const existing = map.get(row.orderItemId);
+    if (existing) {
+      existing.push(row);
+    } else {
+      map.set(row.orderItemId, [row]);
+    }
+    return map;
+  }, new Map<string, OrderItemModifierRow[]>());
+}
+
 export const orderDrizzleRepository = {
   getTodayMetrics(): ResultAsync<PosMetrics, CheckoutPersistenceError> {
     return ResultAsync.fromPromise(
@@ -593,8 +683,11 @@ export const orderDrizzleRepository = {
         const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, normalizedInput.deliveryPersonId, normalizedInput.shiftId, total, now);
         const paymentRow = await createPaymentRow(tx, orderRow.id, payment, now);
         const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
+        await createOrderItemModifiers(tx, orderItemRows, normalizedInput.items, now);
 
-        return rowToCheckoutOrder(orderRow, orderItemRows, customerRow, paymentRow);
+        const orderItemModifierRows = await loadOrderItemModifierRows(tx, orderItemRows);
+
+        return rowToCheckoutOrder(orderRow, orderItemRows, orderItemModifierRows, customerRow, paymentRow);
       }),
       wrapPersistenceError("Failed to create order"),
     );

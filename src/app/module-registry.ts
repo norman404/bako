@@ -1,4 +1,4 @@
-import { productsManifest, categoriesManifest, menusManifest } from "@/modules/menu/manifest";
+import { productsManifest, categoriesManifest, menusManifest, modifierGroupsManifest } from "@/modules/menu/manifest";
 import { checkoutManifest } from "@/modules/checkout/manifest";
 import { deliveryPersonsManifest, deliveryCutManifest } from "@/modules/delivery/manifest";
 import { shiftReportsManifest } from "@/modules/shift-reports/manifest";
@@ -9,6 +9,7 @@ export const MODULE_REGISTRY: ModuleManifest[] = [
   productsManifest,
   categoriesManifest,
   menusManifest,
+  modifierGroupsManifest,
   checkoutManifest,
   deliveryPersonsManifest,
   deliveryCutManifest,
