@@ -87,4 +87,31 @@ export interface ModifierGroupRepository {
   unassign(input: ModifierAssignmentInput): ResultAsync<void, MenuDomainError>;
   listByCategory(categoryId: string): ResultAsync<ModifierGroup[], MenuDomainError>;
   listByProduct(productId: string): ResultAsync<ModifierGroup[], MenuDomainError>;
+  /**
+   * Batch variant of {@link listByCategory}: returns a Map<categoryId, ModifierGroup[]>
+   * for every categoryId in `categoryIds`. Missing categories map to an empty array.
+   * Used to power the product grid without N+1 queries.
+   */
+  listByCategoryIds(
+    categoryIds: string[],
+  ): ResultAsync<Map<string, ModifierGroup[]>, MenuDomainError>;
+  /**
+   * Batch variant of {@link listByProduct}: returns a Map<productId, ModifierGroup[]>
+   * for every productId in `productIds`. Missing products map to an empty array.
+   */
+  listByProductIds(
+    productIds: string[],
+  ): ResultAsync<Map<string, ModifierGroup[]>, MenuDomainError>;
+  /**
+   * Returns a map of categoryId → Set<groupId> of every category↔group
+   * assignment currently active in the system. Used by the admin panel to
+   * render the assignment section with pre-checked state.
+   */
+  listCategoryAssignments(): ResultAsync<Map<string, Set<string>>, MenuDomainError>;
+  /**
+   * Returns a map of productId → Set<groupId> of every product↔group
+   * assignment currently active in the system. Used by the admin panel to
+   * render the assignment section with pre-checked state.
+   */
+  listProductAssignments(): ResultAsync<Map<string, Set<string>>, MenuDomainError>;
 }

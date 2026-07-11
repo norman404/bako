@@ -106,7 +106,9 @@
   "modifierGroups": {
     "title": "Grupos de modificadores",
     "createNew": "Crear grupo",
+    "newGroup": "Nuevo grupo",
     "editGroup": "Editar grupo",
+    "newButton": "Nuevo",
     "nameLabel": "Nombre",
     "namePlaceholder": "Ej: Nivel de hielo",
     "typeLabel": "Tipo",
@@ -126,10 +128,16 @@
     "assignToProduct": "Asignar a productos",
     "error": "No se pudo guardar el grupo",
     "archiveError": "No se pudo archivar el grupo",
+    "nameRequired": "El nombre es obligatorio.",
+    "optionsRequired": "Agregá al menos una opción.",
     "confirmArchive": "¿Archivar {{name}}?",
     "typeSingle": "Selección única",
     "typeMultiple": "Selección múltiple",
     "typeText": "Texto libre",
-    "typeSingleText": "Opción + texto"
+    "typeSingleText": "Opción + texto",
+    "emptyOptionsHint": "Agregá al menos una opción para que el grupo sea válido.",
+    "moveUp": "Subir opción",
+    "moveDown": "Bajar opción",
+    "removeOption": "Eliminar opción"
   }
 }

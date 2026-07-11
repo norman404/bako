@@ -21,5 +21,18 @@
     "menu": "Menu",
     "categories": "Categories",
     "products": "Products"
+  },
+  "customizationDialog": {
+    "title": "Customize",
+    "addButton": "Add",
+    "cancelButton": "Cancel",
+    "commentsPlaceholder": "Write a comment…",
+    "requiredLabel": "Required",
+    "optionalLabel": "Optional",
+    "missingSelectionHint": "Please select {{groupName}}",
+    "summaryTotal": "Total"
+  },
+  "modifierBadge": {
+    "label": "Customizable"
   }
 }

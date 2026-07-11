@@ -204,3 +204,72 @@ describe("ProductGrid modifier badge", () => {
     expect(onAddToCart).toHaveBeenCalledWith(product);
   });
 });
+
+describe("ProductGrid modifier badge — refined", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    setModifierFlag(true);
+  });
+
+  it("uses a lucide icon (SlidersHorizontal) instead of the literal '+' character", () => {
+    const product = buildProduct({ id: "prod-cafe", name: "Café" });
+
+    const { container } = renderGrid({
+      products: [product],
+      productModifierGroups: { "prod-cafe": [buildGroup({ id: "g1" })] },
+    });
+
+    const badge = screen.getByTestId(`modifier-badge-${product.id}`);
+    // The badge must contain an SVG icon, not a text "+"
+    const svg = badge.querySelector("svg");
+    expect(svg).not.toBeNull();
+    expect(badge.textContent?.trim()).toBe("");
+    // And specifically the icon name
+    const iconName = (svg as SVGElement | null)?.getAttribute("data-icon");
+    expect(iconName).toBe("SlidersHorizontal");
+    // Sanity: the icon was rendered (not just the wrapper)
+    expect(container.querySelector('[data-icon="SlidersHorizontal"]')).not.toBeNull();
+  });
+
+  it("badge has a non-empty aria-label that names the feature", () => {
+    const product = buildProduct({ id: "prod-cafe", name: "Café" });
+    renderGrid({
+      products: [product],
+      productModifierGroups: { "prod-cafe": [buildGroup({ id: "g1" })] },
+    });
+
+    const badge = screen.getByTestId(`modifier-badge-${product.id}`);
+    const ariaLabel = badge.getAttribute("aria-label");
+    expect(ariaLabel).toBeTruthy();
+    expect(ariaLabel?.toLowerCase()).toMatch(/personaliz|customiz/);
+  });
+
+  it("badge shows a numeric count when the product has multiple modifier groups", () => {
+    const product = buildProduct({ id: "prod-cafe", name: "Café" });
+    renderGrid({
+      products: [product],
+      productModifierGroups: {
+        "prod-cafe": [
+          buildGroup({ id: "g1" }),
+          buildGroup({ id: "g2" }),
+          buildGroup({ id: "g3" }),
+        ],
+      },
+    });
+
+    const badge = screen.getByTestId(`modifier-badge-${product.id}`);
+    // The badge exposes a numeric count (3 groups → "+3")
+    expect(badge).toHaveAttribute("data-group-count", "3");
+  });
+
+  it("badge does NOT show a count for a single modifier group", () => {
+    const product = buildProduct({ id: "prod-cafe", name: "Café" });
+    renderGrid({
+      products: [product],
+      productModifierGroups: { "prod-cafe": [buildGroup({ id: "g1" })] },
+    });
+
+    const badge = screen.getByTestId(`modifier-badge-${product.id}`);
+    expect(badge).not.toHaveAttribute("data-group-count");
+  });
+});

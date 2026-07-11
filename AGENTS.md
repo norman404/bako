@@ -85,40 +85,52 @@ modules/<feature>/
 
 ## Referencia: módulo `menu` (modelo de referencia)
 
+El módulo más complejo del sistema. Cubre el catálogo completo (productos, categorías, menús) **y** la personalización de productos vía modifier groups.
+
 ```
 modules/menu/
   domain/
-    product.ts         ← type Product, funciones puras (filterProductsByCategory, etc.)
-    category.ts        ← type Category
-    menu.ts            ← type Menu
-    errors.ts          ← MenuDomainError, ProductNotFoundError, etc.
-    ports.ts           ← ProductRepository, CategoryRepository, MenuRepository
-  use-cases/
-    list-products.ts
-    list-categories.ts
-    list-menus.ts
-    create-category.ts
-  persistence/
+    product.ts              ← type Product + funciones puras
+    category.ts             ← type Category
+    menu.ts                 ← type Menu
+    modifier-group.ts       ← types ModifierGroup, ModifierOption, SelectedModifier
+                             ← funciones puras: resolveProductModifierGroups, buildCartItemKey
+    errors.ts               ← MenuDomainError + específicos
+    ports.ts                ← ProductRepository, CategoryRepository, MenuRepository, ModifierGroupRepository
+  use-cases/                ← 15 use-cases: CRUD de products/categories/menus,
+                             ← CRUD de modifier groups, batch queries, assign/unassign
+  persistence/              ← 4 repos Drizzle
     product-drizzle.repository.ts
     category-drizzle.repository.ts
     menu-drizzle.repository.ts
-  hooks/
-    use-products.ts
-    use-categories.ts
-    use-menus.ts
+    modifier-group-drizzle.repository.ts   ← CRUD + listByXIds (batch, 2 SQL queries para N) + listXAssignments
+  hooks/                    ← 6 archivos: use-menus, use-categories, use-products,
+                             ← use-filtered-products, use-modifier-groups (central),
+                             ← use-product-modifier-groups-map.dom.spec.tsx (performance contract)
+  store/                    ← menu-store.ts (Zustand: product search query)
   components/
-    ProductGrid.tsx
+    ProductGrid.tsx         ← grid del POS con badge de modificadores
+    ProductSearch.tsx
+    ProductCustomizationDialog.tsx  ← dialog de personalización (hero, chips, sticky footer)
     CategoryNav.tsx
     MenuSelector.tsx
     admin/
       ProductSettingsPanel.tsx
       CategorySettingsPanel.tsx
       MenuSettingsPanel.tsx
+      ModifierGroupSettingsPanel.tsx  ← usa OptionsEditor embebido
+      OptionsEditor.tsx               ← sub-componente aislado, CRUD de opciones
   lib/
     product-price.ts
+    modifier-price.ts        ← calculateItemUnitPrice(product, modifiers)
+  manifest.ts               ← 4 ModuleManifest (uno por sub-panel admin)
   index.ts
-  README.md
+  README.md                  ← descripción detallada, modelo, performance contract, changelog
 ```
+
+**Performance contract:** `useProductModifierGroupsMap(products)` hace **2 SQL queries totales** sin importar la cantidad de productos (no 2N). El test `use-product-modifier-groups-map.dom.spec.tsx` lo garantiza.
+
+**Feature flag:** `modifier_groups_enabled` en `feature_flags`. Cuando está off, el POS no muestra badges ni dispara el dialog.
 
 ---
 
@@ -215,22 +227,36 @@ pnpm test             # unit tests
 pnpm test:dom         # DOM tests
 ```
 
+**TDD estricto es mandatorio.** Ver `CONTRIBUTING.md` sección "TDD is mandatory" para el ciclo Red → Green → Refactor. La versión corta:
+
+1. **RED**: Escribí tests para el comportamiento NUEVO. Correlos. Deben fallar. Un test que nunca falla prueba nada.
+2. **GREEN**: Escribí el código MÍNIMO para que pasen. Nada más.
+3. **REFACTOR**: Limpiá mientras los tests sigan verde.
+
+**No romper tests viejos al refactorizar UI:** Cuando refinás un componente, los tests existentes (los que prueban el comportamiento viejo) deben seguir pasando. Agregá un nuevo `describe` con tests para el comportamiento nuevo **al final** del spec, no modifiques los viejos. Mantené los mismos `data-testid` / `getByRole` / `getByLabelText` que el spec viejo espera.
+
+**Test de i18n como guard de regresión:** El test `src/shared/i18n/locale-completeness.spec.ts` (12 tests) verifica que **cada locale tenga las mismas keys que `es-MX`**. Si agregás una key a `es-MX`, propagá a los 4 locales restantes, o el test falla. Es un guard permanente.
+
 ---
 
 ## Módulos actuales y su estado
 
 | Módulo | domain/ | ports.ts | use-cases/ | persistence/ | Notas |
 |--------|---------|----------|------------|--------------|-------|
-| `menu` | ✅ | `domain/ports.ts` ✅ | ✅ | ✅ | Modelo de referencia |
+| `menu` | ✅ | `domain/ports.ts` ✅ | ✅ (15) | ✅ (4 repos) | Modelo de referencia. Incluye modifier groups + dialog + OptionsEditor + batch queries. Feature flag: `modifier_groups_enabled`. Manifest con 4 sub-paneles admin. |
 | `checkout` | ✅ | `domain/ports.ts` ✅ | ✅ | ✅ | Completo |
-| `order` | ✅ | — | — | — | Solo domain + Zustand store |
-| `settings` | — | — | — | — | Solo UI state + config |
+| `order` | ✅ | — | — | — | Domain + Zustand store. El `CartItem` incluye `selectedModifiers: SelectedModifier[]` (importado de `menu/domain/modifier-group`) |
+| `settings` | — | — | — | — | Solo UI state + config. Define el contrato `ModuleManifest` que el resto usa |
 | `feature-flags` | ✅ | `domain/ports.ts` ✅ | ✅ | ✅ | Completo con optimistic updates |
+| `delivery` | ✅ | `domain/ports.ts` ✅ | ✅ (3) | ✅ | Repartidores + corte por entrega. Feature flag: `delivery_enabled` |
+| `shift-reports` | ✅ | `domain/ports.ts` ✅ | ✅ (7) | ✅ | Turnos de venta (abrir/cerrar/listar historial) + métricas. Feature flag: `shift_management_enabled` |
+| `updater` | ✅ | — | — | — (usa adapter) | Actualizaciones de Tauri. No persiste; consume el updater de Tauri via adapter en `adapters/`. Tiene `store/` para el estado del chequeo/descarga |
 
 **Shared (cross-cutting):**
 - `src/shared/db/` — cliente y schema Drizzle, usados por los repos de todos los módulos
 - `src/shared/stores/` — Zustand stores de UI state global (ej: `pos-store.ts`)
 - `src/shared/i18n/` — configuración i18n y locales
+  - **Convención de i18n:** Cada locale (`en-US`, `es-AR`, `es-ES`, `es-MX`, `pt-BR`) debe tener las **mismas keys** que `es-MX` (la fuente de verdad). El test `src/shared/i18n/locale-completeness.spec.ts` valida esto estructuralmente: si agregás una key a `es-MX`, tenés que propagarla a los otros 4 locales, o el test falla. Es un guard permanente.
 
 ---
 
@@ -317,6 +343,17 @@ Si el módulo tiene `flagKey`, el tab de configuración solo aparece cuando ese 
 
 1. Insertar el valor default en `src/modules/feature-flags/store/feature-flags-store.ts` → `DEFAULT_FLAGS`
 2. Crear la migración SQL si la tabla necesita el valor inicial (ver sección de migraciones)
+
+**Flags actuales** (defaults en `feature-flags-store.ts`):
+
+| Key | Default | Módulo | Efecto |
+|-----|---------|--------|--------|
+| `categories_enabled` | `false` | `menu` | Muestra la navegación de categorías en el POS |
+| `multiple_menus_enabled` | `false` | `menu` | Muestra el selector de menú + panel de gestión de menús |
+| `delivery_enabled` | `false` | `delivery` | Habilita módulo de repartidores y corte por entrega |
+| `shift_management_enabled` | `false` | `shift-reports` | Habilitar apertura y cierre de turnos de venta |
+| `auto_update_enabled` | `true` | `updater` | Habilita el chequeo y descarga automática de updates de Tauri |
+| `modifier_groups_enabled` | `false` | `menu` | Activa el dialog de personalización y los badges en el POS |
 
 ---
 

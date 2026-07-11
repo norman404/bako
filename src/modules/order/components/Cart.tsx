@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { calculateCartTotals, type CartItem } from "@/modules/order/domain/cart";
 import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
+import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { Button } from "@/components/ui/Button";
 import { formatPosCurrency } from "@/lib/currency";
@@ -85,16 +86,10 @@ function Cart({
                       × {formatPosCurrency(unitPrice)}
                     </p>
                     {hasModifiers && (
-                      <ul className="mt-1.5 flex flex-wrap gap-1">
-                        {item.selectedModifiers.map((modifier, index) => (
-                          <li
-                            key={`${modifier.groupId}-${index}`}
-                            className="inline-flex items-center gap-1 rounded-sharp bg-primary/10 px-1.5 py-0.5 text-2xs font-medium text-primary"
-                          >
-                            {modifier.optionName || modifier.textValue}
-                          </li>
-                        ))}
-                      </ul>
+                      <ModifierList
+                        modifiers={item.selectedModifiers}
+                        quantity={item.quantity}
+                      />
                     )}
                   </div>
                   <span className="font-mono-tabular text-md tracking-tight text-text">
@@ -178,6 +173,62 @@ function Cart({
         </footer>
       ) : null}
     </aside>
+  );
+}
+
+interface ModifierListProps {
+  modifiers: SelectedModifier[];
+  quantity: number;
+}
+
+/**
+ * Renders the modifier chips for a cart item, grouped by `groupName` so
+ * the cashier can see which group each chip belongs to.
+ */
+function ModifierList({ modifiers, quantity }: ModifierListProps) {
+  // Group modifiers by groupName, preserving first-seen order.
+  const grouped = new Map<string, SelectedModifier[]>();
+  for (const modifier of modifiers) {
+    const key = modifier.groupName ?? "_";
+    const list = grouped.get(key) ?? [];
+    list.push(modifier);
+    grouped.set(key, list);
+  }
+
+  return (
+    <ul data-testid="cart-item-modifiers" className="mt-1.5 space-y-1">
+      {Array.from(grouped.entries()).map(([groupName, mods], groupIndex) => (
+        <li
+          key={groupName === "_" ? `orphan-${groupIndex}` : `${groupName}-${groupIndex}`}
+          data-testid="modifier-group"
+          className="flex flex-wrap items-center gap-1"
+        >
+          {groupName !== "_" ? (
+            <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-text-dim">
+              {groupName}:
+            </span>
+          ) : null}
+          {mods.map((modifier, index) => {
+            const label = modifier.optionName || modifier.textValue || "";
+            const value = groupName === "_"
+              ? label
+              : `${groupName}: ${label}`;
+            return (
+              <span
+                key={`${modifier.groupId}-${index}`}
+                data-testid="modifier-chip"
+                className="inline-flex items-center gap-1 rounded-sharp bg-primary/10 px-1.5 py-0.5 text-2xs font-medium text-primary"
+              >
+                {value}
+                {quantity > 1 ? (
+                  <span className="font-mono-tabular text-text-dim">×{quantity}</span>
+                ) : null}
+              </span>
+            );
+          })}
+        </li>
+      ))}
+    </ul>
   );
 }
 

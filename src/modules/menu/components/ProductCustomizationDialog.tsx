@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Check, Plus, X } from "lucide-react";
 
 import type { ModifierGroup, ModifierOption, SelectedModifier } from "@/modules/menu/domain/modifier-group";
 import type { Product } from "@/modules/menu/domain/product";
@@ -13,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 export interface ProductCustomizationDialogProps {
   product: Product;
@@ -36,6 +38,10 @@ type GroupSelectionState =
   | { kind: "multiple"; selections: Map<string, OptionSelection> }
   | { kind: "text"; text: TextSelection }
   | { kind: "single_text"; selections: Map<string, OptionSelection>; text: TextSelection };
+
+// =====================================================================
+// Pure helpers — domain logic, no React
+// =====================================================================
 
 function buildInitialSelection(group: ModifierGroup): GroupSelectionState {
   if (group.type === "text") {
@@ -141,6 +147,238 @@ function buildSelectedModifiers(
   return result;
 }
 
+// =====================================================================
+// Formatting
+// =====================================================================
+
+function formatSurcharge(delta: number): string {
+  if (delta === 0) return "";
+  const sign = delta > 0 ? "+" : "−"; // typographic minus, not hyphen
+  return `${sign}${formatPosCurrency(Math.abs(delta))}`;
+}
+
+// =====================================================================
+// Subcomponents
+// =====================================================================
+
+interface ModifierOptionChipProps {
+  option: ModifierOption;
+  groupKind: "single" | "multiple" | "single_text";
+  selected: boolean;
+  onToggle: () => void;
+}
+
+function ModifierOptionChip({
+  option,
+  groupKind,
+  selected,
+  onToggle,
+}: ModifierOptionChipProps) {
+  const role = groupKind === "multiple" ? "checkbox" : "radio";
+  const ariaChecked = selected;
+  const surcharge = formatSurcharge(option.priceDelta);
+
+  return (
+    <button
+      type="button"
+      role={role}
+      aria-checked={ariaChecked}
+      aria-label={option.name}
+      data-testid={`modifier-option-${option.id}`}
+      data-selected={selected ? "true" : undefined}
+      onClick={onToggle}
+      className={cn(
+        "group/chip flex w-full cursor-pointer items-center gap-3 rounded-card border px-3.5 py-2.5 text-left text-sm transition-[border-color,background-color,color,box-shadow] duration-200",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+        selected
+          ? "border-primary bg-primary/15 text-text shadow-primary"
+          : "border-border bg-surface-raised text-text hover:border-border-strong hover:bg-surface-sunken",
+      )}
+    >
+      <span
+        aria-hidden="true"
+        className={cn(
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-sharp border transition-colors duration-200",
+          selected
+            ? "border-primary bg-primary text-on-primary"
+            : "border-border-strong bg-surface text-transparent group-hover/chip:text-text-dim",
+        )}
+      >
+        {role === "checkbox" ? (
+          <Check className="h-3 w-3" strokeWidth={3} />
+        ) : (
+          <span className="h-2 w-2 rounded-full bg-current" />
+        )}
+      </span>
+
+      <span className="flex-1 font-medium">{option.name}</span>
+
+      {surcharge ? (
+        <span
+          data-testid="option-surcharge"
+          className={cn(
+            "font-mono-tabular text-xs",
+            option.priceDelta > 0 ? "text-text-muted" : "text-success",
+          )}
+        >
+          {surcharge}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+interface ModifierGroupSectionProps {
+  group: ModifierGroup;
+  state: GroupSelectionState;
+  onToggleSingle: (optionId: string) => void;
+  onToggleMultiple: (optionId: string) => void;
+  onTextChange: (value: string) => void;
+}
+
+function ModifierGroupSection({
+  group,
+  state,
+  onToggleSingle,
+  onToggleMultiple,
+  onTextChange,
+}: ModifierGroupSectionProps) {
+  const { t } = useTranslation("menu");
+  const isSingle = state.kind === "single" || state.kind === "single_text";
+  const isMultiple = state.kind === "multiple";
+  const role = isSingle ? "radiogroup" : "group";
+  const ariaLabel = group.name;
+  const groupKind: "single" | "multiple" | "single_text" = isSingle
+    ? state.kind === "single_text"
+      ? "single_text"
+      : "single"
+    : "multiple";
+
+  return (
+    <section
+      data-testid={`modifier-group-${group.id}`}
+      className="space-y-2.5"
+    >
+      <header className="flex items-center gap-2">
+        <h4 className="text-sm font-semibold tracking-tight text-text">
+          {group.name}
+        </h4>
+        {group.required ? (
+          <span
+            data-testid="group-required-badge"
+            className="inline-flex items-center gap-1 rounded-sharp border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.12em] text-warning"
+          >
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-warning" />
+            <span>{t("customizationDialog.requiredLabel")}</span>
+          </span>
+        ) : (
+          <span
+            data-testid="group-optional-badge"
+            className="inline-flex items-center rounded-sharp border border-border bg-surface-sunken px-1.5 py-0.5 text-2xs font-medium uppercase tracking-[0.12em] text-text-dim"
+          >
+            {t("customizationDialog.optionalLabel")}
+          </span>
+        )}
+      </header>
+
+      {isSingle || isMultiple ? (
+        <div role={role} aria-label={ariaLabel} className="space-y-1.5">
+          {group.options.map((option) => {
+            const selected =
+              state.selections.get(option.id)?.selected === true;
+            return (
+              <ModifierOptionChip
+                key={option.id}
+                option={option}
+                groupKind={groupKind}
+                selected={selected}
+                onToggle={() =>
+                  isSingle
+                    ? onToggleSingle(option.id)
+                    : onToggleMultiple(option.id)
+                }
+              />
+            );
+          })}
+        </div>
+      ) : null}
+
+      {state.kind === "text" || state.kind === "single_text" ? (
+        <Textarea
+          aria-label={group.name}
+          value={state.text.textValue}
+          onChange={(e) => onTextChange(e.target.value)}
+          placeholder={t("customizationDialog.commentsPlaceholder")}
+          className="min-h-[64px] font-mono-tabular text-sm"
+        />
+      ) : null}
+    </section>
+  );
+}
+
+interface SelectionSummaryProps {
+  product: Product;
+  groups: ModifierGroup[];
+  states: Map<string, GroupSelectionState>;
+}
+
+function SelectionSummary({ product, groups, states }: SelectionSummaryProps) {
+  const { t } = useTranslation("menu");
+  const modifiers = useMemo(
+    () => buildSelectedModifiers(groups, states),
+    [groups, states],
+  );
+  const total = useMemo(
+    () => calculateItemUnitPrice(product, modifiers),
+    [product, modifiers],
+  );
+
+  if (modifiers.length === 0) {
+    return (
+      <div data-testid="selection-summary" className="space-y-2">
+        <p className="eyebrow">{t("customizationDialog.title")}</p>
+        <p className="text-xs text-text-dim">
+          {t("customizationDialog.commentsPlaceholder")}
+        </p>
+      </div>
+    );
+  }
+
+  // Group modifiers by groupName for compact display
+  const groupedByName = new Map<string, string[]>();
+  for (const m of modifiers) {
+    const label = m.optionName ?? m.textValue ?? "";
+    if (!label) continue;
+    const list = groupedByName.get(m.groupName) ?? [];
+    list.push(label);
+    groupedByName.set(m.groupName, list);
+  }
+
+  return (
+    <div data-testid="selection-summary" className="space-y-1.5">
+      {Array.from(groupedByName.entries()).map(([groupName, values]) => (
+        <p key={groupName} className="text-xs leading-snug text-text-muted">
+          <span className="font-semibold text-text">{groupName}:</span>{" "}
+          {values.join(", ")}
+        </p>
+      ))}
+      <div className="mt-2 flex items-baseline justify-between border-t border-border-strong pt-2">
+        <span className="eyebrow">{t("customizationDialog.summaryTotal")}</span>
+        <span
+          data-testid="summary-total"
+          className="font-mono-tabular text-md font-semibold text-text"
+        >
+          {formatPosCurrency(total)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// Main component
+// =====================================================================
+
 function ProductCustomizationDialog({
   product,
   groups,
@@ -158,12 +396,23 @@ function ProductCustomizationDialog({
     return map;
   });
 
-  const allSatisfied = useMemo(() => {
-    return groups.every((group) => {
+  const { satisfied, firstUnsatisfiedGroup } = useMemo<{
+    satisfied: boolean;
+    firstUnsatisfiedGroup: ModifierGroup | null;
+  }>(() => {
+    for (const group of groups) {
       const state = selectionStates.get(group.id);
-      if (!state) return !group.required;
-      return isGroupSatisfied(group, state);
-    });
+      if (!state) {
+        if (group.required) {
+          return { satisfied: false, firstUnsatisfiedGroup: group };
+        }
+        continue;
+      }
+      if (!isGroupSatisfied(group, state)) {
+        return { satisfied: false, firstUnsatisfiedGroup: group };
+      }
+    }
+    return { satisfied: true, firstUnsatisfiedGroup: null };
   }, [groups, selectionStates]);
 
   const runningPrice = useMemo(() => {
@@ -222,158 +471,118 @@ function ProductCustomizationDialog({
   };
 
   const handleConfirm = () => {
-    if (!allSatisfied) return;
+    if (!satisfied) return;
     const modifiers = buildSelectedModifiers(groups, selectionStates);
     onConfirm(modifiers);
   };
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {t("customizationDialog.title")} · {product.name}
-          </DialogTitle>
+      <DialogContent className="flex max-h-[85vh] max-w-lg flex-col gap-0 overflow-hidden p-0">
+        <DialogHeader className="border-b border-border-strong px-5 pb-4 pt-5">
+          <div
+            data-testid="product-hero"
+            className="flex items-start gap-3"
+          >
+            <div
+              data-testid="product-image"
+              aria-hidden="true"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card border border-border-strong bg-surface-sunken text-2xl"
+            >
+              {product.image}
+            </div>
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="font-display text-xl leading-tight text-text">
+                {product.name}
+              </DialogTitle>
+              <p className="mt-0.5 text-2xs uppercase tracking-[0.16em] text-text-dim">
+                {t("customizationDialog.title")}
+              </p>
+            </div>
+            <div
+              data-testid="product-base-price"
+              className="font-mono-tabular text-md font-semibold text-text-muted"
+            >
+              {formatPosCurrency(product.price)}
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="max-h-[60vh] space-y-4 overflow-y-auto p-1">
-          {groups.map((group) => {
-            const state = selectionStates.get(group.id);
-            if (!state) return null;
+        <div className="scrollbar-thin min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4">
+          {groups.length === 0 ? (
+            <p className="py-8 text-center text-sm text-text-dim">
+              {t("customizationDialog.commentsPlaceholder")}
+            </p>
+          ) : (
+            groups.map((group) => {
+              const state = selectionStates.get(group.id);
+              if (!state) return null;
 
-            return (
-              <section key={group.id} className="space-y-2">
-                <h4 className="text-sm font-semibold text-text">{group.name}</h4>
-
-                {group.type === "single" && (
-                  <div role="radiogroup" aria-label={group.name} className="space-y-1">
-                    {group.options.map((option) => {
-                      const sel = state.kind === "single" ? state.selections.get(option.id) : undefined;
-                      const checked = sel?.selected ?? false;
-                      return (
-                        <label
-                          key={option.id}
-                          className="flex cursor-pointer items-center gap-2 rounded-card border border-border px-3 py-2 text-sm"
-                        >
-                          <input
-                            type="radio"
-                            name={`group-${group.id}`}
-                            checked={checked}
-                            onChange={() => toggleSingleOption(group.id, option.id)}
-                            className="h-4 w-4"
-                          />
-                          <span className="flex-1">{option.name}</span>
-                          {option.priceDelta !== 0 && (
-                            <span className="font-mono-tabular text-xs text-text-muted">
-                              {option.priceDelta > 0 ? "+" : ""}
-                              {formatPosCurrency(option.priceDelta)}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {group.type === "multiple" && (
-                  <div role="group" aria-label={group.name} className="space-y-1">
-                    {group.options.map((option) => {
-                      const sel = state.kind === "multiple" ? state.selections.get(option.id) : undefined;
-                      const checked = sel?.selected ?? false;
-                      return (
-                        <label
-                          key={option.id}
-                          className="flex cursor-pointer items-center gap-2 rounded-card border border-border px-3 py-2 text-sm"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleMultipleOption(group.id, option.id)}
-                            className="h-4 w-4"
-                          />
-                          <span className="flex-1">{option.name}</span>
-                          {option.priceDelta !== 0 && (
-                            <span className="font-mono-tabular text-xs text-text-muted">
-                              {option.priceDelta > 0 ? "+" : ""}
-                              {formatPosCurrency(option.priceDelta)}
-                            </span>
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {group.type === "text" && (
-                  <Textarea
-                    aria-label={group.name}
-                    value={state.kind === "text" ? state.text.textValue : ""}
-                    onChange={(e) => updateTextValue(group.id, e.target.value)}
-                    placeholder={t("customizationDialog.commentsPlaceholder")}
-                  />
-                )}
-
-                {group.type === "single_text" && (
-                  <div className="space-y-1">
-                    <div role="radiogroup" aria-label={group.name} className="space-y-1">
-                      {group.options.map((option) => {
-                        const sel = state.kind === "single_text" ? state.selections.get(option.id) : undefined;
-                        const checked = sel?.selected ?? false;
-                        return (
-                          <label
-                            key={option.id}
-                            className="flex cursor-pointer items-center gap-2 rounded-card border border-border px-3 py-2 text-sm"
-                          >
-                            <input
-                              type="radio"
-                              name={`group-${group.id}`}
-                              checked={checked}
-                              onChange={() => toggleSingleOption(group.id, option.id)}
-                              className="h-4 w-4"
-                            />
-                            <span className="flex-1">{option.name}</span>
-                            {option.priceDelta !== 0 && (
-                              <span className="font-mono-tabular text-xs text-text-muted">
-                                {option.priceDelta > 0 ? "+" : ""}
-                                {formatPosCurrency(option.priceDelta)}
-                              </span>
-                            )}
-                          </label>
-                        );
-                      })}
-                    </div>
-                    <Textarea
-                      aria-label={group.name}
-                      value={state.kind === "single_text" ? state.text.textValue : ""}
-                      onChange={(e) => updateTextValue(group.id, e.target.value)}
-                      placeholder={t("customizationDialog.commentsPlaceholder")}
-                    />
-                  </div>
-                )}
-              </section>
-            );
-          })}
+              return (
+                <ModifierGroupSection
+                  key={group.id}
+                  group={group}
+                  state={state}
+                  onToggleSingle={(optionId) => toggleSingleOption(group.id, optionId)}
+                  onToggleMultiple={(optionId) => toggleMultipleOption(group.id, optionId)}
+                  onTextChange={(value) => updateTextValue(group.id, value)}
+                />
+              );
+            })
+          )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-border pt-3">
-          <span data-testid="running-price" className="font-mono-tabular text-lg font-bold text-text">
-            {formatPosCurrency(runningPrice)}
-          </span>
+        <footer className="sticky bottom-0 border-t border-border-strong bg-surface-raised/95 px-5 pb-5 pt-4 backdrop-blur">
+          <SelectionSummary
+            product={product}
+            groups={groups}
+            states={selectionStates}
+          />
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="eyebrow">{t("customizationDialog.summaryTotal")}</p>
+              <p
+                data-testid="footer-total"
+                className="font-mono-tabular text-display font-bold leading-none tracking-tight text-text"
+              >
+                {formatPosCurrency(runningPrice)}
+              </p>
+              <p
+                data-testid="running-price"
+                className="sr-only"
+              >
+                {formatPosCurrency(runningPrice)}
+              </p>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="small" onClick={onClose}>
-              {t("customizationDialog.cancelButton")}
-            </Button>
-            <Button
-              variant="default"
-              size="small"
-              disabled={!allSatisfied}
-              onClick={handleConfirm}
-            >
-              {t("customizationDialog.addButton")}
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="medium" onClick={onClose}>
+                  <X className="h-4 w-4" />
+                  {t("customizationDialog.cancelButton")}
+                </Button>
+                <Button
+                  data-testid="confirm-button"
+                  variant="default"
+                  size="large"
+                  disabled={!satisfied}
+                  onClick={handleConfirm}
+                >
+                  <Plus className="h-5 w-5" strokeWidth={2.5} />
+                  {t("customizationDialog.addButton")}
+                </Button>
+              </div>
+              {firstUnsatisfiedGroup && !satisfied ? (
+                <p
+                  data-testid="confirm-hint"
+                  className="text-2xs text-warning"
+                >
+                  {t("customizationDialog.missingSelectionHint", { groupName: firstUnsatisfiedGroup.name })}
+                </p>
+              ) : null}
+            </div>
           </div>
-        </div>
+        </footer>
       </DialogContent>
     </Dialog>
   );

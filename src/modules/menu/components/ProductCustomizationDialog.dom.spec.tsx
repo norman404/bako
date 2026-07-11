@@ -588,4 +588,240 @@ describe("ProductCustomizationDialog", () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
+
+  // ====================================================================
+  // UI refinada: hero, chips, surcharge visible, required indicator,
+  // selection summary, sticky footer.
+  // ====================================================================
+  describe("refined UI", () => {
+    it("renders a product hero with name, base price, and image", () => {
+      // GIVEN a product with image and price
+      // WHEN dialog opens
+      // THEN a hero region exposes the product name, base price, and image
+      const product = buildProduct({
+        name: "Café con leche",
+        price: 4200,
+        image: "☕",
+      });
+      const group = buildGroup({ id: "g1", name: "Nivel de hielo", type: "single" });
+
+      renderDialog({ product, groups: [group] });
+
+      const hero = screen.getByTestId("product-hero");
+      expect(hero).toBeInTheDocument();
+      expect(within(hero).getByText("Café con leche")).toBeInTheDocument();
+      // base price rendered in mono-tabular inside the hero
+      expect(within(hero).getByTestId("product-base-price")).toHaveTextContent("42.00");
+      // image is rendered (could be emoji or url)
+      expect(within(hero).getByTestId("product-image")).toBeInTheDocument();
+    });
+
+    it("shows surcharge amount next to each option with non-zero priceDelta", () => {
+      // GIVEN a group with mix of free and paid options
+      // WHEN dialog opens
+      // THEN each paid option exposes its surcharge formatted as "+$X.XX"
+      const group = buildGroup({
+        id: "grp-surcharge",
+        name: "Tamaño",
+        type: "single",
+        options: [
+          buildOption({ id: "opt-s", name: "Chico", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildOption({ id: "opt-m", name: "Mediano", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+          buildOption({ id: "opt-l", name: "Grande", priceDelta: 1200, isDefault: false, sortOrder: 2 }),
+        ],
+      });
+
+      renderDialog({ groups: [group] });
+
+      const chico = screen.getByTestId("modifier-option-opt-s");
+      const mediano = screen.getByTestId("modifier-option-opt-m");
+      const grande = screen.getByTestId("modifier-option-opt-l");
+
+      // free option: no surcharge displayed (or "Incluido" but not a price)
+      expect(within(chico).queryByTestId("option-surcharge")).not.toBeInTheDocument();
+      // paid options: surcharge displayed with explicit "+" prefix
+      expect(within(mediano).getByTestId("option-surcharge")).toHaveTextContent(/\+.*5\.00/);
+      expect(within(grande).getByTestId("option-surcharge")).toHaveTextContent(/\+.*12\.00/);
+    });
+
+    it("renders negative surcharge (discount) with minus sign", () => {
+      // GIVEN a group with a discount option (priceDelta < 0)
+      // WHEN dialog opens
+      // THEN the discount is rendered with a leading minus sign
+      const group = buildGroup({
+        id: "grp-discount",
+        name: "Promo",
+        type: "single",
+        options: [
+          buildOption({ id: "opt-full", name: "Precio normal", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildOption({ id: "opt-promo", name: "Promo", priceDelta: -1000, isDefault: false, sortOrder: 1 }),
+        ],
+      });
+
+      renderDialog({ groups: [group] });
+
+      const promo = screen.getByTestId("modifier-option-opt-promo");
+      // typographic minus (U+2212) and a currency-formatted 10.00
+      expect(within(promo).getByTestId("option-surcharge")).toHaveTextContent(/[−-].*10\.00/);
+    });
+
+    it("marks the selected option with aria-checked=true and a data-selected attribute", () => {
+      // GIVEN a single group with a default option
+      // WHEN dialog opens
+      // THEN the default option is marked as selected (aria-checked + data attr)
+      const group = buildGroup({
+        id: "grp-sel",
+        name: "Nivel de hielo",
+        type: "single",
+        options: [
+          buildOption({ id: "opt-a", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
+          buildOption({ id: "opt-b", name: "Con hielo", isDefault: false, sortOrder: 1 }),
+        ],
+      });
+
+      renderDialog({ groups: [group] });
+
+      const optA = screen.getByTestId("modifier-option-opt-a");
+      const optB = screen.getByTestId("modifier-option-opt-b");
+
+      expect(optA).toHaveAttribute("aria-checked", "true");
+      expect(optA).toHaveAttribute("data-selected", "true");
+      expect(optB).toHaveAttribute("aria-checked", "false");
+      expect(optB).not.toHaveAttribute("data-selected", "true");
+    });
+
+    it("renders an explicit 'Requerido' badge on required group headers", () => {
+      // GIVEN a required single group
+      // WHEN dialog opens
+      // THEN the group header exposes a visible "Requerido" indicator
+      const group = buildGroup({
+        id: "grp-req",
+        name: "Nivel de hielo",
+        type: "single",
+        required: true,
+        options: [
+          buildOption({ id: "opt-a", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
+          buildOption({ id: "opt-b", name: "Con hielo", isDefault: false, sortOrder: 1 }),
+        ],
+      });
+
+      renderDialog({ groups: [group] });
+
+      const groupSection = screen.getByTestId("modifier-group-grp-req");
+      expect(within(groupSection).getByTestId("group-required-badge")).toBeInTheDocument();
+      expect(within(groupSection).getByTestId("group-required-badge")).toHaveTextContent(/requerido|obligatorio/i);
+    });
+
+    it("renders a selection summary in the sticky footer", () => {
+      // GIVEN a product with one single group
+      // WHEN dialog opens with the default pre-selected
+      // THEN the footer summary lists the selected options grouped by groupName
+      const group = buildGroup({
+        id: "grp-sum",
+        name: "Nivel de hielo",
+        type: "single",
+        options: [
+          buildOption({ id: "opt-a", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+        ],
+      });
+
+      renderDialog({ groups: [group] });
+
+      const summary = screen.getByTestId("selection-summary");
+      expect(summary).toBeInTheDocument();
+      expect(within(summary).getByText(/nivel de hielo/i)).toBeInTheDocument();
+      expect(within(summary).getByText(/sin hielo/i)).toBeInTheDocument();
+    });
+
+    it("summary updates when the user changes selection", () => {
+      // GIVEN a single group
+      // WHEN user picks the non-default option
+      // THEN summary reflects the new choice
+      const group = buildGroup({
+        id: "grp-sum-change",
+        name: "Nivel de hielo",
+        type: "single",
+        options: [
+          buildOption({ id: "opt-a", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildOption({ id: "opt-b", name: "Con hielo", priceDelta: 200, isDefault: false, sortOrder: 1 }),
+        ],
+      });
+
+      renderDialog({ product: buildProduct({ price: 5000 }), groups: [group] });
+
+      fireEvent.click(screen.getByLabelText(/con hielo/i));
+
+      const summary = screen.getByTestId("selection-summary");
+      expect(within(summary).getByText(/con hielo/i)).toBeInTheDocument();
+      // running price reflects surcharge: 5000 + 200 = 5200 cents → 52.00
+      expect(within(summary).getByTestId("summary-total")).toHaveTextContent("52.00");
+    });
+
+    it("shows a disabled CTA when a required group is unsatisfied, with the missing group name as hint", () => {
+      // GIVEN a required single group with no defaults
+      // WHEN dialog opens
+      // THEN the CTA is disabled and exposes a hint naming the missing group
+      const group = buildGroup({
+        id: "grp-missing",
+        name: "Tamaño del vaso",
+        type: "single",
+        required: true,
+        options: [
+          buildOption({ id: "opt-a", name: "Chico", isDefault: false, sortOrder: 0 }),
+          buildOption({ id: "opt-b", name: "Grande", isDefault: false, sortOrder: 1 }),
+        ],
+      });
+
+      renderDialog({ groups: [group] });
+
+      const cta = screen.getByTestId("confirm-button");
+      expect(cta).toBeDisabled();
+      // hint names the group
+      const hint = screen.getByTestId("confirm-hint");
+      expect(hint).toHaveTextContent(/tamaño del vaso/i);
+    });
+
+    it("renders the running total prominently in the footer (large mono tabular)", () => {
+      // GIVEN a product base 5000 and one option with delta 500 pre-selected
+      // WHEN dialog opens
+      // THEN the footer shows total = 5500 cents (55.00) in a data-testid hook
+      const product = buildProduct({ price: 5000 });
+      const group = buildGroup({
+        id: "grp-total",
+        name: "Toppings",
+        type: "multiple",
+        options: [
+          buildOption({ id: "opt-bacon", name: "Bacon", priceDelta: 500, isDefault: true, sortOrder: 0 }),
+        ],
+      });
+
+      renderDialog({ product, groups: [group] });
+
+      const total = screen.getByTestId("footer-total");
+      expect(total).toHaveTextContent("55.00");
+      // footer-total is visually prominent
+      expect(total.className).toMatch(/text-(xl|display)/);
+      // and uses tabular numerals
+      expect(total.className).toMatch(/font-mono/);
+    });
+
+    it("does not render any native input[type=radio] or input[type=checkbox] (custom control)", () => {
+      // GIVEN any group
+      // WHEN dialog opens
+      // THEN the DOM uses role=radio/checkbox on custom buttons, not native inputs
+      const group = buildGroup({
+        id: "grp-custom",
+        name: "Toppings",
+        type: "multiple",
+        options: [
+          buildOption({ id: "opt-a", name: "Queso", isDefault: false, sortOrder: 0 }),
+        ],
+      });
+
+      renderDialog({ groups: [group] });
+
+      expect(document.querySelector('input[type="radio"]')).toBeNull();
+      expect(document.querySelector('input[type="checkbox"]')).toBeNull();
+    });
+  });
 });

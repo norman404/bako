@@ -551,6 +551,169 @@ export const modifierGroupDrizzleRepository: ModifierGroupRepository = {
       wrapDbError("Failed to list modifier groups by product"),
     );
   },
+
+  listByCategoryIds(categoryIds: string[]) {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const result = new Map<string, ModifierGroup[]>();
+        if (categoryIds.length === 0) {
+          return result;
+        }
+
+        // 1 query: pick every category↔group assignment for the requested categories.
+        const assignmentRows = await db
+          .select({
+            categoryId: categoryModifierGroups.categoryId,
+            groupId: categoryModifierGroups.groupId,
+          })
+          .from(categoryModifierGroups)
+          .where(inArray(categoryModifierGroups.categoryId, categoryIds));
+
+        if (assignmentRows.length === 0) {
+          // No assignments at all → every requested category maps to []
+          for (const id of categoryIds) result.set(id, []);
+          return result;
+        }
+
+        // Bucket the groupIds by categoryId so we can resolve them.
+        const groupIdsByCategory = new Map<string, string[]>();
+        for (const id of categoryIds) groupIdsByCategory.set(id, []);
+        for (const row of assignmentRows) {
+          const list = groupIdsByCategory.get(row.categoryId) ?? [];
+          list.push(row.groupId);
+          groupIdsByCategory.set(row.categoryId, list);
+        }
+
+        // 2nd query: load every referenced group at once.
+        const allGroupIds = Array.from(new Set(assignmentRows.map((r) => r.groupId)));
+        const groupRows = await db
+          .select()
+          .from(modifierGroups)
+          .where(
+            and(inArray(modifierGroups.id, allGroupIds), isNull(modifierGroups.deletedAt)),
+          )
+          .orderBy(asc(modifierGroups.sortOrder));
+
+        const groupById = new Map<string, ModifierGroup>();
+        for (const g of await loadGroups(groupRows)) {
+          groupById.set(g.id, g);
+        }
+
+        for (const [categoryId, groupIds] of groupIdsByCategory) {
+          const resolved: ModifierGroup[] = [];
+          for (const id of groupIds) {
+            const group = groupById.get(id);
+            if (group) resolved.push(group);
+          }
+          result.set(categoryId, resolved);
+        }
+        return result;
+      })(),
+      wrapDbError("Failed to list modifier groups by categoryIds"),
+    );
+  },
+
+  listByProductIds(productIds: string[]) {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const result = new Map<string, ModifierGroup[]>();
+        if (productIds.length === 0) {
+          return result;
+        }
+
+        // 1 query: pick every product↔group assignment for the requested products.
+        const assignmentRows = await db
+          .select({
+            productId: productModifierGroups.productId,
+            groupId: productModifierGroups.groupId,
+          })
+          .from(productModifierGroups)
+          .where(inArray(productModifierGroups.productId, productIds));
+
+        if (assignmentRows.length === 0) {
+          for (const id of productIds) result.set(id, []);
+          return result;
+        }
+
+        const groupIdsByProduct = new Map<string, string[]>();
+        for (const id of productIds) groupIdsByProduct.set(id, []);
+        for (const row of assignmentRows) {
+          const list = groupIdsByProduct.get(row.productId) ?? [];
+          list.push(row.groupId);
+          groupIdsByProduct.set(row.productId, list);
+        }
+
+        const allGroupIds = Array.from(new Set(assignmentRows.map((r) => r.groupId)));
+        const groupRows = await db
+          .select()
+          .from(modifierGroups)
+          .where(
+            and(inArray(modifierGroups.id, allGroupIds), isNull(modifierGroups.deletedAt)),
+          )
+          .orderBy(asc(modifierGroups.sortOrder));
+
+        const groupById = new Map<string, ModifierGroup>();
+        for (const g of await loadGroups(groupRows)) {
+          groupById.set(g.id, g);
+        }
+
+        for (const [productId, groupIds] of groupIdsByProduct) {
+          const resolved: ModifierGroup[] = [];
+          for (const id of groupIds) {
+            const group = groupById.get(id);
+            if (group) resolved.push(group);
+          }
+          result.set(productId, resolved);
+        }
+        return result;
+      })(),
+      wrapDbError("Failed to list modifier groups by productIds"),
+    );
+  },
+
+  listCategoryAssignments() {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const rows = await db
+          .select({
+            categoryId: categoryModifierGroups.categoryId,
+            groupId: categoryModifierGroups.groupId,
+          })
+          .from(categoryModifierGroups);
+
+        const map = new Map<string, Set<string>>();
+        for (const row of rows) {
+          const set = map.get(row.categoryId) ?? new Set<string>();
+          set.add(row.groupId);
+          map.set(row.categoryId, set);
+        }
+        return map;
+      })(),
+      wrapDbError("Failed to list category assignments"),
+    );
+  },
+
+  listProductAssignments() {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const rows = await db
+          .select({
+            productId: productModifierGroups.productId,
+            groupId: productModifierGroups.groupId,
+          })
+          .from(productModifierGroups);
+
+        const map = new Map<string, Set<string>>();
+        for (const row of rows) {
+          const set = map.get(row.productId) ?? new Set<string>();
+          set.add(row.groupId);
+          map.set(row.productId, set);
+        }
+        return map;
+      })(),
+      wrapDbError("Failed to list product assignments"),
+    );
+  },
 };
 
 async function loadGroups(groupRows: ModifierGroupRow[]): Promise<ModifierGroup[]> {

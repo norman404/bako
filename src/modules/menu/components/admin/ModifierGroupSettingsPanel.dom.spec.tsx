@@ -37,6 +37,9 @@ type CreateModifierGroupResult = ReturnType<typeof modifierHooks.useCreateModifi
 type UpdateModifierGroupResult = ReturnType<typeof modifierHooks.useUpdateModifierGroup>;
 type ArchiveModifierGroupResult = ReturnType<typeof modifierHooks.useArchiveModifierGroup>;
 type AssignModifierGroupResult = ReturnType<typeof modifierHooks.useAssignModifierGroup>;
+type UnassignModifierGroupResult = ReturnType<typeof modifierHooks.useUnassignModifierGroup>;
+type UseCategoryAssignmentsResult = ReturnType<typeof modifierHooks.useCategoryAssignments>;
+type UseProductAssignmentsResult = ReturnType<typeof modifierHooks.useProductAssignments>;
 type UseCategoriesResult = ReturnType<typeof categoryHooks.useCategories>;
 type UseProductsResult = ReturnType<typeof productHooks.useProducts>;
 
@@ -107,6 +110,8 @@ function mockAllHooks(opts: {
   categories?: Category[];
   products?: Product[];
   createPending?: boolean;
+  categoryAssignments?: Map<string, Set<string>>;
+  productAssignments?: Map<string, Set<string>>;
 } = {}) {
   const groups = opts.groups ?? [buildGroup()];
   const categories = opts.categories ?? [buildCategory()];
@@ -136,6 +141,21 @@ function mockAllHooks(opts: {
     isPending: false,
     mutateAsync: vi.fn(),
   } as unknown as AssignModifierGroupResult);
+
+  vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+    isPending: false,
+    mutateAsync: vi.fn(),
+  } as unknown as UnassignModifierGroupResult);
+
+  vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+    data: opts.categoryAssignments ?? new Map(),
+    isLoading: false,
+  } as unknown as UseCategoryAssignmentsResult);
+
+  vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+    data: opts.productAssignments ?? new Map(),
+    isLoading: false,
+  } as unknown as UseProductAssignmentsResult);
 
   vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
     data: categories,
@@ -195,7 +215,7 @@ describe("ModifierGroupSettingsPanel", () => {
   });
 
   describe("create form", () => {
-    it("renders create form with name, type, required, and sort order fields", () => {
+    it("renders create form with name, type, and required fields", () => {
       mockAllHooks();
 
       renderPanel();
@@ -210,7 +230,6 @@ describe("ModifierGroupSettingsPanel", () => {
 
       renderPanel();
 
-      // options editor region
       expect(screen.getByRole("button", { name: /agregar opción|añadir opción/i })).toBeInTheDocument();
     });
 
@@ -240,7 +259,6 @@ describe("ModifierGroupSettingsPanel", () => {
   describe("archive action", () => {
     it("calls archive mutation when archive button clicked and confirmed", () => {
       const archiveMutate = vi.fn();
-      // window.confirm auto-true
       vi.spyOn(window, "confirm").mockReturnValue(true);
 
       vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
@@ -263,6 +281,18 @@ describe("ModifierGroupSettingsPanel", () => {
         isPending: false,
         mutateAsync: vi.fn(),
       } as unknown as AssignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UnassignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseCategoryAssignmentsResult);
+      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseProductAssignmentsResult);
       vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
         data: [buildCategory()],
         isLoading: false,
@@ -290,7 +320,9 @@ describe("ModifierGroupSettingsPanel", () => {
 
       renderPanel();
 
-      // Assignment section must show category and product names with checkboxes
+      // Select the group first to enter edit mode and reveal the assignment section
+      fireEvent.click(screen.getByText("Nivel de hielo"));
+
       const assignSection = screen.getByTestId("modifier-assignment-section");
       expect(within(assignSection).getByText(/bebidas/i)).toBeInTheDocument();
       expect(within(assignSection).getByText(/capuchino/i)).toBeInTheDocument();
@@ -318,6 +350,18 @@ describe("ModifierGroupSettingsPanel", () => {
         isPending: false,
         mutateAsync: assignMutate,
       } as unknown as AssignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UnassignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseCategoryAssignmentsResult);
+      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseProductAssignmentsResult);
       vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
         data: [buildCategory({ id: "cat-assign", name: "Bebidas" })],
         isLoading: false,
@@ -329,7 +373,6 @@ describe("ModifierGroupSettingsPanel", () => {
 
       renderPanel();
 
-      // Need to select the group first (click on list item) to populate assignment
       fireEvent.click(screen.getByText("Nivel de hielo"));
 
       const assignSection = screen.getByTestId("modifier-assignment-section");
@@ -339,6 +382,198 @@ describe("ModifierGroupSettingsPanel", () => {
       expect(assignMutate).toHaveBeenCalled();
       const callArg = assignMutate.mock.calls[0][0];
       expect(callArg).toMatchObject({ groupId: "g-assign", categoryId: "cat-assign" });
+    });
+  });
+
+  // ====================================================================
+  // UI refinada: modos crear/editar, asignación con estado visible, validación inline
+  // ====================================================================
+  describe("refined UI", () => {
+    it("starts in 'create' mode with an empty form when there are no groups", () => {
+      mockAllHooks({ groups: [] });
+
+      renderPanel();
+
+      // The form heading is "Nuevo grupo" (or "Crear grupo")
+      expect(screen.getByRole("heading", { name: /nuevo grupo|crear grupo/i })).toBeInTheDocument();
+      // The submit button reads "Crear grupo" (not "Guardar")
+      const formRegion = screen.getByTestId("modifier-group-form");
+      expect(within(formRegion).getByRole("button", { name: /^crear grupo$/i })).toBeInTheDocument();
+    });
+
+    it("switching to edit mode populates the form with the group's data", () => {
+      mockAllHooks({
+        groups: [
+          buildGroup({
+            id: "g-edit",
+            name: "Nivel de hielo",
+            type: "single",
+            required: true,
+            options: [buildOption({ id: "o1", name: "Sin hielo" })],
+          }),
+        ],
+      });
+
+      renderPanel();
+
+      // Click the group in the list to enter edit mode
+      fireEvent.click(screen.getByText("Nivel de hielo"));
+
+      const formRegion = screen.getByTestId("modifier-group-form");
+      const nameInput = within(formRegion).getByLabelText(/^nombre$/i);
+      expect(nameInput).toHaveValue("Nivel de hielo");
+      expect(within(formRegion).getByLabelText(/requerido/i)).toBeChecked();
+      // Submit button reads "Guardar"
+      expect(within(formRegion).getByRole("button", { name: /guardar/i })).toBeInTheDocument();
+    });
+
+    it("'Nuevo' button resets the form to create mode", () => {
+      mockAllHooks({
+        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+      });
+
+      renderPanel();
+
+      // Edit first
+      fireEvent.click(screen.getByText("Nivel de hielo"));
+      // Then click "Nuevo"
+      fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+
+      const formRegion = screen.getByTestId("modifier-group-form");
+      const nameInput = within(formRegion).getByLabelText(/^nombre$/i);
+      expect(nameInput).toHaveValue("");
+      expect(within(formRegion).getByRole("button", { name: /^crear grupo$/i })).toBeInTheDocument();
+    });
+
+    it("validates that name is non-empty before enabling submit", () => {
+      mockAllHooks({ groups: [] });
+
+      renderPanel();
+
+      // Form starts empty
+      const submit = screen.getByRole("button", { name: /^crear grupo$/i });
+      // The button is disabled because name is empty AND no options
+      expect(submit).toBeDisabled();
+    });
+
+    it("pre-checks the category checkbox when the group is already assigned to that category", () => {
+      mockAllHooks({
+        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        categories: [buildCategory({ id: "cat-1", name: "Bebidas" })],
+        products: [],
+        categoryAssignments: new Map([["cat-1", new Set(["g1"])]]),
+      });
+
+      renderPanel();
+
+      // Select the group to enter edit mode and reveal the assignment section
+      fireEvent.click(screen.getByText("Nivel de hielo"));
+
+      const assignSection = screen.getByTestId("modifier-assignment-section");
+      const categoryCheckbox = within(assignSection).getByRole("checkbox", { name: /bebidas/i });
+      expect(categoryCheckbox).toBeChecked();
+    });
+
+    it("pre-checks the product checkbox when the group is already assigned to that product", () => {
+      mockAllHooks({
+        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        categories: [],
+        products: [buildProduct({ id: "prod-1", name: "Capuchino" })],
+        productAssignments: new Map([["prod-1", new Set(["g1"])]]),
+      });
+
+      renderPanel();
+
+      fireEvent.click(screen.getByText("Nivel de hielo"));
+
+      const assignSection = screen.getByTestId("modifier-assignment-section");
+      const productCheckbox = within(assignSection).getByRole("checkbox", { name: /capuchino/i });
+      expect(productCheckbox).toBeChecked();
+    });
+
+    it("shows an inline error when the create mutation fails", async () => {
+      const createMutate = vi.fn().mockRejectedValue(new Error("Nombre duplicado"));
+
+      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+        data: [buildGroup({ id: "g1", name: "Existente" })],
+        isLoading: false,
+      } as unknown as UseModifierGroupsResult);
+      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: createMutate,
+      } as unknown as CreateModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UpdateModifierGroupResult);
+      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as ArchiveModifierGroupResult);
+      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as AssignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UnassignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseCategoryAssignmentsResult);
+      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseProductAssignmentsResult);
+      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as UseCategoriesResult);
+      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as UseProductsResult);
+
+      renderPanel();
+
+      // Click "Nuevo" to enter create mode
+      fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+      // Fill name + option so the form is valid
+      fireEvent.input(screen.getByLabelText(/nombre/i), { target: { value: "Toppings" } });
+      fireEvent.click(screen.getByRole("button", { name: /agregar opción|añadir opción/i }));
+      const optionInputs = screen.getAllByLabelText(/nombre de la opción|opción/i);
+      fireEvent.input(optionInputs[0], { target: { value: "Queso" } });
+
+      // Submit
+      fireEvent.click(screen.getByRole("button", { name: /^crear grupo$/i }));
+
+      // The error is rendered inline
+      const formRegion = screen.getByTestId("modifier-group-form");
+      await vi.waitFor(() => {
+        expect(within(formRegion).getByText(/nombre duplicado/i)).toBeInTheDocument();
+      });
+    });
+
+    it("hides assignment section when no group is selected (in create mode)", () => {
+      mockAllHooks({
+        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        categories: [buildCategory()],
+        products: [buildProduct()],
+      });
+
+      renderPanel();
+
+      // In create mode (default), the section is hidden because no groupId is selected
+      expect(screen.queryByTestId("modifier-assignment-section")).not.toBeInTheDocument();
+    });
+
+    it("shows a 'no options yet' hint inside the options editor", () => {
+      mockAllHooks({ groups: [] });
+
+      renderPanel();
+
+      expect(screen.getByTestId("options-empty-hint")).toBeInTheDocument();
     });
   });
 });

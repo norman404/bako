@@ -28,7 +28,9 @@
     "cancelButton": "Cancelar",
     "commentsPlaceholder": "Escribí un comentario…",
     "requiredLabel": "Obligatorio",
-    "optionalLabel": "Opcional"
+    "optionalLabel": "Opcional",
+    "missingSelectionHint": "Falta seleccionar {{groupName}}",
+    "summaryTotal": "Total"
   },
   "modifierBadge": {
     "label": "Personalizable"

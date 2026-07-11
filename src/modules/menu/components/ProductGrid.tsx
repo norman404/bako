@@ -1,4 +1,4 @@
-import { SearchX } from "lucide-react";
+import { SearchX, SlidersHorizontal } from "lucide-react";
 
 import type { Category } from "@/modules/menu/domain/category";
 import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
@@ -43,7 +43,8 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart, prod
         {visibleProducts.map((product) => {
           const category = categoryById.get(product.categoryId);
           const color = category?.color;
-          const hasModifiers = modifierGroupsEnabled && (productModifierGroups?.[product.id]?.length ?? 0) > 0;
+          const groups = productModifierGroups?.[product.id] ?? [];
+          const hasModifiers = modifierGroupsEnabled && groups.length > 0;
 
           return (
             <button
@@ -56,10 +57,14 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart, prod
               {hasModifiers && (
                 <span
                   data-testid={`modifier-badge-${product.id}`}
-                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-2xs font-bold text-primary"
+                  data-group-count={groups.length > 1 ? String(groups.length) : undefined}
+                  className="absolute right-2 top-2 inline-flex h-6 items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 text-2xs font-semibold text-primary"
                   aria-label={t('productGrid.modifierBadge', { defaultValue: 'Personalizable' })}
                 >
-                  +
+                  <SlidersHorizontal className="h-3 w-3" aria-hidden="true" />
+                  {groups.length > 1 ? (
+                    <span className="font-mono-tabular">{groups.length}</span>
+                  ) : null}
                 </span>
               )}
 
