@@ -10,7 +10,16 @@ interface PrintTicketPayload {
   ticketNumber: number;
   createdAt: string;
   total: number;
-  items: Array<{ name: string; quantity: number; unitPrice: number }>;
+  items: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    modifiers: Array<{
+      groupName: string;
+      optionName: string | null;
+      textValue: string | null;
+    }>;
+  }>;
   paymentMethod: string;
   paymentAmount: number;
   fulfillmentType: string;
@@ -34,6 +43,7 @@ function buildPayload(input: PrintOrderOptions, printerType: string, printerAddr
       name: item.name,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
+      modifiers: item.modifiers,
     })),
     paymentMethod: input.paymentMethod,
     paymentAmount: input.paymentAmount,

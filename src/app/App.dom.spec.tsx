@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("lucide-react", async () => {
   const React = await import("react");
@@ -18,6 +18,112 @@ vi.mock("lucide-react", async () => {
       }
       return target[prop];
     },
+  });
+});
+
+describe("App — print ticket modifiers", () => {
+  const mockedUseCreateOrder = vi.mocked(useCreateOrder);
+  const mockedPrintOrder = vi.mocked(printOrder);
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    useOrderStore.setState({ currentOrder: [] });
+    usePosStore.setState({
+      selectedCategory: "all",
+      isCheckoutOpen: false,
+      checkoutSessionKey: 0,
+      isMobileCartOpen: false,
+      isSettingsOpen: false,
+    });
+    setModifierFlag(false);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    useOrderStore.setState({ currentOrder: [] });
+    usePosStore.setState({
+      selectedCategory: "all",
+      isCheckoutOpen: false,
+      checkoutSessionKey: 0,
+      isMobileCartOpen: false,
+      isSettingsOpen: false,
+    });
+  });
+
+  it("maps each cart line's modifiers to the correct print item when the same product has different modifiers", async () => {
+    // GIVEN modifier groups are enabled and "Café" has a single-choice group with two options
+    setModifierFlag(true);
+    const product = buildProduct({ id: "prod-cafe", name: "Café", price: 5000 });
+    mockFilteredProducts({ products: [product] });
+    mockProductModifierGroups({
+      "prod-cafe": [
+        buildGroup({
+          id: "g1",
+          name: "Nivel de hielo",
+          type: "single",
+          required: false,
+          options: [
+            buildOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+            buildOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+          ],
+        }),
+      ],
+    });
+
+    mockedUseCreateOrder.mockReturnValue({
+      mutateAsync: vi.fn().mockResolvedValue({
+        id: "order-1",
+        ticketNumber: 42,
+        customerId: null,
+        deliveryPersonId: null,
+        shiftId: null,
+        total: 10500,
+        createdAt: new Date("2026-07-11T10:00:00.000Z"),
+        customer: null,
+        items: [],
+        payment: {
+          id: "pay-1",
+          orderId: "order-1",
+          method: "card",
+          amount: 10500,
+          createdAt: new Date("2026-07-11T10:00:00.000Z"),
+        },
+      }),
+      isPending: false,
+    } as any);
+
+    renderApp();
+
+    // WHEN the user adds "Café" with default "Sin hielo" and then with "Extra hielo"
+    fireEvent.click(screen.getByRole("button", { name: /agregar café/i }));
+    await waitFor(() => screen.getByRole("radiogroup", { name: /nivel de hielo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^agregar$/i }));
+    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /agregar café/i }));
+    await waitFor(() => screen.getByRole("radiogroup", { name: /nivel de hielo/i }));
+    fireEvent.click(screen.getByLabelText(/extra hielo/i));
+    fireEvent.click(screen.getByRole("button", { name: /^agregar$/i }));
+    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(2));
+
+    // AND opens checkout and pays with card
+    fireEvent.click(screen.getByRole("button", { name: /pagar/i }));
+    const checkoutDialog = screen.getByRole("dialog", { name: /confirmar checkout/i });
+    fireEvent.click(screen.getByRole("button", { name: /tarjeta/i }));
+    const payButton = within(checkoutDialog).getByRole("button", { name: /pagar/i });
+    expect(payButton).toBeEnabled();
+    fireEvent.click(payButton);
+
+    // THEN printOrder must be called with each line's own modifiers
+    await waitFor(() => expect(mockedPrintOrder).toHaveBeenCalledTimes(1));
+    const printPayload = mockedPrintOrder.mock.calls[0][0];
+    expect(printPayload.items).toHaveLength(2);
+    expect(printPayload.items[0].modifiers).toEqual([
+      { groupName: "Nivel de hielo", optionName: "Sin hielo", textValue: null },
+    ]);
+    expect(printPayload.items[1].modifiers).toEqual([
+      { groupName: "Nivel de hielo", optionName: "Extra hielo", textValue: null },
+    ]);
   });
 });
 
@@ -78,10 +184,13 @@ vi.mock("@/modules/checkout/hooks/use-checkout", async (importOriginal) => {
   };
 });
 
-import { fireEvent, renderWithProviders, screen, waitFor } from "@/test/test-utils";
+import { fireEvent, renderWithProviders, screen, waitFor, within } from "@/test/test-utils";
 import { App } from "@/app/App";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { useOrderStore } from "@/modules/order/store/order-store";
+import { usePosStore } from "@/shared/stores/pos-store";
+import { useCreateOrder } from "@/modules/checkout/hooks/use-checkout";
+import { printOrder } from "@/modules/checkout/components/print-ticket";
 import * as filteredProductsHook from "@/modules/menu/hooks/use-filtered-products";
 import * as modifierGroupsHook from "@/modules/menu/hooks/use-modifier-groups";
 import type { Category } from "@/modules/menu/domain/category";

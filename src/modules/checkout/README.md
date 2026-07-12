@@ -34,7 +34,6 @@ checkout/
   lib/
     builders.ts
     formatters.ts
-    print-ticket-template.ts
   index.ts              ← export { CheckoutModal }
 ```
 
@@ -50,8 +49,8 @@ checkout/
 | `CreateOrderInput` | Payload para crear una orden |
 | `CheckoutCustomer` | Cliente asociado a una orden |
 | `CheckoutPaymentInput` | Método y monto del pago |
-| `CHECKOUT_PAYMENT_METHOD` | Enum: `cash` / `card` / `transfer` |
-| `CHECKOUT_FULFILLMENT_TYPE` | Enum: `dine_in` / `takeaway` / `delivery` |
+| `CHECKOUT_PAYMENT_METHOD` | Enum: `cash` / `card` |
+| `CHECKOUT_FULFILLMENT_TYPE` | Enum: `local` / `delivery` |
 
 **Función pura clave:**
 ```ts
@@ -123,7 +122,7 @@ Hook de estado del formulario de checkout. Maneja:
 
 ## Adapters
 
-`print-ticket.adapter.ts` — `printOrder(options)`: genera el HTML del ticket via `print-ticket-template.ts` y abre una ventana del navegador para imprimir.
+`print-ticket.adapter.ts` — `printOrder(options)`: normaliza `PrintOrderOptions` a un payload serializable y lo envía al comando `print_ticket` de Tauri. El payload incluye los items con sus modifiers (grupo, opción y valor de texto) para que el backend Rust genere el ticket físico.
 
 ---
 
@@ -144,7 +143,7 @@ Hook de estado del formulario de checkout. Maneja:
 |---------|-----------|
 | `lib/builders.spec.ts` | Construcción del payload CreateOrderInput |
 | `lib/formatters.spec.ts` | Parsing y formateo de montos |
-| `lib/print-ticket-template.spec.ts` | Generación del HTML del ticket |
+| `adapters/print-ticket.adapter.spec.ts` | Normalización del payload enviado a Tauri, incluyendo modifiers |
 | `hooks/use-checkout-form.spec.ts` | Cálculos del formulario (vuelto, validación) |
 | `components/CheckoutModal.dom.spec.tsx` | Integración DOM del modal |
 

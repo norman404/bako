@@ -214,19 +214,14 @@ export function App() {
 
     const createdOrder = await createOrderMutation.mutateAsync(orderInput);
 
-    const productNameById: Record<string, string> = {};
-    for (const item of synchronizedCartItems) {
-      productNameById[item.product.id] = item.product.name;
-    }
-
     const printResult = await printOrder({
       ticketNumber: createdOrder.ticketNumber,
       createdAt: createdOrder.createdAt,
       total: createdOrder.total,
-      items: input.items.map((item) => {
-        const cartItem = synchronizedCartItems.find((c) => c.product.id === item.productId);
+      items: input.items.map((item, index) => {
+        const cartItem = synchronizedCartItems[index];
         return {
-          name: productNameById[item.productId] ?? "Producto",
+          name: cartItem?.product.name ?? "Producto",
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           modifiers: (cartItem?.selectedModifiers ?? []).map((m) => ({
