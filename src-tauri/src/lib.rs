@@ -15,6 +15,12 @@ pub fn run() {
             kind: MigrationKind::Up,
         },
         Migration {
+            version: 2,
+            description: "seed_menu",
+            sql: include_str!("../migrations/0001_seed_menu.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
             version: 3,
             description: "orders_customers",
             sql: include_str!("../migrations/0002_orders_customers.sql"),
