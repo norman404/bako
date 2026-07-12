@@ -62,7 +62,7 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
         <Dialog.Overlay className="fixed inset-0 z-50 bg-scrim/70 backdrop-blur-sm transition-opacity duration-200 data-[state=open]:animate-fade-in" />
 
         {/* Contenedor del modal */}
-        <Dialog.Content className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal modal-shell-solid transition-all duration-200 focus:outline-none text-text grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
+        <Dialog.Content aria-describedby={undefined} className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal modal-shell-solid transition-all duration-200 focus:outline-none text-text grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
 
           <header className="flex items-center justify-between border-b border-border-strong px-4 py-2.5 sm:px-5">
             <Dialog.Title className="font-display text-xl text-primary-strong">{t('modal.title')}</Dialog.Title>

@@ -357,12 +357,13 @@ function ProductSettingsPanel() {
               <Input
                 id="product-name"
                 value={formState.name}
-                onInput={(event) =>
+                onInput={(event) => {
+                  const value = event.currentTarget.value;
                   setFormState((previous) => ({
                     ...previous,
-                    name: event.currentTarget.value,
-                  }))
-                }
+                    name: value,
+                  }));
+                }}
                 placeholder="Flat white"
               />
             </FormField>
@@ -371,12 +372,13 @@ function ProductSettingsPanel() {
               <Input
                 id="product-description"
                 value={formState.description}
-                onInput={(event) =>
+                onInput={(event) => {
+                  const value = event.currentTarget.value;
                   setFormState((previous) => ({
                     ...previous,
-                    description: event.currentTarget.value,
-                  }))
-                }
+                    description: value,
+                  }));
+                }}
                 placeholder="Doble shot con leche vaporizada"
               />
             </FormField>
@@ -386,12 +388,13 @@ function ProductSettingsPanel() {
                 <Input
                   id="product-price"
                   value={formState.price}
-                  onInput={(event) =>
+                  onInput={(event) => {
+                    const value = event.currentTarget.value;
                     setFormState((previous) => ({
                       ...previous,
-                      price: event.currentTarget.value.replace(/[^\d,.-]/g, ""),
-                    }))
-                  }
+                      price: value.replace(/[^\d,.-]/g, ""),
+                    }));
+                  }}
                   inputMode="decimal"
                   className="font-mono-tabular"
                   placeholder="55.50"
@@ -402,12 +405,13 @@ function ProductSettingsPanel() {
                 <Input
                   id="product-prep-time"
                   value={formState.prepTimeMinutes}
-                  onInput={(event) =>
+                  onInput={(event) => {
+                    const value = event.currentTarget.value;
                     setFormState((previous) => ({
                       ...previous,
-                      prepTimeMinutes: event.currentTarget.value,
-                    }))
-                  }
+                      prepTimeMinutes: value,
+                    }));
+                  }}
                   inputMode="numeric"
                   className="font-mono-tabular"
                   placeholder="5"
@@ -419,12 +423,13 @@ function ProductSettingsPanel() {
               <Input
                 id="product-image"
                 value={formState.image}
-                onInput={(event) =>
+                onInput={(event) => {
+                  const value = event.currentTarget.value;
                   setFormState((previous) => ({
                     ...previous,
-                    image: event.currentTarget.value,
-                  }))
-                }
+                    image: value,
+                  }));
+                }}
                 placeholder="☕"
               />
             </FormField>

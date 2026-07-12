@@ -116,6 +116,68 @@ describe("ProductSettingsPanel", () => {
     expect(screen.getByDisplayValue("Flat white")).toBeInTheDocument();
   });
 
+  it("should update the product name field when the operator types", () => {
+    // CASE: the operator edits the selected product name.
+    // VALIDATES: typing into a controlled input updates form state without
+    // reading event.currentTarget inside the setState updater (which can be
+    // null when React batches the update).
+    mockProductMutations();
+
+    // Arrange
+    renderProductSettingsPanel();
+    const nameInput = screen.getByLabelText(/nombre/i);
+
+    // Act
+    fireEvent.input(nameInput, { target: { value: "Cortado" } });
+
+    // Assert
+    expect(nameInput).toHaveValue("Cortado");
+  });
+
+  it("should update the product description field when the operator types", () => {
+    mockProductMutations();
+
+    renderProductSettingsPanel();
+    const descriptionInput = screen.getByLabelText(/descripción/i);
+
+    fireEvent.input(descriptionInput, { target: { value: "Café con poca leche" } });
+
+    expect(descriptionInput).toHaveValue("Café con poca leche");
+  });
+
+  it("should update the product price field when the operator types", () => {
+    mockProductMutations();
+
+    renderProductSettingsPanel();
+    const priceInput = screen.getByLabelText(/precio/i);
+
+    fireEvent.input(priceInput, { target: { value: "120.50" } });
+
+    expect(priceInput).toHaveValue("120.50");
+  });
+
+  it("should update the product prep time field when the operator types", () => {
+    mockProductMutations();
+
+    renderProductSettingsPanel();
+    const prepTimeInput = screen.getByLabelText(/prep \(min\)/i);
+
+    fireEvent.input(prepTimeInput, { target: { value: "7" } });
+
+    expect(prepTimeInput).toHaveValue("7");
+  });
+
+  it("should update the product image field when the operator types", () => {
+    mockProductMutations();
+
+    renderProductSettingsPanel();
+    const imageInput = screen.getByLabelText(/emoji \/ imagen/i);
+
+    fireEvent.input(imageInput, { target: { value: "🥐" } });
+
+    expect(imageInput).toHaveValue("🥐");
+  });
+
   it("should reset the editor when the operator starts a new product", () => {
     // CASE: the operator wants to create a new product.
     // VALIDATES: the menu admin panel clears the editor in create mode.
