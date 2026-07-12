@@ -25,7 +25,8 @@
     "tauri": "tauri",
     "lint": "oxlint",
     "test": "vitest run",
-    "test:dom": "vitest run --config vitest.dom.config.ts"
+    "test:dom": "vitest run --config vitest.dom.config.ts",
+    "seed": "bun run scripts/seed.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.3",
