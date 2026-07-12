@@ -126,6 +126,8 @@
     "typeMultiple": "Seleção múltipla",
     "typeText": "Texto livre",
     "typeSingleText": "Opção + texto",
+    "archiveButtonShort": "Arquivar",
+    "archiveDialogTitle": "Arquivar grupo",
     "emptyOptionsHint": "Adicione pelo menos uma opção para que o grupo seja válido.",
     "moveUp": "Subir opção",
     "moveDown": "Descer opção",

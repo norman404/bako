@@ -21,6 +21,8 @@
       "genericError": "No se pudo guardar el repartidor"
     },
     "archiveConfirm": "¿Archivar a {{name}}?",
+    "archive": "Archivar",
+    "archiveTitle": "Archivar repartidor",
     "archiveError": "No se pudo archivar al repartidor"
   },
   "select": {

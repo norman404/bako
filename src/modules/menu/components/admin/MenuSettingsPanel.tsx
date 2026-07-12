@@ -12,6 +12,7 @@ import {
   useMenus,
 } from "@/modules/menu/hooks/use-menus";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/FormError";
 import { FormField } from "@/components/ui/FormField";
@@ -82,6 +83,7 @@ function MenuSettingsPanel() {
     initialMenu ? buildFormStateFromMenu(initialMenu) : buildEmptyFormState(),
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Menu | null>(null);
 
   const isSaving = createMenuMutation.isPending || updateMenuMutation.isPending;
   const isDeletePending = deleteMenuMutation.isPending;
@@ -105,21 +107,20 @@ function MenuSettingsPanel() {
       setFormError(t('menus.cannotDeleteDefault'));
       return;
     }
+    setDeleteTarget(menu);
+  };
 
-    const shouldDelete = window.confirm(
-      t('menus.confirmDelete', { name: menu.name }),
-    );
-    if (!shouldDelete) {
-      return;
-    }
-
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteMenuMutation.mutateAsync(menu.id);
-      if (selectedMenuId === menu.id) {
+      await deleteMenuMutation.mutateAsync(deleteTarget.id);
+      if (selectedMenuId === deleteTarget.id) {
         beginCreate();
       }
+      setDeleteTarget(null);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : t('menus.deleteError'));
+      setDeleteTarget(null);
     }
   };
 
@@ -195,7 +196,7 @@ function MenuSettingsPanel() {
                       if (isDeletePending) {
                         return;
                       }
-                      void handleDelete(menu);
+                      handleDelete(menu);
                     }}
                     className="h-auto min-h-[60px] w-8 rounded-card text-text-dim hover:bg-surface-sunken hover:text-danger"
                     aria-label={t('menus.deleteButton')}
@@ -263,6 +264,21 @@ function MenuSettingsPanel() {
           </form>
         </section>
       </div>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title={t('menus.title')}
+        description={
+          deleteTarget
+            ? t('menus.confirmDelete', { name: deleteTarget.name })
+            : ""
+        }
+        confirmLabel={t('menus.deleteButton')}
+        confirmVariant="danger"
+        isLoading={isDeletePending}
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </div>
   );
 }

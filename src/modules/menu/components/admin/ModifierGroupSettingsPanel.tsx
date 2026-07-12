@@ -16,6 +16,7 @@ import {
 import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useProducts } from "@/modules/menu/hooks/use-products";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormError } from "@/components/ui/FormError";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
@@ -87,6 +88,7 @@ function ModifierGroupSettingsPanel() {
   const [formState, setFormState] = useState<GroupFormState>(buildEmptyFormState);
   const [options, setOptions] = useState<OptionsEditorOption[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<ModifierGroup | null>(null);
 
   const selectedGroup = useMemo(
     () => groups.find((g) => g.id === selectedGroupId) ?? null,
@@ -117,15 +119,22 @@ function ModifierGroupSettingsPanel() {
   };
 
   const handleArchive = (group: ModifierGroup) => {
-    const shouldArchive = window.confirm(
-      t("modifierGroups.confirmArchive", { name: group.name }),
-    );
-    if (!shouldArchive) return;
-    const promise = archiveMutation.mutateAsync(group.id);
-    if (promise && typeof promise.catch === "function") {
-      promise.catch((err: unknown) => {
-        setFormError(err instanceof Error ? err.message : t("modifierGroups.archiveError"));
-      });
+    setArchiveTarget(group);
+  };
+
+  const handleConfirmArchive = async () => {
+    if (!archiveTarget) return;
+    try {
+      await archiveMutation.mutateAsync(archiveTarget.id);
+      setArchiveTarget(null);
+      // If the archived group was being edited, reset the form
+      if (selectedGroupId === archiveTarget.id) {
+        beginCreate();
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("modifierGroups.archiveError");
+      setFormError(message);
+      setArchiveTarget(null);
     }
   };
 
@@ -215,14 +224,16 @@ function ModifierGroupSettingsPanel() {
                     </p>
                   </Button>
                   <Button
-                    variant="ghost"
-                    size="icon"
+                    variant="danger"
+                    size="small"
                     aria-label={t("modifierGroups.archiveButton", { name: group.name })}
                     onClick={() => handleArchive(group)}
-                    disabled={isSaving}
-                    className="h-auto min-h-[60px] w-8 text-text-dim hover:bg-surface-sunken hover:text-danger"
+                    disabled={isSaving || archiveMutation.isPending}
+                    data-testid={`archive-group-${group.id}`}
+                    className="h-auto min-h-[60px] gap-1 px-2 text-2xs uppercase tracking-[0.12em]"
                   >
-                    <Archive className="h-4 w-4" />
+                    <Archive className="h-3.5 w-3.5" />
+                    {t("modifierGroups.archiveButtonShort", { defaultValue: "Archivar" })}
                   </Button>
                 </div>
               );
@@ -380,6 +391,21 @@ function ModifierGroupSettingsPanel() {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={archiveTarget !== null}
+        onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}
+        title={t("modifierGroups.archiveDialogTitle", { defaultValue: "Archivar grupo" })}
+        description={
+          archiveTarget
+            ? t("modifierGroups.confirmArchive", { name: archiveTarget.name })
+            : ""
+        }
+        confirmLabel={t("modifierGroups.archiveButtonShort", { defaultValue: "Archivar" })}
+        confirmVariant="danger"
+        isLoading={archiveMutation.isPending}
+        onConfirm={() => void handleConfirmArchive()}
+      />
     </div>
   );
 }

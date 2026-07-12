@@ -257,9 +257,26 @@ describe("ModifierGroupSettingsPanel", () => {
   });
 
   describe("archive action", () => {
-    it("calls archive mutation when archive button clicked and confirmed", () => {
-      const archiveMutate = vi.fn();
-      vi.spyOn(window, "confirm").mockReturnValue(true);
+    it("opens a confirmation dialog when the archive button is clicked", () => {
+      mockAllHooks({
+        groups: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
+      });
+
+      renderPanel();
+
+      // Before clicking, no confirmation dialog is visible
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /archivar nivel de hielo/i }));
+
+      // A confirmation dialog MUST appear
+      const dialog = screen.getByRole("alertdialog");
+      expect(dialog).toBeInTheDocument();
+      expect(within(dialog).getByText(/archivar.*nivel de hielo/i)).toBeInTheDocument();
+    });
+
+    it("calls archive mutation only after the confirmation dialog is accepted", () => {
+      const archiveMutate = vi.fn().mockResolvedValue(undefined);
 
       vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
         data: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
@@ -294,17 +311,77 @@ describe("ModifierGroupSettingsPanel", () => {
         isLoading: false,
       } as unknown as UseProductAssignmentsResult);
       vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
-        data: [buildCategory()],
+        data: [],
         isLoading: false,
       } as unknown as UseCategoriesResult);
       vi.spyOn(productHooks, "useProducts").mockReturnValue({
-        data: [buildProduct()],
+        data: [],
+        isLoading: false,
+      } as unknown as UseProductsResult);
+
+      renderPanel();
+
+      // Click the archive button
+      fireEvent.click(screen.getByRole("button", { name: /archivar nivel de hielo/i }));
+
+      // The dialog appears, but the mutation has NOT been called yet
+      expect(archiveMutate).not.toHaveBeenCalled();
+
+      // Click "Cancelar" inside the dialog
+      fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: /cancelar/i }));
+
+      // The mutation is still NOT called
+      expect(archiveMutate).not.toHaveBeenCalled();
+    });
+
+    it("calls archive mutation with the group id when the dialog is accepted", () => {
+      const archiveMutate = vi.fn().mockResolvedValue(undefined);
+
+      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+        data: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
+        isLoading: false,
+      } as unknown as UseModifierGroupsResult);
+      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as CreateModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UpdateModifierGroupResult);
+      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: archiveMutate,
+      } as unknown as ArchiveModifierGroupResult);
+      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as AssignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UnassignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseCategoryAssignmentsResult);
+      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseProductAssignmentsResult);
+      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as UseCategoriesResult);
+      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+        data: [],
         isLoading: false,
       } as unknown as UseProductsResult);
 
       renderPanel();
 
       fireEvent.click(screen.getByRole("button", { name: /archivar nivel de hielo/i }));
+      fireEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: /archivar/i }));
 
       expect(archiveMutate).toHaveBeenCalledWith("g-archive");
     });

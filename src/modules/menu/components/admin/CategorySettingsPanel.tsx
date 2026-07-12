@@ -14,6 +14,7 @@ import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormError } from "@/components/ui/FormError";
@@ -103,6 +104,7 @@ function CategorySettingsPanel() {
     initialCategory ? buildFormStateFromCategory(initialCategory) : buildEmptyFormState(),
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<Category | null>(null);
 
   const isSaving = createCategoryMutation.isPending || updateCategoryMutation.isPending;
   const isArchivePending = archiveCategoryMutation.isPending;
@@ -121,21 +123,21 @@ function CategorySettingsPanel() {
     setFormState(buildFormStateFromCategory(category));
   };
 
-  const handleArchive = async (category: Category) => {
-    const shouldArchive = window.confirm(
-      `¿Archivar ${category.name}? Solo se puede hacer si no tiene productos activos.`,
-    );
-    if (!shouldArchive) {
-      return;
-    }
+  const handleArchive = (category: Category) => {
+    setArchiveTarget(category);
+  };
 
+  const handleConfirmArchive = async () => {
+    if (!archiveTarget) return;
     try {
-      await archiveCategoryMutation.mutateAsync(category.id);
-      if (selectedCategoryId === category.id) {
+      await archiveCategoryMutation.mutateAsync(archiveTarget.id);
+      if (selectedCategoryId === archiveTarget.id) {
         beginCreate();
       }
+      setArchiveTarget(null);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "No se pudo archivar la categoría");
+      setArchiveTarget(null);
     }
   };
 
@@ -205,7 +207,7 @@ function CategorySettingsPanel() {
                       if (isArchivePending) {
                         return;
                       }
-                      void handleArchive(category);
+                      handleArchive(category);
                     }}
                     className="h-auto min-h-[60px] w-8 rounded-card text-text-dim hover:bg-surface-sunken hover:text-danger"
                     aria-label={`Archivar ${category.name}`}
@@ -303,6 +305,21 @@ function CategorySettingsPanel() {
           </form>
         </section>
       </div>
+
+      <ConfirmDialog
+        open={archiveTarget !== null}
+        onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}
+        title="Archivar categoría"
+        description={
+          archiveTarget
+            ? `¿Archivar ${archiveTarget.name}? Solo se puede hacer si no tiene productos activos.`
+            : ""
+        }
+        confirmLabel="Archivar"
+        confirmVariant="danger"
+        isLoading={isArchivePending}
+        onConfirm={() => void handleConfirmArchive()}
+      />
     </div>
   );
 }

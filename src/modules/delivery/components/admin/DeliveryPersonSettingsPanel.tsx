@@ -13,6 +13,7 @@ import {
   useUpdateDeliveryPerson,
 } from "@/modules/delivery/hooks/use-delivery-persons";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/FormError";
 import { FormField } from "@/components/ui/FormField";
@@ -86,6 +87,7 @@ function DeliveryPersonSettingsPanel() {
     initialPerson ? buildFormStateFromPerson(initialPerson) : buildEmptyFormState(),
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<DeliveryPerson | null>(null);
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
   const isArchivePending = archiveMutation.isPending;
@@ -104,19 +106,21 @@ function DeliveryPersonSettingsPanel() {
     setFormState(buildFormStateFromPerson(person));
   };
 
-  const handleArchive = async (person: DeliveryPerson) => {
-    const shouldArchive = window.confirm(t("form.archiveConfirm", { name: person.name }));
-    if (!shouldArchive) {
-      return;
-    }
+  const handleArchive = (person: DeliveryPerson) => {
+    setArchiveTarget(person);
+  };
 
+  const handleConfirmArchive = async () => {
+    if (!archiveTarget) return;
     try {
-      await archiveMutation.mutateAsync(person.id);
-      if (selectedPersonId === person.id) {
+      await archiveMutation.mutateAsync(archiveTarget.id);
+      if (selectedPersonId === archiveTarget.id) {
         beginCreate();
       }
+      setArchiveTarget(null);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : t("form.archiveError"));
+      setArchiveTarget(null);
     }
   };
 
@@ -192,7 +196,7 @@ function DeliveryPersonSettingsPanel() {
                       if (isArchivePending) {
                         return;
                       }
-                      void handleArchive(person);
+                      handleArchive(person);
                     }}
                     className="h-auto min-h-[60px] w-8 rounded-card text-text-dim hover:bg-surface-sunken hover:text-danger"
                     aria-label={`Archivar ${person.name}`}
@@ -269,6 +273,21 @@ function DeliveryPersonSettingsPanel() {
           </form>
         </section>
       </div>
+
+      <ConfirmDialog
+        open={archiveTarget !== null}
+        onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}
+        title={t("form.archiveTitle")}
+        description={
+          archiveTarget
+            ? t("form.archiveConfirm", { name: archiveTarget.name })
+            : ""
+        }
+        confirmLabel={t("form.archive")}
+        confirmVariant="danger"
+        isLoading={isArchivePending}
+        onConfirm={() => void handleConfirmArchive()}
+      />
     </div>
   );
 }
