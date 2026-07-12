@@ -16,6 +16,7 @@ export const categories = sqliteTable(
     description: text("description").notNull(),
     color: text("color"),
     menuId: text("menu_id").references(() => menus.id),
+    printerId: text("printer_id").references(() => printers.id),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
@@ -245,6 +246,21 @@ export const orderItems = sqliteTable(
   ],
 );
 
+export const printers = sqliteTable(
+  "printers",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    address: text("address").notNull(),
+    role: text("role").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("idx_printers_deleted_at").on(table.deletedAt)],
+);
+
 export const systemSettings = sqliteTable("system_settings", {
   id: text("id").primaryKey().$defaultFn(() => "current"),
   locale: text("locale").notNull(),
@@ -269,6 +285,7 @@ export type CustomerRow = typeof customers.$inferSelect;
 export type OrderRow = typeof orders.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
+export type PrinterRow = typeof printers.$inferSelect;
 export type SystemSettingsRow = typeof systemSettings.$inferSelect;
 export type FeatureFlagRow = typeof featureFlags.$inferSelect;
 export type ModifierGroupRow = typeof modifierGroups.$inferSelect;
@@ -286,6 +303,7 @@ export type CustomerInsert = typeof customers.$inferInsert;
 export type OrderInsert = typeof orders.$inferInsert;
 export type PaymentInsert = typeof payments.$inferInsert;
 export type OrderItemInsert = typeof orderItems.$inferInsert;
+export type PrinterInsert = typeof printers.$inferInsert;
 export type SystemSettingsInsert = typeof systemSettings.$inferInsert;
 export type FeatureFlagInsert = typeof featureFlags.$inferInsert;
 export type ShiftRow = typeof shifts.$inferSelect;

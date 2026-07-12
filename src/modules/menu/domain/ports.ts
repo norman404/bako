@@ -25,6 +25,7 @@ export interface CategoryCreateInput {
   description: string;
   color?: string | null;
   menuId?: string | null;
+  printerId?: string | null;
 }
 
 export interface MenuCreateInput {

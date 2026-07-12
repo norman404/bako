@@ -49,6 +49,10 @@
       "shift": {
         "name": "Shifts",
         "description": "Shift management for sales"
+      },
+      "printer": {
+        "name": "Printers",
+        "description": "Print command tickets by area (kitchen, bar, etc.)"
       }
     },
     "flags": {
@@ -71,6 +75,11 @@
         "label": "Product Options",
         "description": "Customize products with modifier groups (ice level, comments, etc.)",
         "updated": "Product Options {{value, select, true {enabled} other {disabled}}}"
+      },
+      "comandas_enabled": {
+        "label": "Command tickets",
+        "description": "Print preparation tickets by area (kitchen, bar, etc.)",
+        "updated": "Command tickets {{value, select, true {enabled} other {disabled}}}"
       }
     }
   },

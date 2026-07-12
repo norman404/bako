@@ -4,6 +4,7 @@ export interface Category {
   description: string;
   color: string | null;
   menuId: string | null;
+  printerId: string | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

@@ -37,6 +37,7 @@ function buildCategory(overrides: Partial<Category> = {}): Category {
     description: "Bebidas frías y calientes",
     color: null,
     menuId: null,
+    printerId: null,
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
     deletedAt: null,

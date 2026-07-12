@@ -11,6 +11,7 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   shift_management_enabled: false,
   auto_update_enabled: true,
   modifier_groups_enabled: false,
+  comandas_enabled: false,
 };
 
 interface FeatureFlagsState {

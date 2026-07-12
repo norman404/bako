@@ -92,6 +92,18 @@ pub fn run() {
             sql: include_str!("../migrations/0015_modifiers_flag_seed.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 16,
+            description: "comandas_flag_seed",
+            sql: include_str!("../migrations/0016_comandas_flag_seed.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 17,
+            description: "printers_and_category_printer",
+            sql: include_str!("../migrations/0017_printers_and_category_printer.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
@@ -107,7 +119,7 @@ pub fn run() {
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::test_printer, commands::list_usb_printers])
+        .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::print_command, commands::test_printer, commands::list_usb_printers])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

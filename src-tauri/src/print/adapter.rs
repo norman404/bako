@@ -1,7 +1,7 @@
 use escpos::printer::Printer;
 use escpos::utils::{Protocol, JustifyMode};
 use super::error::PrintError;
-use super::ticket::{build_ticket, TicketPayload};
+use super::ticket::{build_command, build_ticket, CommandPayload, TicketPayload};
 
 pub enum PrinterDriver {
     #[cfg(target_os = "windows")]
@@ -62,6 +62,22 @@ pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Resul
 
 fn map_err(e: escpos::errors::PrinterError) -> PrintError {
     PrintError::TicketGeneration(e.to_string())
+}
+
+pub fn print_command_with_driver(driver: PrinterDriver, payload: &CommandPayload) -> Result<(), PrintError> {
+    match driver {
+        PrinterDriver::Usb(usb_driver) => {
+            let mut printer = Printer::new(usb_driver, Protocol::default(), None);
+            build_command(&mut printer, payload)?;
+            Ok(())
+        }
+        PrinterDriver::Network(net_driver) => {
+            let mut printer = Printer::new(net_driver, Protocol::default(), None);
+            build_command(&mut printer, payload)?;
+            Ok(())
+        }
+        PrinterDriver::None => Ok(()),
+    }
 }
 
 pub fn print_ticket_with_driver(driver: PrinterDriver, payload: &TicketPayload) -> Result<(), PrintError> {

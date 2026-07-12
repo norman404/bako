@@ -13,6 +13,7 @@ import {
 import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { usePrinters } from "@/modules/printer/hooks/use-printers";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ interface CategoryFormState {
   description: string;
   color: string;
   menuId: string;
+  printerId: string;
 }
 
 function buildEmptyFormState(): CategoryFormState {
@@ -48,6 +50,7 @@ function buildEmptyFormState(): CategoryFormState {
     description: "",
     color: "",
     menuId: "",
+    printerId: "",
   };
 }
 
@@ -57,6 +60,7 @@ function buildFormStateFromCategory(category: Category): CategoryFormState {
     description: category.description,
     color: category.color ?? "",
     menuId: category.menuId ?? "",
+    printerId: category.printerId ?? "",
   };
 }
 
@@ -73,6 +77,7 @@ function toCategoryPayload(formState: CategoryFormState): CategoryCreateInput | 
     description,
     color: formState.color.trim() || null,
     menuId: formState.menuId.trim() || null,
+    printerId: formState.printerId.trim() || null,
   };
 }
 
@@ -88,8 +93,10 @@ function getListButtonClass(isActive: boolean): string {
 function CategorySettingsPanel() {
   const { flags } = useFeatureFlagsStore();
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
+  const comandasEnabled = flags.comandas_enabled ?? false;
   const { data: categories = [] } = useCategories();
   const { data: menus = [] } = useMenus();
+  const { data: printers = [] } = usePrinters();
 
   const createCategoryMutation = useCreateCategory();
   const updateCategoryMutation = useUpdateCategory();
@@ -289,6 +296,29 @@ function CategorySettingsPanel() {
               label="Color (hex opcional)"
               placeholder="#C8E6C9"
             />
+
+            {comandasEnabled && (
+              <FormField label="Impresora de comanda" htmlFor="category-printer">
+                <Select
+                  value={formState.printerId}
+                  onValueChange={(value) =>
+                    setFormState((previous) => ({ ...previous, printerId: value }))
+                  }
+                >
+                  <SelectTrigger id="category-printer">
+                    <SelectValue placeholder="Sin impresora asignada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sin impresora asignada</SelectItem>
+                    {printers.map((printer) => (
+                      <SelectItem key={printer.id} value={printer.id}>
+                        {printer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            )}
 
             <FormError message={formError} />
 

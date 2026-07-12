@@ -19,7 +19,8 @@
     "orderSaved": "Pedido #{{ticketNumber}} guardado",
     "orderCustomerInfo": "{{customerName}} · {{customerPhone}}",
     "orderItemsCount": "{{itemsCount}} productos cobrados en caja",
-    "printError": "La venta quedó guardada, pero no pudimos imprimir el ticket"
+    "printError": "La venta quedó guardada, pero no pudimos imprimir el ticket",
+    "comandaPrintError": "No pudimos imprimir una comanda"
   },
   "header": {
     "title": "Bako"

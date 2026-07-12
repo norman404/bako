@@ -24,6 +24,10 @@ const MODULES: ModuleConfig[] = [
     id: "shift",
     flags: ["shift_management_enabled"],
   },
+  {
+    id: "printer",
+    flags: ["comandas_enabled"],
+  },
 ];
 
 export function FeatureFlagsPanel() {

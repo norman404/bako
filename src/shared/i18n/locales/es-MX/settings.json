@@ -53,6 +53,10 @@
       "shift": {
         "name": "Turnos",
         "description": "Gestión de turnos de venta"
+      },
+      "printer": {
+        "name": "Impresoras",
+        "description": "Imprimir comandas en cocina, barra u otras áreas"
       }
     },
     "flags": {
@@ -80,6 +84,11 @@
         "label": "Opciones de producto",
         "description": "Personalizar productos con grupos de modificadores (nivel de hielo, comentarios, etc.)",
         "updated": "Opciones de producto {{value, select, true {habilitadas} other {deshabilitadas}}}"
+      },
+      "comandas_enabled": {
+        "label": "Comandas",
+        "description": "Imprimir tickets de preparación por área (cocina, barra, etc.)",
+        "updated": "Comandas {{value, select, true {habilitadas} other {deshabilitadas}}}"
       }
     }
   },

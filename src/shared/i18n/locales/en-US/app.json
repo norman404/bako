@@ -19,7 +19,8 @@
     "orderSaved": "Order #{{ticketNumber}} saved",
     "orderCustomerInfo": "{{customerName}} · {{customerPhone}}",
     "orderItemsCount": "{{itemsCount}} products charged at register",
-    "printError": "Sale was saved, but we could not print the ticket"
+    "printError": "Sale was saved, but we could not print the ticket",
+    "comandaPrintError": "Could not print a command ticket"
   },
   "header": {
     "title": "Bako"

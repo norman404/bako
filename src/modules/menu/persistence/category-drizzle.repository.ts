@@ -14,6 +14,7 @@ function rowToCategory(row: CategoryRow): Category {
     description: row.description,
     color: row.color ?? null,
     menuId: row.menuId ?? null,
+    printerId: row.printerId ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
@@ -42,6 +43,7 @@ function normalizeCategoryInput(input: CategoryCreateInput): CategoryCreateInput
     description: input.description.trim(),
     color: input.color?.trim() || null,
     menuId: input.menuId ?? null,
+    printerId: input.printerId?.trim() || null,
   };
 }
 
@@ -151,6 +153,7 @@ export const categoryDrizzleRepository: CategoryRepository = {
           description: normalizedInput.description,
           color: normalizedInput.color,
           menuId: normalizedInput.menuId,
+          printerId: normalizedInput.printerId,
           createdAt: now,
           updatedAt: now,
         })
@@ -184,6 +187,7 @@ export const categoryDrizzleRepository: CategoryRepository = {
           description: normalizedInput.description,
           color: normalizedInput.color,
           menuId: normalizedInput.menuId,
+          printerId: normalizedInput.printerId,
           updatedAt: now,
         })
           .where(and(eq(categories.id, id), isNull(categories.deletedAt)))

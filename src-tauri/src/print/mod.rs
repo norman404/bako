@@ -3,5 +3,5 @@ pub mod error;
 pub mod ticket;
 pub mod usb_detection;
 
-pub use adapter::{create_printer_driver, print_ticket_with_driver, test_printer_with_driver};
-pub use ticket::{TicketPayload, TicketItem, TicketItemModifier, TicketCustomer};
+pub use adapter::*;
+pub use ticket::{CommandItem, CommandPayload, TicketCustomer, TicketItem, TicketPayload};

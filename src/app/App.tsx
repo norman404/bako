@@ -10,6 +10,7 @@ import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
 import { DeliveryPersonSelect } from "@/modules/delivery";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
+import { usePrintCommands } from "@/modules/checkout/hooks/use-print-commands";
 import { CategoryNav } from "@/modules/menu/components/CategoryNav";
 import { MenuSelector } from "@/modules/menu/components/MenuSelector";
 import { ProductCustomizationDialog } from "@/modules/menu/components/ProductCustomizationDialog";
@@ -47,6 +48,7 @@ export function App() {
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
   const deliveryEnabled = flags.delivery_enabled ?? false;
   const shiftManagementEnabled = flags.shift_management_enabled ?? false;
+  const comandasEnabled = flags.comandas_enabled ?? false;
 
   const updater = useUpdater();
 
@@ -140,6 +142,7 @@ export function App() {
     : [];
 
   const createOrderMutation = useCreateOrder();
+  const { printCommands } = usePrintCommands({ enabled: comandasEnabled });
 
   const synchronizedCartItems = currentOrder.map((item) => {
     const currentProduct = products.find((product) => product.id === item.product.id);
@@ -258,6 +261,27 @@ export function App() {
         description: printError.message,
       });
     });
+
+    if (comandasEnabled) {
+      const commandErrors = await printCommands(synchronizedCartItems, categories, {
+        ticketNumber: createdOrder.ticketNumber,
+        createdAt: createdOrder.createdAt,
+        fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
+        customer: createdOrder.customer
+          ? {
+              name: createdOrder.customer.name,
+              phone: createdOrder.customer.phone,
+              address: createdOrder.customer.address,
+            }
+          : null,
+      });
+
+      for (const commandError of commandErrors) {
+        toast.error(t('toast.comandaPrintError'), {
+          description: commandError.message,
+        });
+      }
+    }
   };
 
   return (

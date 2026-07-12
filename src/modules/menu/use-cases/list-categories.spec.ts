@@ -13,6 +13,7 @@ function buildCategory(overrides: Partial<Category> = {}): Category {
     description: overrides.description ?? "Café, tés y chocolate",
     color: overrides.color ?? null,
     menuId: overrides.menuId ?? null,
+    printerId: overrides.printerId ?? null,
     createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
     deletedAt: overrides.deletedAt ?? null,

@@ -11,6 +11,7 @@ function buildCategory(id: string, name: string): Category {
     description: `${name} description`,
     color: null,
     menuId: null,
+    printerId: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     deletedAt: null,
