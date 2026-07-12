@@ -1,59 +1,41 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { DatabaseSync } from "node:sqlite";
+import { describe, expect, it } from "vitest";
 
-import { executeSeed, resolveDbPath, type SqliteConnection } from "./seed";
+import { executeSeed, resolveDbPath, type SeedResult, type SqliteConnection } from "./seed";
 
-const SCHEMA_SQL = `
-CREATE TABLE categories (
-  id text PRIMARY KEY NOT NULL,
-  name text NOT NULL,
-  description text NOT NULL,
-  color text,
-  menu_id text,
-  created_at integer NOT NULL,
-  updated_at integer NOT NULL,
-  deleted_at integer
-);
+function createFakeDb(config: {
+  counts?: Partial<Record<keyof SeedResult, number>>;
+  failOn?: number;
+} = {}): SqliteConnection & { calls: string[]; prepareCalls: string[] } {
+  const calls: string[] = [];
+  const prepareCalls: string[] = [];
+  const counts = {
+    categories: 5,
+    products: 10,
+    menus: 1,
+    productMenus: 10,
+    ...config.counts,
+  };
 
-CREATE TABLE products (
-  id text PRIMARY KEY NOT NULL,
-  category_id text NOT NULL,
-  menu_id text,
-  name text NOT NULL,
-  description text NOT NULL,
-  price integer NOT NULL,
-  prep_time_minutes integer NOT NULL,
-  image text NOT NULL,
-  is_popular integer DEFAULT 0 NOT NULL,
-  created_at integer NOT NULL,
-  updated_at integer NOT NULL,
-  deleted_at integer
-);
-
-CREATE TABLE menus (
-  id text PRIMARY KEY NOT NULL,
-  name text NOT NULL,
-  is_default integer NOT NULL DEFAULT 0,
-  created_at integer NOT NULL,
-  updated_at integer NOT NULL
-);
-
-CREATE TABLE product_menus (
-  product_id text NOT NULL,
-  menu_id text NOT NULL,
-  PRIMARY KEY (product_id, menu_id)
-);
-`;
-
-const SEED_SQL_PATH = fileURLToPath(new URL("../src-tauri/seeds/seed-menu.sql", import.meta.url));
-const SEED_SQL = readFileSync(SEED_SQL_PATH, "utf-8");
-
-function createInMemoryDb(): SqliteConnection {
-  const db = new DatabaseSync(":memory:") as unknown as SqliteConnection;
-  db.exec(SCHEMA_SQL);
-  return db;
+  return {
+    calls,
+    prepareCalls,
+    exec: (sql: string) => {
+      calls.push(sql);
+      if (config.failOn === calls.length) {
+        throw new Error("forced exec failure");
+      }
+    },
+    prepare: (sql: string) => {
+      prepareCalls.push(sql);
+      let c = 0;
+      if (sql.includes("categories")) c = counts.categories;
+      else if (sql.includes("products")) c = counts.products;
+      else if (sql.includes("product_menus")) c = counts.productMenus;
+      else if (sql.includes("menus")) c = counts.menus;
+      return { get: () => ({ c }) };
+    },
+    close: () => {},
+  };
 }
 
 describe("resolveDbPath", () => {
@@ -88,19 +70,11 @@ describe("resolveDbPath", () => {
 });
 
 describe("executeSeed", () => {
-  let db: SqliteConnection;
+  it("executes the seed inside a transaction and returns default counts", () => {
+    const db = createFakeDb();
+    const result = executeSeed(db, "SEED SQL");
 
-  beforeEach(() => {
-    db = createInMemoryDb();
-  });
-
-  afterEach(() => {
-    db.close();
-  });
-
-  it("loads the seed and returns correct counts", () => {
-    const result = executeSeed(db, SEED_SQL);
-
+    expect(db.calls).toEqual(["BEGIN", "SEED SQL", "COMMIT"]);
     expect(result).toEqual({
       categories: 5,
       products: 10,
@@ -109,14 +83,36 @@ describe("executeSeed", () => {
     });
   });
 
-  it("is idempotent — running twice produces the same counts without errors", () => {
-    const first = executeSeed(db, SEED_SQL);
-    const second = executeSeed(db, SEED_SQL);
+  it("queries each table with the expected prepared statements", () => {
+    const db = createFakeDb();
+    executeSeed(db, "SEED SQL");
 
-    expect(second).toEqual(first);
-    expect(second.categories).toBe(5);
-    expect(second.products).toBe(10);
-    expect(second.menus).toBe(1);
-    expect(second.productMenus).toBe(10);
+    expect(db.prepareCalls).toEqual([
+      "SELECT COUNT(*) as c FROM categories",
+      "SELECT COUNT(*) as c FROM products",
+      "SELECT COUNT(*) as c FROM menus",
+      "SELECT COUNT(*) as c FROM product_menus",
+    ]);
+  });
+
+  it("returns custom counts provided by the fake database", () => {
+    const db = createFakeDb({ counts: { categories: 3, products: 7 } });
+    const result = executeSeed(db, "SEED SQL");
+
+    expect(result).toEqual({
+      categories: 3,
+      products: 7,
+      menus: 1,
+      productMenus: 10,
+    });
+  });
+
+  it("rolls back and throws when exec fails", () => {
+    const db = createFakeDb({ failOn: 2 });
+
+    expect(() => executeSeed(db, "BAD SQL")).toThrow(
+      "Error al ejecutar el seed SQL: forced exec failure",
+    );
+    expect(db.calls).toEqual(["BEGIN", "BAD SQL", "ROLLBACK"]);
   });
 });
