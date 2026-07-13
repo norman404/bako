@@ -1,5 +1,6 @@
 use escpos::printer::Printer;
-use escpos::utils::{Protocol, JustifyMode};
+use escpos::printer_options::PrinterOptions;
+use escpos::utils::{JustifyMode, PageCode, Protocol};
 use super::error::PrintError;
 use super::ticket::{build_command, build_ticket, CommandPayload, TicketPayload};
 
@@ -67,15 +68,22 @@ fn map_err(e: escpos::errors::PrinterError) -> PrintError {
     PrintError::TicketGeneration(e.to_string())
 }
 
+fn build_printer<D: escpos::driver::Driver>(driver: D) -> Printer<D> {
+    // PC858 covers Spanish characters (ñ, accents) and the euro symbol,
+    // which the default UTF-8 encoder does not render on most ESC/POS printers.
+    let options = PrinterOptions::new(Some(PageCode::PC858), None, 42);
+    Printer::new(driver, Protocol::default(), Some(options))
+}
+
 pub fn print_command_with_driver(driver: PrinterDriver, payload: &CommandPayload) -> Result<(), PrintError> {
     match driver {
         PrinterDriver::Usb(usb_driver) => {
-            let mut printer = Printer::new(usb_driver, Protocol::default(), None);
+            let mut printer = build_printer(usb_driver);
             build_command(&mut printer, payload)?;
             Ok(())
         }
         PrinterDriver::Network(net_driver) => {
-            let mut printer = Printer::new(net_driver, Protocol::default(), None);
+            let mut printer = build_printer(net_driver);
             build_command(&mut printer, payload)?;
             Ok(())
         }
@@ -86,12 +94,12 @@ pub fn print_command_with_driver(driver: PrinterDriver, payload: &CommandPayload
 pub fn print_ticket_with_driver(driver: PrinterDriver, payload: &TicketPayload) -> Result<(), PrintError> {
     match driver {
         PrinterDriver::Usb(usb_driver) => {
-            let mut printer = Printer::new(usb_driver, Protocol::default(), None);
+            let mut printer = build_printer(usb_driver);
             build_ticket(&mut printer, payload)?;
             Ok(())
         }
         PrinterDriver::Network(net_driver) => {
-            let mut printer = Printer::new(net_driver, Protocol::default(), None);
+            let mut printer = build_printer(net_driver);
             build_ticket(&mut printer, payload)?;
             Ok(())
         }
@@ -102,7 +110,7 @@ pub fn print_ticket_with_driver(driver: PrinterDriver, payload: &TicketPayload) 
 pub fn test_printer_with_driver(driver: PrinterDriver) -> Result<(), PrintError> {
     match driver {
         PrinterDriver::Usb(usb_driver) => {
-            let mut printer = Printer::new(usb_driver, Protocol::default(), None);
+            let mut printer = build_printer(usb_driver);
             printer
                 .init().map_err(map_err)?
                 .size(2, 2).map_err(map_err)?
@@ -116,7 +124,7 @@ pub fn test_printer_with_driver(driver: PrinterDriver) -> Result<(), PrintError>
             Ok(())
         }
         PrinterDriver::Network(net_driver) => {
-            let mut printer = Printer::new(net_driver, Protocol::default(), None);
+            let mut printer = build_printer(net_driver);
             printer
                 .init().map_err(map_err)?
                 .size(2, 2).map_err(map_err)?

@@ -259,6 +259,10 @@ mod tests {
             let buffer = self.buffer.lock().unwrap();
             String::from_utf8_lossy(&buffer).to_string()
         }
+
+        fn bytes(&self) -> Vec<u8> {
+            self.buffer.lock().unwrap().clone()
+        }
     }
 
     impl Driver for MockDriver {
@@ -413,5 +417,40 @@ mod tests {
         assert!(output.contains("Juan"));
         assert!(output.contains("5551234"));
         assert!(output.contains("Calle 1"));
+    }
+
+    #[test]
+    fn build_ticket_encodes_spanish_characters_with_pc858() {
+        use escpos::printer_options::PrinterOptions;
+        use escpos::utils::PageCode;
+
+        let driver = MockDriver::new();
+        let options = PrinterOptions::new(Some(PageCode::PC858), None, 42);
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), Some(options));
+
+        let payload = TicketPayload {
+            ticket_number: 1,
+            created_at: "13 jul 2026".to_owned(),
+            total: 100,
+            items: vec![TicketItem {
+                name: "ñoquis".to_owned(),
+                quantity: 1,
+                unit_price: 100,
+                modifiers: vec![],
+            }],
+            payment_method: "cash".to_owned(),
+            payment_amount: 100,
+            fulfillment_type: "local".to_owned(),
+            customer: None,
+        };
+
+        build_ticket(&mut printer, &payload).unwrap();
+
+        let bytes = driver.bytes();
+        assert!(
+            bytes.contains(&0xA4),
+            "ñ should be encoded as 0xA4 in PC858 (got {:?})",
+            bytes
+        );
     }
 }
