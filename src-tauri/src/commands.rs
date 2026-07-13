@@ -42,11 +42,8 @@ pub fn print_ticket(input: PrintTicketInput) -> Result<(), String> {
 pub struct PrintCommandInput {
     pub printer_type: String,
     pub printer_address: String,
-    pub ticket_number: u32,
-    pub created_at: String,
+    pub header_text: String,
     pub items: Vec<CommandItem>,
-    pub fulfillment_type: String,
-    pub customer: Option<TicketCustomer>,
 }
 
 #[tauri::command]
@@ -55,11 +52,8 @@ pub fn print_command(input: PrintCommandInput) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
 
     let payload = CommandPayload {
-        ticket_number: input.ticket_number,
-        created_at: input.created_at,
+        header_text: input.header_text,
         items: input.items,
-        fulfillment_type: input.fulfillment_type,
-        customer: input.customer,
     };
 
     print_command_with_driver(driver, &payload)

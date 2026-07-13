@@ -116,6 +116,12 @@ pub fn run() {
             sql: include_str!("../migrations/0018_receipt_printing_flag_seed.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 19,
+            description: "comanda_header_text",
+            sql: include_str!("../migrations/0019_comanda_header_text.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

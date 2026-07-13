@@ -36,18 +36,13 @@ function buildLine(overrides: {
   };
 }
 
-const baseContext = {
-  ticketNumber: 42,
-  createdAt: new Date("2026-07-11T10:00:00.000Z"),
-  fulfillmentType: "local" as const,
-  customer: null,
-};
+const HEADER_TEXT = "COMANDA";
 
 describe("buildKitchenCommands", () => {
   it("returns empty array when there are no printers at all", () => {
     const lines = [buildLine({ quantity: 2 })];
 
-    const result = buildKitchenCommands(lines, [], baseContext);
+    const result = buildKitchenCommands(lines, [], HEADER_TEXT);
 
     expect(result).toHaveLength(0);
   });
@@ -60,7 +55,7 @@ describe("buildKitchenCommands", () => {
     ];
     const lines = [buildLine({ quantity: 3 })];
 
-    const result = buildKitchenCommands(lines, printers, baseContext);
+    const result = buildKitchenCommands(lines, printers, HEADER_TEXT);
 
     expect(result).toHaveLength(0);
   });
@@ -70,7 +65,7 @@ describe("buildKitchenCommands", () => {
     const receiptPrinter = buildPrinter({ id: "printer-receipt", role: "receipt", address: "192.168.1.99:9100" });
     const lines = [buildLine({ quantity: 1 })];
 
-    const result = buildKitchenCommands(lines, [kitchenPrinter, receiptPrinter], baseContext);
+    const result = buildKitchenCommands(lines, [kitchenPrinter, receiptPrinter], HEADER_TEXT);
 
     expect(result).toHaveLength(1);
     expect(result[0]?.destination.printerAddress).toBe(kitchenPrinter.address);
@@ -80,7 +75,7 @@ describe("buildKitchenCommands", () => {
     const kitchenPrinter = buildPrinter({ id: "printer-kitchen" });
     const taco = buildLine({ product: { id: "prod-taco", name: "Taco" }, quantity: 3 });
 
-    const result = buildKitchenCommands([taco], [kitchenPrinter], baseContext);
+    const result = buildKitchenCommands([taco], [kitchenPrinter], HEADER_TEXT);
 
     expect(result).toHaveLength(3);
     for (const command of result) {
@@ -98,7 +93,7 @@ describe("buildKitchenCommands", () => {
     const taco = buildLine({ product: { id: "prod-taco", name: "Taco" }, quantity: 2 });
     const water = buildLine({ product: { id: "prod-water", name: "Agua" }, quantity: 1 });
 
-    const result = buildKitchenCommands([taco, water], [kitchenPrinter], baseContext);
+    const result = buildKitchenCommands([taco, water], [kitchenPrinter], HEADER_TEXT);
 
     expect(result).toHaveLength(3);
     expect(result.filter((command) => command.items[0]?.name === "Taco")).toHaveLength(2);
@@ -114,7 +109,7 @@ describe("buildKitchenCommands", () => {
     const kitchenPrinterB = buildPrinter({ id: "printer-kitchen-b", address: "192.168.1.51:9100" });
     const taco = buildLine({ product: { id: "prod-taco", name: "Taco" }, quantity: 2 });
 
-    const result = buildKitchenCommands([taco], [kitchenPrinterA, kitchenPrinterB], baseContext);
+    const result = buildKitchenCommands([taco], [kitchenPrinterA, kitchenPrinterB], HEADER_TEXT);
 
     expect(result).toHaveLength(4);
     expect(
@@ -142,7 +137,7 @@ describe("buildKitchenCommands", () => {
       ],
     });
 
-    const result = buildKitchenCommands([burrito], [kitchenPrinter], baseContext);
+    const result = buildKitchenCommands([burrito], [kitchenPrinter], HEADER_TEXT);
 
     expect(result).toHaveLength(2);
     for (const command of result) {
@@ -150,22 +145,26 @@ describe("buildKitchenCommands", () => {
     }
   });
 
-  it("carries ticket, createdAt, fulfillmentType and customer context into every command", () => {
+  it("carries the given headerText into every generated command", () => {
     const kitchenPrinter = buildPrinter({ id: "printer-kitchen" });
     const taco = buildLine({ quantity: 1 });
-    const context = {
-      ticketNumber: 7,
-      createdAt: new Date("2026-07-11T10:00:00.000Z"),
-      fulfillmentType: "delivery" as const,
-      customer: { name: "Juan", phone: "5551234", address: "Calle 1" },
-    };
 
-    const result = buildKitchenCommands([taco], [kitchenPrinter], context);
+    const result = buildKitchenCommands([taco], [kitchenPrinter], "ENCABEZADO PERSONALIZADO");
 
     expect(result).toHaveLength(1);
-    expect(result[0]?.ticketNumber).toBe(7);
-    expect(result[0]?.createdAt).toEqual(context.createdAt);
-    expect(result[0]?.fulfillmentType).toBe("delivery");
-    expect(result[0]?.customer).toEqual(context.customer);
+    expect(result[0]?.headerText).toBe("ENCABEZADO PERSONALIZADO");
+  });
+
+  it("uses the same headerText across multiple commands and printers", () => {
+    const kitchenPrinterA = buildPrinter({ id: "printer-kitchen-a", address: "192.168.1.50:9100" });
+    const kitchenPrinterB = buildPrinter({ id: "printer-kitchen-b", address: "192.168.1.51:9100" });
+    const taco = buildLine({ quantity: 2 });
+
+    const result = buildKitchenCommands([taco], [kitchenPrinterA, kitchenPrinterB], "COMANDA");
+
+    expect(result).toHaveLength(4);
+    for (const command of result) {
+      expect(command.headerText).toBe("COMANDA");
+    }
   });
 });

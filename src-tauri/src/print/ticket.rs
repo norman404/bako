@@ -67,11 +67,8 @@ pub struct CommandItem {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CommandPayload {
-    pub ticket_number: u32,
-    pub created_at: String,
+    pub header_text: String,
     pub items: Vec<CommandItem>,
-    pub fulfillment_type: String,
-    pub customer: Option<TicketCustomer>,
 }
 
 fn map_err(e: escpos::errors::PrinterError) -> PrintError {
@@ -166,28 +163,15 @@ pub fn build_ticket<D: Driver>(printer: &mut Printer<D>, payload: &TicketPayload
 }
 
 pub fn build_command<D: Driver>(printer: &mut Printer<D>, payload: &CommandPayload) -> Result<(), PrintError> {
-    let ticket_num = format!("{:04}", payload.ticket_number);
-
     // Header
     printer
         .init().map_err(map_err)?
-        .size(2, 2).map_err(map_err)?
-        .bold(true).map_err(map_err)?
-        .justify(JustifyMode::CENTER)
-        .map_err(map_err)?
-        .writeln("COMANDA").map_err(map_err)?
         .size(1, 1).map_err(map_err)?
+        .justify(JustifyMode::CENTER).map_err(map_err)?
+        .bold(true).map_err(map_err)?
+        .writeln(&payload.header_text).map_err(map_err)?
         .bold(false).map_err(map_err)?
-        .writeln(&format!("Ticket #{}", ticket_num)).map_err(map_err)?
-        .writeln(&payload.created_at).map_err(map_err)?;
-
-    // Meta
-    printer
         .justify(JustifyMode::LEFT).map_err(map_err)?
-        .writeln(&format!("Order: {}", payload.fulfillment_type)).map_err(map_err)?;
-
-    // Divider
-    printer
         .writeln("--------------------------------").map_err(map_err)?;
 
     // Items
@@ -208,26 +192,10 @@ pub fn build_command<D: Driver>(printer: &mut Printer<D>, payload: &CommandPaylo
         }
     }
 
-    // Customer (delivery comandas need the address)
-    if let Some(customer) = &payload.customer {
-        printer
-            .writeln("--------------------------------").map_err(map_err)?
-            .justify(JustifyMode::LEFT).map_err(map_err)?
-            .bold(true).map_err(map_err)?
-            .writeln("Cliente").map_err(map_err)?
-            .bold(false).map_err(map_err)?
-            .writeln(&customer.name).map_err(map_err)?
-            .writeln(&customer.phone).map_err(map_err)?
-            .writeln(&customer.address).map_err(map_err)?;
-    }
-
     // Footer
     printer
-        .justify(JustifyMode::CENTER).map_err(map_err)?
-        .writeln("--------------------------------")
-        .map_err(map_err)?
-        .print_cut()
-        .map_err(map_err)?;
+        .writeln("--------------------------------").map_err(map_err)?
+        .print_cut().map_err(map_err)?;
 
     Ok(())
 }
@@ -356,8 +324,7 @@ mod tests {
         let driver = MockDriver::new();
         let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
         let payload = CommandPayload {
-            ticket_number: 42,
-            created_at: "2026-07-11".to_owned(),
+            header_text: "COCINA".to_owned(),
             items: vec![
                 CommandItem {
                     name: "Taco".to_owned(),
@@ -374,15 +341,16 @@ mod tests {
                     modifiers: vec![],
                 },
             ],
-            fulfillment_type: "local".to_owned(),
-            customer: None,
         };
 
         build_command(&mut printer, &payload).unwrap();
 
         let output = driver.output();
-        assert!(output.contains("COMANDA"));
-        assert!(output.contains("Ticket #0042"));
+        assert!(output.contains("COCINA"));
+        assert!(!output.contains("COMANDA"));
+        assert!(!output.contains("Ticket #"));
+        assert!(!output.contains("Order:"));
+        assert!(!output.contains("Cliente"));
         assert!(output.contains("Taco"));
         assert!(!output.contains("2x Taco"));
         assert!(output.contains("Salsa: Roja"));
@@ -392,35 +360,6 @@ mod tests {
         assert!(!output.contains("1x Agua"));
         assert!(!output.contains("$"));
         assert!(!output.contains("Total"));
-    }
-
-    #[test]
-    fn build_command_renders_customer_for_delivery() {
-        let driver = MockDriver::new();
-        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
-        let payload = CommandPayload {
-            ticket_number: 7,
-            created_at: "2026-07-11".to_owned(),
-            items: vec![CommandItem {
-                name: "Taco".to_owned(),
-                quantity: 1,
-                modifiers: vec![],
-            }],
-            fulfillment_type: "delivery".to_owned(),
-            customer: Some(TicketCustomer {
-                name: "Juan".to_owned(),
-                phone: "5551234".to_owned(),
-                address: "Calle 1".to_owned(),
-            }),
-        };
-
-        build_command(&mut printer, &payload).unwrap();
-
-        let output = driver.output();
-        assert!(output.contains("Cliente"));
-        assert!(output.contains("Juan"));
-        assert!(output.contains("5551234"));
-        assert!(output.contains("Calle 1"));
     }
 
     #[test]

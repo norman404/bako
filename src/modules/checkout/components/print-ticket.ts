@@ -10,10 +10,7 @@ export {
   type PrintTicketPaymentMethod,
 } from "@/modules/checkout/domain/print-ticket";
 export {
-  PRINT_COMMAND_FULFILLMENT_TYPE,
-  type PrintCommandCustomer,
   type PrintCommandDestination,
   type PrintCommandItem,
   type PrintCommandOptions,
-  type PrintCommandFulfillmentType,
 } from "@/modules/checkout/domain/print-command";

@@ -267,6 +267,7 @@ export const systemSettings = sqliteTable("system_settings", {
   currency: text("currency").notNull(),
   printerType: text("printer_type"),
   printerAddress: text("printer_address"),
+  comandaHeaderText: text("comanda_header_text"),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 

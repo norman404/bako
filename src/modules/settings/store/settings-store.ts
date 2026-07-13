@@ -12,10 +12,12 @@ interface SettingsState {
   currency: string;
   printerType: PrinterType;
   printerAddress: string | null;
+  comandaHeaderText: string | null;
   isLoading: boolean;
   initializeSettings: () => ResultAsync<void, never>;
   updateSettings: (locale: string, currency: string) => ResultAsync<void, Error>;
   updatePrinterSettings: (printerType: PrinterType, printerAddress: string | null) => ResultAsync<void, Error>;
+  updateComandaHeaderText: (text: string | null) => ResultAsync<void, Error>;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -23,12 +25,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   currency: DEFAULT_CURRENCY_CONFIG.currency,
   printerType: "none",
   printerAddress: null,
+  comandaHeaderText: null,
   isLoading: true,
 
   initializeSettings: (): ResultAsync<void, never> => {
     const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
     if (!isTauri) {
-      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, isLoading: false });
+      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, comandaHeaderText: null, isLoading: false });
       return okAsync(undefined);
     }
 
@@ -42,9 +45,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           currency: DEFAULT_CURRENCY_CONFIG.currency,
           printerType: "none",
           printerAddress: null,
+          comandaHeaderText: null,
           updatedAt: now,
         });
-        set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, isLoading: false });
+        set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, comandaHeaderText: null, isLoading: false });
       } else {
         const row = result[0];
         set({
@@ -52,6 +56,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           currency: row.currency,
           printerType: (row.printerType as PrinterType) ?? "none",
           printerAddress: row.printerAddress ?? null,
+          comandaHeaderText: row.comandaHeaderText ?? null,
           isLoading: false,
         });
       }
@@ -62,7 +67,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       (error) => (error instanceof Error ? error : new Error(String(error))),
     ).orElse((error) => {
       console.warn("Tauri IPC SQLite not available. Activating Vitest/Node fallback.", error);
-      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, isLoading: false });
+      set({ locale: DEFAULT_CURRENCY_CONFIG.locale, currency: DEFAULT_CURRENCY_CONFIG.currency, printerType: "none", printerAddress: null, comandaHeaderText: null, isLoading: false });
       return okAsync(undefined);
     });
   },
@@ -118,6 +123,33 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     return ResultAsync.fromPromise(
       dbOperation,
       (error) => (error instanceof Error ? error : new Error("Failed to persist printer settings")),
+    );
+  },
+
+  updateComandaHeaderText: (text: string | null): ResultAsync<void, Error> => {
+    set({ isLoading: true });
+    const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
+    if (!isTauri) {
+      set({ comandaHeaderText: text, isLoading: false });
+      return okAsync(undefined);
+    }
+
+    const now = new Date();
+    const { locale, currency, printerType, printerAddress } = get();
+    const dbOperation = db
+      .insert(systemSettings)
+      .values({ id: "current", locale, currency, printerType, printerAddress, comandaHeaderText: text, updatedAt: now })
+      .onConflictDoUpdate({
+        target: systemSettings.id,
+        set: { comandaHeaderText: text, updatedAt: now },
+      })
+      .then(() => {
+        set({ comandaHeaderText: text, isLoading: false });
+      });
+
+    return ResultAsync.fromPromise(
+      dbOperation,
+      (error) => (error instanceof Error ? error : new Error("Failed to persist comanda header text")),
     );
   },
 }));

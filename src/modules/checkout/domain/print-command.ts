@@ -1,17 +1,3 @@
-export const PRINT_COMMAND_FULFILLMENT_TYPE = {
-  LOCAL: "local",
-  DELIVERY: "delivery",
-} as const;
-
-export type PrintCommandFulfillmentType =
-  (typeof PRINT_COMMAND_FULFILLMENT_TYPE)[keyof typeof PRINT_COMMAND_FULFILLMENT_TYPE];
-
-export interface PrintCommandCustomer {
-  name: string;
-  phone: string;
-  address: string;
-}
-
 export interface PrintCommandItemModifier {
   groupName: string;
   optionName: string | null;
@@ -30,10 +16,7 @@ export interface PrintCommandDestination {
 }
 
 export interface PrintCommandOptions {
-  ticketNumber: number;
-  createdAt: Date;
+  headerText: string;
   items: PrintCommandItem[];
-  fulfillmentType: PrintCommandFulfillmentType;
-  customer: PrintCommandCustomer | null;
   destination: PrintCommandDestination;
 }

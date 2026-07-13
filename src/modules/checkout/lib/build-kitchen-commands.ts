@@ -9,13 +9,6 @@ export interface CartLine {
   selectedModifiers: SelectedModifier[];
 }
 
-interface CommandContext {
-  ticketNumber: number;
-  createdAt: Date;
-  fulfillmentType: "local" | "delivery";
-  customer: { name: string; phone: string; address: string } | null;
-}
-
 function toCommandModifiers(line: CartLine): PrintCommandItemModifier[] {
   return line.selectedModifiers.map((modifier) => ({
     groupName: modifier.groupName,
@@ -27,7 +20,7 @@ function toCommandModifiers(line: CartLine): PrintCommandItemModifier[] {
 export function buildKitchenCommands(
   cartLines: CartLine[],
   printers: Printer[],
-  context: CommandContext,
+  headerText: string,
 ): PrintCommandOptions[] {
   const kitchenPrinters = printers.filter((printer) => printer.role === PRINTER_ROLE.KITCHEN);
 
@@ -43,11 +36,8 @@ export function buildKitchenCommands(
 
       for (let unit = 0; unit < line.quantity; unit++) {
         options.push({
-          ticketNumber: context.ticketNumber,
-          createdAt: context.createdAt,
+          headerText,
           items: [{ name: line.product.name, quantity: 1, modifiers }],
-          fulfillmentType: context.fulfillmentType,
-          customer: context.customer,
           destination: {
             printerType: printer.type,
             printerAddress: printer.address,

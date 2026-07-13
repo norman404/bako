@@ -266,18 +266,7 @@ export function App() {
     });
 
     if (comandasEnabled) {
-      const commandErrors = await printCommands(synchronizedCartItems, {
-        ticketNumber: createdOrder.ticketNumber,
-        createdAt: createdOrder.createdAt,
-        fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
-        customer: createdOrder.customer
-          ? {
-              name: createdOrder.customer.name,
-              phone: createdOrder.customer.phone,
-              address: createdOrder.customer.address,
-            }
-          : null,
-      });
+      const commandErrors = await printCommands(synchronizedCartItems);
 
       for (const commandError of commandErrors) {
         toast.error(t('toast.comandaPrintError'), {

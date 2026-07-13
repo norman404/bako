@@ -6,8 +6,7 @@ import type { PrintCommandOptions } from "@/modules/checkout/domain/print-comman
 interface PrintCommandPayload {
   printerType: string;
   printerAddress: string;
-  ticketNumber: number;
-  createdAt: string;
+  headerText: string;
   items: Array<{
     name: string;
     quantity: number;
@@ -17,29 +16,18 @@ interface PrintCommandPayload {
       textValue: string | null;
     }>;
   }>;
-  fulfillmentType: string;
-  customer: { name: string; phone: string; address: string } | null;
 }
 
 function buildPayload(input: PrintCommandOptions): PrintCommandPayload {
   return {
     printerType: input.destination.printerType,
     printerAddress: input.destination.printerAddress,
-    ticketNumber: input.ticketNumber,
-    createdAt: input.createdAt.toLocaleString(undefined, {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }),
+    headerText: input.headerText,
     items: input.items.map((item) => ({
       name: item.name,
       quantity: item.quantity,
       modifiers: item.modifiers,
     })),
-    fulfillmentType: input.fulfillmentType,
-    customer: input.customer,
   };
 }
 

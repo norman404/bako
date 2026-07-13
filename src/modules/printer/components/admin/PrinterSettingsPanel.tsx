@@ -25,6 +25,7 @@ import {
   useUpdatePrinter,
 } from "@/modules/printer/hooks/use-printers";
 import { testPrinter } from "@/modules/printer/adapters/test-printer.adapter";
+import { useSettingsStore } from "@/modules/settings/store/settings-store";
 
 const PRINTER_TYPE_OPTIONS = [
   { value: PRINTER_TYPE.NETWORK, label: "Red (TCP)", icon: Wifi },
@@ -107,6 +108,54 @@ function getStatusConfig(address: string): {
     icon: CheckCircle2,
     label: "Configurada",
   };
+}
+
+function ComandaHeaderTextCard() {
+  const { comandaHeaderText, updateComandaHeaderText, isLoading } = useSettingsStore();
+
+  const [text, setText] = useState(comandaHeaderText ?? "");
+
+  const hasChanges = text !== (comandaHeaderText ?? "");
+
+  const handleSave = async () => {
+    const result = await updateComandaHeaderText(text.trim() || null);
+    result.match(
+      () => {
+        toast.success("Encabezado de comanda guardado");
+      },
+      () => toast.error("Error al guardar el encabezado de comanda"),
+    );
+  };
+
+  return (
+    <section className="border-b border-border-strong pb-3">
+      <FormField label="Texto de la comanda" htmlFor="comanda-header-text">
+        <Input
+          id="comanda-header-text"
+          value={text}
+          onInput={(event) => setText(event.currentTarget.value)}
+          placeholder="COMANDA"
+        />
+      </FormField>
+      <p className="mt-1.5 text-2xs text-text-muted">
+        Texto que aparece en el encabezado de cada etiqueta de comanda. Si se deja vacío, se usa "COMANDA" por defecto.
+      </p>
+      <div className="mt-2.5 flex items-center justify-between">
+        <span className="text-2xs text-primary">{hasChanges ? "Cambios sin guardar" : ""}</span>
+        <Button
+          type="button"
+          variant="default"
+          size="small"
+          onClick={() => void handleSave()}
+          disabled={isLoading || !hasChanges}
+          className="gap-1.5"
+        >
+          <Save className="h-3.5 w-3.5" />
+          Guardar
+        </Button>
+      </div>
+    </section>
+  );
 }
 
 function getListButtonClass(isActive: boolean): string {
@@ -213,7 +262,9 @@ export function PrinterSettingsPanel() {
   };
 
   return (
-    <div className="grid min-h-full grid-rows-[auto_1fr] gap-3">
+    <div className="grid min-h-full grid-rows-[auto_auto_1fr] gap-3">
+      <ComandaHeaderTextCard />
+
       <header className="flex items-center justify-between gap-3 border-b border-border-strong pb-3">
         <h2 className="font-display text-lg text-primary-strong">Impresoras</h2>
 

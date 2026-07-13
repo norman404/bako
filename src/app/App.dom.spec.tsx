@@ -587,12 +587,8 @@ describe("App — comandas", () => {
     await waitFor(() => expect(mockPrintCommands).toHaveBeenCalledTimes(1));
 
     const calls = mockPrintCommands.mock.calls;
+    expect(calls[0]).toHaveLength(1); // printCommands now takes a single argument
     expect(calls[0][0]).toHaveLength(2); // cart items
-    expect(calls[0][1]).toMatchObject({
-      ticketNumber: 42,
-      fulfillmentType: "local",
-      customer: null,
-    });
   });
 
   it("does not print commands when flag is OFF", async () => {
