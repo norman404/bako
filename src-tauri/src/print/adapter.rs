@@ -35,15 +35,15 @@ fn parse_network_address(address: &str) -> Result<(String, u16), PrintError> {
 pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Result<PrinterDriver, PrintError> {
     match printer_type {
         "usb" => {
+            let (vid, pid) = parse_usb_address(printer_address)?;
             #[cfg(target_os = "windows")]
             {
-                let driver = escpos::driver::WindowsUsbPrintDriver::open(printer_address)
+                let driver = escpos::driver::WindowsUsbPrintDriver::open_by_vid_pid(vid, pid)
                     .map_err(|e| PrintError::UsbError(e.to_string()))?;
                 Ok(PrinterDriver::Usb(driver))
             }
             #[cfg(not(target_os = "windows"))]
             {
-                let (vid, pid) = parse_usb_address(printer_address)?;
                 let driver = escpos::driver::NativeUsbDriver::open(vid, pid)
                     .map_err(|e| PrintError::UsbError(e.to_string()))?;
                 Ok(PrinterDriver::Usb(driver))
@@ -127,5 +127,43 @@ pub fn test_printer_with_driver(driver: PrinterDriver) -> Result<(), PrintError>
             Ok(())
         }
         PrinterDriver::None => Ok(()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_usb_address_parses_hex_vid_pid() {
+        assert_eq!(parse_usb_address("04b8:0e15").unwrap(), (0x04b8, 0x0e15));
+    }
+
+    #[test]
+    fn parse_usb_address_accepts_uppercase_hex() {
+        assert_eq!(parse_usb_address("1FC9:2016").unwrap(), (0x1fc9, 0x2016));
+    }
+
+    #[test]
+    fn parse_usb_address_rejects_missing_colon() {
+        let err = parse_usb_address("04b80e15").unwrap_err();
+        assert!(matches!(err, PrintError::InvalidAddress(_)));
+    }
+
+    #[test]
+    fn parse_usb_address_rejects_invalid_hex() {
+        let err = parse_usb_address("zzzz:2016").unwrap_err();
+        assert!(matches!(err, PrintError::InvalidAddress(_)));
+    }
+
+    #[test]
+    fn parse_network_address_parses_ip_and_port() {
+        assert_eq!(parse_network_address("192.168.1.100:9100").unwrap(), ("192.168.1.100".to_owned(), 9100));
+    }
+
+    #[test]
+    fn parse_network_address_rejects_invalid_port() {
+        let err = parse_network_address("192.168.1.100:abc").unwrap_err();
+        assert!(matches!(err, PrintError::InvalidAddress(_)));
     }
 }
