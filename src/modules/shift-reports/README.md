@@ -6,7 +6,7 @@ Sistema de apertura y cierre de turnos de venta.
 
 - Abrir un turno nuevo (rechaza si ya hay uno activo)
 - Cerrar turno activo (genera reporte inmediato)
-- Ver reporte de turno: órdenes, total, desglose efectivo/tarjeta
+- Ver reporte de turno: órdenes, productos vendidos, total, desglose efectivo/tarjeta y listado de ventas
 - Historial de turnos con totales
 
 ## Arquitectura

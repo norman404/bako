@@ -1,11 +1,11 @@
-import { eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { ResultAsync } from "neverthrow";
 
 import { db } from "@/shared/db/client";
-import { orders, payments, shifts, type ShiftRow } from "@/shared/db/schema";
+import { orderItems, orders, payments, products, shifts, type ShiftRow } from "@/shared/db/schema";
 import { ShiftPersistenceError } from "../domain/errors";
 import type { ShiftRepository } from "../domain/ports";
-import type { Shift, ShiftHistoryItem, ShiftReport } from "../domain/shift";
+import type { Shift, ShiftHistoryItem, ShiftReport, ShiftReportOrder } from "../domain/shift";
 
 function wrapDbError(context: string) {
   return (cause: unknown) => {
@@ -120,47 +120,90 @@ export const shiftDrizzleRepository: ShiftRepository = {
           throw new ShiftPersistenceError("Shift not found");
         }
 
-        // Join orders + payments to get order totals grouped by payment method
-        const rows = await db
+        // Load all orders for the shift with their payment method.
+        const orderRows = await db
           .select({
             orderId: orders.id,
+            ticketNumber: orders.ticketNumber,
             orderTotal: orders.total,
+            createdAt: orders.createdAt,
             method: payments.method,
           })
           .from(orders)
-          .innerJoin(payments, eq(payments.orderId, orders.id))
-          .where(eq(orders.shiftId, shiftId));
+          .leftJoin(payments, eq(payments.orderId, orders.id))
+          .where(eq(orders.shiftId, shiftId))
+          .orderBy(asc(orders.createdAt));
+
+        // Load items for those orders joined with product names.
+        const orderIds = orderRows.map((row) => row.orderId);
+        const itemRows =
+          orderIds.length === 0
+            ? []
+            : await db
+                .select({
+                  orderId: orderItems.orderId,
+                  productId: orderItems.productId,
+                  productName: products.name,
+                  quantity: orderItems.quantity,
+                  unitPrice: orderItems.unitPrice,
+                })
+                .from(orderItems)
+                .leftJoin(products, eq(products.id, orderItems.productId))
+                .where(inArray(orderItems.orderId, orderIds));
+
+        const itemsByOrder = new Map<string, typeof itemRows>();
+        for (const item of itemRows) {
+          const list = itemsByOrder.get(item.orderId) ?? [];
+          list.push(item);
+          itemsByOrder.set(item.orderId, list);
+        }
 
         let totalSales = 0;
-        let totalOrders = 0;
         let cashTotal = 0;
         let cardTotal = 0;
-        const countedOrders = new Set<string>();
+        let totalItems = 0;
+        const reportOrders: ShiftReportOrder[] = [];
 
-        for (const row of rows) {
-          // Count each order only once
-          if (!countedOrders.has(row.orderId)) {
-            countedOrders.add(row.orderId);
-            totalOrders += 1;
-            totalSales += row.orderTotal;
-          }
+        for (const orderRow of orderRows) {
+          totalSales += orderRow.orderTotal;
 
-          const method = row.method?.trim().toLowerCase() ?? "";
+          const method = orderRow.method?.trim().toLowerCase() ?? "";
           if (method === "cash") {
-            cashTotal += row.orderTotal;
+            cashTotal += orderRow.orderTotal;
           } else if (method === "card") {
-            cardTotal += row.orderTotal;
+            cardTotal += orderRow.orderTotal;
           }
+
+          const orderItemsList = itemsByOrder.get(orderRow.orderId) ?? [];
+          const itemCount = orderItemsList.reduce((sum, item) => sum + item.quantity, 0);
+          totalItems += itemCount;
+
+          reportOrders.push({
+            orderId: orderRow.orderId,
+            ticketNumber: orderRow.ticketNumber,
+            createdAt: orderRow.createdAt,
+            total: orderRow.orderTotal,
+            paymentMethod: orderRow.method ?? "",
+            itemCount,
+            items: orderItemsList.map((item) => ({
+              productId: item.productId,
+              productName: item.productName ?? "",
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            })),
+          });
         }
 
         return {
           shiftId: shift.id,
           openedAt: shift.openedAt,
           closedAt: shift.closedAt ?? null,
-          totalOrders,
+          totalOrders: orderRows.length,
+          totalItems,
           totalSales,
           cashTotal,
           cardTotal,
+          orders: reportOrders,
         };
       })(),
       wrapDbError("Failed to get shift report"),

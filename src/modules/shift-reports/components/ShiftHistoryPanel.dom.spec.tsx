@@ -90,9 +90,28 @@ describe("ShiftHistoryPanel", () => {
         openedAt: new Date("2026-06-04T08:00:00.000Z"),
         closedAt: null,
         totalOrders: 3,
+        totalItems: 7,
         totalSales: 5000,
         cashTotal: 3000,
         cardTotal: 2000,
+        orders: [
+          {
+            orderId: "order-1",
+            ticketNumber: 1,
+            createdAt: new Date("2026-06-04T10:00:00.000Z"),
+            total: 5000,
+            paymentMethod: "cash",
+            itemCount: 7,
+            items: [
+              {
+                productId: "product-1",
+                productName: "Café con leche",
+                quantity: 7,
+                unitPrice: 2500,
+              },
+            ],
+          },
+        ],
       },
       isLoading: false,
     });

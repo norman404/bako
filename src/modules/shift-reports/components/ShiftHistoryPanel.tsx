@@ -53,13 +53,21 @@ function ShiftReportInline({ shiftId }: { shiftId: string }) {
         </div>
 
         {/* Grid de métricas */}
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-4 gap-2">
           <div className="rounded-card border border-border bg-surface-sunken p-3 text-center">
             <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
               {t("totalOrders")}
             </p>
             <p className="font-mono-tabular mt-1 text-lg font-bold text-text">
               {report.totalOrders}
+            </p>
+          </div>
+          <div className="rounded-card border border-border bg-surface-sunken p-3 text-center">
+            <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+              {t("totalItems")}
+            </p>
+            <p className="font-mono-tabular mt-1 text-lg font-bold text-text">
+              {report.totalItems}
             </p>
           </div>
           <div className="rounded-card border border-border bg-surface-sunken p-3 text-center">
