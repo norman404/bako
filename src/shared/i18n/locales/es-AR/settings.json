@@ -71,6 +71,11 @@
         "label": "Opciones de producto",
         "description": "Personalizar productos con grupos de modificadores (nivel de hielo, comentarios, etc.)",
         "updated": "Opciones de producto {{value, select, true {habilitadas} other {deshabilitadas}}}"
+      },
+      "receipt_printing_enabled": {
+        "label": "Ticket de venta",
+        "description": "Imprimir el recibo con precios y totales al cobrar",
+        "updated": "Ticket de venta {{value, select, true {habilitado} other {deshabilitado}}}"
       }
     }
   },

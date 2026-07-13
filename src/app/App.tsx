@@ -49,6 +49,7 @@ export function App() {
   const deliveryEnabled = flags.delivery_enabled ?? false;
   const shiftManagementEnabled = flags.shift_management_enabled ?? false;
   const comandasEnabled = flags.comandas_enabled ?? false;
+  const receiptPrintingEnabled = flags.receipt_printing_enabled ?? true;
 
   const updater = useUpdater();
 
@@ -217,34 +218,42 @@ export function App() {
 
     const createdOrder = await createOrderMutation.mutateAsync(orderInput);
 
-    const printResult = await printOrder({
-      ticketNumber: createdOrder.ticketNumber,
-      createdAt: createdOrder.createdAt,
-      total: createdOrder.total,
-      items: input.items.map((item, index) => {
-        const cartItem = synchronizedCartItems[index];
-        return {
-          name: cartItem?.product.name ?? "Producto",
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          modifiers: (cartItem?.selectedModifiers ?? []).map((m) => ({
-            groupName: m.groupName,
-            optionName: m.optionName,
-            textValue: m.textValue,
-          })),
-        };
-      }),
-      paymentMethod: createdOrder.payment.method,
-      paymentAmount: createdOrder.payment.amount,
-      fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
-      customer: createdOrder.customer
-        ? {
-            name: createdOrder.customer.name,
-            phone: createdOrder.customer.phone,
-            address: createdOrder.customer.address,
-          }
-        : null,
-    });
+    if (receiptPrintingEnabled) {
+      const printResult = await printOrder({
+        ticketNumber: createdOrder.ticketNumber,
+        createdAt: createdOrder.createdAt,
+        total: createdOrder.total,
+        items: input.items.map((item, index) => {
+          const cartItem = synchronizedCartItems[index];
+          return {
+            name: cartItem?.product.name ?? "Producto",
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            modifiers: (cartItem?.selectedModifiers ?? []).map((m) => ({
+              groupName: m.groupName,
+              optionName: m.optionName,
+              textValue: m.textValue,
+            })),
+          };
+        }),
+        paymentMethod: createdOrder.payment.method,
+        paymentAmount: createdOrder.payment.amount,
+        fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
+        customer: createdOrder.customer
+          ? {
+              name: createdOrder.customer.name,
+              phone: createdOrder.customer.phone,
+              address: createdOrder.customer.address,
+            }
+          : null,
+      });
+
+      printResult.mapErr((printError) => {
+        toast.error(t('toast.printError'), {
+          description: printError.message,
+        });
+      });
+    }
 
     handleClearCart();
     closeCheckoutModal();
@@ -256,14 +265,8 @@ export function App() {
         : t('toast.orderItemsCount', { itemsCount: cartTotals.itemsCount }),
     });
 
-    printResult.mapErr((printError) => {
-      toast.error(t('toast.printError'), {
-        description: printError.message,
-      });
-    });
-
     if (comandasEnabled) {
-      const commandErrors = await printCommands(synchronizedCartItems, categories, {
+      const commandErrors = await printCommands(synchronizedCartItems, {
         ticketNumber: createdOrder.ticketNumber,
         createdAt: createdOrder.createdAt,
         fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),

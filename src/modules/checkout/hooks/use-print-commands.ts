@@ -1,7 +1,6 @@
 import { usePrinters } from "@/modules/printer/hooks/use-printers";
-import type { Category } from "@/modules/menu/domain/category";
 import type { CartItem } from "@/modules/order/domain/cart";
-import { groupCartItemsByPrinter } from "@/modules/checkout/lib/group-cart-items-by-printer";
+import { buildKitchenCommands } from "@/modules/checkout/lib/build-kitchen-commands";
 import { printCommand } from "@/modules/checkout/adapters/print-command.adapter";
 import type { PrintCommandFulfillmentType } from "@/modules/checkout/domain/print-command";
 
@@ -21,18 +20,16 @@ export function usePrintCommands(options: UsePrintCommandsOptions = {}) {
   const { data: printers = [] } = usePrinters({ enabled });
 
   return {
-    printCommands: async (cartItems: CartItem[], categories: Category[], context: PrintCommandsInput) => {
-      const commands = groupCartItemsByPrinter(
+    printCommands: async (cartItems: CartItem[], context: PrintCommandsInput) => {
+      const commands = buildKitchenCommands(
         cartItems.map((item) => ({
           product: {
             id: item.product.id,
             name: item.product.name,
-            categoryId: item.product.categoryId,
           },
           quantity: item.quantity,
           selectedModifiers: item.selectedModifiers,
         })),
-        categories,
         printers,
         context,
       );

@@ -71,6 +71,11 @@
         "label": "Opções de produto",
         "description": "Personalizar produtos com grupos de modificadores (nível de gelo, comentários, etc.)",
         "updated": "Opções de produto {{value, select, true {habilitadas} other {desabilitadas}}}"
+      },
+      "receipt_printing_enabled": {
+        "label": "Recibo de venda",
+        "description": "Imprimir o recibo com preços e totais ao finalizar a venda",
+        "updated": "Recibo de venda {{value, select, true {ativado} other {desativado}}}"
       }
     }
   },

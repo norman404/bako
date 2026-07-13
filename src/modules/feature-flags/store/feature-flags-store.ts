@@ -12,6 +12,7 @@ const DEFAULT_FLAGS: Record<string, boolean> = {
   auto_update_enabled: true,
   modifier_groups_enabled: false,
   comandas_enabled: false,
+  receipt_printing_enabled: true,
 };
 
 interface FeatureFlagsState {

@@ -284,6 +284,12 @@ function setComandasFlag(value: boolean) {
   });
 }
 
+function setReceiptPrintingFlag(value: boolean) {
+  useFeatureFlagsStore.setState({
+    flags: { ...useFeatureFlagsStore.getState().flags, receipt_printing_enabled: value },
+  });
+}
+
 function mockFilteredProducts(opts: {
   products: Product[];
   categories?: Category[];
@@ -582,8 +588,7 @@ describe("App — comandas", () => {
 
     const calls = mockPrintCommands.mock.calls;
     expect(calls[0][0]).toHaveLength(2); // cart items
-    expect(calls[0][1]).toEqual(categories);
-    expect(calls[0][2]).toMatchObject({
+    expect(calls[0][1]).toMatchObject({
       ticketNumber: 42,
       fulfillmentType: "local",
       customer: null,
@@ -634,5 +639,109 @@ describe("App — comandas", () => {
 
     await waitFor(() => expect(mockedUseCreateOrder().mutateAsync).toHaveBeenCalled());
     expect(mockPrintCommands).not.toHaveBeenCalled();
+  });
+});
+
+describe("App — receipt printing flag", () => {
+  const mockedUseCreateOrder = vi.mocked(useCreateOrder);
+  const mockedPrintOrder = vi.mocked(printOrder);
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    useOrderStore.setState({ currentOrder: [] });
+    usePosStore.setState({
+      selectedCategory: "all",
+      isCheckoutOpen: false,
+      checkoutSessionKey: 0,
+      isMobileCartOpen: false,
+      isSettingsOpen: false,
+    });
+    setModifierFlag(false);
+    setComandasFlag(false);
+    setReceiptPrintingFlag(true);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+    useOrderStore.setState({ currentOrder: [] });
+    usePosStore.setState({
+      selectedCategory: "all",
+      isCheckoutOpen: false,
+      checkoutSessionKey: 0,
+      isMobileCartOpen: false,
+      isSettingsOpen: false,
+    });
+    setReceiptPrintingFlag(true);
+  });
+
+  function mockOrderCreation(overrides: Record<string, unknown> = {}) {
+    const mutateAsync = vi.fn().mockResolvedValue({
+      id: "order-1",
+      ticketNumber: 7,
+      customerId: null,
+      deliveryPersonId: null,
+      shiftId: null,
+      total: 5000,
+      createdAt: new Date("2026-07-11T10:00:00.000Z"),
+      customer: null,
+      items: [],
+      payment: {
+        id: "pay-1",
+        orderId: "order-1",
+        method: "cash",
+        amount: 5000,
+        createdAt: new Date("2026-07-11T10:00:00.000Z"),
+      },
+      ...overrides,
+    });
+    mockedUseCreateOrder.mockReturnValue({ mutateAsync, isPending: false } as any);
+    return mutateAsync;
+  }
+
+  function setupCartWithTaco() {
+    const category = buildCategory({ id: "cat-food", name: "Comidas" });
+    const taco = buildProduct({ id: "prod-taco", name: "Taco", categoryId: "cat-food", price: 5000 });
+    mockFilteredProducts({ products: [taco], categories: [category] });
+  }
+
+  it("flag OFF: skips the receipt ticket print but still completes the checkout flow", async () => {
+    setReceiptPrintingFlag(false);
+    setupCartWithTaco();
+    const mutateAsync = mockOrderCreation();
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole("button", { name: /agregar taco/i }));
+    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /pagar/i }));
+    const checkoutDialog = screen.getByRole("dialog", { name: /confirmar checkout/i });
+    fireEvent.click(screen.getByRole("button", { name: /efectivo/i }));
+    fireEvent.click(within(checkoutDialog).getByRole("button", { name: /pagar/i }));
+
+    // THEN the order is still created and the checkout flow completes normally
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
+    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(0));
+
+    // AND the receipt ticket print is skipped
+    expect(mockedPrintOrder).not.toHaveBeenCalled();
+  });
+
+  it("flag ON (default): prints the receipt ticket on checkout", async () => {
+    setReceiptPrintingFlag(true);
+    setupCartWithTaco();
+    mockOrderCreation();
+
+    renderApp();
+
+    fireEvent.click(screen.getByRole("button", { name: /agregar taco/i }));
+    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /pagar/i }));
+    const checkoutDialog = screen.getByRole("dialog", { name: /confirmar checkout/i });
+    fireEvent.click(screen.getByRole("button", { name: /efectivo/i }));
+    fireEvent.click(within(checkoutDialog).getByRole("button", { name: /pagar/i }));
+
+    await waitFor(() => expect(mockedPrintOrder).toHaveBeenCalledTimes(1));
   });
 });

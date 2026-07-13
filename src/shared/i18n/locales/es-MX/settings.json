@@ -89,6 +89,11 @@
         "label": "Comandas",
         "description": "Imprimir tickets de preparación por área (cocina, barra, etc.)",
         "updated": "Comandas {{value, select, true {habilitadas} other {deshabilitadas}}}"
+      },
+      "receipt_printing_enabled": {
+        "label": "Ticket de venta",
+        "description": "Imprimir el recibo con precios y totales al cobrar",
+        "updated": "Ticket de venta {{value, select, true {habilitado} other {deshabilitado}}}"
       }
     }
   },

@@ -194,15 +194,15 @@ pub fn build_command<D: Driver>(printer: &mut Printer<D>, payload: &CommandPaylo
     for item in &payload.items {
         printer
             .bold(true).map_err(map_err)?
-            .writeln(&format!("{}x {}", item.quantity, item.name)).map_err(map_err)?
+            .writeln(&item.name).map_err(map_err)?
             .bold(false).map_err(map_err)?;
 
         for modifier in &item.modifiers {
             let label = match (&modifier.option_name, &modifier.text_value) {
-                (Some(option), Some(text)) => format!("  - {}: {} — {}", modifier.group_name, option, text),
-                (Some(option), None) => format!("  - {}: {}", modifier.group_name, option),
-                (None, Some(text)) => format!("  - {}: {}", modifier.group_name, text),
-                (None, None) => format!("  - {}", modifier.group_name),
+                (Some(option), Some(text)) => format!("{}: {} — {}", modifier.group_name, option, text),
+                (Some(option), None) => format!("{}: {}", modifier.group_name, option),
+                (None, Some(text)) => format!("{}: {}", modifier.group_name, text),
+                (None, None) => modifier.group_name.clone(),
             };
             printer.writeln(&label).map_err(map_err)?;
         }
@@ -383,9 +383,13 @@ mod tests {
         let output = driver.output();
         assert!(output.contains("COMANDA"));
         assert!(output.contains("Ticket #0042"));
-        assert!(output.contains("2x Taco"));
+        assert!(output.contains("Taco"));
+        assert!(!output.contains("2x Taco"));
         assert!(output.contains("Salsa: Roja"));
-        assert!(output.contains("1x Agua"));
+        assert!(!output.contains("- Salsa: Roja"));
+        assert!(!output.contains("  - "));
+        assert!(output.contains("Agua"));
+        assert!(!output.contains("1x Agua"));
         assert!(!output.contains("$"));
         assert!(!output.contains("Total"));
     }

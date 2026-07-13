@@ -110,6 +110,12 @@ pub fn run() {
             sql: include_str!("../migrations/0017_printers_and_category_printer.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 18,
+            description: "receipt_printing_flag_seed",
+            sql: include_str!("../migrations/0018_receipt_printing_flag_seed.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

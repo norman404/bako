@@ -80,6 +80,11 @@
         "label": "Command tickets",
         "description": "Print preparation tickets by area (kitchen, bar, etc.)",
         "updated": "Command tickets {{value, select, true {enabled} other {disabled}}}"
+      },
+      "receipt_printing_enabled": {
+        "label": "Sales receipt",
+        "description": "Print the receipt with prices and totals when checking out",
+        "updated": "Sales receipt {{value, select, true {enabled} other {disabled}}}"
       }
     }
   },

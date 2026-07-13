@@ -26,7 +26,7 @@ const MODULES: ModuleConfig[] = [
   },
   {
     id: "printer",
-    flags: ["comandas_enabled"],
+    flags: ["comandas_enabled", "receipt_printing_enabled"],
   },
 ];
 
