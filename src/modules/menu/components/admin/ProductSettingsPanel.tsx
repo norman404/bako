@@ -385,6 +385,7 @@ function ProductSettingsPanel() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <FormField label="Precio" htmlFor="product-price">
+                {/* ADR-0001: product prices are integer cents; the input accepts monetary units. */}
                 <Input
                   id="product-price"
                   value={formState.price}

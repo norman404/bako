@@ -1,6 +1,11 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 
+import {
+  formatProductPriceInput,
+  parseProductPriceInput,
+} from "@/modules/menu/lib/product-price";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -39,6 +44,26 @@ export { OptionsEditor };
 function OptionsEditor({ options, onChange, groupKind, disabled = false }: OptionsEditorProps) {
   const { t } = useTranslation("settings");
   const enforceSingleDefault = groupKind === "single" || groupKind === "single_text";
+  const [editingPrice, setEditingPrice] = useState<Record<number, string>>({});
+
+  const getPriceDisplayValue = (index: number, priceDelta: number) => {
+    if (index in editingPrice) return editingPrice[index];
+    return priceDelta === 0 ? "" : formatProductPriceInput(priceDelta);
+  };
+
+  const handlePriceInput = (index: number, raw: string) => {
+    setEditingPrice((previous) => ({ ...previous, [index]: raw }));
+    const parsed = parseProductPriceInput(raw);
+    handleFieldChange(index, "priceDelta", parsed ?? 0);
+  };
+
+  const handlePriceBlur = (index: number) => {
+    setEditingPrice((previous) => {
+      const next = { ...previous };
+      delete next[index];
+      return next;
+    });
+  };
 
   const handleAdd = () => {
     onChange(normalizeSortOrders([...options, newEmptyOption(options.length)]));
@@ -154,17 +179,14 @@ function OptionsEditor({ options, onChange, groupKind, disabled = false }: Optio
                 </div>
 
                 <div className="w-20">
+                  {/* ADR-0001: option prices are integer cents; the input shows monetary units. */}
                   <Input
                     aria-label={t("modifierGroups.optionPriceLabel")}
-                    type="number"
-                    inputMode="numeric"
-                    value={option.priceDelta === 0 ? "" : String(option.priceDelta)}
-                    onInput={(e) => {
-                      const raw = e.currentTarget.value;
-                      const parsed = raw === "" ? 0 : Number.parseInt(raw, 10);
-                      handleFieldChange(index, "priceDelta", Number.isNaN(parsed) ? 0 : parsed);
-                    }}
-                    placeholder="0"
+                    inputMode="decimal"
+                    value={getPriceDisplayValue(index, option.priceDelta)}
+                    onInput={(e) => handlePriceInput(index, e.currentTarget.value)}
+                    onBlur={() => handlePriceBlur(index)}
+                    placeholder="0.00"
                     disabled={disabled}
                     className="h-8 font-mono-tabular text-right"
                   />

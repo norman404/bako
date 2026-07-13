@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 
 vi.mock("lucide-react", async () => {
   const React = await import("react");
@@ -168,13 +169,13 @@ describe("OptionsEditor", () => {
       expect(next[0].name).toBe("Sin azúcar");
     });
 
-    it("updates the priceDelta field of an option", () => {
+    it("updates the priceDelta field of an option from monetary units to cents", () => {
       const onChange = vi.fn();
       const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
       renderEditor({ options: initial, onChange });
 
       const input = screen.getByLabelText(/precio adicional/i);
-      fireEvent.input(input, { target: { value: "500" } });
+      fireEvent.input(input, { target: { value: "5.00" } });
 
       const next = (onChange.mock.calls[0][0] as OptionsEditorOption[]);
       expect(next[0].priceDelta).toBe(500);
@@ -190,6 +191,96 @@ describe("OptionsEditor", () => {
 
       const next = (onChange.mock.calls[0][0] as OptionsEditorOption[]);
       expect(next[0].isDefault).toBe(true);
+    });
+  });
+
+  describe("price input uses monetary units", () => {
+    it("formats stored cents as a two-decimal monetary value", () => {
+      const onChange = vi.fn();
+      const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 1500 })];
+      renderEditor({ options: initial, onChange });
+
+      const input = screen.getByLabelText(/precio adicional/i) as HTMLInputElement;
+      expect(input.value).toBe("15.00");
+    });
+
+    it("parses user-entered whole monetary value into cents", () => {
+      const onChange = vi.fn();
+      const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
+      renderEditor({ options: initial, onChange });
+
+      const input = screen.getByLabelText(/precio adicional/i);
+      fireEvent.input(input, { target: { value: "15" } });
+
+      const next = (onChange.mock.calls[0][0] as OptionsEditorOption[]);
+      expect(next[0].priceDelta).toBe(1500);
+    });
+
+    it("allows typing a decimal price step by step without jumping", () => {
+      const onChange = vi.fn();
+      const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
+      renderEditor({ options: initial, onChange });
+
+      const input = screen.getByLabelText(/precio adicional/i) as HTMLInputElement;
+
+      fireEvent.input(input, { target: { value: "1" } });
+      expect(input.value).toBe("1");
+
+      fireEvent.input(input, { target: { value: "15" } });
+      expect(input.value).toBe("15");
+
+      fireEvent.input(input, { target: { value: "15." } });
+      expect(input.value).toBe("15.");
+
+      fireEvent.input(input, { target: { value: "15.5" } });
+      expect(input.value).toBe("15.5");
+
+      fireEvent.input(input, { target: { value: "15.50" } });
+      expect(input.value).toBe("15.50");
+
+      const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as OptionsEditorOption[];
+      expect(lastCall[0].priceDelta).toBe(1550);
+    });
+
+    it("formats the price to two decimals on blur", () => {
+      function StatefulEditor() {
+        const [options, setOptions] = useState<OptionsEditorOption[]>([
+          buildOption({ priceDelta: 0 }),
+        ]);
+        return <OptionsEditor options={options} onChange={setOptions} groupKind="single" />;
+      }
+      renderWithProviders(<StatefulEditor />);
+
+      const input = screen.getByLabelText(/precio adicional/i) as HTMLInputElement;
+
+      fireEvent.input(input, { target: { value: "15" } });
+      fireEvent.blur(input);
+
+      expect(input.value).toBe("15.00");
+    });
+
+    it("accepts comma and dot decimal separators", () => {
+      const onChange = vi.fn();
+      const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
+      renderEditor({ options: initial, onChange });
+
+      const input = screen.getByLabelText(/precio adicional/i);
+      fireEvent.input(input, { target: { value: "15,50" } });
+
+      const next = (onChange.mock.calls[0][0] as OptionsEditorOption[]);
+      expect(next[0].priceDelta).toBe(1550);
+    });
+
+    it("treats an empty price as 0 cents", () => {
+      const onChange = vi.fn();
+      const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 1500 })];
+      renderEditor({ options: initial, onChange });
+
+      const input = screen.getByLabelText(/precio adicional/i);
+      fireEvent.input(input, { target: { value: "" } });
+
+      const next = (onChange.mock.calls[0][0] as OptionsEditorOption[]);
+      expect(next[0].priceDelta).toBe(0);
     });
   });
 

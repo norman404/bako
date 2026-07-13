@@ -214,6 +214,45 @@ const cancelOrderMutation = useCancelOrder();
 
 ---
 
+## Decisiones técnicas
+
+Las decisiones arquitectónicas importantes se documentan como **Architecture Decision Records (ADRs)** en `docs/adr/`. Un ADR guarda el contexto, la decisión, las alternativas rechazadas, las consecuencias y una guía para agentes sobre qué no cambiar.
+
+### Cuándo escribir un ADR
+
+Escribí un ADR cuando una decisión:
+
+- Cambia cómo se construye u opera el sistema.
+- Es difícil de revertir una vez que hay código escrito.
+- Afecta a otros que van a trabajar después.
+- Tiene alternativas reales consideradas y rechazadas.
+- Ya costó un bug, un incidente o una refactor sorpresiva.
+
+**No escribas un ADR** para bugfixes triviales, typos, decisiones ya cubiertas por otro ADR, o preferencias de estilo que maneja el linter.
+
+### Cómo crear un ADR
+
+1. **Detectar**: ¿es una decisión nueva, una convención dudosa, o un bug con lección?
+2. **Escanear**: revisá `docs/adr/` para ver si ya hay un ADR relacionado.
+3. **Escribir**: usá el template en `docs/adr/README.md`. Nombrá el archivo `docs/adr/NNNN-titulo-corto.md`.
+4. **Revisar**: abrí PR con status `Proposed`; una vez aceptado, cambiá a `Accepted`.
+5. **Linkar**: referenciá el ADR desde el código que la implementa con un comentario corto.
+6. **Mantener**: cada tanto repasá los ADRs y marcá como `Deprecated` o `Superseded` los que quedaron viejos.
+
+### Reglas de lifecycle
+
+- `Accepted` **no se edita** salvo correcciones menores. Si la decisión cambia, se crea un ADR nuevo que la supere.
+- `Deprecated` significa que ya no aplica y no tiene reemplazo.
+- `Superseded by ADR-NNNN` significa que fue reemplazada; el ADR viejo se mantiene por historia.
+
+### ADRs vigentes
+
+| ADR | Título | Estado |
+| --- | --- | --- |
+| 0001 | [Precios en centavos enteros](./docs/adr/0001-prices-in-cents.md) | Accepted |
+
+---
+
 ## Stack de testing
 
 - **Vitest** para unit tests (`.spec.ts`)
