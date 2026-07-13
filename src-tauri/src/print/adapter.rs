@@ -35,15 +35,18 @@ fn parse_network_address(address: &str) -> Result<(String, u16), PrintError> {
 pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Result<PrinterDriver, PrintError> {
     match printer_type {
         "usb" => {
-            let (vid, pid) = parse_usb_address(printer_address)?;
+            // Keep the parser call inside each cfg branch so rustc sees it as
+            // used on every target and never emits a dead_code warning.
             #[cfg(target_os = "windows")]
             {
+                let (vid, pid) = parse_usb_address(printer_address)?;
                 let driver = escpos::driver::WindowsUsbPrintDriver::open_by_vid_pid(vid, pid)
                     .map_err(|e| PrintError::UsbError(e.to_string()))?;
                 Ok(PrinterDriver::Usb(driver))
             }
             #[cfg(not(target_os = "windows"))]
             {
+                let (vid, pid) = parse_usb_address(printer_address)?;
                 let driver = escpos::driver::NativeUsbDriver::open(vid, pid)
                     .map_err(|e| PrintError::UsbError(e.to_string()))?;
                 Ok(PrinterDriver::Usb(driver))
