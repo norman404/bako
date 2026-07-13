@@ -66,16 +66,6 @@ export function executeSeed(db: SqliteConnection, sqlContent: string): SeedResul
   return { categories, products, menus, productMenus };
 }
 
-async function createBunConnection(dbPath: string): Promise<SqliteConnection> {
-  const { Database } = await import("bun:sqlite");
-  const db = new Database(dbPath);
-  return {
-    exec: (sql: string) => db.exec(sql),
-    prepare: (sql: string) => db.prepare(sql),
-    close: () => db.close(),
-  };
-}
-
 async function main() {
   const platform = process.platform;
   const homeDir = process.env.HOME ?? process.env.USERPROFILE ?? "";
@@ -92,6 +82,7 @@ async function main() {
   const seedSqlPath = join(process.cwd(), SEED_SQL_RELATIVE);
   const sqlContent = readFileSync(seedSqlPath, "utf-8");
 
+  const { createBunConnection } = await import("./adapters/bun-sqlite.connection");
   const db = await createBunConnection(dbPath);
   try {
     const result = executeSeed(db, sqlContent);
