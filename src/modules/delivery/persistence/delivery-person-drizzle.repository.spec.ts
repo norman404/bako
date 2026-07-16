@@ -121,7 +121,7 @@ describe("deliveryPersonDrizzleRepository", () => {
       throw new Error("Expected create to fail for empty name");
     }
 
-    expect(result.error.message).toContain("name is required");
+    expect(result.error.code).toBe("deliveryPersonNameRequired");
     expect(dbMocks.insertValuesMock).not.toHaveBeenCalled();
     expect(dbMocks.selectMock).not.toHaveBeenCalled();
   });
@@ -137,7 +137,7 @@ describe("deliveryPersonDrizzleRepository", () => {
       throw new Error("Expected create to fail for invalid color");
     }
 
-    expect(result.error.message).toContain("hex color");
+    expect(result.error.code).toBe("deliveryPersonColorInvalid");
     expect(dbMocks.insertValuesMock).not.toHaveBeenCalled();
   });
 
@@ -286,7 +286,7 @@ describe("deliveryPersonDrizzleRepository", () => {
       throw new Error("Expected update to fail for invalid color");
     }
 
-    expect(result.error.message).toContain("hex color");
+    expect(result.error.code).toBe("deliveryPersonColorInvalid");
     expect(dbMocks.updateMock).not.toHaveBeenCalled();
   });
 

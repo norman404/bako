@@ -1,1 +1,83 @@
-{}
+{
+  "footer": {
+    "cancel": "Cancelar",
+    "pay": "Pagar",
+    "saving": "Salvando"
+  },
+  "modal": {
+    "ariaLabel": "Confirmar checkout",
+    "title": "Pagamento",
+    "closeAriaLabel": "Fechar"
+  },
+  "fulfillment": {
+    "title": "Entrega",
+    "local": "Local",
+    "delivery": "Delivery"
+  },
+  "payment": {
+    "title": "Pagamento",
+    "cash": "Dinheiro",
+    "card": "Cartão",
+    "receivedLabel": "Recebido",
+    "exactPayment": "Pagamento exato",
+    "summary": {
+      "total": "Total final",
+      "cashReceived": "Dinheiro recebido",
+      "cardPayment": "Pagamento com cartão",
+      "change": "Troco",
+      "dash": "—"
+    }
+  },
+  "delivery": {
+    "headerText": "Escolha um salvo ou cadastre um novo",
+    "searchButton": "Buscar cliente",
+    "newButton": "Novo cliente"
+  },
+  "orderSummary": {
+    "title": "Conta"
+  },
+  "customerSearch": {
+    "label": "Buscar cliente",
+    "placeholder": "Nome, telefone ou endereço",
+    "selectedBadge": "Cliente selecionado",
+    "loading": "Buscando clientes...",
+    "error": "Não foi possível carregar clientes salvos",
+    "emptySearch": "Não encontramos clientes com essa busca. Tente outro dado ou toque \"Novo cliente\".",
+    "emptyState": "Ainda não há clientes salvos para delivery.",
+    "newButton": "Novo cliente",
+    "activeLabel": "ATIVO"
+  },
+  "customerCreate": {
+    "title": "Criar novo cliente",
+    "backButton": "Voltar para busca",
+    "nameLabel": "Cliente",
+    "namePlaceholder": "Valentina Suárez",
+    "phoneLabel": "Telefone",
+    "phonePlaceholder": "11 5555 5555",
+    "addressLabel": "Endereço",
+    "addressPlaceholder": "Av. Siempre Viva 742, Porta B"
+  },
+  "errors": {
+    "customerNameRequired": "O nome do cliente é obrigatório.",
+    "customerPhoneRequired": "O telefone do cliente é obrigatório.",
+    "customerAddressRequired": "O endereço do cliente é obrigatório.",
+    "invalidPaymentMethod": "O método de pagamento deve ser dinheiro ou cartão.",
+    "invalidPaymentAmount": "O valor do pagamento deve ser um número inteiro não negativo.",
+    "insufficientPaymentAmount": "O valor recebido não cobre o total do pedido.",
+    "cardPaymentExactMatchRequired": "Com cartão, o valor deve ser exatamente igual ao total.",
+    "orderItemsRequired": "O pedido deve incluir pelo menos um item.",
+    "orderItemProductIdRequired": "Cada item do pedido deve ter um produto atribuído.",
+    "orderItemQuantityInvalid": "A quantidade deve ser um inteiro positivo.",
+    "orderItemUnitPriceInvalid": "O preço unitário deve ser um inteiro não negativo.",
+    "customerIdAndCustomerConflict": "Escolha um cliente salvo ou cadastre um novo, não ambos.",
+    "localOrderCustomerForbidden": "Pedidos locais não podem incluir dados de cliente de delivery.",
+    "localOrderDeliveryPersonForbidden": "Pedidos locais não podem ter entregador.",
+    "deliveryOrderCustomerRequired": "Pedidos de delivery exigem um cliente.",
+    "customerNotFound": "Não encontramos esse cliente. Tente buscar novamente.",
+    "dbError": "Não foi possível processar o pagamento. Tente novamente.",
+    "generic": "Ocorreu um erro inesperado ao processar o pagamento.",
+    "formDeliveryNewCustomerRequired": "Para delivery, você precisa de cliente, telefone e endereço.",
+    "formDeliverySelectOrCreate": "Escolha um cliente salvo ou toque \"Novo cliente\" para cadastrar um.",
+    "formEmptyCart": "Adicione pelo menos um produto antes de cobrar."
+  }
+}

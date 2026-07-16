@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("lucide-react", async () => {
   const React = await import("react");
@@ -24,14 +24,19 @@ vi.mock("lucide-react", async () => {
 import * as productHooks from "@/modules/menu/hooks/use-products";
 import * as categoryHooks from "@/modules/menu/hooks/use-categories";
 import * as menuHooks from "@/modules/menu/hooks/use-menus";
+import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { ProductSettingsPanel } from "@/modules/menu/components/admin/ProductSettingsPanel";
-import { fireEvent, renderWithProviders, screen } from "@/test/test-utils";
+import { fireEvent, renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
 const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
 
 type CreateProductResult = ReturnType<typeof productHooks.useCreateProduct>;
 type UpdateProductResult = ReturnType<typeof productHooks.useUpdateProduct>;
 type ArchiveProductResult = ReturnType<typeof productHooks.useArchiveProduct>;
+
+const createMutateAsync = vi.fn();
+const updateMutateAsync = vi.fn();
+const archiveMutateAsync = vi.fn();
 
 const BASE_CATEGORIES = [
   {
@@ -63,7 +68,20 @@ const BASE_PRODUCTS = [
   },
 ];
 
-function mockProductMutations(categories = BASE_CATEGORIES, products = BASE_PRODUCTS, menus: any[] = []) {
+function mockProductMutations(
+  categories = BASE_CATEGORIES,
+  products = BASE_PRODUCTS,
+  menus: any[] = [],
+  flags: Partial<Record<string, boolean>> = {},
+) {
+  const nextFlags = { ...useFeatureFlagsStore.getState().flags };
+  for (const [key, value] of Object.entries(flags)) {
+    if (value !== undefined) {
+      nextFlags[key] = value;
+    }
+  }
+  useFeatureFlagsStore.setState({ flags: nextFlags });
+
   // Mock hooks de lectura
   vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
     data: categories,
@@ -83,23 +101,27 @@ function mockProductMutations(categories = BASE_CATEGORIES, products = BASE_PROD
   // Mock hooks de mutación
   vi.spyOn(productHooks, "useCreateProduct").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: createMutateAsync,
   } as unknown as CreateProductResult);
 
   vi.spyOn(productHooks, "useUpdateProduct").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: updateMutateAsync,
   } as unknown as UpdateProductResult);
 
   vi.spyOn(productHooks, "useArchiveProduct").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: archiveMutateAsync,
   } as unknown as ArchiveProductResult);
 }
 
 function renderProductSettingsPanel() {
   renderWithProviders(<ProductSettingsPanel />);
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("ProductSettingsPanel", () => {
   it("should render the first product selected with an ultra minimal editor", () => {
@@ -192,5 +214,100 @@ describe("ProductSettingsPanel", () => {
     // Assert
     expect(screen.getByRole("heading", { name: /nuevo producto/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/nombre/i)).toHaveValue("");
+  });
+
+  it("allows creating a product when multiple menus are disabled", async () => {
+    // CASE: the multiple_menus_enabled flag is off so the menu checkboxes are hidden.
+    // VALIDATES: the form does not reject the product because menuIds is empty.
+    mockProductMutations(BASE_CATEGORIES, [], [], { multiple_menus_enabled: false });
+
+    renderProductSettingsPanel();
+    fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+
+    fireEvent.input(screen.getByLabelText(/nombre/i), { target: { value: "Cortado" } });
+    fireEvent.input(screen.getByLabelText(/precio/i), { target: { value: "120" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /guardar producto/i }));
+
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("allows creating a product when categories selector is hidden but a default exists", async () => {
+    // CASE: the categories_enabled flag is off so the category Select is hidden.
+    // VALIDATES: the form still uses the first category as default and saves.
+    mockProductMutations(BASE_CATEGORIES, [], [], { categories_enabled: false });
+
+    renderProductSettingsPanel();
+    fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+
+    fireEvent.input(screen.getByLabelText(/nombre/i), { target: { value: "Cortado" } });
+    fireEvent.input(screen.getByLabelText(/precio/i), { target: { value: "120" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /guardar producto/i }));
+
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("allows saving a product with empty description, image and prep time", async () => {
+    // CASE: optional fields are left blank.
+    // VALIDATES: description, image and prep time are not required.
+    mockProductMutations(BASE_CATEGORIES, [], [], {
+      categories_enabled: false,
+      multiple_menus_enabled: false,
+    });
+
+    renderProductSettingsPanel();
+    fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+
+    fireEvent.input(screen.getByLabelText(/nombre/i), { target: { value: "Cortado" } });
+    fireEvent.input(screen.getByLabelText(/precio/i), { target: { value: "120" } });
+    fireEvent.input(screen.getByLabelText(/descripción/i), { target: { value: "" } });
+    fireEvent.input(screen.getByLabelText(/prep \(min\)/i), { target: { value: "" } });
+    fireEvent.input(screen.getByLabelText(/emoji \/ imagen/i), { target: { value: "" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /guardar producto/i }));
+
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("shows a clear error and highlights the name field when name is empty", () => {
+    // CASE: the operator tries to save without a product name.
+    // VALIDATES: the error message names the field and the input gets a danger border.
+    mockProductMutations();
+
+    renderProductSettingsPanel();
+    fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+
+    fireEvent.input(screen.getByLabelText(/nombre/i), { target: { value: "" } });
+    fireEvent.input(screen.getByLabelText(/precio/i), { target: { value: "120" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /guardar producto/i }));
+
+    expect(screen.getByText(/ingresá el nombre del producto/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/nombre/i)).toHaveClass("border-danger");
+    expect(createMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it("shows a clear error when price is invalid", () => {
+    // CASE: the operator types a non-numeric price.
+    // VALIDATES: the error message names the price field and does not call create.
+    mockProductMutations();
+
+    renderProductSettingsPanel();
+    fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+
+    fireEvent.input(screen.getByLabelText(/nombre/i), { target: { value: "Cortado" } });
+    fireEvent.input(screen.getByLabelText(/precio/i), { target: { value: "abc" } });
+
+    fireEvent.click(screen.getByRole("button", { name: /guardar producto/i }));
+
+    expect(screen.getByText(/ingresá un precio válido/i)).toBeInTheDocument();
+    expect(createMutateAsync).not.toHaveBeenCalled();
   });
 });

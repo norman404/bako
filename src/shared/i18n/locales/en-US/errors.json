@@ -1,0 +1,19 @@
+{
+  "menu": {
+    "productNotFound": "Product not found: {{productId}}",
+    "categoryNotFound": "Category not found: {{categoryId}}",
+    "menuNotFound": "Menu not found: {{menuId}}",
+    "modifierGroupNotFound": "Modifier group not found: {{groupId}}",
+    "modifierOptionNotFound": "Modifier option not found: {{optionId}}",
+    "generic": "An unexpected error occurred"
+  },
+  "printer": {
+    "printerNotFound": "Printer not found: {{printerId}}",
+    "printerNameRequired": "Printer name is required.",
+    "printerAddressRequired": "Printer address is required.",
+    "printerTypeInvalid": "Invalid printer type: {{type}}.",
+    "printerRoleInvalid": "Invalid printer role: {{role}}.",
+    "dbError": "We couldn't load printers. Please try again.",
+    "generic": "An error occurred with printers."
+  }
+}

@@ -12,6 +12,7 @@ import {
   useDeliveryPersons,
   useUpdateDeliveryPerson,
 } from "@/modules/delivery/hooks/use-delivery-persons";
+import { translateDeliveryError } from "@/modules/delivery/lib/translate-delivery-error";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
@@ -71,7 +72,7 @@ function getListButtonClass(isActive: boolean): string {
 }
 
 function DeliveryPersonSettingsPanel() {
-  const { t } = useTranslation("delivery");
+  const { t } = useTranslation(["delivery", "errors"]);
   const { data: deliveryPersons = [] } = useDeliveryPersons();
 
   const createMutation = useCreateDeliveryPerson();
@@ -147,7 +148,7 @@ function DeliveryPersonSettingsPanel() {
 
       beginCreate();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : t("form.validation.genericError"));
+      setFormError(translateDeliveryError(error, t));
     }
   };
 

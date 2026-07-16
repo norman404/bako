@@ -25,6 +25,13 @@
     "archiveTitle": "Archivar repartidor",
     "archiveError": "No se pudo archivar al repartidor"
   },
+  "errors": {
+    "deliveryPersonNameRequired": "El nombre del repartidor es obligatorio.",
+    "deliveryPersonColorInvalid": "El color debe ser un hex válido (ej. #FFF o #FF5733).",
+    "deliveryPersonNotFound": "No encontramos ese repartidor.",
+    "dbError": "No pudimos cargar los repartidores. Intentá de nuevo.",
+    "generic": "Ocurrió un error con los repartidores."
+  },
   "select": {
     "label": "Repartidor",
     "placeholder": "Seleccionar repartidor (opcional)",

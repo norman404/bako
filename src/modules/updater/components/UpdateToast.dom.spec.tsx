@@ -12,6 +12,7 @@ vi.mock("react-i18next", () => ({
         "toast.readyTitle": `Listo para reiniciar (${String(params?.version ?? "")})`,
         "toast.restartButton": "Reiniciar ahora",
         "toast.errorTitle": "Error al buscar actualización",
+        "toast.genericError": "No pudimos buscar actualizaciones. Intentá de nuevo.",
         "toast.checkingTitle": "Buscando actualizaciones...",
         "toast.dismiss": "Cerrar",
         "toast.tryAgain": "Reintentar",
@@ -140,7 +141,7 @@ describe("UpdateToast", () => {
 
     renderToast({ updater });
 
-    expect(screen.getByText(/check failed/i)).toBeInTheDocument();
+    expect(screen.getByText(/No pudimos buscar actualizaciones/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: /reintentar/i }));
 

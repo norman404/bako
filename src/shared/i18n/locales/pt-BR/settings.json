@@ -136,6 +136,8 @@
     "emptyOptionsHint": "Adicione pelo menos uma opção para que o grupo seja válido.",
     "moveUp": "Subir opção",
     "moveDown": "Descer opção",
+    "moveGroupUp": "Subir grupo",
+    "moveGroupDown": "Descer grupo",
     "removeOption": "Remover opção"
   }
 }

@@ -107,6 +107,17 @@ describe("resolveProductModifierGroups", () => {
     expect(result[0].name).toBe("Tamaño (prod)");
     expect(result[0].options.map((o) => o.id)).toEqual(["opt-prod"]);
   });
+
+  it("sorts the merged result by sortOrder, regardless of whether a group comes from category or product assignment", () => {
+    // GIVEN a category group that should appear AFTER a product group because
+    // the product group has a lower sortOrder.
+    const categoryHielo = buildGroup("g-hielo", "Hielo", 1);
+    const productTamano = buildGroup("g-tamano", "Tamaño", 0);
+
+    const result = resolveProductModifierGroups([categoryHielo], [productTamano]);
+
+    expect(result.map((g) => g.id)).toEqual(["g-tamano", "g-hielo"]);
+  });
 });
 
 describe("buildCartItemKey", () => {

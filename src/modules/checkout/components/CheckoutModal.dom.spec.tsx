@@ -1,6 +1,8 @@
 import { okAsync } from "neverthrow";
 import { describe, expect, it, vi } from "vitest";
 
+import { CheckoutPersistenceError } from "@/modules/checkout/domain/errors";
+
 vi.mock("lucide-react", async () => {
   const React = await import("react");
   const createIcon = (name: string) => {
@@ -292,14 +294,14 @@ describe("CheckoutModal", () => {
   it("muestra mensaje cuando la búsqueda de clientes falla", async () => {
     mockUseCustomers({
       isError: true,
-      error: new Error("boom clientes"),
+      error: new CheckoutPersistenceError("dbError", { context: "Failed to list customers" }),
     });
     renderCheckoutModal();
 
     fireEvent.click(screen.getByRole("button", { name: /delivery/i }));
     fireEvent.click(screen.getByRole("button", { name: /buscar cliente/i }));
 
-    expect(await screen.findByText(/boom clientes/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no pudimos procesar el cobro/i)).toBeInTheDocument();
   });
 
   it("muestra error general cuando onConfirmCheckout falla", async () => {
@@ -310,7 +312,7 @@ describe("CheckoutModal", () => {
     renderCheckoutModal({ onConfirmCheckout });
     fireEvent.click(screen.getByRole("button", { name: /pagar/i }));
 
-    expect(await screen.findByText(/no pudimos guardar/i)).toBeInTheDocument();
+    expect(await screen.findByText(/error inesperado/i)).toBeInTheDocument();
     expect(onConfirmCheckout).toHaveBeenCalledTimes(1);
   });
 

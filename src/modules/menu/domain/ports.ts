@@ -13,10 +13,10 @@ export interface ProductUpsertInput {
   categoryId: string;
   menuIds: string[];
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  prepTimeMinutes: number;
-  image: string;
+  prepTimeMinutes?: number;
+  image?: string;
   isPopular: boolean;
 }
 

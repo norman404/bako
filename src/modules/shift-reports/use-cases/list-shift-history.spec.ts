@@ -51,13 +51,13 @@ describe("listShiftHistory use-case", () => {
 
   it("forwards repository errors", async () => {
     const repo = buildRepo({
-      listHistory: vi.fn(() => errAsync(new ShiftPersistenceError("DB error"))),
+      listHistory: vi.fn(() => errAsync(new ShiftPersistenceError("dbError", { context: "DB error" }))),
     });
 
     const result = await listShiftHistory(repo);
 
     expect(result.isErr()).toBe(true);
     if (result.isOk()) throw new Error("Expected error");
-    expect(result.error.message).toContain("DB error");
+    expect(result.error.code).toBe("dbError");
   });
 });

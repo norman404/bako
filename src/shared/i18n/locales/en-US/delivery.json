@@ -23,6 +23,13 @@
     "archiveConfirm": "Archive {{name}}?",
     "archiveError": "Could not archive delivery person"
   },
+  "errors": {
+    "deliveryPersonNameRequired": "Delivery person name is required.",
+    "deliveryPersonColorInvalid": "Color must be a valid hex (e.g. #FFF or #FF5733).",
+    "deliveryPersonNotFound": "We couldn't find that delivery person.",
+    "dbError": "We couldn't load delivery persons. Please try again.",
+    "generic": "An error occurred with delivery persons."
+  },
   "select": {
     "label": "Delivery person",
     "placeholder": "Select delivery person (optional)",

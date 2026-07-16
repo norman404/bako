@@ -1,6 +1,7 @@
 import { Plus, Printer as PrinterIcon, Save, Trash2, Wifi, Usb, Play, CheckCircle2, AlertCircle } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
@@ -24,6 +25,7 @@ import {
   usePrinters,
   useUpdatePrinter,
 } from "@/modules/printer/hooks/use-printers";
+import { translatePrinterError } from "@/modules/printer/lib/translate-printer-error";
 import { testPrinter } from "@/modules/printer/adapters/test-printer.adapter";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 
@@ -168,6 +170,7 @@ function getListButtonClass(isActive: boolean): string {
 }
 
 export function PrinterSettingsPanel() {
+  const { t } = useTranslation(["settings", "errors"]);
   const { data: printers = [] } = usePrinters();
   const createPrinterMutation = useCreatePrinter();
   const updatePrinterMutation = useUpdatePrinter();
@@ -214,7 +217,7 @@ export function PrinterSettingsPanel() {
       }
       setArchiveTarget(null);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "No se pudo archivar la impresora");
+      setFormError(translatePrinterError(error, t));
       setArchiveTarget(null);
     }
   };
@@ -242,7 +245,7 @@ export function PrinterSettingsPanel() {
 
       beginCreate();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "No se pudo guardar la impresora");
+      setFormError(translatePrinterError(error, t));
     }
   };
 
@@ -255,7 +258,7 @@ export function PrinterSettingsPanel() {
       });
     } catch (e) {
       toast.error("No se pudo conectar con la impresora", {
-        description: e instanceof Error ? e.message : String(e),
+        description: translatePrinterError(e, t),
         icon: <AlertCircle className="h-4 w-4 text-danger" />,
       });
     }

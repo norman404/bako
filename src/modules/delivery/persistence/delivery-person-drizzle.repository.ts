@@ -20,16 +20,17 @@ function rowToDeliveryPerson(row: DeliveryPersonRow): DeliveryPerson {
 }
 
 function wrapDbError(context: string) {
-  return (cause: unknown) => new DeliveryPersonError(`${context}: ${String(cause)}`);
+  return (cause: unknown) =>
+    new DeliveryPersonError("dbError", { context, cause: String(cause) }, `${context}: ${String(cause)}`);
 }
 
 function validateInput(input: DeliveryPersonCreateInput): DeliveryPersonError | null {
   if (input.name.trim().length === 0) {
-    return new DeliveryPersonError("Delivery person name is required");
+    return new DeliveryPersonError("deliveryPersonNameRequired");
   }
 
   if (!/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(input.color)) {
-    return new DeliveryPersonError("Delivery person color must be a valid hex color (e.g. #FFF or #FF5733)");
+    return new DeliveryPersonError("deliveryPersonColorInvalid", { color: input.color });
   }
 
   return null;
@@ -111,7 +112,9 @@ export const deliveryPersonDrizzleRepository: DeliveryPersonRepository = {
     ).andThen((rows) => {
       const [created] = rows;
       if (!created) {
-        return errAsync(new DeliveryPersonError("Failed to load created delivery person"));
+        return errAsync(
+          new DeliveryPersonError("dbError", { context: "Failed to load created delivery person" }),
+        );
       }
 
       return okAsync(rowToDeliveryPerson(created));

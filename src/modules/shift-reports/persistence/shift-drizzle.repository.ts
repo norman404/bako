@@ -12,7 +12,7 @@ function wrapDbError(context: string) {
     if (cause instanceof ShiftPersistenceError) {
       return cause;
     }
-    return new ShiftPersistenceError(`${context}: ${String(cause)}`);
+    return new ShiftPersistenceError("dbError", { context, cause: String(cause) }, `${context}: ${String(cause)}`);
   };
 }
 
@@ -31,7 +31,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
       (async () => {
         const activeRows = await db.select().from(shifts).where(eq(shifts.status, "active")).limit(1);
         if (activeRows.length > 0) {
-          throw new ShiftPersistenceError("Already have an active shift");
+          throw new ShiftPersistenceError("shiftAlreadyActive");
         }
 
         const now = new Date();
@@ -42,7 +42,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
           .returning();
 
         if (!created) {
-          throw new ShiftPersistenceError("Failed to create shift");
+          throw new ShiftPersistenceError("dbError", { context: "Failed to create shift" });
         }
 
         return rowToShift(created);
@@ -62,7 +62,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
           .returning();
 
         if (!updated) {
-          throw new ShiftPersistenceError("Shift not found");
+          throw new ShiftPersistenceError("shiftNotFound", { shiftId });
         }
 
         return rowToShift(updated);
@@ -117,7 +117,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
         const shiftRows = await db.select().from(shifts).where(eq(shifts.id, shiftId)).limit(1);
         const shift = shiftRows[0];
         if (!shift) {
-          throw new ShiftPersistenceError("Shift not found");
+          throw new ShiftPersistenceError("shiftNotFound", { shiftId });
         }
 
         // Load all orders for the shift with their payment method.

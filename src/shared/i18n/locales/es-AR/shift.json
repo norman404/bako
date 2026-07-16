@@ -20,5 +20,12 @@
   "openButton": "Abrir turno",
   "closeButton": "Cerrar turno",
   "confirmClose": "¿Estás seguro de cerrar el turno actual?",
-  "confirmCloseDescription": "Al cerrar el turno se generará el reporte de ventas."
+  "confirmCloseDescription": "Al cerrar el turno se generará el reporte de ventas.",
+  "errors": {
+    "shiftAlreadyActive": "Ya hay un turno activo. Cerralo antes de abrir uno nuevo.",
+    "noActiveShift": "No hay un turno activo.",
+    "shiftNotFound": "No encontramos ese turno.",
+    "dbError": "No pudimos cargar los turnos. Intentá de nuevo.",
+    "generic": "Ocurrió un error con los turnos."
+  }
 }

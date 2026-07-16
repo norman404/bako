@@ -1,1 +1,52 @@
-{}
+{
+  "panel": {
+    "title": "Repartidores",
+    "new": "Nuevo",
+    "empty": "Sin repartidores",
+    "createTitle": "Nuevo repartidor",
+    "editTitle": "Editar repartidor"
+  },
+  "form": {
+    "name": "Nombre",
+    "namePlaceholder": "Nombre del repartidor",
+    "color": "Color (hex)",
+    "colorPlaceholder": "#FF5733",
+    "phone": "Teléfono (opcional)",
+    "phonePlaceholder": "55 1234 5678",
+    "save": "Guardar cambios",
+    "create": "Crear repartidor",
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "colorRequired": "El color es obligatorio (formato: #RRGGBB)",
+      "genericError": "No se pudo guardar el repartidor"
+    },
+    "archiveConfirm": "¿Archivar a {{name}}?",
+    "archive": "Archivar",
+    "archiveTitle": "Archivar repartidor",
+    "archiveError": "No se pudo archivar al repartidor"
+  },
+  "errors": {
+    "deliveryPersonNameRequired": "El nombre del repartidor es obligatorio.",
+    "deliveryPersonColorInvalid": "El color debe ser un hex válido (ej. #FFF o #FF5733).",
+    "deliveryPersonNotFound": "No encontramos ese repartidor. Prueba buscarlo de nuevo.",
+    "dbError": "No pudimos cargar los repartidores. Intenta de nuevo.",
+    "generic": "Se ha producido un error con los repartidores."
+  },
+  "select": {
+    "label": "Repartidor",
+    "placeholder": "Seleccionar repartidor (opcional)",
+    "noOptions": "Sin repartidores activos",
+    "quickCreate": "Nuevo repartidor",
+    "creating": "Creando..."
+  },
+  "cut": {
+    "title": "Corte por repartidor",
+    "subtitle": "Resumen del día",
+    "empty": "Sin entregas registradas hoy",
+    "orders": "Órdenes",
+    "total": "Total",
+    "summary": "Total del día",
+    "refreshButton": "Actualizar",
+    "generatedAt": "Actualizado a las {{time}}"
+  }
+}

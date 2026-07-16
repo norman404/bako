@@ -1,8 +1,9 @@
-import { Archive, Plus } from "lucide-react";
+import { Archive, ArrowDown, ArrowUp, Plus } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ModifierGroup, ModifierGroupType } from "@/modules/menu/domain/modifier-group";
+import type { ModifierGroupUpsertInput } from "@/modules/menu/domain/ports";
 import {
   useArchiveModifierGroup,
   useAssignModifierGroup,
@@ -10,11 +11,13 @@ import {
   useCreateModifierGroup,
   useModifierGroups,
   useProductAssignments,
+  useReorderModifierGroups,
   useUnassignModifierGroup,
   useUpdateModifierGroup,
 } from "@/modules/menu/hooks/use-modifier-groups";
 import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useProducts } from "@/modules/menu/hooks/use-products";
+import { translateMenuError } from "@/modules/menu/lib/translate-menu-error";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormError } from "@/components/ui/FormError";
@@ -61,6 +64,21 @@ function toGroupPayload(formState: GroupFormState, options: OptionsEditorOption[
   };
 }
 
+function buildGroupUpsertInput(group: ModifierGroup, sortOrder: number): ModifierGroupUpsertInput {
+  return {
+    name: group.name,
+    type: group.type,
+    required: group.required,
+    sortOrder,
+    options: group.options.map((option) => ({
+      name: option.name,
+      priceDelta: option.priceDelta,
+      isDefault: option.isDefault,
+      sortOrder: option.sortOrder,
+    })),
+  };
+}
+
 function getListButtonClass(isActive: boolean): string {
   return [
     "w-full cursor-pointer rounded-card border px-2.5 py-2 text-left transition-[border-color,background-color] duration-200",
@@ -71,7 +89,7 @@ function getListButtonClass(isActive: boolean): string {
 }
 
 function ModifierGroupSettingsPanel() {
-  const { t } = useTranslation("settings");
+  const { t } = useTranslation(["settings", "errors"]);
   const { data: groups = [] } = useModifierGroups();
   const { data: categories = [] } = useCategories();
   const { data: products = [] } = useProducts();
@@ -79,6 +97,7 @@ function ModifierGroupSettingsPanel() {
   const { data: productAssignments = new Map() } = useProductAssignments();
   const createMutation = useCreateModifierGroup();
   const updateMutation = useUpdateModifierGroup();
+  const reorderMutation = useReorderModifierGroups();
   const archiveMutation = useArchiveModifierGroup();
   const assignMutation = useAssignModifierGroup();
   const unassignMutation = useUnassignModifierGroup();
@@ -132,9 +151,33 @@ function ModifierGroupSettingsPanel() {
         beginCreate();
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("modifierGroups.archiveError");
+      const message = translateMenuError(err, t);
       setFormError(message);
       setArchiveTarget(null);
+    }
+  };
+
+  const handleMoveGroup = async (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= groups.length) return;
+
+    // Build a new array where the group at `index` is moved to `target`.
+    const nextGroups = [...groups];
+    const [moved] = nextGroups.splice(index, 1);
+    nextGroups.splice(target, 0, moved);
+
+    // Reassign sortOrder based on the new positions. This is necessary
+    // because existing groups may all share the same default sortOrder (0),
+    // so a simple neighbor swap would not change anything.
+    const reordered = nextGroups.map((group, i) => ({
+      id: group.id,
+      input: buildGroupUpsertInput(group, i),
+    }));
+
+    try {
+      await reorderMutation.mutateAsync({ groups: reordered });
+    } catch (err) {
+      setFormError(translateMenuError(err, t));
     }
   };
 
@@ -161,7 +204,7 @@ function ModifierGroupSettingsPanel() {
       }
       beginCreate();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : t("modifierGroups.error"));
+      setFormError(translateMenuError(err, t));
     }
   };
 
@@ -185,7 +228,7 @@ function ModifierGroupSettingsPanel() {
     }
   };
 
-  const isSaving = createMutation.isPending || updateMutation.isPending;
+  const isSaving = createMutation.isPending || updateMutation.isPending || reorderMutation.isPending || archiveMutation.isPending || assignMutation.isPending || unassignMutation.isPending;
   const isFormValid = formState.name.trim().length > 0 && options.length > 0;
 
   return (
@@ -208,10 +251,33 @@ function ModifierGroupSettingsPanel() {
       <div className="grid gap-3 xl:grid-cols-[minmax(0,0.86fr)_minmax(300px,1.14fr)]">
         <section className="min-h-0 overflow-hidden xl:border-r xl:border-border xl:pr-3">
           <div className="scrollbar-thin h-full space-y-1 overflow-y-auto pr-1">
-            {groups.map((group) => {
+            {groups.map((group, index) => {
               const isActive = selectedGroupId === group.id && mode === "edit";
+              const isFirst = index === 0;
+              const isLast = index === groups.length - 1;
               return (
-                <div key={group.id} className="flex items-stretch gap-1">
+                <div key={group.id} data-testid={`modifier-group-row-${index}`} className="flex items-stretch gap-1">
+                  <div className="flex flex-col items-center justify-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => handleMoveGroup(index, -1)}
+                      disabled={isSaving || isFirst}
+                      aria-label={t("modifierGroups.moveGroupUp")}
+                      className="flex h-5 w-5 items-center justify-center rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMoveGroup(index, 1)}
+                      disabled={isSaving || isLast}
+                      aria-label={t("modifierGroups.moveGroupDown")}
+                      className="flex h-5 w-5 items-center justify-center rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      <ArrowDown className="h-3 w-3" />
+                    </button>
+                  </div>
+
                   <Button
                     variant="ghost"
                     onClick={() => beginEdit(group)}

@@ -21,24 +21,25 @@ function rowToPrinter(row: PrinterRow): Printer {
 }
 
 function wrapDbError(context: string) {
-  return (cause: unknown) => new PrinterValidationError(`${context}: ${String(cause)}`);
+  return (cause: unknown) =>
+    new PrinterValidationError("dbError", { context, cause: String(cause) }, `${context}: ${String(cause)}`);
 }
 
 function validatePrinterInput(input: PrinterCreateInput): PrinterDomainError | null {
   if (input.name.trim().length === 0) {
-    return new PrinterValidationError("Printer name is required");
+    return new PrinterValidationError("printerNameRequired");
   }
 
   if (input.address.trim().length === 0) {
-    return new PrinterValidationError("Printer address is required");
+    return new PrinterValidationError("printerAddressRequired");
   }
 
   if (!["usb", "network"].includes(input.type)) {
-    return new PrinterValidationError(`Invalid printer type: ${input.type}`);
+    return new PrinterValidationError("printerTypeInvalid", { type: input.type }, `Invalid printer type: ${input.type}`);
   }
 
   if (!["receipt", "kitchen", "bar", "other"].includes(input.role)) {
-    return new PrinterValidationError(`Invalid printer role: ${input.role}`);
+    return new PrinterValidationError("printerRoleInvalid", { role: input.role }, `Invalid printer role: ${input.role}`);
   }
 
   return null;
@@ -102,7 +103,7 @@ export const printerDrizzleRepository: PrinterRepository = {
     ).andThen((rows) => {
       const [createdPrinter] = rows;
       if (!createdPrinter) {
-        return errAsync(new PrinterValidationError("Failed to load created printer"));
+        return errAsync(new PrinterValidationError("dbError", { context: "Failed to load created printer" }));
       }
 
       return okAsync(rowToPrinter(createdPrinter));

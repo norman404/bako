@@ -56,5 +56,28 @@
     "phonePlaceholder": "11 5555 5555",
     "addressLabel": "Dirección",
     "addressPlaceholder": "Av. Siempre Viva 742, Timbre B"
+  },
+  "errors": {
+    "customerNameRequired": "El nombre del cliente es obligatorio.",
+    "customerPhoneRequired": "El teléfono del cliente es obligatorio.",
+    "customerAddressRequired": "La dirección del cliente es obligatoria.",
+    "invalidPaymentMethod": "El método de pago debe ser efectivo o tarjeta.",
+    "invalidPaymentAmount": "El monto de pago debe ser un número entero no negativo.",
+    "insufficientPaymentAmount": "El monto recibido no cubre el total del pedido.",
+    "cardPaymentExactMatchRequired": "Con tarjeta, el monto debe ser exacto al total.",
+    "orderItemsRequired": "El pedido debe incluir al menos un artículo.",
+    "orderItemProductIdRequired": "Cada artículo debe tener un producto asignado.",
+    "orderItemQuantityInvalid": "La cantidad debe ser un entero positivo.",
+    "orderItemUnitPriceInvalid": "El precio unitario debe ser un entero no negativo.",
+    "customerIdAndCustomerConflict": "Elegí un cliente guardado o cargá uno nuevo, no ambos.",
+    "localOrderCustomerForbidden": "Los pedidos locales no pueden incluir datos de cliente de delivery.",
+    "localOrderDeliveryPersonForbidden": "Los pedidos locales no pueden tener repartidor.",
+    "deliveryOrderCustomerRequired": "Los pedidos de delivery requieren un cliente.",
+    "customerNotFound": "No encontramos ese cliente. Probá buscarlo de nuevo.",
+    "dbError": "No pudimos procesar el cobro. Intentá de nuevo.",
+    "generic": "Ocurrió un error inesperado al procesar el cobro.",
+    "formDeliveryNewCustomerRequired": "Para delivery necesitás cliente, teléfono y dirección.",
+    "formDeliverySelectOrCreate": "Elegí un cliente guardado o tocá \"Nuevo cliente\" para cargar uno.",
+    "formEmptyCart": "Agregá al menos un producto antes de cobrar."
   }
 }

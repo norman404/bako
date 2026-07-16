@@ -1,6 +1,7 @@
 import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { Product } from "@/modules/menu/domain/product";
 import type { ProductUpsertInput } from "@/modules/menu/domain/ports";
@@ -19,6 +20,7 @@ import {
 } from "@/modules/menu/lib/product-price";
 import { formatPosCurrency } from "@/lib/currency";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { translateMenuError } from "@/modules/menu/lib/translate-menu-error";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,6 +54,15 @@ interface ProductFormState {
   isPopular: boolean;
 }
 
+interface ProductFormError {
+  field?: "name" | "price" | "prepTime" | "categoryId";
+  message: string;
+}
+
+type ProductFormResult =
+  | { success: true; payload: ProductUpsertInput }
+  | { success: false; error: ProductFormError };
+
 function buildEmptyFormState(defaultCategoryId: string): ProductFormState {
   return {
     categoryId: defaultCategoryId,
@@ -81,35 +92,41 @@ function buildFormStateFromProduct(product: Product): ProductFormState {
 function toProductPayload(
   formState: ProductFormState,
   defaultCategoryId: string,
-): ProductUpsertInput | null {
+): ProductFormResult {
   const categoryId = formState.categoryId.trim() || defaultCategoryId.trim();
   const name = formState.name.trim();
-  const description = formState.description.trim();
-  const image = formState.image.trim();
   const price = parseProductPriceInput(formState.price);
-  const prepTimeMinutes = Number.parseInt(formState.prepTimeMinutes, 10);
+  const rawPrepTime = formState.prepTimeMinutes.trim();
+  const prepTimeMinutes = rawPrepTime.length === 0 ? 0 : Number.parseInt(rawPrepTime, 10);
 
-  if (categoryId.length === 0 || name.length === 0 || description.length === 0 || image.length === 0) {
-    return null;
+  if (categoryId.length === 0) {
+    return { success: false, error: { field: "categoryId", message: "Seleccioná una categoría." } };
+  }
+
+  if (name.length === 0) {
+    return { success: false, error: { field: "name", message: "Ingresá el nombre del producto." } };
   }
 
   if (price === null) {
-    return null;
+    return { success: false, error: { field: "price", message: "Ingresá un precio válido." } };
   }
 
   if (!Number.isInteger(prepTimeMinutes) || prepTimeMinutes < 0) {
-    return null;
+    return { success: false, error: { field: "prepTime", message: "Ingresá un tiempo de preparación válido." } };
   }
 
   return {
-    categoryId,
-    menuIds: formState.menuIds,
-    name,
-    description,
-    price,
-    prepTimeMinutes,
-    image,
-    isPopular: formState.isPopular,
+    success: true,
+    payload: {
+      categoryId,
+      menuIds: formState.menuIds,
+      name,
+      description: formState.description.trim(),
+      price,
+      prepTimeMinutes,
+      image: formState.image.trim(),
+      isPopular: formState.isPopular,
+    },
   };
 }
 
@@ -123,6 +140,7 @@ function getListButtonClass(isActive: boolean): string {
 }
 
 function ProductSettingsPanel() {
+  const { t } = useTranslation(["settings", "errors"]);
   const { flags } = useFeatureFlagsStore();
   const categoriesEnabled = flags.categories_enabled ?? false;
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
@@ -147,7 +165,7 @@ function ProductSettingsPanel() {
   const [formState, setFormState] = useState<ProductFormState>(() =>
     initialProduct ? buildFormStateFromProduct(initialProduct) : buildEmptyFormState(defaultCategoryId),
   );
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<ProductFormError | null>(null);
 
   const hasCategories = categories.length > 0;
   const isSaving = createProductMutation.isPending || updateProductMutation.isPending;
@@ -187,7 +205,9 @@ function ProductSettingsPanel() {
         beginCreate();
       }
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "No se pudo archivar el producto");
+      setFormError({
+        message: translateMenuError(error, t),
+      });
     }
   };
 
@@ -195,26 +215,28 @@ function ProductSettingsPanel() {
     event.preventDefault();
 
     if (!hasCategories) {
-      setFormError("Creá una categoría primero.");
+      setFormError({ message: "Creá una categoría primero." });
       return;
     }
 
-    const payload = toProductPayload(formState, defaultCategoryId);
-    if (!payload) {
-      setFormError("Revisá los campos.");
+    const result = toProductPayload(formState, defaultCategoryId);
+    if (!result.success) {
+      setFormError(result.error);
       return;
     }
 
     try {
       if (mode === PRODUCT_FORM_MODE.CREATE) {
-        await createProductMutation.mutateAsync(payload);
+        await createProductMutation.mutateAsync(result.payload);
       } else if (selectedProductId) {
-        await updateProductMutation.mutateAsync({ id: selectedProductId, input: payload });
+        await updateProductMutation.mutateAsync({ id: selectedProductId, input: result.payload });
       }
 
       beginCreate();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "No se pudo guardar el producto");
+      setFormError({
+        message: translateMenuError(error, t),
+      });
     }
   };
 
@@ -364,6 +386,7 @@ function ProductSettingsPanel() {
                     name: value,
                   }));
                 }}
+                className={formError?.field === "name" ? "border-danger" : undefined}
                 placeholder="Flat white"
               />
             </FormField>
@@ -397,7 +420,7 @@ function ProductSettingsPanel() {
                     }));
                   }}
                   inputMode="decimal"
-                  className="font-mono-tabular"
+                  className={`font-mono-tabular ${formError?.field === "price" ? "border-danger" : ""}`}
                   placeholder="55.50"
                 />
               </FormField>
@@ -414,7 +437,7 @@ function ProductSettingsPanel() {
                     }));
                   }}
                   inputMode="numeric"
-                  className="font-mono-tabular"
+                  className={`font-mono-tabular ${formError?.field === "prepTime" ? "border-danger" : ""}`}
                   placeholder="5"
                 />
               </FormField>
@@ -448,7 +471,7 @@ function ProductSettingsPanel() {
               </label>
             </div>
 
-            <FormError message={formError} />
+            <FormError message={formError?.message ?? null} />
 
             <div className="flex items-center justify-end border-t border-border pt-2.5">
               <Button

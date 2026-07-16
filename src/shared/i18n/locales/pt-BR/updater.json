@@ -6,6 +6,7 @@
     "readyTitle": "Pronto para reiniciar ({{version}})",
     "restartButton": "Reiniciar agora",
     "errorTitle": "Erro ao buscar atualização",
+    "genericError": "Não foi possível buscar atualizações. Tente novamente.",
     "checkingTitle": "Buscando atualizações...",
     "dismiss": "Fechar",
     "tryAgain": "Tentar novamente"
@@ -24,6 +25,7 @@
     "readyToRestart": "Pronto para reiniciar",
     "restart": "Reiniciar agora",
     "error": "Erro: {{message}}",
+    "genericError": "Não foi possível buscar atualizações. Tente novamente.",
     "tryAgain": "Tentar novamente"
   }
 }

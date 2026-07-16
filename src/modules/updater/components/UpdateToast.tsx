@@ -85,13 +85,14 @@ function ReadyToInstallToast({
   );
 }
 
-function ErrorToast({ updater, error }: { updater: UseUpdaterResult; error: string }) {
+function ErrorToast({ updater }: { updater: UseUpdaterResult; error: string }) {
   const { t } = useTranslation("updater");
+  const displayError = t("toast.genericError");
 
   return (
     <>
       <p className="text-sm font-medium text-text">{t("toast.errorTitle")}</p>
-      <p className="mt-1 text-xs text-danger">{error}</p>
+      <p className="mt-1 text-xs text-danger">{displayError}</p>
       <button
         type="button"
         onClick={updater.checkForUpdates}
@@ -142,7 +143,7 @@ export function UpdateToast({ updater }: UpdateToastProps) {
               case UpdateStatus.ReadyToInstall:
                 return <ReadyToInstallToast updater={updater} status={status} />;
               case UpdateStatus.Error:
-                return <ErrorToast updater={updater} error={status.message} />;
+                return <ErrorToast updater={updater} error="" />;
               case UpdateStatus.Checking:
                 return <CheckingToast />;
               default:

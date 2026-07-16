@@ -13,6 +13,7 @@ import checkoutES from './locales/es-MX/checkout.json';
 import orderES from './locales/es-MX/order.json';
 import turnoES from './locales/es-MX/turno.json';
 import shiftES from './locales/es-MX/shift.json';
+import errorsES from './locales/es-MX/errors.json';
 
 const DEFAULT_TEST_RESOURCES: Resource = {
   'es-MX': {
@@ -24,6 +25,7 @@ const DEFAULT_TEST_RESOURCES: Resource = {
     order: orderES,
     turno: turnoES,
     shift: shiftES,
+    errors: errorsES,
   },
 };
 

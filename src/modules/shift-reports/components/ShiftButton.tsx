@@ -15,6 +15,7 @@ import {
   useOpenShift,
   useCloseShift,
 } from "@/modules/shift-reports/hooks/use-shift-reports";
+import { translateShiftError } from "@/modules/shift-reports/lib/translate-shift-error";
 import { ShiftReportModal } from "./ShiftReportModal";
 
 export function ShiftButton() {
@@ -36,7 +37,7 @@ export function ShiftButton() {
         toast.success(t("openShift"));
       },
       onError: (error) => {
-        toast.error(error instanceof Error ? error.message : String(error));
+        toast.error(translateShiftError(error, t));
       },
     });
   };
@@ -56,7 +57,7 @@ export function ShiftButton() {
         setShowReport(true);
       },
       onError: (error) => {
-        toast.error(error instanceof Error ? error.message : String(error));
+        toast.error(translateShiftError(error, t));
       },
     });
   };

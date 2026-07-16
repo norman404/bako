@@ -76,7 +76,7 @@ describe("createPrinter", () => {
     }
 
     expect(result.error).toBeInstanceOf(PrinterValidationError);
-    expect(result.error.message).toBe("Printer name is required");
+    expect(result.error.code).toBe("printerNameRequired");
   });
 
   it("returns validation error when address is empty", async () => {
@@ -96,7 +96,7 @@ describe("createPrinter", () => {
     }
 
     expect(result.error).toBeInstanceOf(PrinterValidationError);
-    expect(result.error.message).toBe("Printer address is required");
+    expect(result.error.code).toBe("printerAddressRequired");
   });
 
   it("propagates repository errors", async () => {
@@ -106,7 +106,7 @@ describe("createPrinter", () => {
       address: "192.168.1.50:9100",
       role: "kitchen",
     };
-    const mockError = new PrinterDomainError("Database connection failed");
+    const mockError = new PrinterDomainError("dbError", { context: "Database connection failed" });
     const mockRepository = buildMockRepository({ create: () => errAsync(mockError) });
 
     const result = await createPrinter(mockRepository, input);

@@ -38,6 +38,6 @@ describe("closeShift use-case", () => {
     expect(result.isErr()).toBe(true);
     if (result.isOk()) throw new Error("Expected error");
     expect(result.error).toBeInstanceOf(NoActiveShiftError);
-    expect(result.error.message).toContain("No active shift");
+    expect(result.error.code).toBe("noActiveShift");
   });
 });

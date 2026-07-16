@@ -125,21 +125,6 @@ describe("productDrizzleRepository", () => {
     expect(result.value.menuIds).toEqual(["menu-1"]);
   });
 
-  it("create rejects empty menuIds array", async () => {
-    const result = await productDrizzleRepository.create({
-      ...validInput,
-      menuIds: [],
-    });
-
-    expect(result.isErr()).toBe(true);
-    if (result.isOk()) {
-      throw new Error("Expected create to fail for empty menuIds");
-    }
-
-    expect(result.error.message).toContain("must belong to at least one menu");
-    expect(dbMocks.insertValuesMock).not.toHaveBeenCalled();
-  });
-
   it("create rejects non-integer price", async () => {
     const result = await productDrizzleRepository.create({
       ...validInput,
@@ -324,5 +309,102 @@ describe("productDrizzleRepository", () => {
     ]);
 
     expect(result.value.menuIds).toEqual(["menu-2", "menu-3"]);
+  });
+
+  it("create accepts empty menuIds array", async () => {
+    const generatedId = "8dc50e6f-6e6f-4d2c-a6f6-8d19f6f49885";
+    const createdRow = buildProductRow({ id: generatedId, menuId: null });
+
+    dbMocks.insertReturningMock.mockResolvedValueOnce([createdRow]);
+    dbMocks.insertValuesMock.mockReturnValueOnce({ returning: dbMocks.insertReturningMock });
+    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+
+    const result = await productDrizzleRepository.create({
+      ...validInput,
+      menuIds: [],
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    expect(result.value.menuIds).toEqual([]);
+    // productMenus insert should NOT be called when menuIds is empty
+    expect(dbMocks.insertValuesMock).toHaveBeenCalledTimes(1);
+    const insertedProductMenus = dbMocks.insertValuesMock.mock.calls[0]![0];
+    expect(Array.isArray(insertedProductMenus)).toBe(false);
+  });
+
+  it("create accepts empty description and image", async () => {
+    const generatedId = "8dc50e6f-6e6f-4d2c-a6f6-8d19f6f49886";
+    const createdRow = buildProductRow({
+      id: generatedId,
+      description: "",
+      image: "",
+    });
+
+    dbMocks.insertReturningMock.mockResolvedValueOnce([createdRow]);
+    dbMocks.insertValuesMock.mockReturnValueOnce({ returning: dbMocks.insertReturningMock });
+    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+
+    const result = await productDrizzleRepository.create({
+      ...validInput,
+      description: "",
+      image: "",
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    const insertedProduct = dbMocks.insertValuesMock.mock.calls[0]![0] as ProductRow;
+    expect(insertedProduct.description).toBe("");
+    expect(insertedProduct.image).toBe("");
+  });
+
+  it("create accepts prepTimeMinutes of 0", async () => {
+    const generatedId = "8dc50e6f-6e6f-4d2c-a6f6-8d19f6f49887";
+    const createdRow = buildProductRow({ id: generatedId, prepTimeMinutes: 0 });
+
+    dbMocks.insertReturningMock.mockResolvedValueOnce([createdRow]);
+    dbMocks.insertValuesMock.mockReturnValueOnce({ returning: dbMocks.insertReturningMock });
+    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+
+    const result = await productDrizzleRepository.create({
+      ...validInput,
+      prepTimeMinutes: 0,
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    const insertedProduct = dbMocks.insertValuesMock.mock.calls[0]![0] as ProductRow;
+    expect(insertedProduct.prepTimeMinutes).toBe(0);
+  });
+
+  it("update accepts empty menuIds array", async () => {
+    const updatedRow = buildProductRow({ id: "product-1" });
+
+    dbMocks.updateReturningMock.mockResolvedValueOnce([updatedRow]);
+    dbMocks.deleteWhereMock.mockResolvedValueOnce(undefined as never);
+
+    const result = await productDrizzleRepository.update("product-1", {
+      ...validInput,
+      menuIds: [],
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isErr()) {
+      throw result.error;
+    }
+
+    // delete old associations should still be called, but no insert
+    expect(dbMocks.deleteMock).toHaveBeenCalledTimes(1);
+    expect(dbMocks.insertValuesMock).not.toHaveBeenCalled();
+    expect(result.value.menuIds).toEqual([]);
   });
 });

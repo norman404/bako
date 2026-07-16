@@ -24,8 +24,9 @@ vi.mock("lucide-react", async () => {
 import * as modifierHooks from "@/modules/menu/hooks/use-modifier-groups";
 import * as categoryHooks from "@/modules/menu/hooks/use-categories";
 import * as productHooks from "@/modules/menu/hooks/use-products";
+import { ModifierGroupNotFoundError } from "@/modules/menu/domain/errors";
 import { ModifierGroupSettingsPanel } from "@/modules/menu/components/admin/ModifierGroupSettingsPanel";
-import { fireEvent, renderWithProviders, screen, within } from "@/test/test-utils";
+import { fireEvent, renderWithProviders, screen, waitFor, within } from "@/test/test-utils";
 import type { ModifierGroup, ModifierOption } from "@/modules/menu/domain/modifier-group";
 import type { Category } from "@/modules/menu/domain/category";
 import type { Product } from "@/modules/menu/domain/product";
@@ -35,6 +36,7 @@ const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
 type UseModifierGroupsResult = ReturnType<typeof modifierHooks.useModifierGroups>;
 type CreateModifierGroupResult = ReturnType<typeof modifierHooks.useCreateModifierGroup>;
 type UpdateModifierGroupResult = ReturnType<typeof modifierHooks.useUpdateModifierGroup>;
+type ReorderModifierGroupsResult = ReturnType<typeof modifierHooks.useReorderModifierGroups>;
 type ArchiveModifierGroupResult = ReturnType<typeof modifierHooks.useArchiveModifierGroup>;
 type AssignModifierGroupResult = ReturnType<typeof modifierHooks.useAssignModifierGroup>;
 type UnassignModifierGroupResult = ReturnType<typeof modifierHooks.useUnassignModifierGroup>;
@@ -113,6 +115,8 @@ function mockAllHooks(opts: {
   createPending?: boolean;
   categoryAssignments?: Map<string, Set<string>>;
   productAssignments?: Map<string, Set<string>>;
+  updateMutate?: ReturnType<typeof vi.fn>;
+  swapSortOrderMutate?: ReturnType<typeof vi.fn>;
 } = {}) {
   const groups = opts.groups ?? [buildGroup()];
   const categories = opts.categories ?? [buildCategory()];
@@ -130,8 +134,13 @@ function mockAllHooks(opts: {
 
   vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: opts.updateMutate ?? vi.fn(),
   } as unknown as UpdateModifierGroupResult);
+
+  vi.spyOn(modifierHooks, "useReorderModifierGroups").mockReturnValue({
+    isPending: false,
+    mutateAsync: opts.swapSortOrderMutate ?? vi.fn(),
+  } as unknown as ReorderModifierGroupsResult);
 
   vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
     isPending: false,
@@ -569,8 +578,8 @@ describe("ModifierGroupSettingsPanel", () => {
       expect(productCheckbox).toBeChecked();
     });
 
-    it("shows an inline error when the create mutation fails", async () => {
-      const createMutate = vi.fn().mockRejectedValue(new Error("Nombre duplicado"));
+    it("shows a translated inline error when the create mutation fails with a menu domain error", async () => {
+      const createMutate = vi.fn().mockRejectedValue(new ModifierGroupNotFoundError("g-faltante"));
 
       vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
         data: [buildGroup({ id: "g1", name: "Existente" })],
@@ -626,10 +635,74 @@ describe("ModifierGroupSettingsPanel", () => {
       // Submit
       fireEvent.click(screen.getByRole("button", { name: /^crear grupo$/i }));
 
-      // The error is rendered inline
+      // The error is rendered inline using the translated menu error key
       const formRegion = screen.getByTestId("modifier-group-form");
       await vi.waitFor(() => {
-        expect(within(formRegion).getByText(/nombre duplicado/i)).toBeInTheDocument();
+        expect(within(formRegion).getByText(/grupo de modificadores no encontrado/i)).toBeInTheDocument();
+      });
+    });
+
+    it("shows a generic translated fallback for non-translatable errors", async () => {
+      const createMutate = vi.fn().mockRejectedValue(new Error("Raw library error"));
+
+      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+        data: [buildGroup({ id: "g1", name: "Existente" })],
+        isLoading: false,
+      } as unknown as UseModifierGroupsResult);
+      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: createMutate,
+      } as unknown as CreateModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UpdateModifierGroupResult);
+      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as ArchiveModifierGroupResult);
+      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as AssignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+        isPending: false,
+        mutateAsync: vi.fn(),
+      } as unknown as UnassignModifierGroupResult);
+      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseCategoryAssignmentsResult);
+      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+        data: new Map(),
+        isLoading: false,
+      } as unknown as UseProductAssignmentsResult);
+      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as UseCategoriesResult);
+      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+        data: [],
+        isLoading: false,
+      } as unknown as UseProductsResult);
+
+      renderPanel();
+
+      // Click "Nuevo" to enter create mode
+      fireEvent.click(screen.getByRole("button", { name: /^nuevo$/i }));
+      // Fill name + option so the form is valid
+      fireEvent.input(screen.getByLabelText(/nombre/i), { target: { value: "Toppings" } });
+      fireEvent.click(screen.getByRole("button", { name: /agregar opción|añadir opción/i }));
+      const optionInputs = screen.getAllByLabelText(/nombre de la opción|opción/i);
+      fireEvent.input(optionInputs[0], { target: { value: "Queso" } });
+
+      // Submit
+      fireEvent.click(screen.getByRole("button", { name: /^crear grupo$/i }));
+
+      // The generic fallback is rendered inline
+      const formRegion = screen.getByTestId("modifier-group-form");
+      await vi.waitFor(() => {
+        expect(within(formRegion).getByText(/error inesperado/i)).toBeInTheDocument();
       });
     });
 
@@ -652,6 +725,116 @@ describe("ModifierGroupSettingsPanel", () => {
       renderPanel();
 
       expect(screen.getByTestId("options-empty-hint")).toBeInTheDocument();
+    });
+  });
+
+  describe("reorder groups", () => {
+    it("calls the reorder mutation with all groups assigned new sortOrder when up is clicked", async () => {
+      const reorderMutate = vi.fn().mockResolvedValue(undefined);
+      mockAllHooks({
+        groups: [
+          buildGroup({
+            id: "g-hielo",
+            name: "Hielo",
+            sortOrder: 0,
+            options: [buildOption({ id: "o1", name: "Sin hielo" })],
+          }),
+          buildGroup({
+            id: "g-tamano",
+            name: "Tamaño",
+            sortOrder: 1,
+            options: [buildOption({ id: "o2", name: "Grande" })],
+          }),
+        ],
+        swapSortOrderMutate: reorderMutate,
+      });
+
+      renderPanel();
+
+      const rows = screen.getAllByTestId(/^modifier-group-row-/);
+      const upBtn = within(rows[1]).getByRole("button", { name: /subir/i });
+      fireEvent.click(upBtn);
+
+      await waitFor(() => expect(reorderMutate).toHaveBeenCalledTimes(1));
+
+      expect(reorderMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          groups: [
+            expect.objectContaining({
+              id: "g-tamano",
+              input: expect.objectContaining({ name: "Tamaño", sortOrder: 0 }),
+            }),
+            expect.objectContaining({
+              id: "g-hielo",
+              input: expect.objectContaining({ name: "Hielo", sortOrder: 1 }),
+            }),
+          ],
+        }),
+      );
+    });
+
+    it("calls the reorder mutation with all groups assigned new sortOrder when down is clicked", async () => {
+      const reorderMutate = vi.fn().mockResolvedValue(undefined);
+      mockAllHooks({
+        groups: [
+          buildGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 }),
+          buildGroup({ id: "g-tamano", name: "Tamaño", sortOrder: 1 }),
+        ],
+        swapSortOrderMutate: reorderMutate,
+      });
+
+      renderPanel();
+
+      const rows = screen.getAllByTestId(/^modifier-group-row-/);
+      const downBtn = within(rows[0]).getByRole("button", { name: /bajar/i });
+      fireEvent.click(downBtn);
+
+      await waitFor(() => expect(reorderMutate).toHaveBeenCalledTimes(1));
+
+      expect(reorderMutate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          groups: [
+            expect.objectContaining({
+              id: "g-tamano",
+              input: expect.objectContaining({ name: "Tamaño", sortOrder: 0 }),
+            }),
+            expect.objectContaining({
+              id: "g-hielo",
+              input: expect.objectContaining({ name: "Hielo", sortOrder: 1 }),
+            }),
+          ],
+        }),
+      );
+    });
+
+    it("disables the up button on the first group", () => {
+      mockAllHooks({
+        groups: [
+          buildGroup({ id: "g1", name: "Hielo", sortOrder: 0 }),
+          buildGroup({ id: "g2", name: "Tamaño", sortOrder: 1 }),
+        ],
+      });
+
+      renderPanel();
+
+      const rows = screen.getAllByTestId(/^modifier-group-row-/);
+      const upBtn = within(rows[0]).getByRole("button", { name: /subir/i });
+      expect(upBtn).toBeDisabled();
+    });
+
+    it("disables the down button on the last group", () => {
+      mockAllHooks({
+        groups: [
+          buildGroup({ id: "g1", name: "Hielo", sortOrder: 0 }),
+          buildGroup({ id: "g2", name: "Tamaño", sortOrder: 1 }),
+        ],
+      });
+
+      renderPanel();
+
+      const rows = screen.getAllByTestId(/^modifier-group-row-/);
+      const downBtn = within(rows[rows.length - 1]).getByRole("button", { name: /bajar/i });
+      expect(downBtn).toBeDisabled();
     });
   });
 });

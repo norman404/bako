@@ -6,6 +6,7 @@
     "readyTitle": "Ready to restart ({{version}})",
     "restartButton": "Restart now",
     "errorTitle": "Update check failed",
+    "genericError": "We couldn't check for updates. Please try again.",
     "checkingTitle": "Checking for updates...",
     "dismiss": "Close",
     "tryAgain": "Try again"
@@ -24,6 +25,7 @@
     "readyToRestart": "Ready to restart",
     "restart": "Restart now",
     "error": "Error: {{message}}",
+    "genericError": "We couldn't check for updates. Please try again.",
     "tryAgain": "Try again"
   }
 }

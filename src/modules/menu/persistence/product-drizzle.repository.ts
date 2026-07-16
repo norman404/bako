@@ -29,10 +29,6 @@ function wrapDbError(context: string) {
 }
 
 function validateProductInput(input: ProductUpsertInput): MenuDomainError | null {
-  if (input.menuIds.length === 0) {
-    return new MenuDomainError("Product must belong to at least one menu");
-  }
-
   if (input.categoryId.trim().length === 0) {
     return new MenuDomainError("Category is required");
   }
@@ -41,19 +37,12 @@ function validateProductInput(input: ProductUpsertInput): MenuDomainError | null
     return new MenuDomainError("Product name is required");
   }
 
-  if (input.description.trim().length === 0) {
-    return new MenuDomainError("Product description is required");
-  }
-
-  if (input.image.trim().length === 0) {
-    return new MenuDomainError("Product image is required");
-  }
-
   if (!Number.isInteger(input.price) || input.price < 0) {
     return new MenuDomainError("Product price must be a non-negative integer in cents");
   }
 
-  if (!Number.isInteger(input.prepTimeMinutes) || input.prepTimeMinutes < 0) {
+  const prepTimeMinutes = input.prepTimeMinutes ?? 0;
+  if (!Number.isInteger(prepTimeMinutes) || prepTimeMinutes < 0) {
     return new MenuDomainError("Prep time must be a non-negative integer in minutes");
   }
 
@@ -99,13 +88,15 @@ function loadActiveProductById(id: string, context: string): ResultAsync<Product
   });
 }
 
-function normalizeProductInput(input: ProductUpsertInput): ProductUpsertInput {
+function normalizeProductInput(input: ProductUpsertInput): Required<ProductUpsertInput> {
   return {
     ...input,
     categoryId: input.categoryId.trim(),
     name: input.name.trim(),
-    description: input.description.trim(),
-    image: input.image.trim(),
+    description: (input.description ?? "").trim(),
+    image: (input.image ?? "").trim(),
+    prepTimeMinutes: input.prepTimeMinutes ?? 0,
+    menuIds: input.menuIds,
   };
 }
 
@@ -201,13 +192,15 @@ export const productDrizzleRepository: ProductRepository = {
           throw new ProductNotFoundError(productId);
         }
 
-        // Insert product-menu associations
+        // Insert product-menu associations only when there are menus selected
         const productMenuValues = normalizedInput.menuIds.map((menuId) => ({
           productId,
           menuId,
         }));
 
-        await db.insert(productMenus).values(productMenuValues);
+        if (productMenuValues.length > 0) {
+          await db.insert(productMenus).values(productMenuValues);
+        }
 
         return { product: createdProduct, menuIds: normalizedInput.menuIds };
       })(),
@@ -250,13 +243,15 @@ export const productDrizzleRepository: ProductRepository = {
         // Delete old product-menu associations
         await db.delete(productMenus).where(eq(productMenus.productId, id));
 
-        // Insert new product-menu associations
+        // Insert new product-menu associations only when there are menus selected
         const productMenuValues = normalizedInput.menuIds.map((menuId) => ({
           productId: id,
           menuId,
         }));
 
-        await db.insert(productMenus).values(productMenuValues);
+        if (productMenuValues.length > 0) {
+          await db.insert(productMenus).values(productMenuValues);
+        }
 
         return { product: updatedProduct, menuIds: normalizedInput.menuIds };
       })(),

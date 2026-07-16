@@ -106,21 +106,25 @@ function wrapPersistenceError(context: string) {
       return cause;
     }
 
-    return new CheckoutPersistenceError(`${context}: ${formatUnknownError(cause)}`);
+    return new CheckoutPersistenceError(
+      "dbError",
+      { context, cause: formatUnknownError(cause) },
+      `${context}: ${formatUnknownError(cause)}`,
+    );
   };
 }
 
 function validateCustomerInput(customer: CheckoutCustomerInput): CheckoutPersistenceError | null {
   if (customer.name.trim().length === 0) {
-    return new CheckoutPersistenceError("Customer name is required");
+    return new CheckoutPersistenceError("customerNameRequired");
   }
 
   if (customer.phone.trim().length === 0) {
-    return new CheckoutPersistenceError("Customer phone is required");
+    return new CheckoutPersistenceError("customerPhoneRequired");
   }
 
   if (customer.address.trim().length === 0) {
-    return new CheckoutPersistenceError("Customer address is required");
+    return new CheckoutPersistenceError("customerAddressRequired");
   }
 
   return null;
@@ -132,7 +136,7 @@ function isCheckoutPaymentMethod(value: string): value is CheckoutPaymentMethod 
 
 function toCheckoutPaymentMethod(value: string): CheckoutPaymentMethod {
   if (!isCheckoutPaymentMethod(value)) {
-    throw new CheckoutPersistenceError("Payment method must be cash or card");
+    throw new CheckoutPersistenceError("invalidPaymentMethod", { value });
   }
 
   return value;
@@ -143,19 +147,19 @@ function validatePaymentInput(
   total: number,
 ): CheckoutPersistenceError | null {
   if (!isCheckoutPaymentMethod(payment.method)) {
-    return new CheckoutPersistenceError("Payment method must be cash or card");
+    return new CheckoutPersistenceError("invalidPaymentMethod", { method: payment.method });
   }
 
   if (!Number.isInteger(payment.amount) || payment.amount < 0) {
-    return new CheckoutPersistenceError("Payment amount must be a non-negative integer in cents");
+    return new CheckoutPersistenceError("invalidPaymentAmount", { amount: payment.amount });
   }
 
   if (payment.amount < total) {
-    return new CheckoutPersistenceError("Payment amount must cover order total");
+    return new CheckoutPersistenceError("insufficientPaymentAmount", { amount: payment.amount, total });
   }
 
   if (payment.method === CHECKOUT_PAYMENT_METHOD.CARD && payment.amount !== total) {
-    return new CheckoutPersistenceError("Card payment amount must match order total");
+    return new CheckoutPersistenceError("cardPaymentExactMatchRequired", { amount: payment.amount, total });
   }
 
   return null;
@@ -163,20 +167,20 @@ function validatePaymentInput(
 
 function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPersistenceError | null {
   if (input.items.length === 0) {
-    return new CheckoutPersistenceError("Order must include at least one item");
+    return new CheckoutPersistenceError("orderItemsRequired");
   }
 
   for (const item of input.items) {
     if (item.productId.trim().length === 0) {
-      return new CheckoutPersistenceError("Order item productId is required");
+      return new CheckoutPersistenceError("orderItemProductIdRequired");
     }
 
     if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-      return new CheckoutPersistenceError("Order item quantity must be a positive integer");
+      return new CheckoutPersistenceError("orderItemQuantityInvalid", { quantity: item.quantity });
     }
 
     if (!Number.isInteger(item.unitPrice) || item.unitPrice < 0) {
-      return new CheckoutPersistenceError("Order item unitPrice must be a non-negative integer in cents");
+      return new CheckoutPersistenceError("orderItemUnitPriceInvalid", { unitPrice: item.unitPrice });
     }
   }
 
@@ -187,23 +191,23 @@ function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPe
   }
 
   if (input.customerId && input.customer) {
-    return new CheckoutPersistenceError("Provide either customerId or customer input, not both");
+    return new CheckoutPersistenceError("customerIdAndCustomerConflict");
   }
 
   if (input.fulfillmentType === CHECKOUT_FULFILLMENT_TYPE.LOCAL) {
     if (input.customerId || input.customer) {
-      return new CheckoutPersistenceError("Local orders cannot include delivery customer data");
+      return new CheckoutPersistenceError("localOrderCustomerForbidden");
     }
 
     if (input.deliveryPersonId !== null) {
-      return new CheckoutPersistenceError("Local orders cannot have a delivery person");
+      return new CheckoutPersistenceError("localOrderDeliveryPersonForbidden");
     }
 
     return null;
   }
 
   if (!input.customerId && !input.customer) {
-    return new CheckoutPersistenceError("Delivery orders require a selected or new customer");
+    return new CheckoutPersistenceError("deliveryOrderCustomerRequired");
   }
 
   if (!input.customer) {
@@ -376,7 +380,11 @@ async function createCustomerRow(
   const [createdCustomer] = await tx.insert(customers).values(customerValues).returning();
 
   if (!createdCustomer) {
-    throw new CheckoutPersistenceError("Failed to load created customer");
+    throw new CheckoutPersistenceError(
+      "dbError",
+      { context: "Failed to load created customer" },
+      "Failed to load created customer",
+    );
   }
 
   return createdCustomer;
@@ -390,7 +398,11 @@ async function touchCustomerRow(tx: DatabaseClient, customerId: string, now: Dat
     .returning();
 
   if (!updatedCustomer) {
-    throw new CheckoutPersistenceError("Selected customer was not found");
+    throw new CheckoutPersistenceError(
+      "customerNotFound",
+      { customerId },
+      "Selected customer was not found",
+    );
   }
 
   return updatedCustomer;
@@ -418,7 +430,11 @@ async function createOrderRow(
   const [createdOrder] = await tx.insert(orders).values(orderValues).returning();
 
   if (!createdOrder) {
-    throw new CheckoutPersistenceError("Failed to load created order");
+    throw new CheckoutPersistenceError(
+      "dbError",
+      { context: "Failed to load created order" },
+      "Failed to load created order",
+    );
   }
 
   return createdOrder;
@@ -441,7 +457,11 @@ async function createPaymentRow(
   const [createdPayment] = await tx.insert(payments).values(paymentValues).returning();
 
   if (!createdPayment) {
-    throw new CheckoutPersistenceError("Failed to load created payment");
+    throw new CheckoutPersistenceError(
+      "dbError",
+      { context: "Failed to load created payment" },
+      "Failed to load created payment",
+    );
   }
 
   return createdPayment;
@@ -465,7 +485,11 @@ async function createOrderItemRows(
   const createdOrderItems = await tx.insert(orderItems).values(orderItemValues).returning();
 
   if (createdOrderItems.length !== orderItemValues.length) {
-    throw new CheckoutPersistenceError("Failed to load created order items");
+    throw new CheckoutPersistenceError(
+      "dbError",
+      { context: "Failed to load created order items" },
+      "Failed to load created order items",
+    );
   }
 
   return createdOrderItems;

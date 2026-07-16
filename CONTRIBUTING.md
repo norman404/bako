@@ -144,6 +144,32 @@ The `menu` module (`src/modules/menu/`) is the reference implementation — read
 
 > For the full rules, signals of breakage, and the canonical module structure, see [`AGENTS.md`](./AGENTS.md). It's the authoritative architecture guide.
 
+## Error handling pattern
+
+Domain errors should never be shown to users as raw `error.message` strings. The
+`domain/` and `persistence/` layers are framework-agnostic and therefore cannot
+use `react-i18next`.
+
+When an error type has a user-facing meaning, give it a translatable `code` and
+`params` in `domain/{feature}/errors.ts` (see `src/modules/menu/domain/errors.ts`
+for the reference shape). Then:
+
+1. Create or update `src/modules/{feature}/lib/translate-{feature}-error.ts` to
+   map the code to an i18n key under `errors:{feature}.{code}`.
+2. Add the key and value to `src/shared/i18n/locales/*/{feature}.json` (or
+   `errors.json`) for all supported locales.
+3. Use the helper in components instead of `error.message`:
+   ```tsx
+   const { t } = useTranslation(["settings", "errors"]);
+   // ...
+   setFormError(translateMenuError(error, t));
+   ```
+
+Non-domain errors (native `Error`, library exceptions, unmapped domain errors)
+fallback to a generic localized message so users never see raw English stack
+traces. See [ADR-0002](./docs/adr/0002-domain-error-translation.md) for the full
+rationale.
+
 ---
 
 ## Commit Convention

@@ -56,7 +56,7 @@ export function resolveProductModifierGroups(
     merged.set(group.id, group);
   }
 
-  return [...merged.values()];
+  return [...merged.values()].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export function buildCartItemKey(productId: string, modifiers: SelectedModifier[]): string {

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import type { Menu } from "@/modules/menu/domain/menu";
 import type { MenuCreateInput } from "@/modules/menu/domain/ports";
+import { translateMenuError } from "@/modules/menu/lib/translate-menu-error";
 import {
   useCreateMenu,
   useUpdateMenu,
@@ -68,7 +69,7 @@ function getListButtonClass(isActive: boolean): string {
 }
 
 function MenuSettingsPanel() {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'errors']);
   const { data: menus = [] } = useMenus();
   const createMenuMutation = useCreateMenu();
   const updateMenuMutation = useUpdateMenu();
@@ -119,7 +120,7 @@ function MenuSettingsPanel() {
       }
       setDeleteTarget(null);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : t('menus.deleteError'));
+      setFormError(translateMenuError(error, t));
       setDeleteTarget(null);
     }
   };
@@ -147,7 +148,7 @@ function MenuSettingsPanel() {
 
       beginCreate();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : t('menus.error'));
+      setFormError(translateMenuError(error, t));
     }
   };
 

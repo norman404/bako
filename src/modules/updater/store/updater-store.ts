@@ -34,7 +34,7 @@ export interface UpdaterState {
   reset: () => void;
 }
 
-function toMessage(error: unknown): string {
+function toUpdaterMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
@@ -62,7 +62,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
         },
       });
     } catch (error) {
-      set({ status: createErrorStatus(toMessage(error)) });
+      set({ status: createErrorStatus(toUpdaterMessage(error)) });
     }
   },
 
@@ -99,7 +99,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
 
       set({ status: createReadyToInstallStatus(current.version) });
     } catch (error) {
-      set({ status: createErrorStatus(toMessage(error)) });
+      set({ status: createErrorStatus(toUpdaterMessage(error)) });
     }
   },
 
@@ -107,7 +107,7 @@ export const useUpdaterStore = create<UpdaterState>((set, get) => ({
     try {
       await relaunchApplication();
     } catch (error) {
-      set({ status: createErrorStatus(toMessage(error)) });
+      set({ status: createErrorStatus(toUpdaterMessage(error)) });
     }
   },
 

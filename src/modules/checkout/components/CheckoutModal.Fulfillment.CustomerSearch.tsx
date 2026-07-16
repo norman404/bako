@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { FormField } from "@/components/ui/FormField";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { translateCheckoutError } from "@/modules/checkout/lib/translate-checkout-error";
 import { cn } from "@/lib/utils";
 
 type CustomerQueryResult = ReturnType<
@@ -71,9 +72,7 @@ export function CustomerSearchPanel({
           </div>
         ) : customerQuery.isError ? (
           <p className="rounded-card border border-danger/40 bg-danger/10 px-3 py-2.5 text-xs text-danger">
-            {customerQuery.error instanceof Error
-              ? customerQuery.error.message
-              : t('customerSearch.error')}
+            {translateCheckoutError(customerQuery.error, t)}
           </p>
         ) : customerOptions.length === 0 ? (
           <EmptyState className="px-3 py-3 text-left">

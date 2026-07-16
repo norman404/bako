@@ -6,11 +6,11 @@ import type { PrinterRepository } from "@/modules/printer/domain/ports";
 
 function validatePrinterInput(input: PrinterCreateInput): PrinterDomainError | null {
   if (input.name.trim().length === 0) {
-    return new PrinterValidationError("Printer name is required");
+    return new PrinterValidationError("printerNameRequired");
   }
 
   if (input.address.trim().length === 0) {
-    return new PrinterValidationError("Printer address is required");
+    return new PrinterValidationError("printerAddressRequired");
   }
 
   return null;

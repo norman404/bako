@@ -87,7 +87,7 @@ describe("updatePrinter", () => {
       address: "192.168.1.51:9100",
       role: "bar",
     };
-    const mockError = new PrinterDomainError("Database connection failed");
+    const mockError = new PrinterDomainError("dbError", { context: "Database connection failed" });
     const mockRepository = buildMockRepository({ update: () => errAsync(mockError) });
 
     const result = await updatePrinter(mockRepository, "printer-1", input);

@@ -56,5 +56,28 @@
     "phonePlaceholder": "11 5555 5555",
     "addressLabel": "Address",
     "addressPlaceholder": "Av. Siempre Viva 742, Door B"
+  },
+  "errors": {
+    "customerNameRequired": "Customer name is required.",
+    "customerPhoneRequired": "Customer phone is required.",
+    "customerAddressRequired": "Customer address is required.",
+    "invalidPaymentMethod": "Payment method must be cash or card.",
+    "invalidPaymentAmount": "Payment amount must be a non-negative integer.",
+    "insufficientPaymentAmount": "Payment amount must cover the order total.",
+    "cardPaymentExactMatchRequired": "Card payment must match the order total exactly.",
+    "orderItemsRequired": "Order must include at least one item.",
+    "orderItemProductIdRequired": "Each order item must have a product assigned.",
+    "orderItemQuantityInvalid": "Quantity must be a positive integer.",
+    "orderItemUnitPriceInvalid": "Unit price must be a non-negative integer.",
+    "customerIdAndCustomerConflict": "Select a saved customer or enter a new one, not both.",
+    "localOrderCustomerForbidden": "In-store orders cannot include delivery customer data.",
+    "localOrderDeliveryPersonForbidden": "In-store orders cannot have a delivery person.",
+    "deliveryOrderCustomerRequired": "Delivery orders require a customer.",
+    "customerNotFound": "We couldn't find that customer. Try searching again.",
+    "dbError": "We couldn't process the checkout. Please try again.",
+    "generic": "An unexpected error occurred while processing the checkout.",
+    "formDeliveryNewCustomerRequired": "For delivery, you need a customer, phone, and address.",
+    "formDeliverySelectOrCreate": "Select a saved customer or tap \"New customer\" to add one.",
+    "formEmptyCart": "Add at least one product before checking out."
   }
 }

@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useTranslation } from "react-i18next";
+
 import {
   CHECKOUT_FULFILLMENT_TYPE,
   useCustomers,
@@ -7,6 +9,7 @@ import {
   type CheckoutFulfillmentType,
   type CreateOrderInput,
 } from "@/modules/checkout/hooks/use-checkout";
+import { translateCheckoutError } from "@/modules/checkout/lib/translate-checkout-error";
 import {
   buildCreateOrderInput,
   buildCustomerFormState,
@@ -85,6 +88,7 @@ export function useCheckoutForm({
   onClose,
   onConfirmCheckout,
 }: UseCheckoutFormOptions) {
+  const { t } = useTranslation("checkout");
   const normalizedTotals = totals ?? calculateCartTotals(items);
 
   const [fulfillmentType, setFulfillmentType] = useState<CheckoutFulfillmentType>(
@@ -223,9 +227,9 @@ export function useCheckoutForm({
         paymentValidationMessage ??
           (isDelivery
             ? isNewCustomerMode
-              ? "Para delivery necesitás cliente, teléfono y dirección."
-              : 'Elegí un cliente guardado o tocá "Nuevo cliente" para cargar uno.'
-            : "Agregá al menos un producto antes de cobrar."),
+              ? t("errors.formDeliveryNewCustomerRequired")
+              : t("errors.formDeliverySelectOrCreate")
+            : t("errors.formEmptyCart")),
       );
       return;
     }
@@ -234,7 +238,7 @@ export function useCheckoutForm({
       setFormError(null);
       await onConfirmCheckout(payload);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "No pudimos guardar el pedido");
+      setFormError(translateCheckoutError(error, t));
     }
   };
 

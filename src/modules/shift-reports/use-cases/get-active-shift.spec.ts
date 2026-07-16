@@ -47,13 +47,13 @@ describe("getActiveShift use-case", () => {
 
   it("forwards repository errors", async () => {
     const repo = buildRepo({
-      getActive: vi.fn(() => errAsync(new ShiftPersistenceError("DB error"))),
+      getActive: vi.fn(() => errAsync(new ShiftPersistenceError("dbError", { context: "DB error" }))),
     });
 
     const result = await getActiveShift(repo);
 
     expect(result.isErr()).toBe(true);
     if (result.isOk()) throw new Error("Expected error");
-    expect(result.error.message).toContain("DB error");
+    expect(result.error.code).toBe("dbError");
   });
 });

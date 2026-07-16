@@ -20,5 +20,12 @@
   "openButton": "Open shift",
   "closeButton": "Close shift",
   "confirmClose": "Are you sure you want to close the current shift?",
-  "confirmCloseDescription": "Closing the shift will generate the sales report."
+  "confirmCloseDescription": "Closing the shift will generate the sales report.",
+  "errors": {
+    "shiftAlreadyActive": "There is already an active shift. Close it before opening a new one.",
+    "noActiveShift": "There is no active shift.",
+    "shiftNotFound": "We couldn't find that shift.",
+    "dbError": "We couldn't load shifts. Please try again.",
+    "generic": "An error occurred with shifts."
+  }
 }

@@ -23,6 +23,13 @@
     "archiveConfirm": "Arquivar {{name}}?",
     "archiveError": "Não foi possível arquivar o entregador"
   },
+  "errors": {
+    "deliveryPersonNameRequired": "O nome do entregador é obrigatório.",
+    "deliveryPersonColorInvalid": "A cor deve ser um hex válido (ex. #FFF ou #FF5733).",
+    "deliveryPersonNotFound": "Não encontramos esse entregador. Tente buscar novamente.",
+    "dbError": "Não foi possível carregar os entregadores. Tente novamente.",
+    "generic": "Ocorreu um erro com os entregadores."
+  },
   "select": {
     "label": "Entregador",
     "placeholder": "Selecionar entregador (opcional)",

@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import type { Product } from "@/modules/menu/domain/product";
 import type {
   ModifierAssignmentInput,
   ModifierGroupUpsertInput,
 } from "@/modules/menu/domain/ports";
-import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import { modifierGroupDrizzleRepository } from "@/modules/menu/persistence/modifier-group-drizzle.repository";
 import { assignModifierGroup } from "@/modules/menu/use-cases/assign-modifier-group";
 import { archiveModifierGroup } from "@/modules/menu/use-cases/archive-modifier-group";
@@ -121,6 +121,59 @@ export function useCreateModifierGroup() {
   });
 }
 
+function produceReorderedGroups(
+  groups: ModifierGroup[],
+  reorderMap: Map<string, number>,
+): ModifierGroup[] {
+  const next = groups.map((group) => {
+    const sortOrder = reorderMap.get(group.id);
+    if (sortOrder === undefined) return group;
+    return { ...group, sortOrder };
+  });
+  return [...next].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+interface ReorderModifierGroupsInput {
+  groups: { id: string; input: ModifierGroupUpsertInput }[];
+}
+
+export function useReorderModifierGroups() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ groups }: ReorderModifierGroupsInput) => {
+      const results = await Promise.all(
+        groups.map(({ id, input }) => updateModifierGroup(modifierGroupDrizzleRepository, id, input)),
+      );
+
+      for (const result of results) {
+        if (result.isErr()) throw result.error;
+      }
+
+      return results.map((r) => (r.isErr() ? null : r.value)).filter(Boolean);
+    },
+    onMutate: async ({ groups }) => {
+      await queryClient.cancelQueries({ queryKey: MENU_MODIFIER_GROUPS_QUERY_KEY });
+      const previousGroups =
+        queryClient.getQueryData<ModifierGroup[]>(MENU_MODIFIER_GROUPS_QUERY_KEY) ?? [];
+
+      const reorderMap = new Map(groups.map((g) => [g.id, g.input.sortOrder]));
+      const nextGroups = produceReorderedGroups(previousGroups, reorderMap);
+      queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, nextGroups);
+      return { previousGroups };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousGroups) {
+        queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, context.previousGroups);
+      }
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: MENU_MODIFIER_GROUPS_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: MENU_MODIFIER_ASSIGNMENTS_QUERY_KEY });
+    },
+  });
+}
+
 interface UpdateModifierGroupMutationInput {
   id: string;
   input: ModifierGroupUpsertInput;
@@ -137,7 +190,49 @@ export function useUpdateModifierGroup() {
       }
       return result.value;
     },
-    onSuccess: async () => {
+    onMutate: async ({ id, input }) => {
+      await queryClient.cancelQueries({ queryKey: MENU_MODIFIER_GROUPS_QUERY_KEY });
+      const previousGroups =
+        queryClient.getQueryData<ModifierGroup[]>(MENU_MODIFIER_GROUPS_QUERY_KEY) ?? [];
+
+      const targetSortOrder = input.sortOrder;
+      const previousSortOrder = previousGroups.find((g) => g.id === id)?.sortOrder;
+      if (previousSortOrder === undefined || previousSortOrder === targetSortOrder) {
+        queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, previousGroups);
+        return { previousGroups };
+      }
+
+      const reorderMap = new Map<string, number>();
+      for (const group of previousGroups) {
+        if (group.id === id) {
+          reorderMap.set(group.id, targetSortOrder);
+        } else if (
+          targetSortOrder > previousSortOrder &&
+          group.sortOrder > previousSortOrder &&
+          group.sortOrder <= targetSortOrder
+        ) {
+          reorderMap.set(group.id, group.sortOrder - 1);
+        } else if (
+          targetSortOrder < previousSortOrder &&
+          group.sortOrder >= targetSortOrder &&
+          group.sortOrder < previousSortOrder
+        ) {
+          reorderMap.set(group.id, group.sortOrder + 1);
+        } else {
+          reorderMap.set(group.id, group.sortOrder);
+        }
+      }
+
+      const nextGroups = produceReorderedGroups(previousGroups, reorderMap);
+      queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, nextGroups);
+      return { previousGroups };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousGroups) {
+        queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, context.previousGroups);
+      }
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: MENU_MODIFIER_GROUPS_QUERY_KEY });
       await queryClient.invalidateQueries({ queryKey: MENU_MODIFIER_ASSIGNMENTS_QUERY_KEY });
     },

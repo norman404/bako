@@ -1,0 +1,19 @@
+{
+  "menu": {
+    "productNotFound": "Produto não encontrado: {{productId}}",
+    "categoryNotFound": "Categoria não encontrada: {{categoryId}}",
+    "menuNotFound": "Cardápio não encontrado: {{menuId}}",
+    "modifierGroupNotFound": "Grupo de modificadores não encontrado: {{groupId}}",
+    "modifierOptionNotFound": "Opção de modificador não encontrada: {{optionId}}",
+    "generic": "Ocorreu um erro inesperado"
+  },
+  "printer": {
+    "printerNotFound": "Impressora não encontrada: {{printerId}}",
+    "printerNameRequired": "O nome da impressora é obrigatório.",
+    "printerAddressRequired": "O endereço da impressora é obrigatório.",
+    "printerTypeInvalid": "Tipo de impressora inválido: {{type}}.",
+    "printerRoleInvalid": "Função de impressora inválida: {{role}}.",
+    "dbError": "Não foi possível carregar as impressoras. Tente novamente.",
+    "generic": "Ocorreu um erro com as impressoras."
+  }
+}

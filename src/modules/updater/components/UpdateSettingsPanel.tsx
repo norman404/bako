@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { Download, RefreshCw, RotateCw, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -11,6 +12,11 @@ import {
   UpdateStatus,
   type UpdateInfo,
 } from "@/modules/updater/domain/update-status";
+
+function translateUpdaterMessage(_message: string, t: TFunction): string {
+  // Tauri may return English technical strings. Show a localized generic message instead.
+  return t("panel.genericError");
+}
 
 function StatusMessage({ status }: { status: UpdateInfo }) {
   const { t } = useTranslation("updater");
@@ -53,7 +59,7 @@ function StatusMessage({ status }: { status: UpdateInfo }) {
         </span>
       );
     case UpdateStatus.Error:
-      return <span className="text-sm text-danger">{t("panel.error", { message: status.message })}</span>;
+      return <span className="text-sm text-danger">{translateUpdaterMessage(status.message, t)}</span>;
     default:
       return null;
   }

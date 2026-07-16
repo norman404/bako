@@ -54,7 +54,7 @@ describe("archivePrinter", () => {
   });
 
   it("propagates repository errors", async () => {
-    const mockError = new PrinterDomainError("Database connection failed");
+    const mockError = new PrinterDomainError("dbError", { context: "Database connection failed" });
     const mockRepository = buildMockRepository({ archive: () => errAsync(mockError) });
 
     const result = await archivePrinter(mockRepository, "printer-1");

@@ -2,6 +2,7 @@ import { ColorInput } from "@/shared/components/ColorInput";
 import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { Category } from "@/modules/menu/domain/category";
 import type { CategoryCreateInput } from "@/modules/menu/domain/ports";
@@ -14,6 +15,7 @@ import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { usePrinters } from "@/modules/printer/hooks/use-printers";
+import { translateMenuError } from "@/modules/menu/lib/translate-menu-error";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
@@ -94,6 +96,7 @@ function CategorySettingsPanel() {
   const { flags } = useFeatureFlagsStore();
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
   const comandasEnabled = flags.comandas_enabled ?? false;
+  const { t } = useTranslation(["settings", "errors"]);
   const { data: categories = [] } = useCategories();
   const { data: menus = [] } = useMenus();
   const { data: printers = [] } = usePrinters();
@@ -143,7 +146,7 @@ function CategorySettingsPanel() {
       }
       setArchiveTarget(null);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "No se pudo archivar la categoría");
+      setFormError(translateMenuError(error, t));
       setArchiveTarget(null);
     }
   };
@@ -171,7 +174,7 @@ function CategorySettingsPanel() {
 
       beginCreate();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "No se pudo guardar la categoría");
+      setFormError(translateMenuError(error, t));
     }
   };
 

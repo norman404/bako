@@ -278,6 +278,30 @@ pnpm test:dom         # DOM tests
 
 ---
 
+## Debugging de bugs en producción
+
+Antes de escribir código para arreglar un bug que **no se reproduce en tests**, el agente debe obtener datos reales. No asumir estado de la BD ni del store.
+
+### Protocolo mínimo
+
+1. **Reproducir el bug con el usuario.** Pedí pasos exactos y qué se ve (o no se ve).
+2. **Pedir logs o agregarlos.** Imprimí el estado relevante: IDs, `sortOrder`, valores de cache de React Query, respuestas de red.
+3. **Formular una hipótesis basada en los logs.** No en "debería ser así".
+4. **Recién entonces escribir el fix.**
+5. **Verificar con el usuario** y con tests de regresión.
+
+### Anti-patrones a evitar
+
+- ❌ Agregar optimistic updates, nuevos hooks o cambios de arquitectura antes de saber la causa raíz.
+- ❌ Asumir que los datos en producción se parecen a los fixtures de test.
+- ❌ Escalar la solución (ej: "hagamos una mutation atómica en el repo") sin evidencia de que el problema está ahí.
+
+### Caso real en este proyecto
+
+El bug "reordenar grupos no hace nada y parpadea" se resolvió solo cuando los logs mostraron que **todos los grupos existentes tenían `sortOrder: 0`**. La solución correcta fue reasignar `sortOrder` a todos los grupos según su nueva posición, no swapear `sortOrder` entre dos grupos ni agregar más optimistic updates.
+
+---
+
 ## Módulos actuales y su estado
 
 | Módulo | domain/ | ports.ts | use-cases/ | persistence/ | Notas |
