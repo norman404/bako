@@ -31,7 +31,7 @@ vi.mock("sonner", () => ({
 vi.mock("@/modules/menu/components/admin/ProductSettingsPanel", () => ({
   ProductSettingsPanel: () => (
     <section aria-label="Panel de productos">
-      <h2>Productos</h2>
+      <p>Contenido de productos</p>
     </section>
   ),
 }));
@@ -39,7 +39,7 @@ vi.mock("@/modules/menu/components/admin/ProductSettingsPanel", () => ({
 vi.mock("@/modules/menu/components/admin/CategorySettingsPanel", () => ({
   CategorySettingsPanel: () => (
     <section aria-label="Panel de categorías">
-      <h2>Categorías</h2>
+      <p>Contenido de categorías</p>
     </section>
   ),
 }));
@@ -47,7 +47,7 @@ vi.mock("@/modules/menu/components/admin/CategorySettingsPanel", () => ({
 vi.mock("./FeatureFlagsPanel", () => ({
   FeatureFlagsPanel: () => (
     <section aria-label="Panel de características">
-      <h2>Características</h2>
+      <p>Contenido de características</p>
     </section>
   ),
 }));
@@ -79,7 +79,6 @@ function renderSettingsModal(overrides: Partial<SettingsModalProps> = {}) {
 
 describe("SettingsModal (settings feature)", () => {
   beforeEach(() => {
-    // Reset store before each test
     useSettingsStore.setState({
       locale: DEFAULT_CURRENCY_CONFIG.locale,
       currency: DEFAULT_CURRENCY_CONFIG.currency,
@@ -90,88 +89,84 @@ describe("SettingsModal (settings feature)", () => {
     vi.clearAllMocks();
   });
 
-  it("should render an ultra minimal preferences shell with products active by default", () => {
+  it("should render the settings shell with General active by default and grouped sidebar", () => {
     // CASE: the operator opens settings from the POS header.
-    // VALIDATES: the settings shell now lives in its own feature and starts on products.
+    // VALIDATES: the settings shell renders with grouped sidebar (General + Modules)
+    // and the first tab (General) active by default. No content header — the
+    // sidebar's active state is the only indicator.
 
-    // Arrange
     renderSettingsModal();
 
-    // Act
     const dialog = screen.getByRole("dialog", { name: /configuración/i });
-
-    // Assert
     expect(dialog).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /configuración/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Configuración" })).toBeInTheDocument();
+
+    // Sidebar has grouped section headers
+    expect(screen.getByText("CONFIGURACIÓN GENERAL")).toBeInTheDocument();
+    expect(screen.getByText("MÓDULOS")).toBeInTheDocument();
+
+    // General tabs in sidebar
+    expect(screen.getByRole("tab", { name: /general/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /impresora/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /características/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /actualizaciones/i })).toBeInTheDocument();
+
+    // Module tabs in sidebar
     expect(screen.getByRole("tab", { name: /productos/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /categorías/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /sistema/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /características/i })).toBeInTheDocument();
 
-    const activePanel = screen.getByRole("tabpanel");
-    expect(within(activePanel).getByRole("heading", { name: /productos/i })).toBeInTheDocument();
+    // General is the active tab (first in general group)
+    const generalTab = screen.getByRole("tab", { name: /general/i });
+    expect(generalTab).toHaveAttribute("aria-selected", "true");
+
+    // Content panel renders (no heading — sidebar indicates location)
+    expect(screen.getByRole("tabpanel")).toBeInTheDocument();
   });
 
-  it("should switch sections when the operator changes the sidebar selection", () => {
+  it("should switch sections and track active state in sidebar only", () => {
     // CASE: the operator moves across settings sections from the left navigation.
-    // VALIDATES: the settings shell orchestrates menu admin and system panels from other features.
+    // VALIDATES: aria-selected moves to the clicked tab. No content heading to check.
 
-    // Arrange
     renderSettingsModal();
 
-    // Act
+    // Act — switch to Categorías
     fireEvent.click(screen.getByRole("tab", { name: /categorías/i }));
 
-    // Assert
-    let activePanel = screen.getByRole("tabpanel");
-    expect(within(activePanel).getByRole("heading", { name: /^categorías$/i })).toBeInTheDocument();
+    // Assert — Categorías is now selected, General is not
+    expect(screen.getByRole("tab", { name: /categorías/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "false");
 
-    // Act
-    fireEvent.click(screen.getByRole("tab", { name: /sistema/i }));
+    // Act — switch back to General
+    fireEvent.click(screen.getByRole("tab", { name: /general/i }));
 
-    // Assert
-    activePanel = screen.getByRole("tabpanel");
-    expect(within(activePanel).getByRole("heading", { name: /^sistema$/i })).toBeInTheDocument();
+    // Assert — General is selected again
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /categorías/i })).toHaveAttribute("aria-selected", "false");
   });
 
-  it("should switch to the Sistema section and update regional configurations", async () => {
-    // CASE: operator goes to the system settings and modifies locale & currency
-    // VALIDATES: form submit calls the updateSettings action of the Zustand store and shows feedback
+  it("should switch to the General section and show locale/currency selects", async () => {
+    // CASE: operator goes to the general settings
+    // VALIDATES: form controls render
 
-    // Arrange
     renderSettingsModal();
 
-    // Act - switch to System panel
-    fireEvent.click(screen.getByRole("tab", { name: /sistema/i }));
-
-    // Assert
-    const activePanel = screen.getByRole("tabpanel");
-    expect(within(activePanel).getByRole("heading", { name: /^sistema$/i })).toBeInTheDocument();
+    // General is active by default — verify sidebar state
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "true");
 
     // Verify selects render with current values (i18n translated)
     const localeTrigger = screen.getByTestId("locale-select-trigger");
     const currencyTrigger = screen.getByTestId("currency-select-trigger");
     expect(localeTrigger).toHaveTextContent("Español (México)");
     expect(currencyTrigger).toHaveTextContent("MXN ($ - Peso Mexicano)");
-
-    // Verify save button exists and can be clicked (form submits with current values)
-    const saveButton = screen.getByRole("button", { name: /guardar cambios/i });
-    expect(saveButton).toBeInTheDocument();
   });
 
   it("should call onClose when the operator clicks the close button", () => {
-    // CASE: operator wants to dismiss the configuration modal
-    // VALIDATES: close button calls the onClose prop safely
-
-    // Arrange
     const onCloseMock = vi.fn();
     renderSettingsModal({ onClose: onCloseMock });
 
-    // Act
     const closeButton = screen.getByRole("button", { name: /cerrar configuración/i });
     fireEvent.click(closeButton);
 
-    // Assert
     expect(onCloseMock).toHaveBeenCalledTimes(1);
   });
 
@@ -179,23 +174,38 @@ describe("SettingsModal (settings feature)", () => {
     // CASE: operator goes to the features settings to manage feature flags
     // VALIDATES: features panel renders when switching to features tab
 
-    // Arrange
     renderSettingsModal();
 
     // Act - switch to Features panel
     fireEvent.click(screen.getByRole("tab", { name: /características/i }));
 
-    // Assert
-    const activePanel = screen.getByRole("tabpanel");
-    expect(within(activePanel).getByRole("heading", { name: /^características$/i })).toBeInTheDocument();
+    // Assert — Features tab is selected
+    expect(screen.getByRole("tab", { name: /características/i })).toHaveAttribute("aria-selected", "true");
+
+    // Content panel renders
+    expect(screen.getByRole("tabpanel")).toBeInTheDocument();
   });
 
-  it("should render the updater tab from the module registry with its i18n label", () => {
-    // Regression net for the registry migration: the updater settings tab must
-    // keep rendering (now provided by the updater module manifest, not hardcoded
-    // in SettingsModal) with its translated label.
+  it("should render the updater tab in the general group", () => {
+    // The updater tab now lives in the general group alongside General, Printer, and Features.
+    renderSettingsModal();
+    expect(screen.getByRole("tab", { name: /actualizaciones/i })).toBeInTheDocument();
+  });
+
+  it("should render the printer tab as a separate tab", () => {
+    // CASE: operator opens settings — printer should be its own tab.
+    // VALIDATES: the printer tab exists and is separate from general.
+
     renderSettingsModal();
 
-    expect(screen.getByRole("tab", { name: /actualizaciones/i })).toBeInTheDocument();
+    const printerTab = screen.getByRole("tab", { name: /impresora/i });
+    expect(printerTab).toBeInTheDocument();
+
+    // Switch to printer tab
+    fireEvent.click(printerTab);
+
+    // Printer tab is now selected
+    expect(printerTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "false");
   });
 });

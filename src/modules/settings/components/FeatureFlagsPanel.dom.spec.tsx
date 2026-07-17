@@ -22,21 +22,17 @@ describe("FeatureFlagsPanel", () => {
     });
   });
 
-  it("should render the panel title and description", () => {
-    renderWithProviders(<FeatureFlagsPanel />);
-
-    expect(screen.getByRole("heading", { name: /módulos y funcionalidades/i })).toBeInTheDocument();
-    expect(screen.getByText(/activa o desactiva funcionalidades de cada módulo/i)).toBeInTheDocument();
-  });
-
   it("should render module sections with their flags", () => {
     renderWithProviders(<FeatureFlagsPanel />);
 
-    expect(screen.getByRole("heading", { name: "Menú" })).toBeInTheDocument();
+    // Module section titles
+    expect(screen.getByText("Menú")).toBeInTheDocument();
     expect(screen.getByText(/cómo se organizan y muestran los productos/i)).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: /categorías/i })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: /múltiples menús/i })).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: /opciones de producto/i })).toBeInTheDocument();
+
+    // Flag rows with switches
+    expect(screen.getByRole("switch", { name: /categorías/i })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /múltiples menús/i })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: /opciones de producto/i })).toBeInTheDocument();
   });
 
   it("should show current flag states", () => {
@@ -47,8 +43,8 @@ describe("FeatureFlagsPanel", () => {
 
     renderWithProviders(<FeatureFlagsPanel />);
 
-    const categoriesToggle = screen.getByRole("checkbox", { name: /categorías/i });
-    const menusToggle = screen.getByRole("checkbox", { name: /múltiples menús/i });
+    const categoriesToggle = screen.getByRole("switch", { name: /categorías/i });
+    const menusToggle = screen.getByRole("switch", { name: /múltiples menús/i });
 
     expect(categoriesToggle).toBeChecked();
     expect(menusToggle).not.toBeChecked();
@@ -60,7 +56,7 @@ describe("FeatureFlagsPanel", () => {
 
     renderWithProviders(<FeatureFlagsPanel />);
 
-    const categoriesToggle = screen.getByRole("checkbox", { name: /categorías/i });
+    const categoriesToggle = screen.getByRole("switch", { name: /categorías/i });
 
     await user.click(categoriesToggle);
 
@@ -73,7 +69,7 @@ describe("FeatureFlagsPanel", () => {
 
     renderWithProviders(<FeatureFlagsPanel />);
 
-    const categoriesToggle = screen.getByRole("checkbox", { name: /categorías/i });
+    const categoriesToggle = screen.getByRole("switch", { name: /categorías/i });
     expect(categoriesToggle).not.toBeChecked();
 
     await user.click(categoriesToggle);

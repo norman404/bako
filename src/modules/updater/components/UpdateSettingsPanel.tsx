@@ -14,7 +14,6 @@ import {
 } from "@/modules/updater/domain/update-status";
 
 function translateUpdaterMessage(_message: string, t: TFunction): string {
-  // Tauri may return English technical strings. Show a localized generic message instead.
   return t("panel.genericError");
 }
 
@@ -73,28 +72,28 @@ export function UpdateSettingsPanel() {
   const autoUpdateEnabled = flags.auto_update_enabled ?? true;
 
   return (
-    <div className="grid gap-5 max-w-xl">
-      <section className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Download className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-text">{t("updater:panel.title")}</h2>
-            <p className="text-xs text-text-muted">
+    <div className="flex justify-center px-6 py-6">
+      <div className="w-full max-w-xl rounded-lg border border-border bg-surface-sunken overflow-hidden">
+
+        {/* Version info row */}
+        <div className="flex items-center justify-between border-b border-border px-6 py-3">
+          <div className="grid gap-0.5">
+            <span className="text-sm font-medium text-text">
+              {t("updater:panel.title")}
+            </span>
+            <span className="text-xs text-text-dim">
               {t("updater:panel.currentVersionLabel")}: {APP_VERSION}
-            </p>
+            </span>
           </div>
         </div>
-      </section>
 
-      <section className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
+        {/* Auto-update toggle row */}
+        <div className="flex items-center justify-between border-b border-border px-6 py-3">
+          <div className="grid gap-0.5">
             <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
               {t("updater:panel.autoUpdateLabel")}
             </Label>
-            <p className="text-xs text-text-muted">{t("updater:panel.autoUpdateDescription")}</p>
+            <p className="text-xs text-text-dim">{t("updater:panel.autoUpdateDescription")}</p>
           </div>
           <Checkbox
             id="auto-update-enabled"
@@ -104,15 +103,12 @@ export function UpdateSettingsPanel() {
             }}
           />
         </div>
-      </section>
 
-      <section className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <StatusMessage status={updater.status} />
-          </div>
+        {/* Status + actions row */}
+        <div className="flex items-center justify-between px-6 py-3">
+          <StatusMessage status={updater.status} />
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             {updater.status.kind === UpdateStatus.Idle ||
             updater.status.kind === UpdateStatus.Error ? (
               <Button
@@ -120,7 +116,6 @@ export function UpdateSettingsPanel() {
                 size="small"
                 onClick={() => updater.checkForUpdates()}
                 disabled={updater.isChecking}
-                className="gap-1.5"
               >
                 <Search className="h-3.5 w-3.5" />
                 {t("updater:panel.checkButton")}
@@ -133,7 +128,6 @@ export function UpdateSettingsPanel() {
                 size="small"
                 onClick={() => updater.downloadAndInstall()}
                 disabled={updater.isDownloading}
-                className="gap-1.5"
               >
                 <Download className="h-3.5 w-3.5" />
                 {t("updater:panel.downloadAndInstall")}
@@ -145,7 +139,6 @@ export function UpdateSettingsPanel() {
                 variant="default"
                 size="small"
                 onClick={() => updater.relaunch()}
-                className="gap-1.5"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 {t("updater:panel.restart")}
@@ -157,7 +150,6 @@ export function UpdateSettingsPanel() {
                 variant="outline"
                 size="small"
                 onClick={() => updater.checkForUpdates()}
-                className="gap-1.5"
               >
                 <RotateCw className="h-3.5 w-3.5" />
                 {t("updater:panel.tryAgain")}
@@ -165,7 +157,8 @@ export function UpdateSettingsPanel() {
             ) : null}
           </div>
         </div>
-      </section>
+
+      </div>
     </div>
   );
 }

@@ -8,10 +8,19 @@
     "products": "Produtos",
     "categories": "Categorias",
     "menus": "Cardápios",
-    "system": "Sistema",
+    "general": "Geral",
+    "generalDesc": "Idioma e moeda do sistema",
+    "printer": "Impressora",
+    "printerDesc": "Configuração da impressora térmica",
     "turno": "Turno",
     "features": "Recursos",
-    "updater": "Atualizações"
+    "featuresDesc": "Ative ou desative funcionalidades",
+    "updater": "Atualizações",
+    "updaterDesc": "Buscar e instalar atualizações"
+  },
+  "sidebar": {
+    "general": "GERAL",
+    "modules": "MÓDULOS"
   },
   "system": {
     "title": "Sistema",

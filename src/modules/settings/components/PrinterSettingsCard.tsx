@@ -1,20 +1,15 @@
 import { useState, useCallback } from "react";
 import {
-  Printer,
   Usb,
   Wifi,
   CircleOff,
-  Save,
   Play,
-  CheckCircle2,
-  AlertCircle,
   Scan,
 } from "lucide-react";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
 
 import { Button } from "@/components/ui/Button";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -33,58 +28,10 @@ interface UsbPrinterInfo {
 }
 
 const PRINTER_OPTIONS = [
-  {
-    value: "none",
-    label: "Sin impresora",
-    description: "No imprimir tickets",
-    icon: CircleOff,
-  },
-  {
-    value: "usb",
-    label: "USB",
-    description: "Detección automática",
-    icon: Usb,
-  },
-  {
-    value: "network",
-    label: "Red (TCP)",
-    description: "Conexión por red local",
-    icon: Wifi,
-  },
+  { value: "none", label: "Sin impresora", description: "No imprimir tickets", icon: CircleOff },
+  { value: "usb", label: "USB", description: "Detección automática", icon: Usb },
+  { value: "network", label: "Red (TCP)", description: "Conexión por red local", icon: Wifi },
 ];
-
-function getStatusConfig(
-  type: string,
-  address: string | null,
-): {
-  color: string;
-  bg: string;
-  icon: typeof CheckCircle2;
-  label: string;
-} {
-  if (type === "none" || !type) {
-    return {
-      color: "text-text-muted",
-      bg: "bg-surface-sunken",
-      icon: CircleOff,
-      label: "No configurada",
-    };
-  }
-  if (!address || address.trim() === "") {
-    return {
-      color: "text-warning",
-      bg: "bg-warning/10",
-      icon: AlertCircle,
-      label: "Falta dirección",
-    };
-  }
-  return {
-    color: "text-success",
-    bg: "bg-success/10",
-    icon: CheckCircle2,
-    label: "Configurada",
-  };
-}
 
 export function PrinterSettingsCard() {
   const {
@@ -95,20 +42,51 @@ export function PrinterSettingsCard() {
   } = useSettingsStore();
 
   const [printerType, setPrinterType] = useState(currentType);
-  const [printerAddress, setPrinterAddress] = useState(
-    currentAddress ?? "",
-  );
+  const [printerAddress, setPrinterAddress] = useState(currentAddress ?? "");
   const [usbPrinters, setUsbPrinters] = useState<UsbPrinterInfo[]>([]);
   const [isScanning, setIsScanning] = useState(false);
 
-  const status = getStatusConfig(printerType, printerAddress);
-  const StatusIcon = status.icon;
+  const isTestable = printerType !== "none" && printerAddress.trim() !== "";
 
-  const hasChanges =
-    printerType !== currentType || printerAddress !== (currentAddress ?? "");
+  async function savePrinterSettings(type: string, address: string | null) {
+    const result = await updatePrinterSettings(
+      type as "none" | "usb" | "network",
+      type === "none" ? null : address || null,
+    );
+    result.match(
+      () => {
+        toast.success("Configuración guardada", {
+          description:
+            type === "none"
+              ? "Impresora desactivada"
+              : `Impresora ${type.toUpperCase()} configurada`,
+        });
+      },
+      () => toast.error("Error al guardar configuración de impresora"),
+    );
+  }
 
-  const isTestable =
-    printerType !== "none" && printerAddress.trim() !== "";
+  function handleTypeChange(v: string) {
+    const newType = v as "none" | "usb" | "network";
+    setPrinterType(newType);
+    if (newType === "usb") {
+      setPrinterAddress("");
+      setUsbPrinters([]);
+    }
+    // Auto-save on type change
+    savePrinterSettings(newType, newType === "none" ? null : newType === "usb" ? "" : printerAddress);
+  }
+
+  function handleAddressBlur() {
+    if (printerAddress !== (currentAddress ?? "")) {
+      savePrinterSettings(printerType, printerAddress || null);
+    }
+  }
+
+  function handleUsbPrinterSelect(address: string) {
+    setPrinterAddress(address);
+    savePrinterSettings(printerType, address);
+  }
 
   const handleScanUsb = useCallback(async () => {
     setIsScanning(true);
@@ -121,8 +99,8 @@ export function PrinterSettingsCard() {
           description: "Conecta una impresora térmica y vuelve a escanear.",
         });
       } else if (detected.length === 1) {
-        // Auto-seleccionar si solo hay una
         setPrinterAddress(detected[0].address);
+        savePrinterSettings(printerType, detected[0].address);
         toast.success("Impresora detectada", {
           description: `${detected[0].name} (${detected[0].address})`,
         });
@@ -138,192 +116,134 @@ export function PrinterSettingsCard() {
     } finally {
       setIsScanning(false);
     }
-  }, []);
-
-  const handleSave = async () => {
-    const result = await updatePrinterSettings(
-      printerType,
-      printerType === "none" ? null : printerAddress || null,
-    );
-    result.match(
-      () => {
-        toast.success("Configuración guardada", {
-          description:
-            printerType === "none"
-              ? "Impresora desactivada"
-              : `Impresora ${printerType.toUpperCase()} configurada`,
-        });
-      },
-      () => toast.error("Error al guardar configuración de impresora"),
-    );
-  };
+  }, [printerType]);
 
   const handleTest = async () => {
     try {
       await testPrinter();
       toast.success("Impresora respondió correctamente", {
         description: "El ticket de prueba se envió exitosamente",
-        icon: <CheckCircle2 className="h-4 w-4 text-success" />,
       });
     } catch (e) {
       toast.error("No se pudo conectar con la impresora", {
         description: e instanceof Error ? e.message : String(e),
-        icon: <AlertCircle className="h-4 w-4 text-danger" />,
       });
     }
   };
 
   return (
-    <div className="rounded-card border border-border bg-surface-raised shadow-card overflow-hidden">
-      {/* Header con status */}
-      <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sharp bg-surface-sunken">
-            <Printer className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-text">
-              Impresora térmica
-            </h3>
-            <p className="text-2xs text-text-dim">ESC/POS — tickets automáticos</p>
-          </div>
+    <div>
+      {/* Connection type row */}
+      <div className="flex items-center justify-between border-b border-border px-6 py-3">
+        <div className="grid gap-0.5">
+          <label className="text-sm font-medium text-text">
+            Tipo de conexión
+          </label>
         </div>
-
-        <div
-          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${status.bg}`}
-        >
-          <StatusIcon className={`h-3.5 w-3.5 ${status.color}`} />
-          <span className={`text-2xs font-medium uppercase tracking-wider ${status.color}`}>
-            {status.label}
-          </span>
-        </div>
+        <Select value={printerType} onValueChange={handleTypeChange}>
+          <SelectTrigger data-testid="printer-type-select" className="w-[220px]">
+            <span className="text-text">
+              {PRINTER_OPTIONS.find((o) => o.value === printerType)?.label}
+            </span>
+          </SelectTrigger>
+          <SelectContent>
+            {PRINTER_OPTIONS.map((option) => {
+              const Icon = option.icon;
+              return (
+                <SelectItem key={option.value} value={option.value}>
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-text-dim" />
+                    <div className="flex flex-col">
+                      <span>{option.label}</span>
+                      <span className="text-2xs text-text-muted">{option.description}</span>
+                    </div>
+                  </div>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Form */}
-      <div className="grid gap-5 p-5">
-        {/* Tipo de conexión */}
-        <div className="grid gap-1.5">
-          <Label>Tipo de conexión</Label>
-          <Select value={printerType} onValueChange={(v) => {
-            const newType = v as "none" | "usb" | "network";
-            setPrinterType(newType);
-            if (newType === "usb") {
-              setPrinterAddress("");
-              setUsbPrinters([]);
-            }
-          }}>
-            <SelectTrigger data-testid="printer-type-select">
-              <span className="text-text">{PRINTER_OPTIONS.find((o) => o.value === printerType)?.label}</span>
-            </SelectTrigger>
-            <SelectContent>
-              {PRINTER_OPTIONS.map((option) => {
-                const Icon = option.icon;
-                return (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4 text-text-dim" />
+      {/* USB section */}
+      {printerType === "usb" && (
+        <div className="border-b border-border px-6 py-3">
+          {usbPrinters.length === 0 ? (
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-text">
+                Detección automática
+              </label>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="small"
+                  onClick={handleScanUsb}
+                  disabled={isScanning}
+                >
+                  <Scan className={`h-3.5 w-3.5 ${isScanning ? "animate-spin" : ""}`} />
+                  {isScanning ? "Escaneando..." : "Buscar impresoras USB"}
+                </Button>
+              </div>
+              <p className="text-xs text-text-dim">
+                Conecta tu impresora térmica por USB y haz clic en "Buscar".
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-2">
+              <label className="text-sm font-medium text-text">
+                Impresoras detectadas
+              </label>
+              <Select value={printerAddress} onValueChange={handleUsbPrinterSelect}>
+                <SelectTrigger className="w-full">
+                  <span className="text-text truncate">
+                    {printerAddress
+                      ? usbPrinters.find((p) => p.address === printerAddress)?.name ?? printerAddress
+                      : "Seleccionar impresora..."}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  {usbPrinters.map((printer) => (
+                    <SelectItem key={printer.address} value={printer.address}>
                       <div className="flex flex-col">
-                        <span>{option.label}</span>
-                        <span className="text-2xs text-text-muted">
-                          {option.description}
+                        <span className="text-text">{printer.name}</span>
+                        <span className="font-mono-tabular text-2xs text-text-muted">
+                          {printer.address}
                         </span>
                       </div>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* USB: escanear o seleccionar */}
-        {printerType === "usb" && (
-          <div className="grid gap-1.5 animate-fade-in">
-            {usbPrinters.length === 0 ? (
-              <>
-                <Label>Detección automática</Label>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="small"
-                    onClick={handleScanUsb}
-                    disabled={isScanning}
-                    className="gap-1.5"
-                  >
-                    <Scan className={`h-3.5 w-3.5 ${isScanning ? "animate-spin" : ""}`} />
-                    {isScanning ? "Escaneando..." : "Buscar impresoras USB"}
-                  </Button>
-                </div>
-                <p className="text-2xs text-text-muted leading-relaxed">
-                  Conecta tu impresora térmica por USB y haz clic en "Buscar". El sistema detectará automáticamente el modelo.
-                </p>
-              </>
-            ) : (
-              <>
-                <Label>Impresoras detectadas</Label>
-                <Select
-                  value={printerAddress}
-                  onValueChange={setPrinterAddress}
-                >
-                  <SelectTrigger>
-                    <span className="text-text truncate">
-                      {printerAddress
-                        ? usbPrinters.find((p) => p.address === printerAddress)?.name ?? printerAddress
-                        : "Seleccionar impresora..."}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {usbPrinters.map((printer) => (
-                      <SelectItem key={printer.address} value={printer.address}>
-                        <div className="flex flex-col">
-                          <span className="text-text">{printer.name}</span>
-                          <span className="font-mono-tabular text-2xs text-text-muted">
-                            {printer.address}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="small"
-                    onClick={handleScanUsb}
-                    disabled={isScanning}
-                    className="gap-1.5 text-2xs"
-                  >
-                    <Scan className={`h-3 w-3 ${isScanning ? "animate-spin" : ""}`} />
-                    {isScanning ? "Escaneando..." : "Volver a buscar"}
-                  </Button>
-                </div>
-              </>
-            )}
-
-            {/* Info card USB */}
-            <div className="flex items-start gap-2 rounded-sharp bg-surface-sunken/50 p-3 border border-border">
-              <Usb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <div className="grid gap-0.5">
-                <span className="text-2xs font-medium text-text">Conexión USB directa</span>
-                <span className="text-2xs text-text-dim leading-relaxed">
-                  El sistema se comunica directamente con la impresora sin drivers del sistema operativo. Asegúrate de que la impresora esté conectada y encendida.
-                </span>
-              </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="ghost"
+                size="small"
+                onClick={handleScanUsb}
+                disabled={isScanning}
+                className="w-fit text-xs"
+              >
+                <Scan className={`h-3 w-3 ${isScanning ? "animate-spin" : ""}`} />
+                {isScanning ? "Escaneando..." : "Volver a buscar"}
+              </Button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {/* Network: input manual */}
-        {printerType === "network" && (
-          <div className="grid gap-1.5 animate-fade-in">
-            <Label>Dirección del dispositivo</Label>
+      {/* Network section */}
+      {printerType === "network" && (
+        <div className="border-b border-border px-6 py-3">
+          <div className="grid gap-2">
+            <label className="text-sm font-medium text-text">
+              Dirección del dispositivo
+            </label>
             <div className="relative">
               <Input
                 data-testid="printer-address-input"
                 value={printerAddress}
                 onChange={(e) => setPrinterAddress(e.target.value)}
+                onBlur={handleAddressBlur}
                 placeholder="192.168.1.100:9100"
                 className="pr-20 font-mono-tabular text-sm"
               />
@@ -331,54 +251,25 @@ export function PrinterSettingsCard() {
                 IP:PORT
               </span>
             </div>
-            <p className="text-2xs text-text-muted leading-relaxed">
-              Ingresa la dirección IP y el puerto TCP separados por dos puntos. Puerto estándar ESC/POS: 9100.
+            <p className="text-xs text-text-dim">
+              Ingresa la dirección IP y el puerto TCP. Puerto estándar ESC/POS: 9100.
             </p>
-
-            <div className="flex items-start gap-2 rounded-sharp bg-surface-sunken/50 p-3 border border-border">
-              <Wifi className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <div className="grid gap-0.5">
-                <span className="text-2xs font-medium text-text">Conexión por red local</span>
-                <span className="text-2xs text-text-dim leading-relaxed">
-                  La impresora debe estar en la misma red local con IP estática o asignada por DHCP. Puerto estándar: 9100.
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-2">
-            {hasChanges && (
-              <span className="text-2xs text-primary">Cambios sin guardar</span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="small"
-              onClick={handleTest}
-              disabled={isLoading || !isTestable}
-              className="gap-1.5"
-            >
-              <Play className="h-3.5 w-3.5" />
-              Probar
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              size="small"
-              onClick={handleSave}
-              disabled={isLoading}
-              className="gap-1.5"
-            >
-              <Save className="h-3.5 w-3.5" />
-              Guardar
-            </Button>
           </div>
         </div>
+      )}
+
+      {/* Test button */}
+      <div className="flex items-center justify-end px-6 py-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="small"
+          onClick={handleTest}
+          disabled={isLoading || !isTestable}
+        >
+          <Play className="h-3.5 w-3.5" />
+          Probar
+        </Button>
       </div>
     </div>
   );

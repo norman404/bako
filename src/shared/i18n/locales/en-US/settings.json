@@ -8,10 +8,19 @@
     "products": "Products",
     "categories": "Categories",
     "menus": "Menus",
-    "system": "System",
+    "general": "General",
+    "generalDesc": "System language and currency",
+    "printer": "Printer",
+    "printerDesc": "Thermal printer configuration",
     "turno": "Shift",
     "features": "Features",
-    "updater": "Updates"
+    "featuresDesc": "Enable or disable features",
+    "updater": "Updates",
+    "updaterDesc": "Check for and install updates"
+  },
+  "sidebar": {
+    "general": "GENERAL",
+    "modules": "MODULES"
   },
   "system": {
     "title": "System",
