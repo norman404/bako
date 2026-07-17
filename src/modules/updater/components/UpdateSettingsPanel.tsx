@@ -73,39 +73,44 @@ export function UpdateSettingsPanel() {
 
   return (
     <div className="flex justify-center px-6 py-6">
-      <div className="w-full max-w-xl rounded-lg border border-border bg-surface-sunken overflow-hidden">
+      <div className="w-full max-w-xl rounded-lg border border-border bg-surface-sunken/30 overflow-hidden">
 
         {/* Version info row */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-3">
-          <div className="grid gap-0.5">
-            <span className="text-sm font-medium text-text">
-              {t("updater:panel.title")}
-            </span>
-            <span className="text-xs text-text-dim">
-              {t("updater:panel.currentVersionLabel")}: {APP_VERSION}
-            </span>
+        <div className="px-5">
+          <div className="flex items-center justify-between py-3 border-b border-border">
+            <div className="grid gap-0.5">
+              <span className="text-sm font-medium text-text">
+                {t("updater:panel.title")}
+              </span>
+              <span className="text-xs text-text-dim">
+                {t("updater:panel.currentVersionLabel")}: {APP_VERSION}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Auto-update toggle row */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-3">
-          <div className="grid gap-0.5">
-            <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
-              {t("updater:panel.autoUpdateLabel")}
-            </Label>
-            <p className="text-xs text-text-dim">{t("updater:panel.autoUpdateDescription")}</p>
+        <div className="px-5">
+          <div className="flex items-center justify-between py-3 border-b border-border">
+            <div className="grid gap-0.5">
+              <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
+                {t("updater:panel.autoUpdateLabel")}
+              </Label>
+              <p className="text-xs text-text-dim">{t("updater:panel.autoUpdateDescription")}</p>
+            </div>
+            <Checkbox
+              id="auto-update-enabled"
+              checked={autoUpdateEnabled}
+              onCheckedChange={(checked) => {
+                setFlag("auto_update_enabled", checked as boolean);
+              }}
+            />
           </div>
-          <Checkbox
-            id="auto-update-enabled"
-            checked={autoUpdateEnabled}
-            onCheckedChange={(checked) => {
-              setFlag("auto_update_enabled", checked as boolean);
-            }}
-          />
         </div>
 
         {/* Status + actions row */}
-        <div className="flex items-center justify-between px-6 py-3">
+        <div className="px-5">
+          <div className="flex items-center justify-between py-3">
           <StatusMessage status={updater.status} />
 
           <div className="flex items-center gap-2">
@@ -157,6 +162,7 @@ export function UpdateSettingsPanel() {
             ) : null}
           </div>
         </div>
+      </div>
 
       </div>
     </div>

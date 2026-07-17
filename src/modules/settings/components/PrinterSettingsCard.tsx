@@ -134,40 +134,41 @@ export function PrinterSettingsCard() {
   return (
     <div>
       {/* Connection type row */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-3">
-        <div className="grid gap-0.5">
+      <div className="px-5">
+        <div className="flex items-center justify-between py-3 border-b border-border">
           <label className="text-sm font-medium text-text">
             Tipo de conexión
           </label>
-        </div>
-        <Select value={printerType} onValueChange={handleTypeChange}>
-          <SelectTrigger data-testid="printer-type-select" className="w-[220px]">
-            <span className="text-text">
-              {PRINTER_OPTIONS.find((o) => o.value === printerType)?.label}
-            </span>
-          </SelectTrigger>
-          <SelectContent>
-            {PRINTER_OPTIONS.map((option) => {
-              const Icon = option.icon;
-              return (
-                <SelectItem key={option.value} value={option.value}>
-                  <div className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 text-text-dim" />
-                    <div className="flex flex-col">
-                      <span>{option.label}</span>
-                      <span className="text-2xs text-text-muted">{option.description}</span>
+          <Select value={printerType} onValueChange={handleTypeChange}>
+            <SelectTrigger data-testid="printer-type-select" className="w-[220px]">
+              <span className="text-text">
+                {PRINTER_OPTIONS.find((o) => o.value === printerType)?.label}
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              {PRINTER_OPTIONS.map((option) => {
+                const Icon = option.icon;
+                return (
+                  <SelectItem key={option.value} value={option.value}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-text-dim" />
+                      <div className="flex flex-col">
+                        <span>{option.label}</span>
+                        <span className="text-2xs text-text-muted">{option.description}</span>
+                      </div>
                     </div>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* USB section */}
       {printerType === "usb" && (
-        <div className="border-b border-border px-6 py-3">
+        <div className="px-5">
+          <div className="py-3 border-b border-border">
           {usbPrinters.length === 0 ? (
             <div className="grid gap-2">
               <label className="text-sm font-medium text-text">
@@ -229,11 +230,13 @@ export function PrinterSettingsCard() {
             </div>
           )}
         </div>
+      </div>
       )}
 
       {/* Network section */}
       {printerType === "network" && (
-        <div className="border-b border-border px-6 py-3">
+        <div className="px-5">
+          <div className="py-3 border-b border-border">
           <div className="grid gap-2">
             <label className="text-sm font-medium text-text">
               Dirección del dispositivo
@@ -256,10 +259,12 @@ export function PrinterSettingsCard() {
             </p>
           </div>
         </div>
+      </div>
       )}
 
       {/* Test button */}
-      <div className="flex items-center justify-end px-6 py-3">
+      <div className="px-5">
+        <div className="flex items-center justify-end py-3">
         <Button
           type="button"
           variant="ghost"
@@ -270,6 +275,7 @@ export function PrinterSettingsCard() {
           <Play className="h-3.5 w-3.5" />
           Probar
         </Button>
+        </div>
       </div>
     </div>
   );

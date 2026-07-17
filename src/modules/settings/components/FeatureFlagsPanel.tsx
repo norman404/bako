@@ -53,12 +53,12 @@ export function FeatureFlagsPanel() {
 
   return (
     <div className="flex justify-center px-6 py-6">
-      <div className="w-full max-w-xl rounded-lg border border-border bg-surface-sunken overflow-hidden">
+      <div className="w-full max-w-xl rounded-lg border border-border bg-surface-sunken/30 overflow-hidden">
       {MODULES.map((module, moduleIndex) => (
         <div key={module.id}>
           {/* Module section title */}
           <div className={moduleIndex > 0 ? "border-t border-border" : ""}>
-            <div className="px-6 pt-4 pb-1">
+            <div className="px-5 pt-4 pb-1">
               <h3 className="text-sm font-semibold text-text">
                 {t(`featureFlags.modules.${module.id}.name`)}
               </h3>
@@ -70,28 +70,27 @@ export function FeatureFlagsPanel() {
 
           {/* Flag rows */}
           {module.flags.map((flag) => (
-            <div
-              key={flag}
-              className="flex items-center justify-between border-b border-border px-6 py-3"
-            >
-              <div className="grid gap-0.5">
-                <label
-                  htmlFor={`flag-${flag}`}
-                  className="cursor-pointer text-sm font-medium text-text"
-                >
-                  {t(`featureFlags.flags.${flag}.label`)}
-                </label>
-                <p className="text-xs text-text-dim">
-                  {t(`featureFlags.flags.${flag}.description`)}
-                </p>
+            <div key={flag} className="px-5">
+              <div className="flex items-center justify-between py-3 border-b border-border">
+                <div className="grid gap-0.5">
+                  <label
+                    htmlFor={`flag-${flag}`}
+                    className="cursor-pointer text-sm font-medium text-text"
+                  >
+                    {t(`featureFlags.flags.${flag}.label`)}
+                  </label>
+                  <p className="text-xs text-text-dim">
+                    {t(`featureFlags.flags.${flag}.description`)}
+                  </p>
+                </div>
+                <Switch
+                  id={`flag-${flag}`}
+                  aria-label={t(`featureFlags.flags.${flag}.label`)}
+                  checked={flags[flag]}
+                  onCheckedChange={() => handleToggle(flag, flags[flag])}
+                  disabled={updateMutation.isPending}
+                />
               </div>
-              <Switch
-                id={`flag-${flag}`}
-                aria-label={t(`featureFlags.flags.${flag}.label`)}
-                checked={flags[flag]}
-                onCheckedChange={() => handleToggle(flag, flags[flag])}
-                disabled={updateMutation.isPending}
-              />
             </div>
           ))}
         </div>

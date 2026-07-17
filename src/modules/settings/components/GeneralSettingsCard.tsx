@@ -57,45 +57,45 @@ export function GeneralSettingsCard() {
   return (
     <div>
       {/* Locale row */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-3">
-        <div className="grid gap-0.5">
+      <div className="px-5">
+        <div className="flex items-center justify-between py-3 border-b border-border">
           <label className="text-sm font-medium text-text">
             {t("system.localeLabel")}
           </label>
+          <Select value={locale} onValueChange={handleLocaleChange}>
+            <SelectTrigger data-testid="locale-select-trigger" className="w-[220px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SUPPORTED_LOCALES.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={locale} onValueChange={handleLocaleChange}>
-          <SelectTrigger data-testid="locale-select-trigger" className="w-[220px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SUPPORTED_LOCALES.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Currency row */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-3">
-        <div className="grid gap-0.5">
+      <div className="px-5">
+        <div className="flex items-center justify-between py-3 border-b border-border">
           <label className="text-sm font-medium text-text">
             {t("system.currencyLabel")}
           </label>
+          <Select value={currency} onValueChange={handleCurrencyChange}>
+            <SelectTrigger data-testid="currency-select-trigger" className="w-[220px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SUPPORTED_CURRENCIES.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={currency} onValueChange={handleCurrencyChange}>
-          <SelectTrigger data-testid="currency-select-trigger" className="w-[220px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SUPPORTED_CURRENCIES.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
     </div>
   );
