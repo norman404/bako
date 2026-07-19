@@ -40,10 +40,20 @@ Feature flags viven en la tabla `feature_flags` (SQLite); defaults en `src/modul
 ## Testing y TDD
 
 - Vitest para unit tests (`.spec.ts`); Testing Library para DOM (`.dom.spec.tsx`, config en `vitest.dom.config.ts`).
-- Correr: `pnpm test` / `pnpm test:dom`.
+- Correr: `bun run test` / `bun run test:dom` (NUNCA `bun test` — es el runner nativo de Bun, no Vitest).
 - **TDD estricto es mandatorio** (ver `CONTRIBUTING.md`): RED (test del comportamiento nuevo, debe fallar) → GREEN (código mínimo) → REFACTOR (limpiar en verde).
 - Al refactorizar UI: no modifiques tests viejos — agregá un `describe` nuevo al final y mantené los mismos `data-testid` / `getByRole` / `getByLabelText`.
 - `src/shared/i18n/locale-completeness.spec.ts` es guard permanente: toda key nueva en `es-MX` debe propagarse a los otros 4 locales o el test falla.
+
+---
+
+## Tooling: Bun
+
+El proyecto usa **Bun** (>=1.3) como package manager y como runtime de vite/tsc (scripts `dev`/`build`/`preview` con `bunx --bun`). **Vitest corre bajo Node a propósito** (bug [oven-sh/bun#27002](https://github.com/oven-sh/bun/issues/27002) — workers de vitest colgados bajo runtime Bun en CI Linux), por eso `test`/`test:dom` son `vitest run` sin `--bun`.
+
+**Anti-patrones:**
+- NO introducir `bunfig.toml` con `[run] bun = true` — forzaría vitest a runtime Bun y rompería CI.
+- NO usar `bun test` — invoca el test runner nativo de Bun sobre specs de Vitest y falla; siempre `bun run test`.
 
 ---
 
@@ -101,4 +111,4 @@ La `pubkey` en `src-tauri/tauri.conf.json` queda compilada dentro del binario en
 
 | Skill | Ubicación | Cuándo se activa |
 |---|---|---|
-| `bako-release` | `.pi/skills/bako-release/SKILL.md` | Pedido de release, build, bump de versión o "cut a release". Gate obligatorio: `pnpm lint` + `pnpm test` + `pnpm test:dom` en verde antes de tocar `package.json`, `tauri.conf.json`, `Cargo.toml`/`Cargo.lock`. |
+| `bako-release` | `.pi/skills/bako-release/SKILL.md` | Pedido de release, build, bump de versión o "cut a release". Gate obligatorio: `bun run lint` + `bun run test` + `bun run test:dom` en verde antes de tocar `package.json`, `tauri.conf.json`, `Cargo.toml`/`Cargo.lock`. |

@@ -15,7 +15,7 @@ You'll need these installed before you can build and run Bako:
 | Tool | Version | Notes |
 | --- | --- | --- |
 | **Node.js** | `20+` | Use [nvm](https://github.com/nvm-sh/nvm) or [fnm](https://github.com/Schniz/fnm) to manage versions |
-| **pnpm** | `9+` | `corepack enable && corepack prepare pnpm@latest --activate` |
+| **Bun** | `1.3+` | `curl -fsSL https://bun.sh/install \| bash` — see [bun.sh](https://bun.sh) |
 | **Rust** | `stable` | Install via [rustup](https://rustup.rs/) — required by Tauri |
 | **Git** | any recent | |
 
@@ -51,19 +51,16 @@ See the [Tauri 2 prerequisites guide](https://v2.tauri.app/start/prerequisites/)
 git clone https://github.com/<your-username>/bako.git
 cd bako
 
-# 2. Enable pnpm
-corepack enable
+# 2. Install JS dependencies
+bun install
 
-# 3. Install JS dependencies
-pnpm install
-
-# 4. Run the full desktop app (compiles Rust + boots Vite)
-pnpm tauri dev
+# 3. Run the full desktop app (compiles Rust + boots Vite)
+bun run tauri dev
 ```
 
-The first `pnpm tauri dev` will take a while because it compiles the Rust backend. Subsequent runs are much faster.
+The first `bun run tauri dev` will take a while because it compiles the Rust backend. Subsequent runs are much faster.
 
-Want just the web dev server (no Tauri shell)? `pnpm dev` boots Vite alone — useful for pure UI work, but any feature that hits SQLite or native APIs won't work in that mode.
+Want just the web dev server (no Tauri shell)? `bun run dev` boots Vite alone — useful for pure UI work, but any feature that hits SQLite or native APIs won't work in that mode.
 
 ---
 
@@ -71,13 +68,13 @@ Want just the web dev server (no Tauri shell)? `pnpm dev` boots Vite alone — u
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Vite dev server only (no Tauri/native APIs) |
-| `pnpm tauri dev` | Full desktop app — **recommended for feature work** |
-| `pnpm build` | Production build (`tsc` + `vite build`) |
-| `pnpm test` | Unit tests via Vitest |
-| `pnpm test:dom` | DOM tests via `@testing-library/react` |
+| `bun run dev` | Vite dev server only (no Tauri/native APIs) |
+| `bun run tauri dev` | Full desktop app — **recommended for feature work** |
+| `bun run build` | Production build (`tsc` + `vite build`) |
+| `bun run test` | Unit tests via Vitest |
+| `bun run test:dom` | DOM tests via `@testing-library/react` |
 
-Bako uses **oxlint** as its linter — run `pnpm lint` before opening a PR. There is no formatter configured yet, so follow the style of surrounding code, and run `pnpm build` to catch type errors.
+Bako uses **oxlint** as its linter — run `bun run lint` before opening a PR. There is no formatter configured yet, so follow the style of surrounding code, and run `bun run build` to catch type errors.
 
 ---
 
@@ -104,11 +101,13 @@ Every change follows **Red → Green → Refactor**. No exceptions.
 
 ```bash
 # Target a single spec file during the cycle:
-pnpm test --testPathPattern=<spec-file>
-pnpm test:dom --testPathPattern=<dom-spec-file>
+bun run test --testPathPattern=<spec-file>
+bun run test:dom --testPathPattern=<dom-spec-file>
 ```
 
 Tests for **existing** behavior should pass before you touch anything — they're your regression safety net.
+
+> ⚠️ Usa `bun run test`, NUNCA `bun test` — `bun test` invoca el test runner nativo de Bun sobre los specs de Vitest y falla. Los tests corren deliberadamente bajo Node (Vitest no soporta el runtime de Bun — bug [oven-sh/bun#27002](https://github.com/oven-sh/bun/issues/27002)), por lo que Node ≥20.19 sigue siendo requisito local para correr tests aunque ya no esté en `engines`.
 
 ---
 
@@ -232,8 +231,8 @@ refactor/<short-description>
 
 ### Before opening a PR
 
-- [ ] `pnpm build` passes (no type errors)
-- [ ] `pnpm test` and `pnpm test:dom` pass
+- [ ] `bun run build` passes (no type errors)
+- [ ] `bun run test` and `bun run test:dom` pass
 - [ ] New behavior is covered by tests written **first** (Red phase observed)
 - [ ] Commits follow Conventional Commits, no AI-attribution trailers
 - [ ] No unrelated formatting churn
@@ -264,7 +263,7 @@ Use the [GitHub issue tracker](https://github.com/norman404/bako/issues/new?temp
 - **OS and version** (macOS / Linux distro / Windows build)
 - **Steps to reproduce** — numbered, minimal
 - **Expected vs. actual behavior**
-- **Logs / screenshots** — Tauri logs live in the dev console (`pnpm tauri dev`) or the OS log directory in production
+- **Logs / screenshots** — Tauri logs live in the dev console (`bun run tauri dev`) or the OS log directory in production
 
 The more reproducible, the faster we can triage.
 

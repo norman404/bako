@@ -36,7 +36,7 @@ Bako uses a `YY.M.patch` scheme (e.g. `26.7.10`).
 ### 3. Run lint — HARD GATE
 
 ```bash
-pnpm lint
+bun run lint
 ```
 
 If lint fails, **STOP**. Report errors and do not continue. No version files may be modified until lint is green.
@@ -44,8 +44,8 @@ If lint fails, **STOP**. Report errors and do not continue. No version files may
 ### 4. Run tests — HARD GATE
 
 ```bash
-pnpm test
-pnpm test:dom
+bun run test
+bun run test:dom
 ```
 
 If any test fails, **STOP**. Report failures and do not continue. Do not bump the version with failing tests.
@@ -129,9 +129,9 @@ Report that the GitHub Actions release build has started.
 
 ### Checks
 - [x] Working tree clean
-- [x] `pnpm lint` passed
-- [x] `pnpm test` passed
-- [x] `pnpm test:dom` passed
+- [x] `bun run lint` passed
+- [x] `bun run test` passed
+- [x] `bun run test:dom` passed
 
 ### Files Changed
 | File | Change |

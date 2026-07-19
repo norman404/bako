@@ -6,7 +6,7 @@ A desktop point-of-sale (POS) application for cafeterias and small businesses.
 [![Release](https://img.shields.io/github/v/release/norman404/bako)](https://github.com/norman404/bako/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/norman404/bako/ci.yml?branch=main&label=CI)](https://github.com/norman404/bako/actions)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-green)
-![pnpm](https://img.shields.io/badge/pnpm-%3E%3D9-orange)
+![Bun](https://img.shields.io/badge/Bun-%3E%3D1.3-black)
 
 Bako is a local-first, single-screen desktop POS built with **Tauri 2 + React 19 + TypeScript**. The UI runs on Vite and persists data locally in **SQLite** through `@tauri-apps/plugin-sql` and **Drizzle ORM**. No routing, no backend — everything runs on the machine where it's installed.
 
@@ -51,7 +51,7 @@ Bako is a local-first, single-screen desktop POS built with **Tauri 2 + React 19
 ## Prerequisites
 
 - **Node.js** 20+
-- **pnpm** 9+
+- **Bun** 1.3+
 - **Rust** stable (install via [rustup](https://rustup.rs/))
 
 ### OS-specific requirements
@@ -81,13 +81,13 @@ git clone https://github.com/norman404/bako.git
 cd bako
 
 # Install dependencies
-pnpm install
+bun install
 
 # Run in development (web only)
-pnpm dev
+bun run dev
 
 # Run as desktop app (Tauri)
-pnpm tauri dev
+bun run tauri dev
 ```
 
 > **Versioning:** Bako releases use CalVer `YY.M.x` (two-digit year.month.release-of-the-month), tagged as `vYY.M.x`.
@@ -100,13 +100,13 @@ pnpm tauri dev
 
 | Command              | Description                                  |
 | -------------------- | -------------------------------------------- |
-| `pnpm dev`           | Start Vite dev server (web only)             |
-| `pnpm build`         | Type-check and build for production (`tsc` + `vite build`) |
-| `pnpm preview`       | Preview the production build locally         |
-| `pnpm tauri dev`     | Run as a Tauri desktop app (development)     |
-| `pnpm tauri build`   | Build the desktop app for production         |
-| `pnpm test`          | Run unit tests (Vitest)                      |
-| `pnpm test:dom`      | Run DOM tests (Testing Library + jsdom)     |
+| `bun run dev`        | Start Vite dev server (web only)             |
+| `bun run build`      | Type-check and build for production (`tsc` + `vite build`) |
+| `bun run preview`    | Preview the production build locally         |
+| `bun run tauri dev`  | Run as a Tauri desktop app (development)     |
+| `bun run tauri build`| Build the desktop app for production         |
+| `bun run test`       | Run unit tests (Vitest)                      |
+| `bun run test:dom`   | Run DOM tests (Testing Library + jsdom)     |
 
 ### Workflow
 
@@ -188,8 +188,8 @@ Bako uses a local SQLite database named `bako.db`, initialized in `src/shared/db
 ## Testing
 
 ```bash
-pnpm test       # unit tests
-pnpm test:dom   # DOM tests
+bun run test       # unit tests
+bun run test:dom   # DOM tests
 ```
 
 Tests are co-located with their implementation. Domain logic and use-cases are the easiest to test — they are pure functions with no React or database dependencies.

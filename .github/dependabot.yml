@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Frontend dependencies (npm/pnpm)
+  # Frontend dependencies (npm/bun)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:

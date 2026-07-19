@@ -18,9 +18,9 @@
 
 <!-- Describe the tests you ran. If following TDD, mention Red-Green-Refactor cycle -->
 
-- [ ] Unit tests pass (`pnpm test`)
-- [ ] DOM tests pass (`pnpm test:dom`)
-- [ ] Build succeeds (`pnpm build`)
+- [ ] Unit tests pass (`bun run test`)
+- [ ] DOM tests pass (`bun run test:dom`)
+- [ ] Build succeeds (`bun run build`)
 
 ## Checklist
 
