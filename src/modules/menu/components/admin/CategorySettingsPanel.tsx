@@ -85,10 +85,10 @@ function toCategoryPayload(formState: CategoryFormState): CategoryCreateInput | 
 
 function getListButtonClass(isActive: boolean): string {
   return [
-    "w-full cursor-pointer rounded-none border-l-2 px-3 py-2 text-left transition-[border-color,background-color] duration-150",
+    "w-full cursor-pointer rounded-none border-l-[3px] px-3 py-2 text-left transition-[border-color,background-color] duration-150",
     isActive
-      ? "border-primary bg-primary/10 text-primary-strong"
-      : "border-transparent text-text hover:bg-surface-sunken",
+      ? "border-primary-strong bg-primary/15 text-primary-strong"
+      : "border-transparent text-text hover:bg-surface-sunken/60",
   ].join(" ");
 }
 

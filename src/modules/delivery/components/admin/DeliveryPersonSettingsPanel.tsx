@@ -64,10 +64,10 @@ function toDeliveryPersonPayload(formState: DeliveryPersonFormState): DeliveryPe
 
 function getListButtonClass(isActive: boolean): string {
   return [
-    "w-full cursor-pointer rounded-card border px-2.5 py-2 text-left transition-[border-color,background-color] duration-200",
+    "w-full cursor-pointer rounded-none border-l-[3px] px-3 py-2 text-left transition-[border-color,background-color] duration-150",
     isActive
-      ? "border-primary bg-primary/10 text-primary-strong"
-      : "border-transparent text-text hover:border-border-strong hover:bg-surface-sunken/50",
+      ? "border-primary-strong bg-primary/15 text-primary-strong"
+      : "border-transparent text-text hover:bg-surface-sunken/60",
   ].join(" ");
 }
 

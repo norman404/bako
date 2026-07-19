@@ -3,7 +3,7 @@ import { Download, RefreshCw, RotateCw, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { APP_VERSION } from "@/lib/app-version";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/Button";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
@@ -98,11 +98,12 @@ export function UpdateSettingsPanel() {
               </Label>
               <p className="text-xs text-text-dim">{t("updater:panel.autoUpdateDescription")}</p>
             </div>
-            <Checkbox
+            <Switch
               id="auto-update-enabled"
+              aria-label={t("updater:panel.autoUpdateLabel")}
               checked={autoUpdateEnabled}
               onCheckedChange={(checked) => {
-                setFlag("auto_update_enabled", checked as boolean);
+                setFlag("auto_update_enabled", checked);
               }}
             />
           </div>

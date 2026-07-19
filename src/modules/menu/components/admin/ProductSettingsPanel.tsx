@@ -132,10 +132,10 @@ function toProductPayload(
 
 function getListButtonClass(isActive: boolean): string {
   return [
-    "w-full cursor-pointer rounded-card border px-2.5 py-2 text-left transition-[border-color,background-color] duration-200",
+    "w-full cursor-pointer rounded-card px-3.5 py-3 text-left transition-colors duration-150",
     isActive
-      ? "border-primary bg-primary/10 text-primary-strong"
-      : "border-transparent text-text hover:border-border-strong hover:bg-surface-sunken/50",
+      ? "bg-primary/15 text-primary-strong shadow-inset-subtle-sm"
+      : "text-text hover:bg-surface-sunken/70",
   ].join(" ");
 }
 
@@ -241,13 +241,11 @@ function ProductSettingsPanel() {
   };
 
   return (
-    <div className="grid min-h-full grid-rows-[auto_1fr] gap-3">
-      <header className="flex flex-col gap-2.5 border-b border-border-strong pb-3 lg:flex-row lg:items-center lg:justify-between">
-        <h2 className="font-display text-lg text-primary-strong">Productos</h2>
-
-        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+    <div className="grid min-h-full gap-3 xl:grid-cols-[minmax(0,0.88fr)_minmax(296px,1.12fr)]">
+      <section className="min-h-0 overflow-hidden xl:border-r xl:border-border xl:pr-3">
+        <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center">
           <SearchInput
-            containerClassName="sm:min-w-[220px]"
+            containerClassName="flex-1"
             aria-label="Buscar producto"
             value={searchTerm}
             onInput={(event) => setSearchTerm(event.currentTarget.value)}
@@ -263,11 +261,8 @@ function ProductSettingsPanel() {
             Nuevo
           </Button>
         </div>
-      </header>
 
-      <div className="grid min-h-0 gap-3 xl:grid-cols-[minmax(0,0.88fr)_minmax(296px,1.12fr)]">
-        <section className="min-h-0 overflow-hidden xl:border-r xl:border-border xl:pr-3">
-          <div className="scrollbar-thin h-full space-y-1 overflow-y-auto pr-1">
+        <div className="scrollbar-thin h-full space-y-2 overflow-y-auto pr-1">
             {visibleProducts.map((product) => {
               const isActive = selectedProductId === product.id && mode === PRODUCT_FORM_MODE.EDIT;
 
@@ -278,14 +273,18 @@ function ProductSettingsPanel() {
                     onClick={() => beginEdit(product)}
                     className={getListButtonClass(isActive)}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">{product.name}</p>
-                        <p className="mt-1 line-clamp-1 text-2xs text-text-dim">{product.description}</p>
+                    <div className="flex flex-col items-start gap-1.5">
+                      <div className="flex w-full items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{product.name}</p>
+                          <p className="mt-1 line-clamp-1 text-2xs text-text-dim">{product.description}</p>
+                        </div>
+                        <span className="font-mono-tabular text-2xs text-primary-strong">{formatPosCurrency(product.price)}</span>
                       </div>
-                      <span className="font-mono-tabular text-2xs text-primary-strong">{formatPosCurrency(product.price)}</span>
+                      <span className="rounded-full border border-border bg-surface-sunken px-2 py-0.5 text-2xs font-semibold text-text-dim">
+                        {product.prepTimeMinutes} min
+                      </span>
                     </div>
-                    <p className="mt-1.5 text-2xs uppercase tracking-[0.14em] text-text-dim">{product.prepTimeMinutes} min</p>
                   </Button>
 
                   <Button
@@ -314,149 +313,157 @@ function ProductSettingsPanel() {
         </section>
 
         <section className="min-h-0 xl:pl-1">
-          <div className="border-b border-border pb-2.5">
-            <h3 className="text-md font-semibold text-text">
-              {mode === PRODUCT_FORM_MODE.CREATE ? "Nuevo producto" : "Editar producto"}
+          {mode === PRODUCT_FORM_MODE.CREATE ? (
+            <h3 className="mb-3 text-2xs font-semibold uppercase tracking-[0.14em] text-text-dim">
+              Nuevo producto
             </h3>
-          </div>
+          ) : null}
 
           {!hasCategories ? (
-            <div className="mt-3 rounded-card border border-border px-3 py-2">
+            <div className="mb-3 rounded-card border border-border px-3 py-2">
               <p className="text-xs text-text-muted">Creá una categoría primero.</p>
             </div>
           ) : null}
 
-          <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
-            {multipleMenusEnabled && (
-              <FormField label="Menús" htmlFor="product-menus">
-                <div className="space-y-2">
-                  {menus.map((menu) => (
-                    <div key={menu.id} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`menu-${menu.id}`}
-                        checked={formState.menuIds.includes(menu.id)}
-                        onCheckedChange={(checked) => {
-                          setFormState((previous) => ({
-                            ...previous,
-                            menuIds: checked
-                              ? [...previous.menuIds, menu.id]
-                              : previous.menuIds.filter((id) => id !== menu.id),
-                          }));
-                        }}
-                      />
-                      <label htmlFor={`menu-${menu.id}`} className="text-xs text-text cursor-pointer">
-                        {menu.name}
-                      </label>
+          <form className="grid gap-3.5" onSubmit={(event) => void handleSubmit(event)}>
+            {(multipleMenusEnabled || categoriesEnabled) && (
+              <div className="grid gap-3 rounded-card border border-border bg-surface-raised/40 p-3.5">
+                {multipleMenusEnabled && (
+                  <FormField label="Menús" htmlFor="product-menus">
+                    <div className="space-y-2">
+                      {menus.map((menu) => (
+                        <div key={menu.id} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`menu-${menu.id}`}
+                            checked={formState.menuIds.includes(menu.id)}
+                            onCheckedChange={(checked) => {
+                              setFormState((previous) => ({
+                                ...previous,
+                                menuIds: checked
+                                  ? [...previous.menuIds, menu.id]
+                                  : previous.menuIds.filter((id) => id !== menu.id),
+                              }));
+                            }}
+                          />
+                          <label htmlFor={`menu-${menu.id}`} className="text-xs text-text cursor-pointer">
+                            {menu.name}
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </FormField>
+                  </FormField>
+                )}
+
+                {categoriesEnabled && (
+                  <FormField label="Categoría" htmlFor="product-category">
+                    <Select
+                      value={formState.categoryId || defaultCategoryId}
+                      onValueChange={(value) =>
+                        setFormState((previous) => ({ ...previous, categoryId: value }))
+                      }
+                    >
+                      <SelectTrigger id="product-category">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                )}
+              </div>
             )}
 
-            {categoriesEnabled && (
-              <FormField label="Categoría" htmlFor="product-category">
-                <Select
-                  value={formState.categoryId || defaultCategoryId}
-                  onValueChange={(value) =>
-                    setFormState((previous) => ({ ...previous, categoryId: value }))
-                  }
-                >
-                  <SelectTrigger id="product-category">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            )}
-
-            <FormField label="Nombre" htmlFor="product-name">
-              <Input
-                id="product-name"
-                value={formState.name}
-                onInput={(event) => {
-                  const value = event.currentTarget.value;
-                  setFormState((previous) => ({
-                    ...previous,
-                    name: value,
-                  }));
-                }}
-                className={formError?.field === "name" ? "border-danger" : undefined}
-                placeholder="Flat white"
-              />
-            </FormField>
-
-            <FormField label="Descripción" htmlFor="product-description">
-              <Input
-                id="product-description"
-                value={formState.description}
-                onInput={(event) => {
-                  const value = event.currentTarget.value;
-                  setFormState((previous) => ({
-                    ...previous,
-                    description: value,
-                  }));
-                }}
-                placeholder="Doble shot con leche vaporizada"
-              />
-            </FormField>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FormField label="Precio" htmlFor="product-price">
-                {/* ADR-0001: product prices are integer cents; the input accepts monetary units. */}
+            <div className="grid gap-3 rounded-card border border-border bg-surface-raised/40 p-3.5">
+              <FormField label="Nombre" htmlFor="product-name">
                 <Input
-                  id="product-price"
-                  value={formState.price}
+                  id="product-name"
+                  value={formState.name}
                   onInput={(event) => {
                     const value = event.currentTarget.value;
                     setFormState((previous) => ({
                       ...previous,
-                      price: value.replace(/[^\d,.-]/g, ""),
+                      name: value,
                     }));
                   }}
-                  inputMode="decimal"
-                  className={`font-mono-tabular ${formError?.field === "price" ? "border-danger" : ""}`}
-                  placeholder="55.50"
+                  className={formError?.field === "name" ? "border-danger" : undefined}
+                  placeholder="Flat white"
                 />
               </FormField>
 
-              <FormField label="Prep (min)" htmlFor="product-prep-time">
+              <FormField label="Descripción" htmlFor="product-description">
                 <Input
-                  id="product-prep-time"
-                  value={formState.prepTimeMinutes}
+                  id="product-description"
+                  value={formState.description}
                   onInput={(event) => {
                     const value = event.currentTarget.value;
                     setFormState((previous) => ({
                       ...previous,
-                      prepTimeMinutes: value,
+                      description: value,
                     }));
                   }}
-                  inputMode="numeric"
-                  className={`font-mono-tabular ${formError?.field === "prepTime" ? "border-danger" : ""}`}
-                  placeholder="5"
+                  placeholder="Doble shot con leche vaporizada"
                 />
               </FormField>
             </div>
 
-            <FormField label="Emoji / imagen" htmlFor="product-image">
-              <Input
-                id="product-image"
-                value={formState.image}
-                onInput={(event) => {
-                  const value = event.currentTarget.value;
-                  setFormState((previous) => ({
-                    ...previous,
-                    image: value,
-                  }));
-                }}
-                placeholder="☕"
-              />
-            </FormField>
+            <div className="grid gap-3 rounded-card border border-border bg-surface-raised/40 p-3.5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <FormField label="Precio" htmlFor="product-price">
+                  {/* ADR-0001: product prices are integer cents; the input accepts monetary units. */}
+                  <Input
+                    id="product-price"
+                    value={formState.price}
+                    onInput={(event) => {
+                      const value = event.currentTarget.value;
+                      setFormState((previous) => ({
+                        ...previous,
+                        price: value.replace(/[^\d,.-]/g, ""),
+                      }));
+                    }}
+                    inputMode="decimal"
+                    className={`font-mono-tabular ${formError?.field === "price" ? "border-danger" : ""}`}
+                    placeholder="55.50"
+                  />
+                </FormField>
+
+                <FormField label="Prep (min)" htmlFor="product-prep-time">
+                  <Input
+                    id="product-prep-time"
+                    value={formState.prepTimeMinutes}
+                    onInput={(event) => {
+                      const value = event.currentTarget.value;
+                      setFormState((previous) => ({
+                        ...previous,
+                        prepTimeMinutes: value,
+                      }));
+                    }}
+                    inputMode="numeric"
+                    className={`font-mono-tabular ${formError?.field === "prepTime" ? "border-danger" : ""}`}
+                    placeholder="5"
+                  />
+                </FormField>
+              </div>
+
+              <FormField label="Emoji / imagen" htmlFor="product-image">
+                <Input
+                  id="product-image"
+                  value={formState.image}
+                  onInput={(event) => {
+                    const value = event.currentTarget.value;
+                    setFormState((previous) => ({
+                      ...previous,
+                      image: value,
+                    }));
+                  }}
+                  placeholder="☕"
+                />
+              </FormField>
+            </div>
 
             <div className="flex items-center gap-2">
               <Checkbox
@@ -469,6 +476,11 @@ function ProductSettingsPanel() {
               <label htmlFor="product-popular" className="text-2xs text-text cursor-pointer">
                 Popular
               </label>
+              {formState.isPopular ? (
+                <span className="ml-auto rounded-full bg-primary-strong px-2 py-0.5 text-2xs font-semibold text-on-primary">
+                  ★ Popular
+                </span>
+              ) : null}
             </div>
 
             <FormError message={formError?.message ?? null} />
@@ -485,7 +497,6 @@ function ProductSettingsPanel() {
             </div>
           </form>
         </section>
-      </div>
     </div>
   );
 }
