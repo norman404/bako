@@ -1,34 +1,30 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach, afterAll } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    }
-  });
-});
 
-vi.mock("sonner", () => ({
+mock.module("sonner", () => ({
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mock(),
+    error: mock(),
+    info: mock(),
+    warning: mock(),
+    promise: mock(),
+    dismiss: mock(),
+    message: mock(),
   },
+  Toaster: () => null,
 }));
+import * as featureFlagsStoreModule from "@/modules/feature-flags/store/feature-flags-store";
 
-vi.mock("@/modules/menu/components/admin/ProductSettingsPanel", () => ({
+// Snapshot del módulo real ANTES de mockearlo — bun corre todos los archivos de
+// test en un solo proceso y mock.module no se aísla entre archivos, así que al
+// terminar este archivo restauramos el módulo original (ver afterAll).
+const realFeatureFlagsStoreModule = { ...featureFlagsStoreModule };
+
+
+
+mock.module("@/modules/menu/components/admin/ProductSettingsPanel", () => ({
   ProductSettingsPanel: () => (
     <section aria-label="Panel de productos">
       <p>Contenido de productos</p>
@@ -36,7 +32,7 @@ vi.mock("@/modules/menu/components/admin/ProductSettingsPanel", () => ({
   ),
 }));
 
-vi.mock("@/modules/menu/components/admin/CategorySettingsPanel", () => ({
+mock.module("@/modules/menu/components/admin/CategorySettingsPanel", () => ({
   CategorySettingsPanel: () => (
     <section aria-label="Panel de categorías">
       <p>Contenido de categorías</p>
@@ -44,7 +40,7 @@ vi.mock("@/modules/menu/components/admin/CategorySettingsPanel", () => ({
   ),
 }));
 
-vi.mock("./FeatureFlagsPanel", () => ({
+mock.module("./FeatureFlagsPanel", () => ({
   FeatureFlagsPanel: () => (
     <section aria-label="Panel de características">
       <p>Contenido de características</p>
@@ -52,12 +48,18 @@ vi.mock("./FeatureFlagsPanel", () => ({
   ),
 }));
 
-vi.mock("@/modules/feature-flags/store/feature-flags-store", () => ({
-  useFeatureFlagsStore: vi.fn(() => ({
+mock.module("@/modules/feature-flags/store/feature-flags-store", () => ({
+  useFeatureFlagsStore: mock(() => ({
     flags: { categories_enabled: true, multiple_menus_enabled: false },
     isLoading: false,
   })),
 }));
+
+afterAll(() => {
+  // Restaura el módulo real del store para los archivos que corren después
+  // en el mismo proceso de bun test (Cart.dom, App.dom usan setState/getState).
+  mock.module("@/modules/feature-flags/store/feature-flags-store", () => realFeatureFlagsStoreModule);
+});
 
 import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { fireEvent, renderWithProviders, screen, within } from "@/test/test-utils";
@@ -71,7 +73,7 @@ function renderSettingsModal(overrides: Partial<SettingsModalProps> = {}) {
   renderWithProviders(
     <SettingsModal
       open={overrides.open ?? true}
-      onClose={overrides.onClose ?? vi.fn()}
+      onClose={overrides.onClose ?? mock()}
       registry={overrides.registry ?? MODULE_REGISTRY}
     />,
   );
@@ -86,7 +88,7 @@ describe("SettingsModal (settings feature)", () => {
       printerAddress: null,
       isLoading: false,
     });
-    vi.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   it("should render the settings shell with General active by default and grouped sidebar", () => {
@@ -161,7 +163,7 @@ describe("SettingsModal (settings feature)", () => {
   });
 
   it("should call onClose when the operator clicks the close button", () => {
-    const onCloseMock = vi.fn();
+    const onCloseMock = mock();
     renderSettingsModal({ onClose: onCloseMock });
 
     const closeButton = screen.getByRole("button", { name: /cerrar configuración/i });

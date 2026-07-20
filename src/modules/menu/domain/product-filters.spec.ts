@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import type { Product } from "@/modules/menu/domain/product";
 import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";

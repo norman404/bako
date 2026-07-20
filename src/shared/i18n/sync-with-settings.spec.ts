@@ -1,48 +1,62 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import i18next from 'i18next';
+import { describe, it, expect, beforeEach, mock } from 'bun:test';
+import type { i18n } from 'i18next';
 import { wireI18nWithSettings } from './sync-with-settings';
 import { useSettingsStore } from '@/modules/settings/store/settings-store';
+
+function createFakeI18n(initialLanguage = 'es-MX'): i18n {
+  let currentLanguage = initialLanguage;
+  return {
+    language: currentLanguage,
+    changeLanguage: mock(async (lng?: string) => {
+      if (lng) currentLanguage = lng;
+      return Promise.resolve(lng);
+    }),
+  } as unknown as i18n;
+}
+
+const DEFAULT_SETTINGS = {
+  currency: 'MXN',
+  printerType: 'none',
+  printerAddress: null,
+  isLoading: false,
+} as const;
 
 describe('wireI18nWithSettings', () => {
   beforeEach(() => {
     // Reset store state
-    useSettingsStore.setState({ locale: 'es-MX', currency: 'MXN', printerType: 'none', printerAddress: null, isLoading: false });
-    
-    // Mock i18next changeLanguage
-    vi.spyOn(i18next, 'changeLanguage').mockImplementation(async (lng?: string) => {
-      (i18next as any).language = lng;
-      return lng as any;
-    });
+    useSettingsStore.setState({ locale: 'es-MX', ...DEFAULT_SETTINGS });
   });
 
   it('should call changeLanguage when store locale changes', async () => {
-    wireI18nWithSettings(i18next);
+    const i18n = createFakeI18n('es-MX');
+    wireI18nWithSettings(i18n);
 
     // Change locale in store
-    useSettingsStore.setState({ locale: 'pt-BR', currency: 'MXN', printerType: 'none', printerAddress: null });
+    useSettingsStore.setState({ locale: 'pt-BR', ...DEFAULT_SETTINGS });
 
     // Wait for async changeLanguage
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(i18next.changeLanguage).toHaveBeenCalledWith('pt-BR');
+    expect(i18n.changeLanguage).toHaveBeenCalledWith('pt-BR');
   });
 
   it('should not trigger change if locale is same as current', async () => {
-    (i18next as any).language = 'es-MX';
-    wireI18nWithSettings(i18next);
+    const i18n = createFakeI18n('es-MX');
+    wireI18nWithSettings(i18n);
 
-    vi.clearAllMocks();
+    mock.clearAllMocks();
 
     // Set same locale
-    useSettingsStore.setState({ locale: 'es-MX', currency: 'MXN', printerType: 'none', printerAddress: null });
+    useSettingsStore.setState({ locale: 'es-MX', ...DEFAULT_SETTINGS });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(i18next.changeLanguage).not.toHaveBeenCalled();
+    expect(i18n.changeLanguage).not.toHaveBeenCalled();
   });
 
   it('should return unsubscribe function', () => {
-    const unsubscribe = wireI18nWithSettings(i18next);
+    const i18n = createFakeI18n();
+    const unsubscribe = wireI18nWithSettings(i18n);
 
     expect(typeof unsubscribe).toBe('function');
   });

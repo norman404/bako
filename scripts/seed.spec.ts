@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import { executeSeed, resolveDbPath, type SeedResult, type SqliteConnection } from "./seed";
 

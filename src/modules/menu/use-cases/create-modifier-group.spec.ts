@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { MenuDomainError } from "@/modules/menu/domain/errors";
@@ -39,7 +39,7 @@ function validInput(): ModifierGroupUpsertInput {
 describe("createModifierGroup", () => {
   it("delegates to repository.create and returns the created group", async () => {
     const created = buildGroup({ id: "new-id" });
-    const createSpy = vi.fn(() => okAsync(created));
+    const createSpy = mock(() => okAsync(created));
     const mockRepository = { create: createSpy } as unknown as ModifierGroupRepository;
 
     const result = await createModifierGroup(mockRepository, validInput());
@@ -54,7 +54,7 @@ describe("createModifierGroup", () => {
 
   it("propagates validation errors from the repository (empty options)", async () => {
     const validationError = new MenuDomainError("Modifier group must have at least one option");
-    const createSpy = vi.fn(() => errAsync(validationError));
+    const createSpy = mock(() => errAsync(validationError));
     const mockRepository = { create: createSpy } as unknown as ModifierGroupRepository;
 
     const result = await createModifierGroup(mockRepository, { ...validInput(), options: [] });
@@ -70,7 +70,7 @@ describe("createModifierGroup", () => {
     const validationError = new MenuDomainError(
       'Modifier group of type "single" may have at most one default option',
     );
-    const createSpy = vi.fn(() => errAsync(validationError));
+    const createSpy = mock(() => errAsync(validationError));
     const mockRepository = { create: createSpy } as unknown as ModifierGroupRepository;
 
     const result = await createModifierGroup(mockRepository, {

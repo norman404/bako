@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach, type Mock } from "bun:test";
 import { renderHook, act, waitFor } from "@testing-library/react";
 
-vi.mock("@/modules/updater/adapters/tauri-updater.adapter", () => ({
-  checkForUpdate: vi.fn(),
-  downloadAndInstallUpdate: vi.fn(),
-  relaunchApplication: vi.fn(),
+mock.module("@/modules/updater/adapters/tauri-updater.adapter", () => ({
+  checkForUpdate: mock(),
+  downloadAndInstallUpdate: mock(),
+  relaunchApplication: mock(),
 }));
 
 import { checkForUpdate, type UpdateHandle } from "@/modules/updater/adapters/tauri-updater.adapter";
@@ -20,13 +20,15 @@ import { useUpdaterStore } from "@/modules/updater/store/updater-store";
 
 import { useUpdater } from "./use-updater";
 
+const checkForUpdateMock = checkForUpdate as Mock<typeof checkForUpdate>;
+
 function resetStore() {
   useUpdaterStore.setState({ status: createIdleStatus(), _updateHandle: null });
 }
 
 describe("useUpdater", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     resetStore();
   });
 
@@ -90,9 +92,9 @@ describe("useUpdater", () => {
     const handle: UpdateHandle = {
       version: "1.2.0",
       notes: "",
-      downloadAndInstall: vi.fn(() => Promise.resolve()),
+      downloadAndInstall: mock(() => Promise.resolve()),
     };
-    vi.mocked(checkForUpdate).mockResolvedValue({ version: "1.2.0", notes: "", handle });
+    checkForUpdateMock.mockResolvedValue({ version: "1.2.0", notes: "", handle });
 
     const { result } = renderHook(() => useUpdater());
 

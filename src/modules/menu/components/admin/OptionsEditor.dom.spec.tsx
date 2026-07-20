@@ -1,23 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
-import { useState } from "react";
+import { describe, expect, it, mock } from "bun:test";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === "default" || prop === "__esModule" || typeof prop !== "string") {
-        return target[prop];
-      }
-      if (!target[prop]) target[prop] = createIcon(prop);
-      return target[prop];
-    },
-  });
-});
+import { useState } from "react";
 
 import { fireEvent, renderWithProviders, screen, within } from "@/test/test-utils";
 import {
@@ -39,7 +22,7 @@ function buildOption(overrides: Partial<OptionsEditorOption> = {}): OptionsEdito
 function renderEditor(props: Partial<OptionsEditorProps> = {}) {
   const defaultProps: OptionsEditorProps = {
     options: [],
-    onChange: vi.fn(),
+    onChange: mock(),
     groupKind: "single",
   };
   return renderWithProviders(<OptionsEditor {...defaultProps} {...props} />);
@@ -61,7 +44,7 @@ describe("OptionsEditor", () => {
 
   describe("add option", () => {
     it("appends a new empty option when the add button is clicked", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       renderEditor({ options: [], onChange });
 
       fireEvent.click(screen.getByRole("button", { name: /agregar opción|añadir opción/i }));
@@ -75,7 +58,7 @@ describe("OptionsEditor", () => {
 
   describe("remove option", () => {
     it("removes the option at the given index", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [
         buildOption({ name: "A", sortOrder: 0 }),
         buildOption({ name: "B", sortOrder: 1 }),
@@ -98,7 +81,7 @@ describe("OptionsEditor", () => {
 
   describe("reorder", () => {
     it("moves the option up when the up button is clicked", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [
         buildOption({ name: "A", sortOrder: 0 }),
         buildOption({ name: "B", sortOrder: 1 }),
@@ -115,7 +98,7 @@ describe("OptionsEditor", () => {
     });
 
     it("moves the option down when the down button is clicked", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [
         buildOption({ name: "A", sortOrder: 0 }),
         buildOption({ name: "B", sortOrder: 1 }),
@@ -158,7 +141,7 @@ describe("OptionsEditor", () => {
 
   describe("field updates", () => {
     it("updates the name field of an option", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ name: "" })];
       renderEditor({ options: initial, onChange });
 
@@ -170,7 +153,7 @@ describe("OptionsEditor", () => {
     });
 
     it("updates the priceDelta field of an option from monetary units to cents", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
       renderEditor({ options: initial, onChange });
 
@@ -182,7 +165,7 @@ describe("OptionsEditor", () => {
     });
 
     it("updates the isDefault toggle of an option", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ isDefault: false })];
       renderEditor({ options: initial, onChange });
 
@@ -196,7 +179,7 @@ describe("OptionsEditor", () => {
 
   describe("price input uses monetary units", () => {
     it("formats stored cents as a two-decimal monetary value", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 1500 })];
       renderEditor({ options: initial, onChange });
 
@@ -205,7 +188,7 @@ describe("OptionsEditor", () => {
     });
 
     it("parses user-entered whole monetary value into cents", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
       renderEditor({ options: initial, onChange });
 
@@ -217,7 +200,7 @@ describe("OptionsEditor", () => {
     });
 
     it("allows typing a decimal price step by step without jumping", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
       renderEditor({ options: initial, onChange });
 
@@ -260,7 +243,7 @@ describe("OptionsEditor", () => {
     });
 
     it("accepts comma and dot decimal separators", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 0 })];
       renderEditor({ options: initial, onChange });
 
@@ -272,7 +255,7 @@ describe("OptionsEditor", () => {
     });
 
     it("treats an empty price as 0 cents", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [buildOption({ priceDelta: 1500 })];
       renderEditor({ options: initial, onChange });
 
@@ -286,7 +269,7 @@ describe("OptionsEditor", () => {
 
   describe("default exclusivity for single/single_text", () => {
     it("toggling default on one option unsets default on the others", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [
         buildOption({ name: "A", isDefault: true, sortOrder: 0 }),
         buildOption({ name: "B", isDefault: false, sortOrder: 1 }),
@@ -303,7 +286,7 @@ describe("OptionsEditor", () => {
     });
 
     it("does NOT enforce exclusivity for multiple groups", () => {
-      const onChange = vi.fn();
+      const onChange = mock();
       const initial: OptionsEditorOption[] = [
         buildOption({ name: "A", isDefault: true, sortOrder: 0 }),
         buildOption({ name: "B", isDefault: false, sortOrder: 1 }),

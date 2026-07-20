@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach, type Mock } from "vitest";
+import { describe, expect, it, mock, beforeEach, type Mock } from "bun:test";
 
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(),
+mock.module("@tauri-apps/api/core", () => ({
+  invoke: mock(),
 }));
 
 import { invoke } from "@tauri-apps/api/core";
@@ -9,7 +9,7 @@ import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { printOrder } from "@/modules/checkout/adapters/print-ticket.adapter";
 import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
 
-const mockedInvoke = invoke as Mock;
+const mockedInvoke = invoke as Mock<typeof invoke>;
 
 describe("print-ticket adapter", () => {
   beforeEach(() => {

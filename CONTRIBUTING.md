@@ -89,23 +89,17 @@ Tests are **co-located** with the implementation they cover, not in a separate `
 | `*.spec.ts` | Unit test (pure logic — domain, use-cases, lib) |
 | `*.dom.spec.tsx` | DOM test using `@testing-library/react` (components, hooks with UI) |
 
-DOM tests run on a separate Vitest config (`vitest.dom.config.ts`) so they don't pollute the unit suite.
+DOM tests use `@testing-library/react` with `happy-dom` (registered globally via `bunfig.toml` → `src/test/setup-bun.ts`). The runner `scripts/run-tests.ts` executes each spec in its own `bun test` process to keep `mock.module()` isolated between files.
 
-### TDD is mandatory
-
-Every change follows **Red → Green → Refactor**. No exceptions.
-
-1. **Red** — Write the test for the *new* behavior. Run it. It **must fail** for the right reason (a real assertion failure, not a syntax error). A test that never fails proves nothing.
-2. **Green** — Write the minimum code to make the failing test pass. Nothing more.
-3. **Refactor** — Clean up while tests stay green. Re-run them.
+### Targeting a single spec during TDD
 
 ```bash
-# Target a single spec file during the cycle:
-bun run test --testPathPattern=<spec-file>
-bun run test:dom --testPathPattern=<dom-spec-file>
-```
+# Run a single unit spec
+bun test src/modules/menu/domain/product.spec.ts
 
-Tests for **existing** behavior should pass before you touch anything — they're your regression safety net.
+# Run a single DOM spec
+bun test src/modules/menu/components/ProductGrid.dom.spec.tsx
+```
 
 > ⚠️ Usa `bun run test`, NUNCA `bun test` — `bun test` invoca el test runner nativo de Bun sobre los specs de Vitest y falla. Los tests corren deliberadamente bajo Node (Vitest no soporta el runtime de Bun — bug [oven-sh/bun#27002](https://github.com/oven-sh/bun/issues/27002)), por lo que Node ≥20.19 sigue siendo requisito local para correr tests aunque ya no esté en `engines`.
 

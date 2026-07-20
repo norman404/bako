@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { MenuDomainError } from "@/modules/menu/domain/errors";
@@ -47,8 +47,8 @@ describe("listProductModifiers", () => {
     ];
     const productGroups = [buildGroup("g3", "Extra", 2)];
 
-    const listByCategorySpy = vi.fn(() => okAsync(categoryGroups));
-    const listByProductSpy = vi.fn(() => okAsync(productGroups));
+    const listByCategorySpy = mock(() => okAsync(categoryGroups));
+    const listByProductSpy = mock(() => okAsync(productGroups));
     const mockRepository = {
       listByCategory: listByCategorySpy,
       listByProduct: listByProductSpy,

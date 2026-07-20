@@ -1,22 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === "default" || prop === "__esModule" || typeof prop !== "string") {
-        return target[prop];
-      }
-      if (!target[prop]) target[prop] = createIcon(prop);
-      return target[prop];
-    },
-  });
-});
+
 
 import { renderWithProviders, screen, within } from "@/test/test-utils";
 import { Cart } from "@/modules/order/components/Cart";
@@ -85,18 +70,18 @@ function renderCart(props: {
   return renderWithProviders(
     <Cart
       items={items}
-      onIncreaseQuantity={props.onIncreaseQuantity ?? vi.fn()}
-      onDecreaseQuantity={props.onDecreaseQuantity ?? vi.fn()}
-      onRemoveItem={props.onRemoveItem ?? vi.fn()}
-      onClearCart={props.onClearCart ?? vi.fn()}
-      onCheckout={props.onCheckout ?? vi.fn()}
+      onIncreaseQuantity={props.onIncreaseQuantity ?? mock()}
+      onDecreaseQuantity={props.onDecreaseQuantity ?? mock()}
+      onRemoveItem={props.onRemoveItem ?? mock()}
+      onClearCart={props.onClearCart ?? mock()}
+      onCheckout={props.onCheckout ?? mock()}
     />,
   );
 }
 
 describe("Cart modifier display", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mock.restore();
     setModifierFlag(true);
   });
 

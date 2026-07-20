@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type {
   OrderItemModifierRow,
@@ -7,17 +7,17 @@ import type {
   PaymentRow,
 } from "@/shared/db/schema";
 
-const txMocks = vi.hoisted(() => {
-  const selectMock = vi.fn<any>();
+const txMocks = (() => {
+  const selectMock = mock<any>();
 
-  const insertReturningMock = vi.fn<any>(() => Promise.resolve([]));
-  const insertValuesMock = vi.fn<any>(() => ({ returning: insertReturningMock }));
-  const insertMock = vi.fn(() => ({ values: insertValuesMock }));
+  const insertReturningMock = mock<any>(() => Promise.resolve([]));
+  const insertValuesMock = mock<any>(() => ({ returning: insertReturningMock }));
+  const insertMock = mock(() => ({ values: insertValuesMock }));
 
-  const updateReturningMock = vi.fn<any>(() => Promise.resolve([]));
-  const updateWhereMock = vi.fn(() => ({ returning: updateReturningMock }));
-  const updateSetMock = vi.fn<any>(() => ({ where: updateWhereMock }));
-  const updateMock = vi.fn(() => ({ set: updateSetMock }));
+  const updateReturningMock = mock<any>(() => Promise.resolve([]));
+  const updateWhereMock = mock(() => ({ returning: updateReturningMock }));
+  const updateSetMock = mock<any>(() => ({ where: updateWhereMock }));
+  const updateMock = mock(() => ({ set: updateSetMock }));
 
   return {
     selectMock,
@@ -29,21 +29,21 @@ const txMocks = vi.hoisted(() => {
     updateSetMock,
     updateMock,
   };
-});
+})();
 
-const dbMocks = vi.hoisted(() => ({
+const dbMocks = {
   select: txMocks.selectMock,
   insert: txMocks.insertMock,
   update: txMocks.updateMock,
-}));
+};
 
-const txClient = vi.hoisted(() => ({
+const txClient = {
   select: txMocks.selectMock,
   insert: txMocks.insertMock,
   update: txMocks.updateMock,
-}));
+};
 
-vi.mock("@/shared/db/client", () => ({
+mock.module("@/shared/db/client", () => ({
   db: dbMocks,
   withTransaction: async (operation: (tx: any) => Promise<any>) => operation(txClient),
 }));
@@ -118,7 +118,7 @@ function buildModifierInput(overrides: Partial<CheckoutOrderItemModifierInput> =
 function selectChainSimple(rows: unknown) {
   return {
     from: () => ({
-      where: vi.fn(() => Promise.resolve(rows)),
+      where: mock(() => Promise.resolve(rows)),
     }),
   };
 }
@@ -133,14 +133,14 @@ function buildLocalOrderInput(items: CheckoutOrderItemInput[]): CreateOrderInput
 
 describe("orderDrizzleRepository.createOrder — modifier snapshots", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     txMocks.insertReturningMock.mockResolvedValue([]);
     txMocks.updateReturningMock.mockResolvedValue([]);
   });
 
   it("inserts order_item_modifiers rows for items with modifiers inside the transaction", async () => {
     const generatedId = "11111111-1111-4111-8111-111111111111";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const orderRow = buildOrderRow({ id: generatedId, total: 5500 });
     const paymentRow = buildPaymentRow({ id: generatedId, orderId: generatedId });
@@ -150,7 +150,7 @@ describe("orderDrizzleRepository.createOrder — modifier snapshots", () => {
     txMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         orderBy: () => ({
-          limit: vi.fn(() => Promise.resolve([])),
+          limit: mock(() => Promise.resolve([])),
         }),
       }),
     });
@@ -241,7 +241,7 @@ describe("orderDrizzleRepository.createOrder — modifier snapshots", () => {
 
   it("does NOT insert modifier rows when item has empty modifiers", async () => {
     const generatedId = "22222222-2222-4222-8222-222222222222";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const orderRow = buildOrderRow({ id: generatedId, total: 4000 });
     const paymentRow = buildPaymentRow({ id: generatedId, orderId: generatedId });
@@ -250,7 +250,7 @@ describe("orderDrizzleRepository.createOrder — modifier snapshots", () => {
     txMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         orderBy: () => ({
-          limit: vi.fn(() => Promise.resolve([])),
+          limit: mock(() => Promise.resolve([])),
         }),
       }),
     });
@@ -279,7 +279,7 @@ describe("orderDrizzleRepository.createOrder — modifier snapshots", () => {
 
   it("rolls back modifiers when order item insertion fails mid-transaction", async () => {
     const generatedId = "33333333-3333-4333-8333-333333333333";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const orderRow = buildOrderRow({ id: generatedId, total: 5500 });
     const paymentRow = buildPaymentRow({ id: generatedId, orderId: generatedId });
@@ -287,7 +287,7 @@ describe("orderDrizzleRepository.createOrder — modifier snapshots", () => {
     txMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         orderBy: () => ({
-          limit: vi.fn(() => Promise.resolve([])),
+          limit: mock(() => Promise.resolve([])),
         }),
       }),
     });
@@ -320,14 +320,14 @@ describe("orderDrizzleRepository.createOrder — modifier snapshots", () => {
 
 describe("orderDrizzleRepository — rowToCheckoutOrder loads modifier snapshots", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     txMocks.insertReturningMock.mockResolvedValue([]);
     txMocks.updateReturningMock.mockResolvedValue([]);
   });
 
   it("loaded order includes modifier snapshots from order_item_modifiers table", async () => {
     const generatedId = "44444444-4444-4444-8444-444444444444";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const orderRow = buildOrderRow({ id: generatedId, total: 5500 });
     const paymentRow = buildPaymentRow({ id: generatedId, orderId: generatedId });
@@ -337,7 +337,7 @@ describe("orderDrizzleRepository — rowToCheckoutOrder loads modifier snapshots
     txMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         orderBy: () => ({
-          limit: vi.fn(() => Promise.resolve([])),
+          limit: mock(() => Promise.resolve([])),
         }),
       }),
     });
@@ -426,7 +426,7 @@ describe("orderDrizzleRepository — rowToCheckoutOrder loads modifier snapshots
 
   it("loaded order returns empty modifiers array when item has no snapshot rows (pre-modifier historical order)", async () => {
     const generatedId = "55555555-5555-4555-8555-555555555555";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const orderRow = buildOrderRow({ id: generatedId, total: 4000 });
     const paymentRow = buildPaymentRow({ id: generatedId, orderId: generatedId });
@@ -435,7 +435,7 @@ describe("orderDrizzleRepository — rowToCheckoutOrder loads modifier snapshots
     txMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         orderBy: () => ({
-          limit: vi.fn(() => Promise.resolve([])),
+          limit: mock(() => Promise.resolve([])),
         }),
       }),
     });
@@ -465,7 +465,7 @@ describe("orderDrizzleRepository — rowToCheckoutOrder loads modifier snapshots
     // even if the live group/option is renamed AFTER persistence,
     // the order_item_modifiers row keeps the original optionName.
     const generatedId = "66666666-6666-4666-8666-666666666666";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const orderRow = buildOrderRow({ id: generatedId, total: 5500 });
     const paymentRow = buildPaymentRow({ id: generatedId, orderId: generatedId });
@@ -474,7 +474,7 @@ describe("orderDrizzleRepository — rowToCheckoutOrder loads modifier snapshots
     txMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         orderBy: () => ({
-          limit: vi.fn(() => Promise.resolve([])),
+          limit: mock(() => Promise.resolve([])),
         }),
       }),
     });

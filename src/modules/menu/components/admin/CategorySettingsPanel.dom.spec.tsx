@@ -1,25 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock, spyOn } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    }
-  });
-});
 
 import * as categoryHooks from "@/modules/menu/hooks/use-categories";
 import * as menuHooks from "@/modules/menu/hooks/use-menus";
@@ -47,30 +29,30 @@ const BASE_CATEGORIES = [
 
 function mockCategoryMutations(categories = [...BASE_CATEGORIES], menus: any[] = []) {
   // Mock hooks de lectura
-  vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+  spyOn(categoryHooks, "useCategories").mockReturnValue({
     data: categories,
     isLoading: false,
   } as any);
 
-  vi.spyOn(menuHooks, "useMenus").mockReturnValue({
+  spyOn(menuHooks, "useMenus").mockReturnValue({
     data: menus,
     isLoading: false,
   } as any);
 
   // Mock hooks de mutación
-  vi.spyOn(categoryHooks, "useCreateCategory").mockReturnValue({
+  spyOn(categoryHooks, "useCreateCategory").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: mock(),
   } as unknown as CreateCategoryResult);
 
-  vi.spyOn(categoryHooks, "useUpdateCategory").mockReturnValue({
+  spyOn(categoryHooks, "useUpdateCategory").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: mock(),
   } as unknown as UpdateCategoryResult);
 
-  vi.spyOn(categoryHooks, "useArchiveCategory").mockReturnValue({
+  spyOn(categoryHooks, "useArchiveCategory").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: mock(),
   } as unknown as ArchiveCategoryResult);
 }
 

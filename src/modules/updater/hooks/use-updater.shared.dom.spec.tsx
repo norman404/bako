@@ -1,13 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock, type Mock } from "bun:test";
 import { renderHook, act } from "@testing-library/react";
 
 // The updater status MUST be a single source of truth shared across every
 // consumer (the App toast + the Settings panel). We mock the adapter so the
 // check resolves a controlled update without needing the Tauri runtime.
-vi.mock("@/modules/updater/adapters/tauri-updater.adapter", () => ({
-  checkForUpdate: vi.fn(),
-  downloadAndInstallUpdate: vi.fn(),
-  relaunchApplication: vi.fn(),
+mock.module("@/modules/updater/adapters/tauri-updater.adapter", () => ({
+  checkForUpdate: mock(),
+  downloadAndInstallUpdate: mock(),
+  relaunchApplication: mock(),
 }));
 
 import { checkForUpdate, type UpdateHandle } from "@/modules/updater/adapters/tauri-updater.adapter";
@@ -15,14 +15,16 @@ import { createAvailableStatus } from "@/modules/updater/domain/update-status";
 
 import { useUpdater } from "./use-updater";
 
+const checkForUpdateMock = checkForUpdate as Mock<typeof checkForUpdate>;
+
 describe("useUpdater — shared state", () => {
   it("exposes the same status to every consumer (single source of truth)", async () => {
     const handle: UpdateHandle = {
       version: "2026.6.2",
       notes: "shared",
-      downloadAndInstall: vi.fn(() => Promise.resolve()),
+      downloadAndInstall: mock(() => Promise.resolve()),
     };
-    vi.mocked(checkForUpdate).mockResolvedValue({
+    checkForUpdateMock.mockResolvedValue({
       version: "2026.6.2",
       notes: "shared",
       handle,

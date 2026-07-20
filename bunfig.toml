@@ -1,0 +1,3 @@
+# ⚠️ SOLO sección [test]. NUNCA agregar [run] bun = true (ver AGENTS.md).
+[test]
+preload = ["./src/test/setup-bun.ts"]

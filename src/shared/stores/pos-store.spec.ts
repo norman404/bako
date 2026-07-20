@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
 

@@ -1,27 +1,6 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
-
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === "default" || prop === "__esModule" || typeof prop !== "string") {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    },
-  });
-});
-
-import { vi } from "vitest";
 import { renderWithProviders, screen, fireEvent } from "@/test/test-utils";
 import { ProductSearch } from "@/modules/menu/components/ProductSearch";
 import { useMenuStore } from "@/modules/menu/store/menu-store";

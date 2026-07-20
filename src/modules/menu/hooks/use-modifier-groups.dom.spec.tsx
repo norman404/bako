@@ -1,5 +1,5 @@
 import * as React from "react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, spyOn, beforeEach } from "bun:test";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { errAsync, okAsync } from "neverthrow";
@@ -8,12 +8,8 @@ import { MenuDomainError } from "@/modules/menu/domain/errors";
 import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import type { ModifierGroupUpsertInput } from "@/modules/menu/domain/ports";
 
-vi.mock("@/modules/menu/persistence/modifier-group-drizzle.repository", () => ({
-  modifierGroupDrizzleRepository: {
-    update: vi.fn(),
-  },
-}));
-
+// spyOn sobre el objeto real en vez de mock.module: en bun los module mocks
+// persisten entre archivos del mismo proceso y contaminan los specs de persistence.
 import { modifierGroupDrizzleRepository } from "@/modules/menu/persistence/modifier-group-drizzle.repository";
 import {
   MENU_MODIFIER_GROUPS_QUERY_KEY,
@@ -67,7 +63,7 @@ describe("useReorderModifierGroups", () => {
   }
 
   beforeEach(() => {
-    vi.resetAllMocks();
+    mock.clearAllMocks();
   });
 
   it("reassigns sortOrder to all groups and reorders optimistically", async () => {
@@ -83,7 +79,7 @@ describe("useReorderModifierGroups", () => {
     const queryClient = createQueryClient();
     queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, [hielo, azucar, demo]);
 
-    vi.mocked(modifierGroupDrizzleRepository.update).mockImplementation(
+    spyOn(modifierGroupDrizzleRepository, "update").mockImplementation(
       (id: string, input: ModifierGroupUpsertInput) =>
         okAsync({ ...groupsById[id], sortOrder: input.sortOrder }),
     );
@@ -124,7 +120,7 @@ describe("useReorderModifierGroups", () => {
     const queryClient = createQueryClient();
     queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, [hielo, azucar]);
 
-    vi.mocked(modifierGroupDrizzleRepository.update).mockImplementation(
+    spyOn(modifierGroupDrizzleRepository, "update").mockImplementation(
       (id: string, _input: ModifierGroupUpsertInput) =>
         id === "g-azucar"
           ? okAsync({ ...azucar, sortOrder: 0 })
@@ -171,7 +167,7 @@ describe("useUpdateModifierGroup", () => {
   }
 
   beforeEach(() => {
-    vi.resetAllMocks();
+    mock.clearAllMocks();
   });
 
   it("optimistically reassigns sortOrder for the updated group and reorders", async () => {
@@ -181,7 +177,7 @@ describe("useUpdateModifierGroup", () => {
     const queryClient = createQueryClient();
     queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, [hielo, tamano]);
 
-    vi.mocked(modifierGroupDrizzleRepository.update).mockReturnValue(
+    spyOn(modifierGroupDrizzleRepository, "update").mockReturnValue(
       okAsync({ ...tamano, sortOrder: 0 }),
     );
 
@@ -216,7 +212,7 @@ describe("useUpdateModifierGroup", () => {
     const queryClient = createQueryClient();
     queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, [hielo, tamano]);
 
-    vi.mocked(modifierGroupDrizzleRepository.update).mockReturnValue(
+    spyOn(modifierGroupDrizzleRepository, "update").mockReturnValue(
       errAsync(new MenuDomainError("Update failed")),
     );
 

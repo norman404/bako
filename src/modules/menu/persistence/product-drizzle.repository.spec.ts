@@ -1,29 +1,29 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { ProductUpsertInput } from "@/modules/menu/domain/ports";
 import type { ProductMenuRow, ProductRow } from "@/shared/db/schema";
 
-const dbMocks = vi.hoisted(() => {
-  const selectLimitMock = vi.fn<any>(() => Promise.resolve([]));
-  const selectWhereMock = vi.fn<any>(() => ({ limit: selectLimitMock }));
-  const selectFromMock = vi.fn<any>(() => ({ where: selectWhereMock }));
-  const selectMock = vi.fn<any>(() => ({ from: selectFromMock }));
+const dbMocks = (() => {
+  const selectLimitMock = mock<any>(() => Promise.resolve([]));
+  const selectWhereMock = mock<any>(() => ({ limit: selectLimitMock }));
+  const selectFromMock = mock<any>(() => ({ where: selectWhereMock }));
+  const selectMock = mock<any>(() => ({ from: selectFromMock }));
 
-  const insertReturningMock = vi.fn<() => Promise<ProductRow[]>>();
-  const insertValuesMock = vi.fn<(values: Partial<ProductRow>) => { returning: typeof insertReturningMock }>(
+  const insertReturningMock = mock<() => Promise<ProductRow[]>>();
+  const insertValuesMock = mock<(values: Partial<ProductRow>) => { returning: typeof insertReturningMock }>(
     () => ({ returning: insertReturningMock }),
   );
-  const insertMock = vi.fn(() => ({ values: insertValuesMock }));
+  const insertMock = mock(() => ({ values: insertValuesMock }));
 
-  const updateReturningMock = vi.fn<() => Promise<ProductRow[]>>();
-  const updateWhereMock = vi.fn(() => ({ returning: updateReturningMock }));
-  const updateSetMock = vi.fn<(values: Partial<ProductRow>) => { where: typeof updateWhereMock }>(
+  const updateReturningMock = mock<() => Promise<ProductRow[]>>();
+  const updateWhereMock = mock(() => ({ returning: updateReturningMock }));
+  const updateSetMock = mock<(values: Partial<ProductRow>) => { where: typeof updateWhereMock }>(
     () => ({ where: updateWhereMock }),
   );
-  const updateMock = vi.fn(() => ({ set: updateSetMock }));
+  const updateMock = mock(() => ({ set: updateSetMock }));
 
-  const deleteWhereMock = vi.fn(() => Promise.resolve());
-  const deleteMock = vi.fn(() => ({ where: deleteWhereMock }));
+  const deleteWhereMock = mock(() => Promise.resolve());
+  const deleteMock = mock(() => ({ where: deleteWhereMock }));
 
   return {
     selectLimitMock,
@@ -40,9 +40,9 @@ const dbMocks = vi.hoisted(() => {
     deleteWhereMock,
     deleteMock,
   };
-});
+})();
 
-vi.mock("@/shared/db/client", () => ({
+mock.module("@/shared/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,
@@ -84,7 +84,7 @@ function buildProductRow(overrides: Partial<ProductRow> = {}): ProductRow {
 
 describe("productDrizzleRepository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     dbMocks.insertReturningMock.mockResolvedValue([]);
     dbMocks.updateReturningMock.mockResolvedValue([]);
   });
@@ -95,7 +95,7 @@ describe("productDrizzleRepository", () => {
 
     dbMocks.insertReturningMock.mockResolvedValueOnce([createdRow]);
     dbMocks.insertValuesMock.mockReturnValueOnce({ returning: dbMocks.insertReturningMock });
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const result = await productDrizzleRepository.create(validInput);
 
@@ -253,12 +253,12 @@ describe("productDrizzleRepository", () => {
     const productMenuRows = [{ menuId: "menu-1" }, { menuId: "menu-2" }];
 
     // First query: db.select().from(products).where(...).limit(1)
-    const selectWhereMock1 = vi.fn(() => ({ limit: vi.fn(() => Promise.resolve([product])) }));
-    const selectFromMock1 = vi.fn(() => ({ where: selectWhereMock1 }));
+    const selectWhereMock1 = mock(() => ({ limit: mock(() => Promise.resolve([product])) }));
+    const selectFromMock1 = mock(() => ({ where: selectWhereMock1 }));
 
     // Second query: db.select({ menuId }).from(productMenus).where(...)
-    const selectWhereMock2 = vi.fn(() => Promise.resolve(productMenuRows));
-    const selectFromMock2 = vi.fn(() => ({ where: selectWhereMock2 }));
+    const selectWhereMock2 = mock(() => Promise.resolve(productMenuRows));
+    const selectFromMock2 = mock(() => ({ where: selectWhereMock2 }));
 
     // Setup selectMock to return different chains
     dbMocks.selectMock.mockReturnValueOnce({ from: selectFromMock1 } as never);
@@ -317,7 +317,7 @@ describe("productDrizzleRepository", () => {
 
     dbMocks.insertReturningMock.mockResolvedValueOnce([createdRow]);
     dbMocks.insertValuesMock.mockReturnValueOnce({ returning: dbMocks.insertReturningMock });
-    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const result = await productDrizzleRepository.create({
       ...validInput,
@@ -346,7 +346,7 @@ describe("productDrizzleRepository", () => {
 
     dbMocks.insertReturningMock.mockResolvedValueOnce([createdRow]);
     dbMocks.insertValuesMock.mockReturnValueOnce({ returning: dbMocks.insertReturningMock });
-    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const result = await productDrizzleRepository.create({
       ...validInput,
@@ -370,7 +370,7 @@ describe("productDrizzleRepository", () => {
 
     dbMocks.insertReturningMock.mockResolvedValueOnce([createdRow]);
     dbMocks.insertValuesMock.mockReturnValueOnce({ returning: dbMocks.insertReturningMock });
-    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const result = await productDrizzleRepository.create({
       ...validInput,

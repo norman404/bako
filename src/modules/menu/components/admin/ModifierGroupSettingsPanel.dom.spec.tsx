@@ -1,25 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, spyOn, beforeEach } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === "default" || prop === "__esModule" || typeof prop !== "string") {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    },
-  });
-});
 
 import * as modifierHooks from "@/modules/menu/hooks/use-modifier-groups";
 import * as categoryHooks from "@/modules/menu/hooks/use-categories";
@@ -115,64 +97,64 @@ function mockAllHooks(opts: {
   createPending?: boolean;
   categoryAssignments?: Map<string, Set<string>>;
   productAssignments?: Map<string, Set<string>>;
-  updateMutate?: ReturnType<typeof vi.fn>;
-  swapSortOrderMutate?: ReturnType<typeof vi.fn>;
+  updateMutate?: ReturnType<typeof mock>;
+  swapSortOrderMutate?: ReturnType<typeof mock>;
 } = {}) {
   const groups = opts.groups ?? [buildGroup()];
   const categories = opts.categories ?? [buildCategory()];
   const products = opts.products ?? [buildProduct()];
 
-  vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+  spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
     data: groups,
     isLoading: false,
   } as unknown as UseModifierGroupsResult);
 
-  vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+  spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
     isPending: opts.createPending ?? false,
-    mutateAsync: vi.fn(),
+    mutateAsync: mock(),
   } as unknown as CreateModifierGroupResult);
 
-  vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+  spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
     isPending: false,
-    mutateAsync: opts.updateMutate ?? vi.fn(),
+    mutateAsync: opts.updateMutate ?? mock(),
   } as unknown as UpdateModifierGroupResult);
 
-  vi.spyOn(modifierHooks, "useReorderModifierGroups").mockReturnValue({
+  spyOn(modifierHooks, "useReorderModifierGroups").mockReturnValue({
     isPending: false,
-    mutateAsync: opts.swapSortOrderMutate ?? vi.fn(),
+    mutateAsync: opts.swapSortOrderMutate ?? mock(),
   } as unknown as ReorderModifierGroupsResult);
 
-  vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+  spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: mock(),
   } as unknown as ArchiveModifierGroupResult);
 
-  vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+  spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: mock(),
   } as unknown as AssignModifierGroupResult);
 
-  vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+  spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
     isPending: false,
-    mutateAsync: vi.fn(),
+    mutateAsync: mock(),
   } as unknown as UnassignModifierGroupResult);
 
-  vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+  spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
     data: opts.categoryAssignments ?? new Map(),
     isLoading: false,
   } as unknown as UseCategoryAssignmentsResult);
 
-  vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+  spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
     data: opts.productAssignments ?? new Map(),
     isLoading: false,
   } as unknown as UseProductAssignmentsResult);
 
-  vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+  spyOn(categoryHooks, "useCategories").mockReturnValue({
     data: categories,
     isLoading: false,
   } as unknown as UseCategoriesResult);
 
-  vi.spyOn(productHooks, "useProducts").mockReturnValue({
+  spyOn(productHooks, "useProducts").mockReturnValue({
     data: products,
     isLoading: false,
   } as unknown as UseProductsResult);
@@ -184,7 +166,7 @@ function renderPanel() {
 
 describe("ModifierGroupSettingsPanel", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mock.restore();
   });
 
   describe("list rendering", () => {
@@ -261,7 +243,7 @@ describe("ModifierGroupSettingsPanel", () => {
       fireEvent.click(screen.getByRole("button", { name: /guardar|crear grupo/i }));
 
       // createModifierGroup mutateAsync should have been called
-      const createSpy = modifierHooks.useCreateModifierGroup().mutateAsync as unknown as ReturnType<typeof vi.fn>;
+      const createSpy = modifierHooks.useCreateModifierGroup().mutateAsync as unknown as ReturnType<typeof mock>;
       expect(createSpy).toHaveBeenCalled();
     });
   });
@@ -286,45 +268,45 @@ describe("ModifierGroupSettingsPanel", () => {
     });
 
     it("calls archive mutation only after the confirmation dialog is accepted", () => {
-      const archiveMutate = vi.fn().mockResolvedValue(undefined);
+      const archiveMutate = mock().mockResolvedValue(undefined);
 
-      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+      spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
         data: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
-      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as CreateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UpdateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
         isPending: false,
         mutateAsync: archiveMutate,
       } as unknown as ArchiveModifierGroupResult);
-      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as AssignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UnassignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseCategoryAssignmentsResult);
-      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseProductAssignmentsResult);
-      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+      spyOn(categoryHooks, "useCategories").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseCategoriesResult);
-      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+      spyOn(productHooks, "useProducts").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseProductsResult);
@@ -345,45 +327,45 @@ describe("ModifierGroupSettingsPanel", () => {
     });
 
     it("calls archive mutation with the group id when the dialog is accepted", () => {
-      const archiveMutate = vi.fn().mockResolvedValue(undefined);
+      const archiveMutate = mock().mockResolvedValue(undefined);
 
-      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+      spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
         data: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
-      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as CreateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UpdateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
         isPending: false,
         mutateAsync: archiveMutate,
       } as unknown as ArchiveModifierGroupResult);
-      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as AssignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UnassignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseCategoryAssignmentsResult);
-      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseProductAssignmentsResult);
-      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+      spyOn(categoryHooks, "useCategories").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseCategoriesResult);
-      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+      spyOn(productHooks, "useProducts").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseProductsResult);
@@ -416,44 +398,44 @@ describe("ModifierGroupSettingsPanel", () => {
     });
 
     it("calls assign mutation when a category checkbox is toggled on", () => {
-      const assignMutate = vi.fn();
-      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+      const assignMutate = mock();
+      spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
         data: [buildGroup({ id: "g-assign", name: "Nivel de hielo" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
-      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as CreateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UpdateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as ArchiveModifierGroupResult);
-      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
         isPending: false,
         mutateAsync: assignMutate,
       } as unknown as AssignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UnassignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseCategoryAssignmentsResult);
-      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseProductAssignmentsResult);
-      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+      spyOn(categoryHooks, "useCategories").mockReturnValue({
         data: [buildCategory({ id: "cat-assign", name: "Bebidas" })],
         isLoading: false,
       } as unknown as UseCategoriesResult);
-      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+      spyOn(productHooks, "useProducts").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseProductsResult);
@@ -579,45 +561,45 @@ describe("ModifierGroupSettingsPanel", () => {
     });
 
     it("shows a translated inline error when the create mutation fails with a menu domain error", async () => {
-      const createMutate = vi.fn().mockRejectedValue(new ModifierGroupNotFoundError("g-faltante"));
+      const createMutate = mock().mockRejectedValue(new ModifierGroupNotFoundError("g-faltante"));
 
-      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+      spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
         data: [buildGroup({ id: "g1", name: "Existente" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
-      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
         isPending: false,
         mutateAsync: createMutate,
       } as unknown as CreateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UpdateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as ArchiveModifierGroupResult);
-      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as AssignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UnassignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseCategoryAssignmentsResult);
-      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseProductAssignmentsResult);
-      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+      spyOn(categoryHooks, "useCategories").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseCategoriesResult);
-      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+      spyOn(productHooks, "useProducts").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseProductsResult);
@@ -637,51 +619,51 @@ describe("ModifierGroupSettingsPanel", () => {
 
       // The error is rendered inline using the translated menu error key
       const formRegion = screen.getByTestId("modifier-group-form");
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(within(formRegion).getByText(/grupo de modificadores no encontrado/i)).toBeInTheDocument();
       });
     });
 
     it("shows a generic translated fallback for non-translatable errors", async () => {
-      const createMutate = vi.fn().mockRejectedValue(new Error("Raw library error"));
+      const createMutate = mock().mockRejectedValue(new Error("Raw library error"));
 
-      vi.spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
+      spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
         data: [buildGroup({ id: "g1", name: "Existente" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
-      vi.spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
         isPending: false,
         mutateAsync: createMutate,
       } as unknown as CreateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUpdateModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UpdateModifierGroupResult);
-      vi.spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useArchiveModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as ArchiveModifierGroupResult);
-      vi.spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useAssignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as AssignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
+      spyOn(modifierHooks, "useUnassignModifierGroup").mockReturnValue({
         isPending: false,
-        mutateAsync: vi.fn(),
+        mutateAsync: mock(),
       } as unknown as UnassignModifierGroupResult);
-      vi.spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useCategoryAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseCategoryAssignmentsResult);
-      vi.spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
+      spyOn(modifierHooks, "useProductAssignments").mockReturnValue({
         data: new Map(),
         isLoading: false,
       } as unknown as UseProductAssignmentsResult);
-      vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+      spyOn(categoryHooks, "useCategories").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseCategoriesResult);
-      vi.spyOn(productHooks, "useProducts").mockReturnValue({
+      spyOn(productHooks, "useProducts").mockReturnValue({
         data: [],
         isLoading: false,
       } as unknown as UseProductsResult);
@@ -701,7 +683,7 @@ describe("ModifierGroupSettingsPanel", () => {
 
       // The generic fallback is rendered inline
       const formRegion = screen.getByTestId("modifier-group-form");
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(within(formRegion).getByText(/error inesperado/i)).toBeInTheDocument();
       });
     });
@@ -730,7 +712,7 @@ describe("ModifierGroupSettingsPanel", () => {
 
   describe("reorder groups", () => {
     it("calls the reorder mutation with all groups assigned new sortOrder when up is clicked", async () => {
-      const reorderMutate = vi.fn().mockResolvedValue(undefined);
+      const reorderMutate = mock().mockResolvedValue(undefined);
       mockAllHooks({
         groups: [
           buildGroup({
@@ -774,7 +756,7 @@ describe("ModifierGroupSettingsPanel", () => {
     });
 
     it("calls the reorder mutation with all groups assigned new sortOrder when down is clicked", async () => {
-      const reorderMutate = vi.fn().mockResolvedValue(undefined);
+      const reorderMutate = mock().mockResolvedValue(undefined);
       mockAllHooks({
         groups: [
           buildGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 }),

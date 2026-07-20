@@ -9,7 +9,7 @@
  * No es exhaustivo (no compara value-por-value), solo verifica presencia
  * estructural de los namespaces que el código consume.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 // Import every locale's settings.json and menu.json statically so the test
 // itself is fully type-checked and works in any environment.

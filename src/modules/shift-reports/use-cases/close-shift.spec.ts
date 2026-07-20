@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { okAsync, errAsync } from "neverthrow";
 import { closeShift } from "./close-shift";
 import type { ShiftRepository } from "../domain/ports";
@@ -7,11 +7,11 @@ import { NoActiveShiftError } from "../domain/errors";
 
 function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
   return {
-    openShift: vi.fn(() => okAsync({} as Shift)),
-    closeShift: vi.fn(() => okAsync({ id: "shift-1", openedAt: new Date(), closedAt: new Date(), status: "closed" } as Shift)),
-    getActive: vi.fn(() => okAsync(null)),
-    listHistory: vi.fn(() => okAsync([])),
-    getReport: vi.fn(() => okAsync({} as any)),
+    openShift: mock(() => okAsync({} as Shift)),
+    closeShift: mock(() => okAsync({ id: "shift-1", openedAt: new Date(), closedAt: new Date(), status: "closed" } as Shift)),
+    getActive: mock(() => okAsync(null)),
+    listHistory: mock(() => okAsync([])),
+    getReport: mock(() => okAsync({} as any)),
     ...overrides,
   };
 }
@@ -30,7 +30,7 @@ describe("closeShift use-case", () => {
 
   it("forwards repository errors", async () => {
     const repo = buildRepo({
-      closeShift: vi.fn(() => errAsync(new NoActiveShiftError())),
+      closeShift: mock(() => errAsync(new NoActiveShiftError())),
     });
 
     const result = await closeShift(repo, "shift-1");

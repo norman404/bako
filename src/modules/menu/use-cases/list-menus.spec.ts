@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { okAsync } from "neverthrow";
 
 import type { MenuRepository } from "@/modules/menu/domain/ports";
@@ -25,8 +25,8 @@ describe("listMenus", () => {
     ];
 
     const mockRepository = {
-      list: vi.fn(() => okAsync(mockMenus)),
-      create: vi.fn(),
+      list: mock(() => okAsync(mockMenus)),
+      create: mock(),
     } as unknown as MenuRepository;
 
     const result = await listMenus(mockRepository);

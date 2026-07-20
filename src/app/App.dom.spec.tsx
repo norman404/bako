@@ -1,194 +1,107 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, mock, spyOn, beforeEach, afterEach, afterAll, type Mock } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === "default" || prop === "__esModule" || typeof prop !== "string") {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    },
-  });
-});
 
-describe("App — print ticket modifiers", () => {
-  const mockedUseCreateOrder = vi.mocked(useCreateOrder);
-  const mockedPrintOrder = vi.mocked(printOrder);
 
-  beforeEach(() => {
-    vi.restoreAllMocks();
-    useOrderStore.setState({ currentOrder: [] });
-    usePosStore.setState({
-      selectedCategory: "all",
-      isCheckoutOpen: false,
-      checkoutSessionKey: 0,
-      isMobileCartOpen: false,
-      isSettingsOpen: false,
-    });
-    setModifierFlag(false);
-    setComandasFlag(false);
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-    useOrderStore.setState({ currentOrder: [] });
-    usePosStore.setState({
-      selectedCategory: "all",
-      isCheckoutOpen: false,
-      checkoutSessionKey: 0,
-      isMobileCartOpen: false,
-      isSettingsOpen: false,
-    });
-  });
-
-  it("maps each cart line's modifiers to the correct print item when the same product has different modifiers", async () => {
-    // GIVEN modifier groups are enabled and "Café" has a single-choice group with two options
-    setModifierFlag(true);
-    const product = buildProduct({ id: "prod-cafe", name: "Café", price: 5000 });
-    mockFilteredProducts({ products: [product] });
-    mockProductModifierGroups({
-      "prod-cafe": [
-        buildGroup({
-          id: "g1",
-          name: "Nivel de hielo",
-          type: "single",
-          required: false,
-          options: [
-            buildOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-            buildOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
-          ],
-        }),
-      ],
-    });
-
-    mockedUseCreateOrder.mockReturnValue({
-      mutateAsync: vi.fn().mockResolvedValue({
-        id: "order-1",
-        ticketNumber: 42,
-        customerId: null,
-        deliveryPersonId: null,
-        shiftId: null,
-        total: 10500,
-        createdAt: new Date("2026-07-11T10:00:00.000Z"),
-        customer: null,
-        items: [],
-        payment: {
-          id: "pay-1",
-          orderId: "order-1",
-          method: "card",
-          amount: 10500,
-          createdAt: new Date("2026-07-11T10:00:00.000Z"),
-        },
-      }),
-      isPending: false,
-    } as any);
-
-    renderApp();
-
-    // WHEN the user adds "Café" with default "Sin hielo" and then with "Extra hielo"
-    fireEvent.click(screen.getByRole("button", { name: /agregar café/i }));
-    await waitFor(() => screen.getByRole("radiogroup", { name: /nivel de hielo/i }));
-    fireEvent.click(screen.getByRole("button", { name: /^agregar$/i }));
-    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(1));
-
-    fireEvent.click(screen.getByRole("button", { name: /agregar café/i }));
-    await waitFor(() => screen.getByRole("radiogroup", { name: /nivel de hielo/i }));
-    fireEvent.click(screen.getByLabelText(/extra hielo/i));
-    fireEvent.click(screen.getByRole("button", { name: /^agregar$/i }));
-    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(2));
-
-    // AND opens checkout and pays with card
-    fireEvent.click(screen.getByRole("button", { name: /pagar/i }));
-    const checkoutDialog = screen.getByRole("dialog", { name: /confirmar checkout/i });
-    fireEvent.click(screen.getByRole("button", { name: /tarjeta/i }));
-    const payButton = within(checkoutDialog).getByRole("button", { name: /pagar/i });
-    expect(payButton).toBeEnabled();
-    fireEvent.click(payButton);
-
-    // THEN printOrder must be called with each line's own modifiers
-    await waitFor(() => expect(mockedPrintOrder).toHaveBeenCalledTimes(1));
-    const printPayload = mockedPrintOrder.mock.calls[0][0];
-    expect(printPayload.items).toHaveLength(2);
-    expect(printPayload.items[0].modifiers).toEqual([
-      { groupName: "Nivel de hielo", optionName: "Sin hielo", textValue: null },
-    ]);
-    expect(printPayload.items[1].modifiers).toEqual([
-      { groupName: "Nivel de hielo", optionName: "Extra hielo", textValue: null },
-    ]);
-  });
-});
-
-vi.mock("sonner", () => ({
+mock.module("sonner", () => ({
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-    warning: vi.fn(),
+    success: mock(),
+    error: mock(),
+    info: mock(),
+    warning: mock(),
+    promise: mock(),
+    dismiss: mock(),
+    message: mock(),
   },
+  Toaster: () => null,
+}));
+// ── Snapshots de los módulos reales ANTES de mockearlos ──────────────────────
+// bun test corre todos los archivos en un solo proceso y mock.module no se
+// aísla entre archivos: al terminar este archivo se restauran los módulos
+// originales (ver afterAll al final de esta sección).
+import * as actualSonner from "sonner";
+import * as actualTauriCore from "@tauri-apps/api/core";
+import * as actualUseMountEffect from "@/lib/use-mount-effect";
+import * as actualUseMenus from "@/modules/menu/hooks/use-menus";
+import * as actualUseShiftReports from "@/modules/shift-reports/hooks/use-shift-reports";
+import * as actualUpdater from "@/modules/updater";
+import * as actualPrintTicket from "@/modules/checkout/components/print-ticket";
+import * as actualUsePrintCommands from "@/modules/checkout/hooks/use-print-commands";
+import * as actualUseCheckoutModule from "@/modules/checkout/hooks/use-checkout";
+
+const REAL_MODULES: ReadonlyArray<[specifier: string, exports: Record<string, unknown>]> = [
+  ["sonner", { ...actualSonner }],
+  ["@tauri-apps/api/core", { ...actualTauriCore }],
+  ["@/lib/use-mount-effect", { ...actualUseMountEffect }],
+  ["@/modules/menu/hooks/use-menus", { ...actualUseMenus }],
+  ["@/modules/shift-reports/hooks/use-shift-reports", { ...actualUseShiftReports }],
+  ["@/modules/updater", { ...actualUpdater }],
+  ["@/modules/checkout/components/print-ticket", { ...actualPrintTicket }],
+  ["@/modules/checkout/hooks/use-print-commands", { ...actualUsePrintCommands }],
+  ["@/modules/checkout/hooks/use-checkout", { ...actualUseCheckoutModule }],
+];
+
+const actualUseCheckout = { ...actualUseCheckoutModule };
+
+mock.module("@tauri-apps/api/core", () => ({
+  invoke: mock(),
 }));
 
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(),
+mock.module("@/lib/use-mount-effect", () => ({
+  useMountEffect: mock(() => undefined),
 }));
 
-vi.mock("@/lib/use-mount-effect", () => ({
-  useMountEffect: vi.fn(() => undefined),
+mock.module("@/modules/menu/hooks/use-menus", () => ({
+  useMenus: mock(() => ({ data: [], isLoading: false })),
 }));
 
-vi.mock("@/modules/menu/hooks/use-menus", () => ({
-  useMenus: vi.fn(() => ({ data: [], isLoading: false })),
+mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+  useActiveShift: mock(() => ({ data: undefined, isLoading: false })),
 }));
 
-vi.mock("@/modules/shift-reports/hooks/use-shift-reports", () => ({
-  useActiveShift: vi.fn(() => ({ data: undefined, isLoading: false })),
-}));
-
-vi.mock("@/modules/updater", () => ({
-  useUpdater: vi.fn(() => ({
+mock.module("@/modules/updater", () => ({
+  useUpdater: mock(() => ({
     status: { kind: "idle" },
     isChecking: false,
     hasUpdate: false,
     isDownloading: false,
     isReadyToInstall: false,
     error: null,
-    checkForUpdates: vi.fn(),
-    downloadAndInstall: vi.fn(),
-    relaunch: vi.fn(),
-    reset: vi.fn(),
+    checkForUpdates: mock(),
+    downloadAndInstall: mock(),
+    relaunch: mock(),
+    reset: mock(),
   })),
   UpdateToast: () => null,
 }));
 
-vi.mock("@/modules/checkout/components/print-ticket", () => ({
-  printOrder: vi.fn(() => ({
-    mapErr: vi.fn(() => undefined),
+mock.module("@/modules/checkout/components/print-ticket", () => ({
+  printOrder: mock(() => ({
+    mapErr: mock(() => undefined),
   })),
 }));
 
-vi.mock("@/modules/checkout/hooks/use-print-commands", () => ({
-  usePrintCommands: vi.fn(() => ({
-    printCommands: vi.fn().mockResolvedValue([]),
+mock.module("@/modules/checkout/hooks/use-print-commands", () => ({
+  usePrintCommands: mock(() => ({
+    printCommands: mock().mockResolvedValue([]),
   })),
 }));
 
-vi.mock("@/modules/checkout/hooks/use-checkout", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/modules/checkout/hooks/use-checkout")>();
-  return {
-    ...actual,
-    useCreateOrder: vi.fn(() => ({
-      mutateAsync: vi.fn(),
-      isPending: false,
-    })),
-  };
+mock.module("@/modules/checkout/hooks/use-checkout", () => ({
+  ...actualUseCheckout,
+  useCreateOrder: mock(() => ({
+    mutateAsync: mock(),
+    isPending: false,
+  })),
+}));
+
+afterAll(() => {
+  // Restaura los módulos reales para los archivos que corren después en el
+  // mismo proceso de bun test.
+  for (const [specifier, exports] of REAL_MODULES) {
+    mock.module(specifier, () => exports);
+  }
 });
 
 import { fireEvent, renderWithProviders, screen, waitFor, within } from "@/test/test-utils";
@@ -295,8 +208,7 @@ function mockFilteredProducts(opts: {
   categories?: Category[];
 } = { products: [] }) {
   const categories = opts.categories ?? [buildCategory()];
-  return vi
-    .spyOn(filteredProductsHook, "useFilteredProducts")
+  return spyOn(filteredProductsHook, "useFilteredProducts")
     .mockReturnValue({
       products: opts.products,
       categories,
@@ -307,7 +219,7 @@ function mockFilteredProducts(opts: {
 }
 
 function mockProductModifierGroups(groupsByProductId: Record<string, ModifierGroup[]>) {
-  return vi.spyOn(modifierGroupsHook, "useProductModifierGroupsMap").mockImplementation(
+  return spyOn(modifierGroupsHook, "useProductModifierGroupsMap").mockImplementation(
     (products: Product[]) => {
       const map: Record<string, ModifierGroup[]> = {};
       for (const product of products) {
@@ -322,9 +234,116 @@ function renderApp() {
   return renderWithProviders(<App />);
 }
 
+describe("App — print ticket modifiers", () => {
+  const mockedUseCreateOrder = useCreateOrder as Mock<typeof useCreateOrder>;
+  const mockedPrintOrder = printOrder as Mock<typeof printOrder>;
+
+  beforeEach(() => {
+    mock.restore();
+    useOrderStore.setState({ currentOrder: [] });
+    usePosStore.setState({
+      selectedCategory: "all",
+      isCheckoutOpen: false,
+      checkoutSessionKey: 0,
+      isMobileCartOpen: false,
+      isSettingsOpen: false,
+    });
+    setModifierFlag(false);
+    setComandasFlag(false);
+  });
+
+  afterEach(() => {
+    mock.clearAllMocks();
+    useOrderStore.setState({ currentOrder: [] });
+    usePosStore.setState({
+      selectedCategory: "all",
+      isCheckoutOpen: false,
+      checkoutSessionKey: 0,
+      isMobileCartOpen: false,
+      isSettingsOpen: false,
+    });
+  });
+
+  it("maps each cart line's modifiers to the correct print item when the same product has different modifiers", async () => {
+    // GIVEN modifier groups are enabled and "Café" has a single-choice group with two options
+    setModifierFlag(true);
+    const product = buildProduct({ id: "prod-cafe", name: "Café", price: 5000 });
+    mockFilteredProducts({ products: [product] });
+    mockProductModifierGroups({
+      "prod-cafe": [
+        buildGroup({
+          id: "g1",
+          name: "Nivel de hielo",
+          type: "single",
+          required: false,
+          options: [
+            buildOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+            buildOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+          ],
+        }),
+      ],
+    });
+
+    mockedUseCreateOrder.mockReturnValue({
+      mutateAsync: mock().mockResolvedValue({
+        id: "order-1",
+        ticketNumber: 42,
+        customerId: null,
+        deliveryPersonId: null,
+        shiftId: null,
+        total: 10500,
+        createdAt: new Date("2026-07-11T10:00:00.000Z"),
+        customer: null,
+        items: [],
+        payment: {
+          id: "pay-1",
+          orderId: "order-1",
+          method: "card",
+          amount: 10500,
+          createdAt: new Date("2026-07-11T10:00:00.000Z"),
+        },
+      }),
+      isPending: false,
+    } as any);
+
+    renderApp();
+
+    // WHEN the user adds "Café" with default "Sin hielo" and then with "Extra hielo"
+    fireEvent.click(screen.getByRole("button", { name: /agregar café/i }));
+    await waitFor(() => screen.getByRole("radiogroup", { name: /nivel de hielo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^agregar$/i }));
+    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(1));
+
+    fireEvent.click(screen.getByRole("button", { name: /agregar café/i }));
+    await waitFor(() => screen.getByRole("radiogroup", { name: /nivel de hielo/i }));
+    fireEvent.click(screen.getByLabelText(/extra hielo/i));
+    fireEvent.click(screen.getByRole("button", { name: /^agregar$/i }));
+    await waitFor(() => expect(useOrderStore.getState().currentOrder).toHaveLength(2));
+
+    // AND opens checkout and pays with card
+    fireEvent.click(screen.getByRole("button", { name: /pagar/i }));
+    const checkoutDialog = screen.getByRole("dialog", { name: /confirmar checkout/i });
+    fireEvent.click(screen.getByRole("button", { name: /tarjeta/i }));
+    const payButton = within(checkoutDialog).getByRole("button", { name: /pagar/i });
+    expect(payButton).toBeEnabled();
+    fireEvent.click(payButton);
+
+    // THEN printOrder must be called with each line's own modifiers
+    await waitFor(() => expect(mockedPrintOrder).toHaveBeenCalledTimes(1));
+    const printPayload = mockedPrintOrder.mock.calls[0][0];
+    expect(printPayload.items).toHaveLength(2);
+    expect(printPayload.items[0].modifiers).toEqual([
+      { groupName: "Nivel de hielo", optionName: "Sin hielo", textValue: null },
+    ]);
+    expect(printPayload.items[1].modifiers).toEqual([
+      { groupName: "Nivel de hielo", optionName: "Extra hielo", textValue: null },
+    ]);
+  });
+});
+
 describe("App — handleAddToCart wiring (Phase 7)", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mock.restore();
     useOrderStore.setState({ currentOrder: [] });
     setModifierFlag(false);
   });
@@ -504,11 +523,11 @@ describe("App — handleAddToCart wiring (Phase 7)", () => {
 });
 
 describe("App — comandas", () => {
-  const mockedUseCreateOrder = vi.mocked(useCreateOrder);
-  const mockedUsePrintCommands = vi.mocked(usePrintCommands);
+  const mockedUseCreateOrder = useCreateOrder as Mock<typeof useCreateOrder>;
+  const mockedUsePrintCommands = usePrintCommands as Mock<typeof usePrintCommands>;
 
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mock.restore();
     useOrderStore.setState({ currentOrder: [] });
     usePosStore.setState({
       selectedCategory: "all",
@@ -522,7 +541,7 @@ describe("App — comandas", () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     useOrderStore.setState({ currentOrder: [] });
     usePosStore.setState({
       selectedCategory: "all",
@@ -538,7 +557,7 @@ describe("App — comandas", () => {
 
     const kitchenPrinter = { id: "printer-kitchen", type: "network", address: "192.168.1.50:9100" };
     const barPrinter = { id: "printer-bar", type: "network", address: "192.168.1.51:9100" };
-    const mockPrintCommands = vi.fn().mockResolvedValue([]);
+    const mockPrintCommands = mock().mockResolvedValue([]);
     mockedUsePrintCommands.mockReturnValue({ printCommands: mockPrintCommands });
 
     const categories = [
@@ -550,7 +569,7 @@ describe("App — comandas", () => {
     mockFilteredProducts({ products: [taco, soda], categories });
 
     mockedUseCreateOrder.mockReturnValue({
-      mutateAsync: vi.fn().mockResolvedValue({
+      mutateAsync: mock().mockResolvedValue({
         id: "order-1",
         ticketNumber: 42,
         customerId: null,
@@ -594,7 +613,7 @@ describe("App — comandas", () => {
   it("does not print commands when flag is OFF", async () => {
     setComandasFlag(false);
 
-    const mockPrintCommands = vi.fn().mockResolvedValue([]);
+    const mockPrintCommands = mock().mockResolvedValue([]);
     mockedUsePrintCommands.mockReturnValue({ printCommands: mockPrintCommands });
 
     const category = buildCategory({ id: "cat-food", name: "Comidas", printerId: "printer-kitchen" });
@@ -602,7 +621,7 @@ describe("App — comandas", () => {
     mockFilteredProducts({ products: [taco], categories: [category] });
 
     mockedUseCreateOrder.mockReturnValue({
-      mutateAsync: vi.fn().mockResolvedValue({
+      mutateAsync: mock().mockResolvedValue({
         id: "order-1",
         ticketNumber: 1,
         customerId: null,
@@ -639,11 +658,11 @@ describe("App — comandas", () => {
 });
 
 describe("App — receipt printing flag", () => {
-  const mockedUseCreateOrder = vi.mocked(useCreateOrder);
-  const mockedPrintOrder = vi.mocked(printOrder);
+  const mockedUseCreateOrder = useCreateOrder as Mock<typeof useCreateOrder>;
+  const mockedPrintOrder = printOrder as Mock<typeof printOrder>;
 
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mock.restore();
     useOrderStore.setState({ currentOrder: [] });
     usePosStore.setState({
       selectedCategory: "all",
@@ -658,7 +677,7 @@ describe("App — receipt printing flag", () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     useOrderStore.setState({ currentOrder: [] });
     usePosStore.setState({
       selectedCategory: "all",
@@ -671,7 +690,7 @@ describe("App — receipt printing flag", () => {
   });
 
   function mockOrderCreation(overrides: Record<string, unknown> = {}) {
-    const mutateAsync = vi.fn().mockResolvedValue({
+    const mutateAsync = mock().mockResolvedValue({
       id: "order-1",
       ticketNumber: 7,
       customerId: null,

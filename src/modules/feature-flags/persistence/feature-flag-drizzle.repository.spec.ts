@@ -1,16 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 import type { FeatureFlagRow } from "@/shared/db/schema";
 
-const dbMocks = vi.hoisted(() => {
-  const selectFromMock = vi.fn<() => Promise<FeatureFlagRow[]>>();
-  const selectMock = vi.fn(() => ({ from: selectFromMock }));
+const dbMocks = (() => {
+  const selectFromMock = mock<() => Promise<FeatureFlagRow[]>>();
+  const selectMock = mock(() => ({ from: selectFromMock }));
 
-  const updateWhereMock = vi.fn<() => Promise<void>>();
-  const updateSetMock = vi.fn<(values: Partial<FeatureFlagRow>) => { where: typeof updateWhereMock }>(
+  const updateWhereMock = mock<() => Promise<void>>();
+  const updateSetMock = mock<(values: Partial<FeatureFlagRow>) => { where: typeof updateWhereMock }>(
     () => ({ where: updateWhereMock }),
   );
-  const updateMock = vi.fn(() => ({ set: updateSetMock }));
+  const updateMock = mock(() => ({ set: updateSetMock }));
 
   return {
     selectFromMock,
@@ -19,9 +19,9 @@ const dbMocks = vi.hoisted(() => {
     updateWhereMock,
     updateMock,
   };
-});
+})();
 
-vi.mock("@/shared/db/client", () => ({
+mock.module("@/shared/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     update: dbMocks.updateMock,
@@ -40,7 +40,7 @@ function buildFeatureFlagRow(overrides: Partial<FeatureFlagRow> = {}): FeatureFl
 
 describe("featureFlagDrizzleRepository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     dbMocks.updateWhereMock.mockResolvedValue(undefined);
   });
 

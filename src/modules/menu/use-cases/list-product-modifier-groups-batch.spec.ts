@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { MenuDomainError } from "@/modules/menu/domain/errors";
@@ -32,8 +32,8 @@ interface BatchInput {
 
 describe("listProductModifierGroupsBatch", () => {
   it("returns an empty map for an empty product list (no queries are issued)", async () => {
-    const listByCategoryIds = vi.fn();
-    const listByProductIds = vi.fn();
+    const listByCategoryIds = mock();
+    const listByProductIds = mock();
     const repo = { listByCategoryIds, listByProductIds } as unknown as ModifierGroupRepository;
 
     const result = await listProductModifierGroupsBatch(repo, []);
@@ -51,10 +51,10 @@ describe("listProductModifierGroupsBatch", () => {
       categoryId: "cat-A",
     }));
 
-    const listByCategoryIds = vi.fn((_ids: string[]) =>
+    const listByCategoryIds = mock((_ids: string[]) =>
       okAsync(new Map([["cat-A", [buildGroup({ id: "g-cat" })]]])),
     );
-    const listByProductIds = vi.fn((_ids: string[]) => okAsync(new Map<string, ModifierGroup[]>([])));
+    const listByProductIds = mock((_ids: string[]) => okAsync(new Map<string, ModifierGroup[]>([])));
     const repo = { listByCategoryIds, listByProductIds } as unknown as ModifierGroupRepository;
 
     const result = await listProductModifierGroupsBatch(repo, products);
@@ -73,7 +73,7 @@ describe("listProductModifierGroupsBatch", () => {
       { productId: "p2", categoryId: "cat-B" },
     ];
 
-    const listByCategoryIds = vi.fn((_ids: string[]) =>
+    const listByCategoryIds = mock((_ids: string[]) =>
       okAsync(
         new Map<string, ModifierGroup[]>([
           ["cat-A", [buildGroup({ id: "g-cat-A" })]],
@@ -81,7 +81,7 @@ describe("listProductModifierGroupsBatch", () => {
         ]),
       ),
     );
-    const listByProductIds = vi.fn((_ids: string[]) =>
+    const listByProductIds = mock((_ids: string[]) =>
       okAsync(
         new Map<string, ModifierGroup[]>([
           ["p1", [buildGroup({ id: "g-prod-p1" })]],
@@ -106,10 +106,10 @@ describe("listProductModifierGroupsBatch", () => {
     const products: BatchInput[] = [{ productId: "p1", categoryId: "cat-A" }];
 
     const sharedGroup = buildGroup({ id: "g-shared" });
-    const listByCategoryIds = vi.fn(() =>
+    const listByCategoryIds = mock(() =>
       okAsync(new Map<string, ModifierGroup[]>([["cat-A", [sharedGroup]]])),
     );
-    const listByProductIds = vi.fn(() =>
+    const listByProductIds = mock(() =>
       okAsync(new Map<string, ModifierGroup[]>([["p1", [sharedGroup]]])),
     );
     const repo = { listByCategoryIds, listByProductIds } as unknown as ModifierGroupRepository;
@@ -125,8 +125,8 @@ describe("listProductModifierGroupsBatch", () => {
   it("returns an empty array for a product whose categoryId is missing (not in the map)", async () => {
     const products: BatchInput[] = [{ productId: "p-orphan", categoryId: "cat-deleted" }];
 
-    const listByCategoryIds = vi.fn(() => okAsync(new Map<string, ModifierGroup[]>([])));
-    const listByProductIds = vi.fn(() => okAsync(new Map<string, ModifierGroup[]>([])));
+    const listByCategoryIds = mock(() => okAsync(new Map<string, ModifierGroup[]>([])));
+    const listByProductIds = mock(() => okAsync(new Map<string, ModifierGroup[]>([])));
     const repo = { listByCategoryIds, listByProductIds } as unknown as ModifierGroupRepository;
 
     const result = await listProductModifierGroupsBatch(repo, products);
@@ -138,10 +138,10 @@ describe("listProductModifierGroupsBatch", () => {
   });
 
   it("propagates the error from listByCategoryIds", async () => {
-    const listByCategoryIds = vi.fn(() =>
+    const listByCategoryIds = mock(() =>
       errAsync(new MenuDomainError("Failed to list category groups")),
     );
-    const listByProductIds = vi.fn(() => okAsync(new Map<string, ModifierGroup[]>([])));
+    const listByProductIds = mock(() => okAsync(new Map<string, ModifierGroup[]>([])));
     const repo = { listByCategoryIds, listByProductIds } as unknown as ModifierGroupRepository;
 
     const result = await listProductModifierGroupsBatch(repo, [
@@ -154,8 +154,8 @@ describe("listProductModifierGroupsBatch", () => {
   });
 
   it("propagates the error from listByProductIds", async () => {
-    const listByCategoryIds = vi.fn(() => okAsync(new Map<string, ModifierGroup[]>([])));
-    const listByProductIds = vi.fn(() =>
+    const listByCategoryIds = mock(() => okAsync(new Map<string, ModifierGroup[]>([])));
+    const listByProductIds = mock(() =>
       errAsync(new MenuDomainError("Failed to list product groups")),
     );
     const repo = { listByCategoryIds, listByProductIds } as unknown as ModifierGroupRepository;

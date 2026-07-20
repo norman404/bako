@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 
 import type { Update, DownloadEvent } from "@tauri-apps/plugin-updater";
 
@@ -17,10 +17,10 @@ function buildTauriUpdate(overrides: Partial<Update> = {}): Update {
     date: "2026-06-15T00:00:00Z",
     rawJson: {},
     available: true,
-    download: vi.fn(() => Promise.resolve()),
-    install: vi.fn(() => Promise.resolve()),
-    downloadAndInstall: vi.fn(() => Promise.resolve()),
-    close: vi.fn(() => Promise.resolve()),
+    download: mock(() => Promise.resolve()),
+    install: mock(() => Promise.resolve()),
+    downloadAndInstall: mock(() => Promise.resolve()),
+    close: mock(() => Promise.resolve()),
     ...overrides,
   } as unknown as Update;
 }
@@ -28,7 +28,7 @@ function buildTauriUpdate(overrides: Partial<Update> = {}): Update {
 describe("checkForUpdate", () => {
   it("returns update info when update is available", async () => {
     const update = buildTauriUpdate({ version: "2026.6.2", body: "Nuevas funciones" });
-    const check = vi.fn(() => Promise.resolve(update));
+    const check = mock(() => Promise.resolve(update));
 
     const result = await checkForUpdate({ check });
 
@@ -39,7 +39,7 @@ describe("checkForUpdate", () => {
   });
 
   it("returns null when no update is available", async () => {
-    const check = vi.fn(() => Promise.resolve(null));
+    const check = mock(() => Promise.resolve(null));
 
     const result = await checkForUpdate({ check });
 
@@ -47,7 +47,7 @@ describe("checkForUpdate", () => {
   });
 
   it("throws when check fails", async () => {
-    const check = vi.fn(() => Promise.reject(new Error("network error")));
+    const check = mock(() => Promise.reject(new Error("network error")));
 
     await expect(checkForUpdate({ check })).rejects.toThrow("network error");
   });
@@ -55,7 +55,7 @@ describe("checkForUpdate", () => {
 
 describe("downloadAndInstallUpdate", () => {
   it("calls downloadAndInstall on the handle", async () => {
-    const downloadAndInstall = vi.fn((_: (event: DownloadEvent) => void) => Promise.resolve());
+    const downloadAndInstall = mock((_: (event: DownloadEvent) => void) => Promise.resolve());
     const handle: UpdateHandle = {
       version: "2026.6.2",
       notes: "",
@@ -69,7 +69,7 @@ describe("downloadAndInstallUpdate", () => {
 
   it("forwards download events to progress callback", async () => {
     const events: DownloadEvent[] = [];
-    const downloadAndInstall = vi.fn((onEvent: (event: DownloadEvent) => void) => {
+    const downloadAndInstall = mock((onEvent: (event: DownloadEvent) => void) => {
       onEvent({ event: "Started", data: { contentLength: 1000 } });
       onEvent({ event: "Progress", data: { chunkLength: 500 } });
       onEvent({ event: "Finished" });
@@ -90,7 +90,7 @@ describe("downloadAndInstallUpdate", () => {
   });
 
   it("throws when download fails", async () => {
-    const downloadAndInstall = vi.fn(() => Promise.reject(new Error("download failed")));
+    const downloadAndInstall = mock(() => Promise.reject(new Error("download failed")));
     const handle: UpdateHandle = {
       version: "2026.6.2",
       notes: "",
@@ -105,7 +105,7 @@ describe("downloadAndInstallUpdate", () => {
 
 describe("relaunchApplication", () => {
   it("calls relaunch", async () => {
-    const relaunch = vi.fn(() => Promise.resolve());
+    const relaunch = mock(() => Promise.resolve());
 
     await relaunchApplication({ relaunch });
 
@@ -113,7 +113,7 @@ describe("relaunchApplication", () => {
   });
 
   it("throws when relaunch fails", async () => {
-    const relaunch = vi.fn(() => Promise.reject(new Error("relaunch failed")));
+    const relaunch = mock(() => Promise.reject(new Error("relaunch failed")));
 
     await expect(relaunchApplication({ relaunch })).rejects.toThrow("relaunch failed");
   });

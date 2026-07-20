@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { MenuDomainError } from "@/modules/menu/domain/errors";
@@ -10,7 +10,7 @@ import { assignModifierGroup } from "@/modules/menu/use-cases/assign-modifier-gr
 
 describe("assignModifierGroup", () => {
   it("delegates to repository.assign with a category target", async () => {
-    const assignSpy = vi.fn(() => okAsync(undefined));
+    const assignSpy = mock(() => okAsync(undefined));
     const mockRepository = { assign: assignSpy } as unknown as ModifierGroupRepository;
 
     const input: ModifierAssignmentInput = {
@@ -26,7 +26,7 @@ describe("assignModifierGroup", () => {
   });
 
   it("delegates to repository.assign with a product target", async () => {
-    const assignSpy = vi.fn(() => okAsync(undefined));
+    const assignSpy = mock(() => okAsync(undefined));
     const mockRepository = { assign: assignSpy } as unknown as ModifierGroupRepository;
 
     const input: ModifierAssignmentInput = {
@@ -45,7 +45,7 @@ describe("assignModifierGroup", () => {
     const validationError = new MenuDomainError(
       "Modifier assignment requires at least one of categoryId or productId",
     );
-    const assignSpy = vi.fn(() => errAsync(validationError));
+    const assignSpy = mock(() => errAsync(validationError));
     const mockRepository = { assign: assignSpy } as unknown as ModifierGroupRepository;
 
     const result = await assignModifierGroup(mockRepository, {
@@ -63,7 +63,7 @@ describe("assignModifierGroup", () => {
 
   it("propagates DB errors (duplicate PK)", async () => {
     const dbError = new MenuDomainError("Failed to assign: UNIQUE constraint failed");
-    const assignSpy = vi.fn(() => errAsync(dbError));
+    const assignSpy = mock(() => errAsync(dbError));
     const mockRepository = { assign: assignSpy } as unknown as ModifierGroupRepository;
 
     const result = await assignModifierGroup(mockRepository, {

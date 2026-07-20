@@ -1,17 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { MenuCreateInput } from "@/modules/menu/domain/ports";
 import type { MenuRow } from "@/shared/db/schema";
 
-const dbMocks = vi.hoisted(() => {
-  const selectFromMock = vi.fn<() => Promise<MenuRow[]>>();
-  const selectMock = vi.fn(() => ({ from: selectFromMock }));
+const dbMocks = (() => {
+  const selectFromMock = mock<() => Promise<MenuRow[]>>();
+  const selectMock = mock(() => ({ from: selectFromMock }));
 
-  const insertReturningMock = vi.fn<() => Promise<MenuRow[]>>();
-  const insertValuesMock = vi.fn<(values: Partial<MenuRow>) => { returning: typeof insertReturningMock }>(
+  const insertReturningMock = mock<() => Promise<MenuRow[]>>();
+  const insertValuesMock = mock<(values: Partial<MenuRow>) => { returning: typeof insertReturningMock }>(
     () => ({ returning: insertReturningMock }),
   );
-  const insertMock = vi.fn(() => ({ values: insertValuesMock }));
+  const insertMock = mock(() => ({ values: insertValuesMock }));
 
   return {
     selectFromMock,
@@ -20,9 +20,9 @@ const dbMocks = vi.hoisted(() => {
     insertValuesMock,
     insertMock,
   };
-});
+})();
 
-vi.mock("@/shared/db/client", () => ({
+mock.module("@/shared/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,
@@ -48,7 +48,7 @@ function buildMenuRow(overrides: Partial<MenuRow> = {}): MenuRow {
 
 describe("menuDrizzleRepository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     dbMocks.insertReturningMock.mockResolvedValue([]);
   });
 
@@ -98,7 +98,7 @@ describe("menuDrizzleRepository", () => {
     it("generates a UUID id and persists trimmed values", async () => {
       const generatedId = "a7f5d5d8-9d8b-45ed-8d80-6c0d6a1c6f6a";
       dbMocks.insertReturningMock.mockResolvedValueOnce([buildMenuRow({ id: generatedId })]);
-      const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+      const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
       const result = await menuDrizzleRepository.create({
         name: `  ${validInput.name}  `,
@@ -126,7 +126,7 @@ describe("menuDrizzleRepository", () => {
     it("defaults isDefault to false when not provided", async () => {
       const generatedId = "12345678-1234-1234-1234-123456789012";
       dbMocks.insertReturningMock.mockResolvedValueOnce([buildMenuRow({ id: generatedId, isDefault: false })]);
-      vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+      spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
       const result = await menuDrizzleRepository.create({
         name: validInput.name,

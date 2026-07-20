@@ -1,13 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, mock, beforeEach, type Mock } from "bun:test";
+
 import userEvent from "@testing-library/user-event";
 import { okAsync } from "neverthrow";
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { renderWithProviders, screen } from "@/test/test-utils";
 
-vi.mock("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
+mock.module("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
   featureFlagDrizzleRepository: {
-    update: vi.fn(),
+    update: mock(),
   },
 }));
 
@@ -15,7 +16,7 @@ import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistenc
 
 describe("FeatureFlagsPanel", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     useFeatureFlagsStore.setState({
       flags: { categories_enabled: false, multiple_menus_enabled: false, modifier_groups_enabled: false },
       isLoading: false,
@@ -52,7 +53,7 @@ describe("FeatureFlagsPanel", () => {
 
   it("should call mutation when toggle is clicked", async () => {
     const user = userEvent.setup();
-    vi.mocked(featureFlagDrizzleRepository.update).mockReturnValue(okAsync(undefined));
+    (featureFlagDrizzleRepository.update as Mock<typeof featureFlagDrizzleRepository.update>).mockReturnValue(okAsync(undefined));
 
     renderWithProviders(<FeatureFlagsPanel />);
 
@@ -65,7 +66,7 @@ describe("FeatureFlagsPanel", () => {
 
   it("should update UI optimistically on toggle", async () => {
     const user = userEvent.setup();
-    vi.mocked(featureFlagDrizzleRepository.update).mockReturnValue(okAsync(undefined));
+    (featureFlagDrizzleRepository.update as Mock<typeof featureFlagDrizzleRepository.update>).mockReturnValue(okAsync(undefined));
 
     renderWithProviders(<FeatureFlagsPanel />);
 

@@ -1,31 +1,26 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    }
-  });
-});
 
-vi.mock("@/modules/shift-reports/hooks/use-shift-reports", () => ({
-  useActiveShift: vi.fn(),
-  useOpenShift: vi.fn(),
-  useCloseShift: vi.fn(),
-  useShiftReport: vi.fn(() => ({ data: null, isLoading: false })),
+
+mock.module("sonner", () => ({
+  toast: {
+    success: mock(),
+    error: mock(),
+    info: mock(),
+    warning: mock(),
+    promise: mock(),
+    dismiss: mock(),
+    message: mock(),
+  },
+  Toaster: () => null,
+}));
+mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+  useActiveShift: mock(),
+  useOpenShift: mock(),
+  useCloseShift: mock(),
+  useShiftReport: mock(() => ({ data: null, isLoading: false })),
   SHIFT_QUERY_KEYS: {
     active: ["shift", "active"],
     history: ["shift", "history"],
@@ -33,20 +28,13 @@ vi.mock("@/modules/shift-reports/hooks/use-shift-reports", () => ({
   },
 }));
 
-vi.mock("@/modules/shift-reports/persistence/shift-drizzle.repository", () => ({
+mock.module("@/modules/shift-reports/persistence/shift-drizzle.repository", () => ({
   shiftDrizzleRepository: {
-    openShift: vi.fn(),
-    closeShift: vi.fn(),
-    getActive: vi.fn(),
-    listHistory: vi.fn(),
-    getReport: vi.fn(),
-  },
-}));
-
-vi.mock("sonner", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
+    openShift: mock(),
+    closeShift: mock(),
+    getActive: mock(),
+    listHistory: mock(),
+    getReport: mock(),
   },
 }));
 
@@ -55,11 +43,11 @@ import * as shiftHooks from "@/modules/shift-reports/hooks/use-shift-reports";
 import { renderWithProviders, screen, waitFor, fireEvent } from "@/test/test-utils";
 
 describe("ShiftButton", () => {
-  const mockOpenShift = vi.fn();
-  const mockCloseShift = vi.fn();
+  const mockOpenShift = mock();
+  const mockCloseShift = mock();
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   it("renders open shift button when no active shift", async () => {

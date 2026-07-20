@@ -1,28 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    }
-  });
-});
 
-vi.mock("@/modules/shift-reports/hooks/use-shift-reports", () => ({
-  useShiftReport: vi.fn(() => ({ data: null, isLoading: false })),
+mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+  useShiftReport: mock(() => ({ data: null, isLoading: false })),
   SHIFT_QUERY_KEYS: {
     active: ["shift", "active"],
     history: ["shift", "history"],
@@ -73,13 +55,13 @@ const mockReport = {
 
 describe("ShiftReportModal", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   it("renders total items sold in the metrics grid", async () => {
     (shiftHooks.useShiftReport as any).mockReturnValue({ data: mockReport, isLoading: false });
 
-    renderWithProviders(<ShiftReportModal shiftId="shift-1" open={true} onClose={vi.fn()} />);
+    renderWithProviders(<ShiftReportModal shiftId="shift-1" open={true} onClose={mock()} />);
 
     await waitFor(() => {
       expect(screen.getByText(/Productos vendidos/i)).toBeInTheDocument();
@@ -90,7 +72,7 @@ describe("ShiftReportModal", () => {
   it("renders the sales list with order totals", async () => {
     (shiftHooks.useShiftReport as any).mockReturnValue({ data: mockReport, isLoading: false });
 
-    renderWithProviders(<ShiftReportModal shiftId="shift-1" open={true} onClose={vi.fn()} />);
+    renderWithProviders(<ShiftReportModal shiftId="shift-1" open={true} onClose={mock()} />);
 
     await waitFor(() => {
       expect(screen.getByText(/Listado de ventas/i)).toBeInTheDocument();
@@ -102,7 +84,7 @@ describe("ShiftReportModal", () => {
   it("expands an order to show its items", async () => {
     (shiftHooks.useShiftReport as any).mockReturnValue({ data: mockReport, isLoading: false });
 
-    renderWithProviders(<ShiftReportModal shiftId="shift-1" open={true} onClose={vi.fn()} />);
+    renderWithProviders(<ShiftReportModal shiftId="shift-1" open={true} onClose={mock()} />);
 
     const orderRow = await screen.findByText("#1");
     fireEvent.click(orderRow);

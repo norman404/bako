@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type {
   ModifierAssignmentInput,
@@ -11,20 +11,20 @@ import type {
   ProductModifierGroupRow,
 } from "@/shared/db/schema";
 
-const dbMocks = vi.hoisted(() => {
-  const selectMock = vi.fn<any>();
+const dbMocks = (() => {
+  const selectMock = mock<any>();
 
-  const insertReturningMock = vi.fn<any>(() => Promise.resolve([]));
-  const insertValuesMock = vi.fn<any>(() => ({ returning: insertReturningMock }));
-  const insertMock = vi.fn(() => ({ values: insertValuesMock }));
+  const insertReturningMock = mock<any>(() => Promise.resolve([]));
+  const insertValuesMock = mock<any>(() => ({ returning: insertReturningMock }));
+  const insertMock = mock(() => ({ values: insertValuesMock }));
 
-  const updateReturningMock = vi.fn<any>(() => Promise.resolve([]));
-  const updateWhereMock = vi.fn(() => ({ returning: updateReturningMock }));
-  const updateSetMock = vi.fn<any>(() => ({ where: updateWhereMock }));
-  const updateMock = vi.fn(() => ({ set: updateSetMock }));
+  const updateReturningMock = mock<any>(() => Promise.resolve([]));
+  const updateWhereMock = mock(() => ({ returning: updateReturningMock }));
+  const updateSetMock = mock<any>(() => ({ where: updateWhereMock }));
+  const updateMock = mock(() => ({ set: updateSetMock }));
 
-  const deleteWhereMock = vi.fn<any>(() => Promise.resolve());
-  const deleteMock = vi.fn(() => ({ where: deleteWhereMock }));
+  const deleteWhereMock = mock<any>(() => Promise.resolve());
+  const deleteMock = mock(() => ({ where: deleteWhereMock }));
 
   return {
     selectMock,
@@ -38,9 +38,9 @@ const dbMocks = vi.hoisted(() => {
     deleteWhereMock,
     deleteMock,
   };
-});
+})();
 
-vi.mock("@/shared/db/client", () => ({
+mock.module("@/shared/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,
@@ -100,8 +100,8 @@ function selectChain(rows: unknown) {
   return {
     from: () => ({
       where: () => ({
-        orderBy: vi.fn(() => Promise.resolve(rows)),
-        limit: vi.fn(() => Promise.resolve(rows)),
+        orderBy: mock(() => Promise.resolve(rows)),
+        limit: mock(() => Promise.resolve(rows)),
       }),
     }),
   };
@@ -111,14 +111,14 @@ function selectChain(rows: unknown) {
 function selectColumnChain(rows: unknown) {
   return {
     from: () => ({
-      where: vi.fn(() => Promise.resolve(rows)),
+      where: mock(() => Promise.resolve(rows)),
     }),
   };
 }
 
 describe("modifierGroupDrizzleRepository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     dbMocks.insertReturningMock.mockResolvedValue([]);
     dbMocks.updateReturningMock.mockResolvedValue([]);
     dbMocks.deleteWhereMock.mockResolvedValue(undefined);
@@ -128,7 +128,7 @@ describe("modifierGroupDrizzleRepository", () => {
 
   it("create inserts group row then option rows and returns the assembled group", async () => {
     const generatedId = "11111111-1111-4111-8111-111111111111";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const groupRow = buildGroupRow({ id: generatedId });
     dbMocks.insertReturningMock.mockResolvedValueOnce([groupRow]);
@@ -168,7 +168,7 @@ describe("modifierGroupDrizzleRepository", () => {
 
   it("create triangulates: a group with a single option is persisted correctly", async () => {
     const generatedId = "22222222-2222-4222-8222-222222222222";
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const groupRow = buildGroupRow({ id: generatedId, name: "Comentarios", type: "text", required: true });
     dbMocks.insertReturningMock.mockResolvedValueOnce([groupRow]);
@@ -603,7 +603,7 @@ describe("modifierGroupDrizzleRepository", () => {
     dbMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         where: () => ({
-          limit: vi.fn(() => Promise.resolve([groupRow])),
+          limit: mock(() => Promise.resolve([groupRow])),
         }),
       }),
     });
@@ -629,7 +629,7 @@ describe("modifierGroupDrizzleRepository", () => {
     dbMocks.selectMock.mockReturnValueOnce({
       from: () => ({
         where: () => ({
-          limit: vi.fn(() => Promise.resolve([])),
+          limit: mock(() => Promise.resolve([])),
         }),
       }),
     });

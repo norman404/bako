@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { okAsync } from "neverthrow";
 
 import type { ModifierGroupRepository } from "@/modules/menu/domain/ports";
@@ -8,7 +8,7 @@ import { listProductAssignments } from "@/modules/menu/use-cases/list-product-as
 describe("listCategoryAssignments", () => {
   it("returns a Set of groupIds assigned to each categoryId", async () => {
     const repo = {
-      listCategoryAssignments: vi.fn(() =>
+      listCategoryAssignments: mock(() =>
         okAsync(new Map<string, Set<string>>([
           ["cat-bebidas", new Set(["g1", "g2"])],
           ["cat-comidas", new Set(["g1"])],
@@ -31,7 +31,7 @@ describe("listCategoryAssignments", () => {
 describe("listProductAssignments", () => {
   it("returns a Set of groupIds assigned to each productId", async () => {
     const repo = {
-      listProductAssignments: vi.fn(() =>
+      listProductAssignments: mock(() =>
         okAsync(new Map<string, Set<string>>([
           ["prod-1", new Set(["g1"])],
           ["prod-2", new Set([])],

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, spyOn, beforeEach } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
@@ -55,13 +55,13 @@ function createWrapper() {
 
 describe("useProductModifierGroupsMap (batch)", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mock.restore();
   });
 
   it("issues at most 1 call to the batch use-case regardless of product count", async () => {
-    const batchSpy = vi
-      .spyOn(batchUseCase, "listProductModifierGroupsBatch")
-      .mockReturnValue(okAsync({}));
+    const batchSpy = spyOn(batchUseCase, "listProductModifierGroupsBatch").mockReturnValue(
+      okAsync({}),
+    );
 
     const products = Array.from({ length: 50 }, (_, i) =>
       buildProduct({ id: `p${i}`, categoryId: i % 2 === 0 ? "cat-A" : "cat-B" }),
@@ -83,7 +83,7 @@ describe("useProductModifierGroupsMap (batch)", () => {
   });
 
   it("pre-fills the returned map with empty arrays for every input product", async () => {
-    vi.spyOn(batchUseCase, "listProductModifierGroupsBatch").mockReturnValue(
+    spyOn(batchUseCase, "listProductModifierGroupsBatch").mockReturnValue(
       okAsync({
         p1: [buildGroup("g1")],
         // p2 missing from result
@@ -111,11 +111,11 @@ describe("useProductModifierGroupsMap (batch)", () => {
   it("calls the batch use-case with the real drizzle repository (DI is wired correctly)", async () => {
     // Spy on the repository method that the batch use-case internally calls.
     // We just verify that the wiring is correct: the hook → use-case → repo path.
-    const repoSpy = vi
-      .spyOn(modifierGroupDrizzleRepository, "listByCategoryIds")
-      .mockReturnValue(okAsync(new Map()));
+    const repoSpy = spyOn(modifierGroupDrizzleRepository, "listByCategoryIds").mockReturnValue(
+      okAsync(new Map()),
+    );
 
-    vi.spyOn(modifierGroupDrizzleRepository, "listByProductIds").mockReturnValue(
+    spyOn(modifierGroupDrizzleRepository, "listByProductIds").mockReturnValue(
       okAsync(new Map()),
     );
 

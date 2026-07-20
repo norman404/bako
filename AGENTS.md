@@ -39,8 +39,10 @@ Feature flags viven en la tabla `feature_flags` (SQLite); defaults en `src/modul
 
 ## Testing y TDD
 
-- Vitest para unit tests (`.spec.ts`); Testing Library para DOM (`.dom.spec.tsx`, config en `vitest.dom.config.ts`).
-- Correr: `bun run test` / `bun run test:dom` (NUNCA `bun test` — es el runner nativo de Bun, no Vitest).
+- `bun:test` nativo para unit tests (`.spec.ts`) y DOM (`.dom.spec.tsx`).
+- Setup global en `bunfig.toml` → `src/test/setup-bun.ts`: happy-dom, jest-dom matchers, ResizeObserver polyfill, `clearMocks` y `cleanup`.
+- Runner custom en `scripts/run-tests.ts` porque `bun test` aplana `mock.module()` a nivel global cuando varios specs corren en el mismo proceso; el runner ejecuta cada spec en su propio `bun test <file>` para mantener el aislamiento que daba Vitest.
+- Correr: `bun run test` (todos), `bun run test:dom` (solo `.dom.spec.tsx`), `bun run test:node` (solo `.spec.ts`).
 - **TDD estricto es mandatorio** (ver `CONTRIBUTING.md`): RED (test del comportamiento nuevo, debe fallar) → GREEN (código mínimo) → REFACTOR (limpiar en verde).
 - Al refactorizar UI: no modifiques tests viejos — agregá un `describe` nuevo al final y mantené los mismos `data-testid` / `getByRole` / `getByLabelText`.
 - `src/shared/i18n/locale-completeness.spec.ts` es guard permanente: toda key nueva en `es-MX` debe propagarse a los otros 4 locales o el test falla.
@@ -49,11 +51,10 @@ Feature flags viven en la tabla `feature_flags` (SQLite); defaults en `src/modul
 
 ## Tooling: Bun
 
-El proyecto usa **Bun** (>=1.3) como package manager y como runtime de vite/tsc (scripts `dev`/`build`/`preview` con `bunx --bun`). **Vitest corre bajo Node a propósito** (bug [oven-sh/bun#27002](https://github.com/oven-sh/bun/issues/27002) — workers de vitest colgados bajo runtime Bun en CI Linux), por eso `test`/`test:dom` son `vitest run` sin `--bun`.
+El proyecto usa **Bun** (>=1.3) como package manager y como runtime de vite/tsc (scripts `dev`/`build`/`preview` con `bunx --bun`). Los tests corren con `bun:test` nativo, orquestados por `scripts/run-tests.ts` para aislar cada spec en su propio proceso.
 
-**Anti-patrones:**
-- NO introducir `bunfig.toml` con `[run] bun = true` — forzaría vitest a runtime Bun y rompería CI.
-- NO usar `bun test` — invoca el test runner nativo de Bun sobre specs de Vitest y falla; siempre `bun run test`.
+**Anti-patrón:**
+- NO introducir `bunfig.toml` con `[run] bun = true` — forzaría que todo corra con Bun de formas inesperadas. La sección `[test].preload` es la única permitida.
 
 ---
 

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, mock, beforeEach, type Mock } from "bun:test";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { okAsync, errAsync } from "neverthrow";
@@ -7,13 +7,15 @@ import { useUpdateFeatureFlag } from "./use-update-feature-flag";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
 
-vi.mock("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
+mock.module("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
   featureFlagDrizzleRepository: {
-    update: vi.fn(),
+    update: mock(),
   },
 }));
 
 import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+
+const updateMock = featureFlagDrizzleRepository.update as Mock<typeof featureFlagDrizzleRepository.update>;
 
 describe("useUpdateFeatureFlag", () => {
   function createWrapper() {
@@ -29,7 +31,7 @@ describe("useUpdateFeatureFlag", () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     useFeatureFlagsStore.setState({
       flags: { categories_enabled: false, multiple_menus_enabled: false },
       isLoading: false,
@@ -37,7 +39,7 @@ describe("useUpdateFeatureFlag", () => {
   });
 
   it("should update feature flag and invalidate query", async () => {
-    vi.mocked(featureFlagDrizzleRepository.update).mockReturnValue(okAsync(undefined));
+    updateMock.mockReturnValue(okAsync(undefined));
 
     const { result } = renderHook(() => useUpdateFeatureFlag(), { wrapper: createWrapper() });
 
@@ -52,7 +54,7 @@ describe("useUpdateFeatureFlag", () => {
   });
 
   it("should rollback on error", async () => {
-    vi.mocked(featureFlagDrizzleRepository.update).mockReturnValue(
+    updateMock.mockReturnValue(
       errAsync(new FeatureFlagPersistenceError("Update failed")),
     );
 
@@ -69,7 +71,7 @@ describe("useUpdateFeatureFlag", () => {
   });
 
   it("should perform optimistic update", async () => {
-    vi.mocked(featureFlagDrizzleRepository.update).mockImplementation(
+    updateMock.mockImplementation(
       () =>
         new Promise((resolve) => {
           setTimeout(() => resolve(okAsync(undefined) as any), 100);

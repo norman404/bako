@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 import { useFeatureFlagsStore } from "./feature-flags-store";
 
 // Mock the repository module
-vi.mock("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
+mock.module("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
   featureFlagDrizzleRepository: {
-    list: vi.fn(),
-    update: vi.fn(),
+    list: mock(),
+    update: mock(),
   },
 }));
 
@@ -13,7 +13,7 @@ import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistenc
 
 describe("useFeatureFlagsStore", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     // Reset store state
       useFeatureFlagsStore.setState({
         flags: { categories_enabled: false, multiple_menus_enabled: false, delivery_enabled: false, shift_management_enabled: false, auto_update_enabled: true, modifier_groups_enabled: false, comandas_enabled: false, receipt_printing_enabled: true },

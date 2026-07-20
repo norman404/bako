@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import { buildKitchenCommands } from "./build-kitchen-commands";
 import type { Printer } from "@/modules/printer/domain/printer";

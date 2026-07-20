@@ -105,8 +105,9 @@ bun run tauri dev
 | `bun run preview`    | Preview the production build locally         |
 | `bun run tauri dev`  | Run as a Tauri desktop app (development)     |
 | `bun run tauri build`| Build the desktop app for production         |
-| `bun run test`       | Run unit tests (Vitest)                      |
-| `bun run test:dom`   | Run DOM tests (Testing Library + jsdom)     |
+| `bun run test`       | Run tests (`bun:test` via `scripts/run-tests.ts`) |
+| `bun run test:node`  | Run unit tests (`.spec.ts`)                  |
+| `bun run test:dom`   | Run DOM tests (`.dom.spec.tsx` + happy-dom)  |
 
 ### Workflow
 

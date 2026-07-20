@@ -1,32 +1,33 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { DeliveryPersonCreateInput } from "@/modules/delivery/domain/ports";
 import type { DeliveryPersonRow } from "@/shared/db/schema";
 
-const dbMocks = vi.hoisted(() => {
-  const selectLimitMock = vi.fn<any>(() => Promise.resolve([]));
-  const selectWhereMock = vi.fn<any>(() => ({ limit: selectLimitMock }));
-  const selectGroupByMock = vi.fn<any>(() => Promise.resolve([]));
-  const innerJoinWhereMock = vi.fn<any>(() => ({ groupBy: selectGroupByMock }));
-  const selectMock = vi.fn<any>(() => ({
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const dbMocks = (() => {
+  const selectLimitMock = mock<any>(() => Promise.resolve([]));
+  const selectWhereMock = mock<any>(() => ({ limit: selectLimitMock }));
+  const selectGroupByMock = mock<any>(() => Promise.resolve([]));
+  const innerJoinWhereMock = mock<any>(() => ({ groupBy: selectGroupByMock }));
+  const selectMock = mock<any>(() => ({
     from: () => ({
       where: selectWhereMock,
       innerJoin: () => ({ where: innerJoinWhereMock }),
     }),
   }));
 
-  const insertReturningMock = vi.fn<() => Promise<DeliveryPersonRow[]>>();
-  const insertValuesMock = vi.fn<(values: Partial<DeliveryPersonRow>) => { returning: typeof insertReturningMock }>(
+  const insertReturningMock = mock<() => Promise<DeliveryPersonRow[]>>();
+  const insertValuesMock = mock<(values: Partial<DeliveryPersonRow>) => { returning: typeof insertReturningMock }>(
     () => ({ returning: insertReturningMock }),
   );
-  const insertMock = vi.fn(() => ({ values: insertValuesMock }));
+  const insertMock = mock(() => ({ values: insertValuesMock }));
 
-  const updateReturningMock = vi.fn<() => Promise<(DeliveryPersonRow | { id: string })[]>>();
-  const updateWhereMock = vi.fn(() => ({ returning: updateReturningMock }));
-  const updateSetMock = vi.fn<(values: Partial<DeliveryPersonRow>) => { where: typeof updateWhereMock }>(
+  const updateReturningMock = mock<() => Promise<(DeliveryPersonRow | { id: string })[]>>();
+  const updateWhereMock = mock(() => ({ returning: updateReturningMock }));
+  const updateSetMock = mock<(values: Partial<DeliveryPersonRow>) => { where: typeof updateWhereMock }>(
     () => ({ where: updateWhereMock }),
   );
-  const updateMock = vi.fn(() => ({ set: updateSetMock }));
+  const updateMock = mock(() => ({ set: updateSetMock }));
 
   return {
     selectLimitMock,
@@ -42,9 +43,10 @@ const dbMocks = vi.hoisted(() => {
     updateSetMock,
     updateMock,
   };
-});
+})();
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
-vi.mock("@/shared/db/client", () => ({
+mock.module("@/shared/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,
@@ -75,7 +77,7 @@ function buildDeliveryPersonRow(overrides: Partial<DeliveryPersonRow> = {}): Del
 
 describe("deliveryPersonDrizzleRepository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     dbMocks.insertReturningMock.mockResolvedValue([]);
   });
 
@@ -84,7 +86,7 @@ describe("deliveryPersonDrizzleRepository", () => {
   it("create generates a UUID id and persists trimmed values", async () => {
     const generatedId = "a7f5d5d8-9d8b-45ed-8d80-6c0d6a1c6f6a";
     dbMocks.insertReturningMock.mockResolvedValueOnce([buildDeliveryPersonRow({ id: generatedId })]);
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const result = await deliveryPersonDrizzleRepository.create({
       name: `  ${validInput.name}  `,
@@ -146,7 +148,7 @@ describe("deliveryPersonDrizzleRepository", () => {
     dbMocks.insertReturningMock.mockResolvedValueOnce([
       buildDeliveryPersonRow({ id: generatedId, color: "#FFF" }),
     ]);
-    vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const result = await deliveryPersonDrizzleRepository.create({
       name: "Ana López",
@@ -168,8 +170,8 @@ describe("deliveryPersonDrizzleRepository", () => {
 
     dbMocks.selectMock.mockReturnValueOnce({
       from: () => ({
-        where: vi.fn(() => Promise.resolve([active1, active2])),
-        innerJoin: vi.fn(),
+        where: mock(() => Promise.resolve([active1, active2])),
+        innerJoin: mock(),
       }),
     });
 
@@ -188,8 +190,8 @@ describe("deliveryPersonDrizzleRepository", () => {
   it("list returns empty array when no active delivery persons", async () => {
     dbMocks.selectMock.mockReturnValueOnce({
       from: () => ({
-        where: vi.fn(() => Promise.resolve([])),
-        innerJoin: vi.fn(),
+        where: mock(() => Promise.resolve([])),
+        innerJoin: mock(),
       }),
     });
 

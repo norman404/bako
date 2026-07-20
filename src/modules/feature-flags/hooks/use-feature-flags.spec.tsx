@@ -1,5 +1,5 @@
 import * as React from "react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, mock, type Mock } from "bun:test";
 import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { okAsync, errAsync } from "neverthrow";
@@ -7,13 +7,15 @@ import { useFeatureFlags } from "./use-feature-flags";
 import type { FeatureFlag } from "@/modules/feature-flags/domain/feature-flag";
 import { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
 
-vi.mock("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
+mock.module("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
   featureFlagDrizzleRepository: {
-    list: vi.fn(),
+    list: mock(),
   },
 }));
 
 import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+
+const listMock = featureFlagDrizzleRepository.list as Mock<typeof featureFlagDrizzleRepository.list>;
 
 describe("useFeatureFlags", () => {
   function createWrapper() {
@@ -33,7 +35,7 @@ describe("useFeatureFlags", () => {
       { key: "multiple_menus_enabled", value: false, updatedAt: new Date() },
     ];
 
-    vi.mocked(featureFlagDrizzleRepository.list).mockReturnValue(okAsync(mockFlags));
+    listMock.mockReturnValue(okAsync(mockFlags));
 
     const { result } = renderHook(() => useFeatureFlags(), { wrapper: createWrapper() });
 
@@ -43,7 +45,7 @@ describe("useFeatureFlags", () => {
   });
 
   it("should handle errors", async () => {
-    vi.mocked(featureFlagDrizzleRepository.list).mockReturnValue(
+    listMock.mockReturnValue(
       errAsync(new FeatureFlagPersistenceError("Failed to load")),
     );
 

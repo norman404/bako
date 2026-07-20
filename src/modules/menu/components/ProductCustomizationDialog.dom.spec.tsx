@@ -1,25 +1,7 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === "default" || prop === "__esModule" || typeof prop !== "string") {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    },
-  });
-});
 
 import { fireEvent, renderWithProviders, screen, within } from "@/test/test-utils";
 import {
@@ -84,8 +66,8 @@ function renderDialog(props: Partial<ProductCustomizationDialogProps> = {}) {
     product: buildProduct(),
     groups: [],
     open: true,
-    onConfirm: vi.fn(),
-    onClose: vi.fn(),
+    onConfirm: mock(),
+    onClose: mock(),
   };
   const merged = { ...defaultProps, ...props };
   return renderWithProviders(<ProductCustomizationDialog {...merged} />);
@@ -93,7 +75,7 @@ function renderDialog(props: Partial<ProductCustomizationDialogProps> = {}) {
 
 describe("ProductCustomizationDialog", () => {
   beforeEach(() => {
-    vi.restoreAllMocks();
+    mock.restore();
   });
 
   describe("rendering by group type", () => {
@@ -505,7 +487,7 @@ describe("ProductCustomizationDialog", () => {
           buildOption({ id: "opt-extra", groupId: "grp-confirm-single", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
         ],
       });
-      const onConfirm = vi.fn();
+      const onConfirm = mock();
 
       renderDialog({ product, groups: [group], onConfirm });
 
@@ -534,7 +516,7 @@ describe("ProductCustomizationDialog", () => {
           buildOption({ id: "opt-extra", groupId: "grp-confirm-change", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
         ],
       });
-      const onConfirm = vi.fn();
+      const onConfirm = mock();
 
       renderDialog({ product, groups: [group], onConfirm });
 
@@ -557,7 +539,7 @@ describe("ProductCustomizationDialog", () => {
         type: "text",
         options: [],
       });
-      const onConfirm = vi.fn();
+      const onConfirm = mock();
 
       renderDialog({ product, groups: [group], onConfirm });
 
@@ -579,7 +561,7 @@ describe("ProductCustomizationDialog", () => {
 
     it("calls onClose when cancel/close button clicked", () => {
       const group = buildGroup({ id: "grp-close", name: "Nivel de hielo", type: "single" });
-      const onClose = vi.fn();
+      const onClose = mock();
 
       renderDialog({ groups: [group], onClose });
 

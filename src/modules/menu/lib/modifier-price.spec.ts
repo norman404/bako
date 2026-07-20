@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
 import type { Product } from "@/modules/menu/domain/product";

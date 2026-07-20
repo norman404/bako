@@ -1,13 +1,14 @@
-import { describe, expect, it, vi, type Mock } from "vitest";
+import { describe, expect, it, mock, type Mock } from "bun:test";
 
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn(),
+mock.module("@tauri-apps/api/core", () => ({
+  invoke: mock(),
 }));
 
 import { invoke } from "@tauri-apps/api/core";
 import { testPrinter } from "./test-printer.adapter";
 
-const mockedInvoke = invoke as Mock;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockedInvoke = invoke as Mock<(...args: any[]) => any>;
 
 describe("testPrinter adapter", () => {
   it("invokes test_printer with type and address", async () => {

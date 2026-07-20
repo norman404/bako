@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { CategoryCreateInput } from "@/modules/menu/domain/ports";
 import type { CategoryRow } from "@/shared/db/schema";
 
-const dbMocks = vi.hoisted(() => {
-  const selectLimitMock = vi.fn<any>(() => Promise.resolve([]));
-  const selectWhereMock = vi.fn<any>(() => ({ limit: selectLimitMock }));
-  const selectOrderByMock = vi.fn<any>(() => ({ where: selectWhereMock }));
+const dbMocks = (() => {
+  const selectLimitMock = mock<any>(() => Promise.resolve([]));
+  const selectWhereMock = mock<any>(() => ({ limit: selectLimitMock }));
+  const selectOrderByMock = mock<any>(() => ({ where: selectWhereMock }));
   // Support for: selectDistinct().from().innerJoin().where()
-  const innerJoinWhereMock = vi.fn<any>(() => Promise.resolve([]));
-  const selectMock = vi.fn<any>(() => ({
+  const innerJoinWhereMock = mock<any>(() => Promise.resolve([]));
+  const selectMock = mock<any>(() => ({
     from: () => ({
       where: selectWhereMock,
       orderBy: selectOrderByMock,
@@ -17,18 +17,18 @@ const dbMocks = vi.hoisted(() => {
     }),
   }));
 
-  const insertReturningMock = vi.fn<() => Promise<CategoryRow[]>>();
-  const insertValuesMock = vi.fn<(values: Partial<CategoryRow>) => { returning: typeof insertReturningMock }>(
+  const insertReturningMock = mock<() => Promise<CategoryRow[]>>();
+  const insertValuesMock = mock<(values: Partial<CategoryRow>) => { returning: typeof insertReturningMock }>(
     () => ({ returning: insertReturningMock }),
   );
-  const insertMock = vi.fn(() => ({ values: insertValuesMock }));
+  const insertMock = mock(() => ({ values: insertValuesMock }));
 
-  const updateReturningMock = vi.fn<() => Promise<CategoryRow[]>>();
-  const updateWhereMock = vi.fn(() => ({ returning: updateReturningMock }));
-  const updateSetMock = vi.fn<(values: Partial<CategoryRow>) => { where: typeof updateWhereMock }>(
+  const updateReturningMock = mock<() => Promise<CategoryRow[]>>();
+  const updateWhereMock = mock(() => ({ returning: updateReturningMock }));
+  const updateSetMock = mock<(values: Partial<CategoryRow>) => { where: typeof updateWhereMock }>(
     () => ({ where: updateWhereMock }),
   );
-  const updateMock = vi.fn(() => ({ set: updateSetMock }));
+  const updateMock = mock(() => ({ set: updateSetMock }));
 
   return {
     selectLimitMock,
@@ -44,9 +44,9 @@ const dbMocks = vi.hoisted(() => {
     updateSetMock,
     updateMock,
   };
-});
+})();
 
-vi.mock("@/shared/db/client", () => ({
+mock.module("@/shared/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,
@@ -79,14 +79,14 @@ function buildCategoryRow(overrides: Partial<CategoryRow> = {}): CategoryRow {
 
 describe("categoryDrizzleRepository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     dbMocks.insertReturningMock.mockResolvedValue([]);
   });
 
   it("create generates a UUID id and persists trimmed values", async () => {
     const generatedId = "a7f5d5d8-9d8b-45ed-8d80-6c0d6a1c6f6a";
     dbMocks.insertReturningMock.mockResolvedValueOnce([buildCategoryRow({ id: generatedId })]);
-    const randomUuidSpy = vi.spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
+    const randomUuidSpy = spyOn(globalThis.crypto, "randomUUID").mockReturnValue(generatedId);
 
     const result = await categoryDrizzleRepository.create({
       name: `  ${validInput.name}  `,
@@ -146,8 +146,8 @@ describe("categoryDrizzleRepository", () => {
 
     dbMocks.selectMock.mockReturnValueOnce({
       from: () => ({
-        where: vi.fn(() => Promise.resolve([category1, category2])),
-        orderBy: vi.fn(),
+        where: mock(() => Promise.resolve([category1, category2])),
+        orderBy: mock(),
       }),
     });
 

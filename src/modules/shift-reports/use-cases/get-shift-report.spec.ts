@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { okAsync, errAsync } from "neverthrow";
 import { getShiftReport } from "./get-shift-report";
 import type { ShiftRepository } from "../domain/ports";
@@ -7,11 +7,11 @@ import { ShiftPersistenceError } from "../domain/errors";
 
 function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
   return {
-    openShift: vi.fn(() => okAsync({} as Shift)),
-    closeShift: vi.fn(() => okAsync({} as Shift)),
-    getActive: vi.fn(() => okAsync(null)),
-    listHistory: vi.fn(() => okAsync([])),
-    getReport: vi.fn(() => okAsync({} as any)),
+    openShift: mock(() => okAsync({} as Shift)),
+    closeShift: mock(() => okAsync({} as Shift)),
+    getActive: mock(() => okAsync(null)),
+    listHistory: mock(() => okAsync([])),
+    getReport: mock(() => okAsync({} as any)),
     ...overrides,
   };
 }
@@ -46,7 +46,7 @@ describe("getShiftReport use-case", () => {
       orders: [order],
     };
     const repo = buildRepo({
-      getReport: vi.fn(() => okAsync(report)),
+      getReport: mock(() => okAsync(report)),
     });
 
     const result = await getShiftReport(repo, "shift-1");
@@ -61,7 +61,7 @@ describe("getShiftReport use-case", () => {
 
   it("forwards repository errors", async () => {
     const repo = buildRepo({
-      getReport: vi.fn(() => errAsync(new ShiftPersistenceError("dbError", { context: "DB error" }))),
+      getReport: mock(() => errAsync(new ShiftPersistenceError("dbError", { context: "DB error" }))),
     });
 
     const result = await getShiftReport(repo, "shift-1");

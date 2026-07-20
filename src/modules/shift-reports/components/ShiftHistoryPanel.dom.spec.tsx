@@ -1,29 +1,11 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    }
-  });
-});
 
-vi.mock("@/modules/shift-reports/hooks/use-shift-reports", () => ({
-  useShiftHistory: vi.fn(),
-  useShiftReport: vi.fn(() => ({ data: null, isLoading: false })),
+mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+  useShiftHistory: mock(),
+  useShiftReport: mock(() => ({ data: null, isLoading: false })),
   SHIFT_QUERY_KEYS: {
     active: ["shift", "active"],
     history: ["shift", "history"],
@@ -37,7 +19,7 @@ import { renderWithProviders, screen, waitFor, fireEvent } from "@/test/test-uti
 
 describe("ShiftHistoryPanel", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   it("renders empty state when no shifts", async () => {

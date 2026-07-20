@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach } from "bun:test";
 import { formatPosCurrency, sortStrings } from "@/lib/currency";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { DEFAULT_CURRENCY_CONFIG } from "@/lib/currency-config";

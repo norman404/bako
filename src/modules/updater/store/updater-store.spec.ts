@@ -1,10 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach, type Mock } from "bun:test";
 import type { DownloadEvent } from "@tauri-apps/plugin-updater";
 
-vi.mock("@/modules/updater/adapters/tauri-updater.adapter", () => ({
-  checkForUpdate: vi.fn(),
-  downloadAndInstallUpdate: vi.fn(),
-  relaunchApplication: vi.fn(),
+mock.module("@/modules/updater/adapters/tauri-updater.adapter", () => ({
+  checkForUpdate: mock(),
+  downloadAndInstallUpdate: mock(),
+  relaunchApplication: mock(),
 }));
 
 import {
@@ -23,10 +23,14 @@ import {
 } from "@/modules/updater/domain/update-status";
 import { useUpdaterStore } from "./updater-store";
 
+const checkForUpdateMock = checkForUpdate as Mock<typeof checkForUpdate>;
+const downloadAndInstallUpdateMock = downloadAndInstallUpdate as Mock<typeof downloadAndInstallUpdate>;
+const relaunchApplicationMock = relaunchApplication as Mock<typeof relaunchApplication>;
+
 function buildHandle(
   overrides: Partial<UpdateHandle> = {},
-): { handle: UpdateHandle; downloadAndInstall: ReturnType<typeof vi.fn> } {
-  const downloadAndInstall = vi.fn((_onEvent: (event: DownloadEvent) => void) => Promise.resolve());
+): { handle: UpdateHandle; downloadAndInstall: ReturnType<typeof mock> } {
+  const downloadAndInstall = mock((_onEvent: (event: DownloadEvent) => void) => Promise.resolve());
   const handle: UpdateHandle = {
     version: "2026.6.2",
     notes: "",
@@ -42,7 +46,7 @@ function resetStore() {
 
 describe("useUpdaterStore", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
     resetStore();
   });
 
@@ -53,7 +57,7 @@ describe("useUpdaterStore", () => {
 
     it("sets checking status while the check is in progress", async () => {
       let resolveCheck: (value: { version: string; notes: string; handle: UpdateHandle } | null) => void = () => undefined;
-      vi.mocked(checkForUpdate).mockReturnValue(
+      checkForUpdateMock.mockReturnValue(
         new Promise((resolve) => {
           resolveCheck = resolve;
         }),
@@ -71,7 +75,7 @@ describe("useUpdaterStore", () => {
 
     it("sets available status when an update is found", async () => {
       const { handle } = buildHandle();
-      vi.mocked(checkForUpdate).mockResolvedValue({
+      checkForUpdateMock.mockResolvedValue({
         version: "2026.6.2",
         notes: "Bug fixes",
         handle,
@@ -85,7 +89,7 @@ describe("useUpdaterStore", () => {
     });
 
     it("clears the handle and goes idle when no update is available", async () => {
-      vi.mocked(checkForUpdate).mockResolvedValue(null);
+      checkForUpdateMock.mockResolvedValue(null);
 
       await useUpdaterStore.getState().checkForUpdates();
 
@@ -94,7 +98,7 @@ describe("useUpdaterStore", () => {
     });
 
     it("sets error status when the check fails", async () => {
-      vi.mocked(checkForUpdate).mockRejectedValue(new Error("check failed"));
+      checkForUpdateMock.mockRejectedValue(new Error("check failed"));
 
       await useUpdaterStore.getState().checkForUpdates();
 
@@ -113,7 +117,7 @@ describe("useUpdaterStore", () => {
 
     it("tracks download progress and ends ready to install", async () => {
       const { handle } = buildHandle({
-        downloadAndInstall: vi.fn((onEvent: (event: DownloadEvent) => void) => {
+        downloadAndInstall: mock((onEvent: (event: DownloadEvent) => void) => {
           onEvent({ event: "Started", data: { contentLength: 1000 } });
           onEvent({ event: "Progress", data: { chunkLength: 300 } });
           onEvent({ event: "Progress", data: { chunkLength: 200 } });
@@ -122,8 +126,8 @@ describe("useUpdaterStore", () => {
           return Promise.resolve();
         }),
       });
-      vi.mocked(checkForUpdate).mockResolvedValue({ version: "2026.6.2", notes: "", handle });
-      vi.mocked(downloadAndInstallUpdate).mockImplementation(
+      checkForUpdateMock.mockResolvedValue({ version: "2026.6.2", notes: "", handle });
+      downloadAndInstallUpdateMock.mockImplementation(
         async (targetHandle: UpdateHandle, onEvent: (event: DownloadEvent) => void) => {
           await targetHandle.downloadAndInstall(onEvent);
         },
@@ -140,15 +144,15 @@ describe("useUpdaterStore", () => {
 
     it("sets the last downloading status with the accumulated progress", async () => {
       const { handle } = buildHandle({
-        downloadAndInstall: vi.fn((onEvent: (event: DownloadEvent) => void) => {
+        downloadAndInstall: mock((onEvent: (event: DownloadEvent) => void) => {
           onEvent({ event: "Started", data: { contentLength: 1000 } });
           onEvent({ event: "Progress", data: { chunkLength: 250 } });
           onEvent({ event: "Finished" });
           return Promise.resolve();
         }),
       });
-      vi.mocked(checkForUpdate).mockResolvedValue({ version: "2026.6.2", notes: "", handle });
-      vi.mocked(downloadAndInstallUpdate).mockImplementation(
+      checkForUpdateMock.mockResolvedValue({ version: "2026.6.2", notes: "", handle });
+      downloadAndInstallUpdateMock.mockImplementation(
         async (targetHandle: UpdateHandle, onEvent: (event: DownloadEvent) => void) => {
           await targetHandle.downloadAndInstall(onEvent);
         },
@@ -164,10 +168,10 @@ describe("useUpdaterStore", () => {
 
     it("sets error status when the download fails", async () => {
       const { handle } = buildHandle({
-        downloadAndInstall: vi.fn(() => Promise.reject(new Error("download failed"))),
+        downloadAndInstall: mock(() => Promise.reject(new Error("download failed"))),
       });
-      vi.mocked(checkForUpdate).mockResolvedValue({ version: "2026.6.2", notes: "", handle });
-      vi.mocked(downloadAndInstallUpdate).mockImplementation(
+      checkForUpdateMock.mockResolvedValue({ version: "2026.6.2", notes: "", handle });
+      downloadAndInstallUpdateMock.mockImplementation(
         async (targetHandle: UpdateHandle, onEvent: (event: DownloadEvent) => void) => {
           await targetHandle.downloadAndInstall(onEvent);
         },
@@ -182,7 +186,7 @@ describe("useUpdaterStore", () => {
 
   describe("relaunch", () => {
     it("calls relaunch application", async () => {
-      vi.mocked(relaunchApplication).mockResolvedValue(undefined);
+      relaunchApplicationMock.mockResolvedValue(undefined);
 
       await useUpdaterStore.getState().relaunch();
 
@@ -190,7 +194,7 @@ describe("useUpdaterStore", () => {
     });
 
     it("sets error status when relaunch fails", async () => {
-      vi.mocked(relaunchApplication).mockRejectedValue(new Error("relaunch failed"));
+      relaunchApplicationMock.mockRejectedValue(new Error("relaunch failed"));
 
       await useUpdaterStore.getState().relaunch();
 
@@ -200,7 +204,7 @@ describe("useUpdaterStore", () => {
 
   describe("reset", () => {
     it("resets status back to idle and clears the handle", async () => {
-      vi.mocked(checkForUpdate).mockRejectedValue(new Error("check failed"));
+      checkForUpdateMock.mockRejectedValue(new Error("check failed"));
       await useUpdaterStore.getState().checkForUpdates();
       expect(useUpdaterStore.getState().status.kind).toBe(UpdateStatus.Error);
 

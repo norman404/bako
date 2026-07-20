@@ -1,8 +1,9 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, mock, beforeEach } from "bun:test";
+
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-vi.mock("react-i18next", () => ({
+mock.module("react-i18next", () => ({
   useTranslation: () => ({
     t: (key: string, params?: Record<string, unknown>) => {
       const translations: Record<string, string> = {
@@ -42,10 +43,10 @@ function buildUpdater(overrides: Partial<UseUpdaterResult> = {}): UseUpdaterResu
     isDownloading: false,
     isReadyToInstall: false,
     error: null,
-    checkForUpdates: vi.fn(),
-    downloadAndInstall: vi.fn(),
-    relaunch: vi.fn(),
-    reset: vi.fn(),
+    checkForUpdates: mock(),
+    downloadAndInstall: mock(),
+    relaunch: mock(),
+    reset: mock(),
     ...overrides,
   };
 }
@@ -56,7 +57,7 @@ function renderToast(props: Partial<UpdateToastProps> = {}) {
 
 describe("UpdateToast", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mock.clearAllMocks();
   });
 
   it("renders nothing when idle", () => {
@@ -89,7 +90,7 @@ describe("UpdateToast", () => {
   });
 
   it("calls downloadAndInstall when update button is clicked", async () => {
-    const downloadAndInstall = vi.fn();
+    const downloadAndInstall = mock();
     const updater = buildUpdater({
       status: createAvailableStatus({ version: "2026.6.2", notes: "" }),
       hasUpdate: true,
@@ -115,7 +116,7 @@ describe("UpdateToast", () => {
   });
 
   it("renders ready to install and calls relaunch on click", async () => {
-    const relaunch = vi.fn();
+    const relaunch = mock();
     const updater = buildUpdater({
       status: createReadyToInstallStatus("2026.6.2"),
       isReadyToInstall: true,
@@ -130,8 +131,8 @@ describe("UpdateToast", () => {
   });
 
   it("renders error state, allows retry and dismiss", async () => {
-    const reset = vi.fn();
-    const checkForUpdates = vi.fn();
+    const reset = mock();
+    const checkForUpdates = mock();
     const updater = buildUpdater({
       status: createErrorStatus("check failed"),
       error: "check failed",

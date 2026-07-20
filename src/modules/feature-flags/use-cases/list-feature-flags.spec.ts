@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock } from "bun:test";
 import { okAsync } from "neverthrow";
 
 import type { FeatureFlagRepository } from "@/modules/feature-flags/domain/ports";
@@ -13,8 +13,8 @@ describe("listFeatureFlags", () => {
     ];
 
     const mockRepository: FeatureFlagRepository = {
-      list: vi.fn(() => okAsync(mockFlags)),
-      update: vi.fn(),
+      list: mock(() => okAsync(mockFlags)),
+      update: mock(),
     };
 
     const result = await listFeatureFlags(mockRepository);

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import { formatProductPriceInput, parseProductPriceInput } from "@/modules/menu/lib/product-price";
 

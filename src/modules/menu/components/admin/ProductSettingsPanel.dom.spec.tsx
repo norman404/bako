@@ -1,25 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
+import * as React from "react";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
 
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    }
-  });
-});
 
 import * as productHooks from "@/modules/menu/hooks/use-products";
 import * as categoryHooks from "@/modules/menu/hooks/use-categories";
@@ -34,9 +16,9 @@ type CreateProductResult = ReturnType<typeof productHooks.useCreateProduct>;
 type UpdateProductResult = ReturnType<typeof productHooks.useUpdateProduct>;
 type ArchiveProductResult = ReturnType<typeof productHooks.useArchiveProduct>;
 
-const createMutateAsync = vi.fn();
-const updateMutateAsync = vi.fn();
-const archiveMutateAsync = vi.fn();
+const createMutateAsync = mock();
+const updateMutateAsync = mock();
+const archiveMutateAsync = mock();
 
 const BASE_CATEGORIES = [
   {
@@ -83,33 +65,33 @@ function mockProductMutations(
   useFeatureFlagsStore.setState({ flags: nextFlags });
 
   // Mock hooks de lectura
-  vi.spyOn(categoryHooks, "useCategories").mockReturnValue({
+  spyOn(categoryHooks, "useCategories").mockReturnValue({
     data: categories,
     isLoading: false,
   } as any);
 
-  vi.spyOn(productHooks, "useProducts").mockReturnValue({
+  spyOn(productHooks, "useProducts").mockReturnValue({
     data: products,
     isLoading: false,
   } as any);
 
-  vi.spyOn(menuHooks, "useMenus").mockReturnValue({
+  spyOn(menuHooks, "useMenus").mockReturnValue({
     data: menus,
     isLoading: false,
   } as any);
 
   // Mock hooks de mutación
-  vi.spyOn(productHooks, "useCreateProduct").mockReturnValue({
+  spyOn(productHooks, "useCreateProduct").mockReturnValue({
     isPending: false,
     mutateAsync: createMutateAsync,
   } as unknown as CreateProductResult);
 
-  vi.spyOn(productHooks, "useUpdateProduct").mockReturnValue({
+  spyOn(productHooks, "useUpdateProduct").mockReturnValue({
     isPending: false,
     mutateAsync: updateMutateAsync,
   } as unknown as UpdateProductResult);
 
-  vi.spyOn(productHooks, "useArchiveProduct").mockReturnValue({
+  spyOn(productHooks, "useArchiveProduct").mockReturnValue({
     isPending: false,
     mutateAsync: archiveMutateAsync,
   } as unknown as ArchiveProductResult);
@@ -120,7 +102,7 @@ function renderProductSettingsPanel() {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  mock.clearAllMocks();
 });
 
 describe("ProductSettingsPanel", () => {

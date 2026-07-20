@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { PrinterDomainError } from "@/modules/printer/domain/errors";

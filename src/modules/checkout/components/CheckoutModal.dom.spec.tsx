@@ -1,28 +1,11 @@
 import { okAsync } from "neverthrow";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, mock, spyOn } from "bun:test";
+import * as React from "react";
+
+
 
 import { CheckoutPersistenceError } from "@/modules/checkout/domain/errors";
 
-vi.mock("lucide-react", async () => {
-  const React = await import("react");
-  const createIcon = (name: string) => {
-    return React.forwardRef(function Icon(props: any, ref: any) {
-      return React.createElement("svg", { ref, "aria-hidden": "true", "data-icon": name, ...props });
-    });
-  };
-
-  return new Proxy({}, {
-    get(target: any, prop: string | symbol) {
-      if (prop === 'default' || prop === '__esModule' || typeof prop !== 'string') {
-        return target[prop];
-      }
-      if (!target[prop]) {
-        target[prop] = createIcon(prop);
-      }
-      return target[prop];
-    }
-  });
-});
 
 import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
 import * as checkoutHooks from "@/modules/checkout/hooks/use-checkout";
@@ -75,15 +58,14 @@ function buildCartItem(id = "product-1", price = 5500, quantity = 1): CartItem {
 type UseCustomersResult = ReturnType<typeof checkoutHooks.useCustomers>;
 
 function mockListCustomers(customers: CheckoutCustomer[]) {
-  return vi
-    .spyOn(orderDrizzleRepository, "listCustomers")
+  return spyOn(orderDrizzleRepository, "listCustomers")
     .mockImplementation(
       () => okAsync(customers) as ReturnType<typeof orderDrizzleRepository.listCustomers>,
     );
 }
 
 function mockUseCustomers(overrides: Partial<UseCustomersResult>) {
-  return vi.spyOn(checkoutHooks, "useCustomers").mockReturnValue({
+  return spyOn(checkoutHooks, "useCustomers").mockReturnValue({
     data: undefined,
     error: null,
     isPending: false,
@@ -93,9 +75,9 @@ function mockUseCustomers(overrides: Partial<UseCustomersResult>) {
 }
 
 function renderCheckoutModal(overrides: Partial<CheckoutModalProps> = {}) {
-  const onClose = overrides.onClose ?? vi.fn();
+  const onClose = overrides.onClose ?? mock();
   const onConfirmCheckout =
-    overrides.onConfirmCheckout ?? vi.fn(async (_input: CreateOrderInput) => undefined);
+    overrides.onConfirmCheckout ?? mock(async (_input: CreateOrderInput) => undefined);
 
   renderWithProviders(
     <CheckoutModal
@@ -305,7 +287,7 @@ describe("CheckoutModal", () => {
   });
 
   it("muestra error general cuando onConfirmCheckout falla", async () => {
-    const onConfirmCheckout = vi.fn(async () => {
+    const onConfirmCheckout = mock(async () => {
       throw new Error("No pudimos guardar");
     });
 
@@ -325,7 +307,7 @@ describe("CheckoutModal", () => {
   it("llama onConfirmCheckout con payload correcto para tarjeta", async () => {
     const item = buildCartItem("product-1", 5500, 2);
     const total = item.product.price * item.quantity;
-    const onConfirmCheckout = vi.fn(async (_input: CreateOrderInput) => undefined);
+    const onConfirmCheckout = mock(async (_input: CreateOrderInput) => undefined);
 
     renderCheckoutModal({ items: [item], onConfirmCheckout });
 
