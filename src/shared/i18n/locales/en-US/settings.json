@@ -156,6 +156,7 @@
     "moveDown": "Move option down",
     "moveGroupUp": "Move group up",
     "moveGroupDown": "Move group down",
-    "removeOption": "Remove option"
+    "removeOption": "Remove option",
+    "firstOptionFreeLabel": "First option free"
   }
 }

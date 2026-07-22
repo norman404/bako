@@ -147,6 +147,7 @@
     "moveDown": "Bajar opción",
     "moveGroupUp": "Subir grupo",
     "moveGroupDown": "Bajar grupo",
-    "removeOption": "Eliminar opción"
+    "removeOption": "Eliminar opción",
+    "firstOptionFreeLabel": "Primera opción gratis"
   }
 }

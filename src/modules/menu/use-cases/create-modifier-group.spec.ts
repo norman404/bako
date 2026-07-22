@@ -16,6 +16,7 @@ function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
     type: overrides.type ?? "single",
     required: overrides.required ?? false,
     sortOrder: overrides.sortOrder ?? 0,
+    firstOptionFree: overrides.firstOptionFree ?? false,
     options: overrides.options ?? [],
     createdAt: overrides.createdAt ?? new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: overrides.updatedAt ?? new Date("2026-01-01T00:00:00.000Z"),

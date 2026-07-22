@@ -53,6 +53,7 @@ function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,
     deletedAt: null,
+    firstOptionFree: false,
     ...overrides,
   };
 }

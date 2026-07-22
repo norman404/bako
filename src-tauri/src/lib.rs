@@ -122,6 +122,12 @@ pub fn run() {
             sql: include_str!("../migrations/0019_comanda_header_text.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 20,
+            description: "first_option_free",
+            sql: include_str!("../migrations/0020_first_option_free.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

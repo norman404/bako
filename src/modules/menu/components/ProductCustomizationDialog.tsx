@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Check, Plus, X } from "lucide-react";
 
 import type { ModifierGroup, ModifierOption, SelectedModifier } from "@/modules/menu/domain/modifier-group";
+import { applyFirstOptionFree } from "@/modules/menu/domain/modifier-group";
 import type { Product } from "@/modules/menu/domain/product";
 import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
 import { formatPosCurrency } from "@/lib/currency";
@@ -130,10 +131,11 @@ function buildSelectedModifiers(
     }
 
     const selectedIds = getSelectedOptions(state);
+    const groupModifiers: SelectedModifier[] = [];
     for (const optionId of selectedIds) {
       const option = findOption(group, optionId);
       if (!option) continue;
-      result.push({
+      groupModifiers.push({
         groupId: group.id,
         groupName: group.name,
         optionId: option.id,
@@ -142,6 +144,7 @@ function buildSelectedModifiers(
         textValue: null,
       });
     }
+    result.push(...applyFirstOptionFree(group, groupModifiers));
   }
 
   return result;

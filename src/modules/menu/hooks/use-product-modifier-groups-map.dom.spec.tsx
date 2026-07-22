@@ -37,6 +37,7 @@ function buildGroup(id: string): ModifierGroup {
     type: "single",
     required: false,
     sortOrder: 0,
+    firstOptionFree: false,
     options: [],
     createdAt: FIXED_DATE,
     updatedAt: FIXED_DATE,

@@ -32,10 +32,11 @@ interface GroupFormState {
   type: ModifierGroupType;
   required: boolean;
   sortOrder: number;
+  firstOptionFree: boolean;
 }
 
 function buildEmptyFormState(): GroupFormState {
-  return { name: "", type: "single", required: false, sortOrder: 0 };
+  return { name: "", type: "single", required: false, sortOrder: 0, firstOptionFree: false };
 }
 
 function buildFormStateFromGroup(group: ModifierGroup): GroupFormState {
@@ -44,6 +45,7 @@ function buildFormStateFromGroup(group: ModifierGroup): GroupFormState {
     type: group.type,
     required: group.required,
     sortOrder: group.sortOrder,
+    firstOptionFree: group.firstOptionFree,
   };
 }
 
@@ -55,6 +57,7 @@ function toGroupPayload(formState: GroupFormState, options: OptionsEditorOption[
     type: formState.type,
     required: formState.required,
     sortOrder: formState.sortOrder,
+    firstOptionFree: formState.firstOptionFree,
     options: options.map((opt, i) => ({
       name: opt.name,
       priceDelta: opt.priceDelta,
@@ -70,6 +73,7 @@ function buildGroupUpsertInput(group: ModifierGroup, sortOrder: number): Modifie
     type: group.type,
     required: group.required,
     sortOrder,
+    firstOptionFree: group.firstOptionFree,
     options: group.options.map((option) => ({
       name: option.name,
       priceDelta: option.priceDelta,
@@ -368,6 +372,21 @@ function ModifierGroupSettingsPanel() {
                 disabled={isSaving}
               />
             </FormField>
+
+            {formState.type === "multiple" ? (
+              <FormField label={t("modifierGroups.firstOptionFreeLabel")} htmlFor="mod-first-free">
+                <input
+                  id="mod-first-free"
+                  type="checkbox"
+                  checked={formState.firstOptionFree}
+                  onChange={(e) => {
+                    const checked = e.currentTarget.checked;
+                    setFormState((p) => ({ ...p, firstOptionFree: checked }));
+                  }}
+                  disabled={isSaving}
+                />
+              </FormField>
+            ) : null}
 
             <OptionsEditor
               options={options}

@@ -61,6 +61,7 @@ function buildGroupRow(overrides: Partial<ModifierGroupRow> = {}): ModifierGroup
     type: overrides.type ?? "single",
     required: overrides.required ?? false,
     sortOrder: overrides.sortOrder ?? 0,
+    firstOptionFree: overrides.firstOptionFree ?? false,
     createdAt: overrides.createdAt ?? now,
     updatedAt: overrides.updatedAt ?? now,
     deletedAt: overrides.deletedAt ?? null,

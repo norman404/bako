@@ -19,6 +19,7 @@ export type {
 export {
   resolveProductModifierGroups,
   buildCartItemKey,
+  applyFirstOptionFree,
 } from './domain/modifier-group'
 export type { MenuCreateInput, CategoryCreateInput, ProductUpsertInput, ModifierGroupUpsertInput, ModifierOptionInput, ModifierAssignmentInput } from './domain/ports'
 export { MenuDomainError, MenuNotFoundError, CategoryNotFoundError, ProductNotFoundError, ModifierGroupNotFoundError, ModifierOptionNotFoundError } from './domain/errors'

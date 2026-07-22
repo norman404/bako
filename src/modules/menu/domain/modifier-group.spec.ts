@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  applyFirstOptionFree,
   buildCartItemKey,
   type ModifierGroup,
   type ModifierOption,
@@ -34,6 +35,7 @@ function buildGroup(
     type: "single",
     required: false,
     sortOrder,
+    firstOptionFree: false,
     options,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
     updatedAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -154,5 +156,126 @@ describe("buildCartItemKey", () => {
     const keyB = buildCartItemKey(productId, [m2, m1]);
 
     expect(keyA).toBe(keyB);
+  });
+});
+
+describe("applyFirstOptionFree", () => {
+  function buildMultipleGroup(
+    id: string,
+    firstOptionFree: boolean,
+    options: ModifierOption[],
+  ): ModifierGroup {
+    return {
+      id,
+      name: `group-${id}`,
+      type: "multiple",
+      required: false,
+      sortOrder: 0,
+      options,
+      firstOptionFree,
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+      deletedAt: null,
+    };
+  }
+
+  it("returns modifiers unchanged when group is not multiple", () => {
+    const group: ModifierGroup = {
+      ...buildMultipleGroup("g1", true, []),
+      type: "single",
+    };
+    const selected = [buildSelected("g1", "opt1", null, 500)];
+
+    const result = applyFirstOptionFree(group, selected);
+
+    expect(result).toEqual(selected);
+  });
+
+  it("returns modifiers unchanged when firstOptionFree is false", () => {
+    const group = buildMultipleGroup("g1", false, [
+      buildOption("opt1", "g1", "Queso", 200),
+      buildOption("opt2", "g1", "Jamón", 300),
+    ]);
+    const selected = [
+      buildSelected("g1", "opt1", null, 200),
+      buildSelected("g1", "opt2", null, 300),
+    ];
+
+    const result = applyFirstOptionFree(group, selected);
+
+    expect(result).toEqual(selected);
+  });
+
+  it("zeroes priceDelta of the first option by sortOrder when firstOptionFree is true", () => {
+    const group = buildMultipleGroup("g1", true, [
+      { ...buildOption("opt1", "g1", "Queso", 200), sortOrder: 1 },
+      { ...buildOption("opt2", "g1", "Jamón", 300), sortOrder: 0 },
+    ]);
+    const selected = [
+      buildSelected("g1", "opt1", null, 200),
+      buildSelected("g1", "opt2", null, 300),
+    ];
+
+    const result = applyFirstOptionFree(group, selected);
+
+    // opt2 has sortOrder 0 → first → priceDelta becomes 0
+    // opt1 has sortOrder 1 → second → keeps priceDelta 200
+    expect(result).toHaveLength(2);
+    expect(result.find((m) => m.optionId === "opt2")?.priceDelta).toBe(0);
+    expect(result.find((m) => m.optionId === "opt1")?.priceDelta).toBe(200);
+  });
+
+  it("handles single selection: the only option becomes free", () => {
+    const group = buildMultipleGroup("g1", true, [
+      buildOption("opt1", "g1", "Queso", 200),
+    ]);
+    const selected = [buildSelected("g1", "opt1", null, 200)];
+
+    const result = applyFirstOptionFree(group, selected);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].priceDelta).toBe(0);
+  });
+
+  it("preserves other fields when zeroing priceDelta", () => {
+    const group = buildMultipleGroup("g1", true, [
+      buildOption("opt1", "g1", "Queso", 200),
+    ]);
+    const selected = [buildSelected("g1", "opt1", null, 200)];
+
+    const result = applyFirstOptionFree(group, selected);
+
+    expect(result[0].groupId).toBe("g1");
+    expect(result[0].optionId).toBe("opt1");
+    expect(result[0].optionName).toBe("option-opt1");
+    expect(result[0].textValue).toBeNull();
+  });
+
+  it("returns empty array when no modifiers selected", () => {
+    const group = buildMultipleGroup("g1", true, [
+      buildOption("opt1", "g1", "Queso", 200),
+    ]);
+
+    const result = applyFirstOptionFree(group, []);
+
+    expect(result).toEqual([]);
+  });
+
+  it("ignores options not present in the group when sorting", () => {
+    const group = buildMultipleGroup("g1", true, [
+      { ...buildOption("opt1", "g1", "Queso", 200), sortOrder: 1 },
+      { ...buildOption("opt2", "g1", "Jamón", 300), sortOrder: 0 },
+    ]);
+    const selected = [
+      buildSelected("g1", "opt1", null, 200),
+      buildSelected("g1", "opt_unknown", null, 999),
+    ];
+
+    const result = applyFirstOptionFree(group, selected);
+
+    // opt_unknown has no sortOrder → treated as Infinity → goes last
+    // opt1 has sortOrder 1 → first → priceDelta becomes 0
+    expect(result.find((m) => m.optionId === "opt1")?.priceDelta).toBe(0);
+    expect(result.find((m) => m.optionId === "opt_unknown")?.priceDelta).toBe(999);
   });
 });

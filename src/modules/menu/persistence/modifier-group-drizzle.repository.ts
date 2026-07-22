@@ -47,6 +47,7 @@ function rowToGroup(row: ModifierGroupRow, options: ModifierOption[] = []): Modi
     type: row.type as ModifierGroupType,
     required: row.required,
     sortOrder: row.sortOrder,
+    firstOptionFree: row.firstOptionFree,
     options,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -135,6 +136,7 @@ function normalizeModifierGroupInput(input: ModifierGroupUpsertInput): ModifierG
     type: input.type,
     required: input.required,
     sortOrder: input.sortOrder,
+    firstOptionFree: input.firstOptionFree ?? false,
     options: input.options.map(normalizeModifierOptionInput),
   };
 }
@@ -280,6 +282,7 @@ export const modifierGroupDrizzleRepository: ModifierGroupRepository = {
             type: normalizedInput.type,
             required: normalizedInput.required,
             sortOrder: normalizedInput.sortOrder,
+            firstOptionFree: normalizedInput.firstOptionFree,
             createdAt: now,
             updatedAt: now,
           })
@@ -340,6 +343,7 @@ export const modifierGroupDrizzleRepository: ModifierGroupRepository = {
             type: normalizedInput.type,
             required: normalizedInput.required,
             sortOrder: normalizedInput.sortOrder,
+            firstOptionFree: normalizedInput.firstOptionFree,
             updatedAt: now,
           })
           .where(and(eq(modifierGroups.id, id), isNull(modifierGroups.deletedAt)))

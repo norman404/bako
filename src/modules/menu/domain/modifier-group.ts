@@ -18,6 +18,7 @@ export interface ModifierGroup {
   type: ModifierGroupType;
   required: boolean;
   sortOrder: number;
+  firstOptionFree: boolean;
   options: ModifierOption[];
   createdAt: Date;
   updatedAt: Date;
@@ -66,4 +67,45 @@ export function buildCartItemKey(productId: string, modifiers: SelectedModifier[
     .join("|");
 
   return `${productId}::${normalized}`;
+}
+
+/**
+ * When a modifier group has `type === "multiple"` and `firstOptionFree === true`,
+ * this function zeroes the `priceDelta` of the first selected option (ordered by
+ * the option's `sortOrder`). All subsequent selected options keep their original
+ * `priceDelta`.
+ *
+ * For non-multiple groups or when `firstOptionFree` is `false`, the modifiers
+ * are returned unchanged.
+ */
+export function applyFirstOptionFree(
+  group: ModifierGroup,
+  selected: SelectedModifier[],
+): SelectedModifier[] {
+  if (group.type !== "multiple" || !group.firstOptionFree) {
+    return selected;
+  }
+
+  if (selected.length === 0) {
+    return [];
+  }
+
+  // Build a lookup of optionId → sortOrder from the group's options
+  const optionSortOrders = new Map<string, number>();
+  for (const option of group.options) {
+    optionSortOrders.set(option.id, option.sortOrder);
+  }
+
+  // Sort selected modifiers by their corresponding option's sortOrder.
+  // Options not found in the group are treated as Infinity (go last).
+  const sorted = [...selected].sort((a, b) => {
+    const orderA = a.optionId ? (optionSortOrders.get(a.optionId) ?? Infinity) : Infinity;
+    const orderB = b.optionId ? (optionSortOrders.get(b.optionId) ?? Infinity) : Infinity;
+    return orderA - orderB;
+  });
+
+  // Zero the priceDelta of the first one, keep the rest as-is
+  return sorted.map((modifier, index) =>
+    index === 0 ? { ...modifier, priceDelta: 0 } : modifier,
+  );
 }
