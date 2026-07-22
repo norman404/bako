@@ -6,36 +6,7 @@ import {
   computeReceivedAmount,
 } from "@/modules/checkout/hooks/use-checkout-form";
 import { CHECKOUT_PAYMENT_METHOD } from "@/modules/checkout/lib/builders";
-import type { Product } from "@/modules/menu/domain/product";
-import type { CartItem } from "@/modules/order/domain/cart";
-
-const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
-
-function buildProduct(id: string, price: number): Product {
-  return {
-    id,
-    categoryId: "coffee",
-    name: `Product ${id}`,
-    description: `Description ${id}`,
-    price,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    menuIds: [],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-  };
-}
-
-function buildCartItem(id = "product-1", price = 5500, quantity = 1): CartItem {
-  return {
-    lineId: `line-${id}`,
-    product: buildProduct(id, price),
-    quantity,
-    selectedModifiers: [],
-  };
-}
+import { buildCartItem } from "@/modules/order/test/factories";
 
 describe("useCheckoutForm helpers", () => {
   describe("computeReceivedAmount", () => {

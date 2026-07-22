@@ -11,26 +11,12 @@ import type { ModifierGroupUpsertInput } from "@/modules/menu/domain/ports";
 // spyOn sobre el objeto real en vez de mock.module: en bun los module mocks
 // persisten entre archivos del mismo proceso y contaminan los specs de persistence.
 import { modifierGroupDrizzleRepository } from "@/modules/menu/persistence/modifier-group-drizzle.repository";
+import { buildModifierGroup } from "@/modules/menu/test/factories";
 import {
   MENU_MODIFIER_GROUPS_QUERY_KEY,
   useReorderModifierGroups,
   useUpdateModifierGroup,
 } from "./use-modifier-groups";
-
-function buildGroup(id: string, name: string, sortOrder: number): ModifierGroup {
-  return {
-    id,
-    name,
-    type: "single",
-    required: false,
-    sortOrder,
-    firstOptionFree: false,
-    options: [],
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
 
 function buildUpsertInput(group: ModifierGroup, sortOrder: number): ModifierGroupUpsertInput {
   return {
@@ -68,9 +54,9 @@ describe("useReorderModifierGroups", () => {
   });
 
   it("reassigns sortOrder to all groups and reorders optimistically", async () => {
-    const hielo = buildGroup("g-hielo", "Hielo", 0);
-    const azucar = buildGroup("g-azucar", "Azucar", 0);
-    const demo = buildGroup("g-demo", "Demo", 0);
+    const hielo = buildModifierGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 });
+    const azucar = buildModifierGroup({ id: "g-azucar", name: "Azucar", sortOrder: 0 });
+    const demo = buildModifierGroup({ id: "g-demo", name: "Demo", sortOrder: 0 });
     const groupsById: Record<string, ModifierGroup> = {
       "g-hielo": hielo,
       "g-azucar": azucar,
@@ -115,8 +101,8 @@ describe("useReorderModifierGroups", () => {
   });
 
   it("rolls back when one of the parallel updates fails", async () => {
-    const hielo = buildGroup("g-hielo", "Hielo", 0);
-    const azucar = buildGroup("g-azucar", "Azucar", 0);
+    const hielo = buildModifierGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 });
+    const azucar = buildModifierGroup({ id: "g-azucar", name: "Azucar", sortOrder: 0 });
 
     const queryClient = createQueryClient();
     queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, [hielo, azucar]);
@@ -172,8 +158,8 @@ describe("useUpdateModifierGroup", () => {
   });
 
   it("optimistically reassigns sortOrder for the updated group and reorders", async () => {
-    const hielo = buildGroup("g-hielo", "Hielo", 0);
-    const tamano = buildGroup("g-tamano", "Tamaño", 1);
+    const hielo = buildModifierGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 });
+    const tamano = buildModifierGroup({ id: "g-tamano", name: "Tamaño", sortOrder: 1 });
 
     const queryClient = createQueryClient();
     queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, [hielo, tamano]);
@@ -207,8 +193,8 @@ describe("useUpdateModifierGroup", () => {
   });
 
   it("rolls back the optimistic sortOrder swap when the mutation fails", async () => {
-    const hielo = buildGroup("g-hielo", "Hielo", 0);
-    const tamano = buildGroup("g-tamano", "Tamaño", 1);
+    const hielo = buildModifierGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 });
+    const tamano = buildModifierGroup({ id: "g-tamano", name: "Tamaño", sortOrder: 1 });
 
     const queryClient = createQueryClient();
     queryClient.setQueryData(MENU_MODIFIER_GROUPS_QUERY_KEY, [hielo, tamano]);

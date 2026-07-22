@@ -8,61 +8,11 @@ import type { Product } from "@/modules/menu/domain/product";
 import type { Category } from "@/modules/menu/domain/category";
 import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { buildCategory, buildModifierGroup, buildProduct } from "@/modules/menu/test/factories";
 
 // Import dinámico DESPUÉS de mock.module: en bun los imports estáticos se evalúan
 // antes del cuerpo del módulo, y mock.module no re-parchea bindings ya evaluados.
 const { ProductGrid } = await import("@/modules/menu/components/ProductGrid");
-
-const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
-
-function buildCategory(overrides: Partial<Category> = {}): Category {
-  return {
-    id: "cat-1",
-    name: "Bebidas",
-    description: "Bebidas frías y calientes",
-    color: null,
-    menuId: null,
-    printerId: null,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildProduct(overrides: Partial<Product> = {}): Product {
-  return {
-    id: "prod-1",
-    categoryId: "cat-1",
-    menuIds: ["menu-1"],
-    name: "Café",
-    description: "Café caliente",
-    price: 5000,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
-  return {
-    id: "g1",
-    name: "Nivel de hielo",
-    type: "single",
-    required: false,
-    sortOrder: 0,
-    options: [],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    firstOptionFree: false,
-    ...overrides,
-  };
-}
 
 function setModifierFlag(value: boolean) {
   useFeatureFlagsStore.setState({
@@ -103,7 +53,7 @@ describe("ProductGrid modifier badge", () => {
     // WHEN ProductGrid renders
     // THEN card displays a modifier badge
     const product = buildProduct({ id: "prod-cafe", name: "Café" });
-    const groups = [buildGroup({ id: "g1" }), buildGroup({ id: "g2" })];
+    const groups = [buildModifierGroup({ id: "g1" }), buildModifierGroup({ id: "g2" })];
 
     renderGrid({
       products: [product],
@@ -134,7 +84,7 @@ describe("ProductGrid modifier badge", () => {
     // THEN no badge displayed
     setModifierFlag(false);
     const product = buildProduct({ id: "prod-cafe", name: "Café" });
-    const groups = [buildGroup({ id: "g1" })];
+    const groups = [buildModifierGroup({ id: "g1" })];
 
     renderGrid({
       products: [product],
@@ -152,8 +102,8 @@ describe("ProductGrid modifier badge", () => {
     renderGrid({
       products: [p1, p2],
       productModifierGroups: {
-        p1: [buildGroup({ id: "g1" })],
-        p2: [buildGroup({ id: "g2" })],
+        p1: [buildModifierGroup({ id: "g1" })],
+        p2: [buildModifierGroup({ id: "g2" })],
       },
     });
 
@@ -168,7 +118,7 @@ describe("ProductGrid modifier badge", () => {
     renderGrid({
       products: [withGroups, withoutGroups],
       productModifierGroups: {
-        "p-with": [buildGroup({ id: "g1" })],
+        "p-with": [buildModifierGroup({ id: "g1" })],
         "p-without": [],
       },
     });
@@ -183,7 +133,7 @@ describe("ProductGrid modifier badge", () => {
 
     renderGrid({
       products: [product],
-      productModifierGroups: { "prod-cafe": [buildGroup({ id: "g1" })] },
+      productModifierGroups: { "prod-cafe": [buildModifierGroup({ id: "g1" })] },
       onAddToCart,
     });
 
@@ -203,7 +153,7 @@ describe("ProductGrid modifier badge — refined", () => {
 
     renderGrid({
       products: [product],
-      productModifierGroups: { "prod-cafe": [buildGroup({ id: "g1" })] },
+      productModifierGroups: { "prod-cafe": [buildModifierGroup({ id: "g1" })] },
     });
 
     const badge = screen.getByTestId(`modifier-badge-${product.id}`);
@@ -217,7 +167,7 @@ describe("ProductGrid modifier badge — refined", () => {
     const product = buildProduct({ id: "prod-cafe", name: "Café" });
     renderGrid({
       products: [product],
-      productModifierGroups: { "prod-cafe": [buildGroup({ id: "g1" })] },
+      productModifierGroups: { "prod-cafe": [buildModifierGroup({ id: "g1" })] },
     });
 
     const badge = screen.getByTestId(`modifier-badge-${product.id}`);
@@ -232,9 +182,9 @@ describe("ProductGrid modifier badge — refined", () => {
       products: [product],
       productModifierGroups: {
         "prod-cafe": [
-          buildGroup({ id: "g1" }),
-          buildGroup({ id: "g2" }),
-          buildGroup({ id: "g3" }),
+          buildModifierGroup({ id: "g1" }),
+          buildModifierGroup({ id: "g2" }),
+          buildModifierGroup({ id: "g3" }),
         ],
       },
     });
@@ -248,7 +198,7 @@ describe("ProductGrid modifier badge — refined", () => {
     const product = buildProduct({ id: "prod-cafe", name: "Café" });
     renderGrid({
       products: [product],
-      productModifierGroups: { "prod-cafe": [buildGroup({ id: "g1" })] },
+      productModifierGroups: { "prod-cafe": [buildModifierGroup({ id: "g1" })] },
     });
 
     const badge = screen.getByTestId(`modifier-badge-${product.id}`);

@@ -46,6 +46,7 @@ Feature flags viven en la tabla `feature_flags` (SQLite); defaults en `src/modul
 - **TDD estricto es mandatorio** (ver `CONTRIBUTING.md`): RED (test del comportamiento nuevo, debe fallar) → GREEN (código mínimo) → REFACTOR (limpiar en verde).
 - Al refactorizar UI: no modifiques tests viejos — agregá un `describe` nuevo al final y mantené los mismos `data-testid` / `getByRole` / `getByLabelText`.
 - `src/shared/i18n/locale-completeness.spec.ts` es guard permanente: toda key nueva en `es-MX` debe propagarse a los otros 4 locales o el test falla.
+- Fixtures de dominio compartidas viven en `src/modules/<módulo>/test/factories.ts`, una por tipo, dueño = módulo que define el tipo (ej. `Product`/`ModifierGroup` en `menu`, `CartItem` en `order`). Patrón único: `(overrides: Partial<T> = {}) => ({...defaults, ...overrides})`. Import por path directo (`@/modules/menu/test/factories`), nunca vía el barrel del módulo. No reimplementar el shape de un tipo de dominio en un spec — importar la factory del módulo dueño.
 
 ---
 

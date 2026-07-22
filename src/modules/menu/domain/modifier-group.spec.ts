@@ -8,56 +8,11 @@ import {
   type SelectedModifier,
   resolveProductModifierGroups,
 } from "@/modules/menu/domain/modifier-group";
-
-function buildOption(id: string, groupId: string, name: string, priceDelta = 0): ModifierOption {
-  return {
-    id,
-    groupId,
-    name,
-    priceDelta,
-    isDefault: false,
-    sortOrder: 0,
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
-
-function buildGroup(
-  id: string,
-  name: string,
-  sortOrder: number,
-  options: ModifierOption[] = [],
-): ModifierGroup {
-  return {
-    id,
-    name,
-    type: "single",
-    required: false,
-    sortOrder,
-    firstOptionFree: false,
-    options,
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
-
-function buildSelected(
-  groupId: string,
-  optionId: string | null,
-  textValue: string | null,
-  priceDelta = 0,
-): SelectedModifier {
-  return {
-    groupId,
-    groupName: `group-${groupId}`,
-    optionId,
-    optionName: optionId ? `option-${optionId}` : null,
-    priceDelta,
-    textValue,
-  };
-}
+import {
+  buildModifierGroup,
+  buildModifierOption,
+  buildSelectedModifier,
+} from "@/modules/menu/test/factories";
 
 describe("resolveProductModifierGroups", () => {
   it("returns an empty list when both category and product have no assignments", () => {
@@ -67,8 +22,8 @@ describe("resolveProductModifierGroups", () => {
   });
 
   it("returns category groups unchanged when product has no assignments", () => {
-    const g1 = buildGroup("g1", "Tamaño", 0);
-    const g2 = buildGroup("g2", "Leche", 1);
+    const g1 = buildModifierGroup({ id: "g1", name: "Tamaño", sortOrder: 0 });
+    const g2 = buildModifierGroup({ id: "g2", name: "Leche", sortOrder: 1 });
 
     const result = resolveProductModifierGroups([g1, g2], []);
 
@@ -76,8 +31,8 @@ describe("resolveProductModifierGroups", () => {
   });
 
   it("returns product groups unchanged when category has no assignments", () => {
-    const g3 = buildGroup("g3", "Extra", 0);
-    const g4 = buildGroup("g4", "Salsa", 1);
+    const g3 = buildModifierGroup({ id: "g3", name: "Extra", sortOrder: 0 });
+    const g4 = buildModifierGroup({ id: "g4", name: "Salsa", sortOrder: 1 });
 
     const result = resolveProductModifierGroups([], [g3, g4]);
 
@@ -85,9 +40,9 @@ describe("resolveProductModifierGroups", () => {
   });
 
   it("merges disjoint category and product groups without duplicates", () => {
-    const g1 = buildGroup("g1", "Tamaño", 0);
-    const g2 = buildGroup("g2", "Leche", 1);
-    const g3 = buildGroup("g3", "Extra", 2);
+    const g1 = buildModifierGroup({ id: "g1", name: "Tamaño", sortOrder: 0 });
+    const g2 = buildModifierGroup({ id: "g2", name: "Leche", sortOrder: 1 });
+    const g3 = buildModifierGroup({ id: "g3", name: "Extra", sortOrder: 2 });
 
     const result = resolveProductModifierGroups([g1, g2], [g3]);
 
@@ -95,12 +50,20 @@ describe("resolveProductModifierGroups", () => {
   });
 
   it("makes product assignment win when the same group id appears in both", () => {
-    const categoryG1 = buildGroup("g1", "Tamaño (cat)", 0, [
-      buildOption("opt-cat", "g1", "Grande", 0),
-    ]);
-    const productG1 = buildGroup("g1", "Tamaño (prod)", 0, [
-      buildOption("opt-prod", "g1", "Grande Pro", 100),
-    ]);
+    const categoryG1 = buildModifierGroup({
+      id: "g1",
+      name: "Tamaño (cat)",
+      sortOrder: 0,
+      options: [buildModifierOption({ id: "opt-cat", groupId: "g1", name: "Grande", priceDelta: 0 })],
+    });
+    const productG1 = buildModifierGroup({
+      id: "g1",
+      name: "Tamaño (prod)",
+      sortOrder: 0,
+      options: [
+        buildModifierOption({ id: "opt-prod", groupId: "g1", name: "Grande Pro", priceDelta: 100 }),
+      ],
+    });
 
     const result = resolveProductModifierGroups([categoryG1], [productG1]);
 
@@ -113,8 +76,8 @@ describe("resolveProductModifierGroups", () => {
   it("sorts the merged result by sortOrder, regardless of whether a group comes from category or product assignment", () => {
     // GIVEN a category group that should appear AFTER a product group because
     // the product group has a lower sortOrder.
-    const categoryHielo = buildGroup("g-hielo", "Hielo", 1);
-    const productTamano = buildGroup("g-tamano", "Tamaño", 0);
+    const categoryHielo = buildModifierGroup({ id: "g-hielo", name: "Hielo", sortOrder: 1 });
+    const productTamano = buildModifierGroup({ id: "g-tamano", name: "Tamaño", sortOrder: 0 });
 
     const result = resolveProductModifierGroups([categoryHielo], [productTamano]);
 
@@ -126,8 +89,8 @@ describe("buildCartItemKey", () => {
   it("returns the same key for identical productId and identical modifier selection", () => {
     const productId = "p1";
     const modifiers: SelectedModifier[] = [
-      buildSelected("g1", "opt1", null, 100),
-      buildSelected("g2", null, "sin hielo", 0),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 100 }),
+      buildSelectedModifier({ groupId: "g2", optionId: null, textValue: "sin hielo", priceDelta: 0 }),
     ];
 
     const keyA = buildCartItemKey(productId, modifiers);
@@ -138,8 +101,12 @@ describe("buildCartItemKey", () => {
 
   it("returns a different key when the modifier selection differs", () => {
     const productId = "p1";
-    const modifiersA: SelectedModifier[] = [buildSelected("g1", "opt1", null, 100)];
-    const modifiersB: SelectedModifier[] = [buildSelected("g1", "opt2", null, 200)];
+    const modifiersA: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 100 }),
+    ];
+    const modifiersB: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt2", textValue: null, priceDelta: 200 }),
+    ];
 
     const keyA = buildCartItemKey(productId, modifiersA);
     const keyB = buildCartItemKey(productId, modifiersB);
@@ -149,8 +116,8 @@ describe("buildCartItemKey", () => {
 
   it("is order-insensitive: same modifiers in different order produce the same key", () => {
     const productId = "p1";
-    const m1 = buildSelected("g1", "opt1", null, 100);
-    const m2 = buildSelected("g2", null, "sin hielo", 0);
+    const m1 = buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 100 });
+    const m2 = buildSelectedModifier({ groupId: "g2", optionId: null, textValue: "sin hielo", priceDelta: 0 });
 
     const keyA = buildCartItemKey(productId, [m1, m2]);
     const keyB = buildCartItemKey(productId, [m2, m1]);
@@ -165,18 +132,13 @@ describe("applyFirstOptionFree", () => {
     firstOptionFree: boolean,
     options: ModifierOption[],
   ): ModifierGroup {
-    return {
+    return buildModifierGroup({
+      type: "multiple",
+      firstOptionFree,
+      options,
       id,
       name: `group-${id}`,
-      type: "multiple",
-      required: false,
-      sortOrder: 0,
-      options,
-      firstOptionFree,
-      createdAt: new Date("2026-01-01T00:00:00.000Z"),
-      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-      deletedAt: null,
-    };
+    });
   }
 
   it("returns modifiers unchanged when group is not multiple", () => {
@@ -184,7 +146,9 @@ describe("applyFirstOptionFree", () => {
       ...buildMultipleGroup("g1", true, []),
       type: "single",
     };
-    const selected = [buildSelected("g1", "opt1", null, 500)];
+    const selected = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 500 }),
+    ];
 
     const result = applyFirstOptionFree(group, selected);
 
@@ -193,12 +157,12 @@ describe("applyFirstOptionFree", () => {
 
   it("returns modifiers unchanged when firstOptionFree is false", () => {
     const group = buildMultipleGroup("g1", false, [
-      buildOption("opt1", "g1", "Queso", 200),
-      buildOption("opt2", "g1", "Jamón", 300),
+      buildModifierOption({ id: "opt1", groupId: "g1", name: "Queso", priceDelta: 200 }),
+      buildModifierOption({ id: "opt2", groupId: "g1", name: "Jamón", priceDelta: 300 }),
     ]);
     const selected = [
-      buildSelected("g1", "opt1", null, 200),
-      buildSelected("g1", "opt2", null, 300),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 200 }),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt2", textValue: null, priceDelta: 300 }),
     ];
 
     const result = applyFirstOptionFree(group, selected);
@@ -208,12 +172,12 @@ describe("applyFirstOptionFree", () => {
 
   it("zeroes priceDelta of the first option by sortOrder when firstOptionFree is true", () => {
     const group = buildMultipleGroup("g1", true, [
-      { ...buildOption("opt1", "g1", "Queso", 200), sortOrder: 1 },
-      { ...buildOption("opt2", "g1", "Jamón", 300), sortOrder: 0 },
+      buildModifierOption({ id: "opt1", groupId: "g1", name: "Queso", priceDelta: 200, sortOrder: 1 }),
+      buildModifierOption({ id: "opt2", groupId: "g1", name: "Jamón", priceDelta: 300, sortOrder: 0 }),
     ]);
     const selected = [
-      buildSelected("g1", "opt1", null, 200),
-      buildSelected("g1", "opt2", null, 300),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 200 }),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt2", textValue: null, priceDelta: 300 }),
     ];
 
     const result = applyFirstOptionFree(group, selected);
@@ -227,9 +191,11 @@ describe("applyFirstOptionFree", () => {
 
   it("handles single selection: the only option becomes free", () => {
     const group = buildMultipleGroup("g1", true, [
-      buildOption("opt1", "g1", "Queso", 200),
+      buildModifierOption({ id: "opt1", groupId: "g1", name: "Queso", priceDelta: 200 }),
     ]);
-    const selected = [buildSelected("g1", "opt1", null, 200)];
+    const selected = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 200 }),
+    ];
 
     const result = applyFirstOptionFree(group, selected);
 
@@ -239,9 +205,17 @@ describe("applyFirstOptionFree", () => {
 
   it("preserves other fields when zeroing priceDelta", () => {
     const group = buildMultipleGroup("g1", true, [
-      buildOption("opt1", "g1", "Queso", 200),
+      buildModifierOption({ id: "opt1", groupId: "g1", name: "Queso", priceDelta: 200 }),
     ]);
-    const selected = [buildSelected("g1", "opt1", null, 200)];
+    const selected = [
+      buildSelectedModifier({
+        groupId: "g1",
+        optionId: "opt1",
+        optionName: "option-opt1",
+        textValue: null,
+        priceDelta: 200,
+      }),
+    ];
 
     const result = applyFirstOptionFree(group, selected);
 
@@ -253,7 +227,7 @@ describe("applyFirstOptionFree", () => {
 
   it("returns empty array when no modifiers selected", () => {
     const group = buildMultipleGroup("g1", true, [
-      buildOption("opt1", "g1", "Queso", 200),
+      buildModifierOption({ id: "opt1", groupId: "g1", name: "Queso", priceDelta: 200 }),
     ]);
 
     const result = applyFirstOptionFree(group, []);
@@ -263,12 +237,12 @@ describe("applyFirstOptionFree", () => {
 
   it("ignores options not present in the group when sorting", () => {
     const group = buildMultipleGroup("g1", true, [
-      { ...buildOption("opt1", "g1", "Queso", 200), sortOrder: 1 },
-      { ...buildOption("opt2", "g1", "Jamón", 300), sortOrder: 0 },
+      buildModifierOption({ id: "opt1", groupId: "g1", name: "Queso", priceDelta: 200, sortOrder: 1 }),
+      buildModifierOption({ id: "opt2", groupId: "g1", name: "Jamón", priceDelta: 300, sortOrder: 0 }),
     ]);
     const selected = [
-      buildSelected("g1", "opt1", null, 200),
-      buildSelected("g1", "opt_unknown", null, 999),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", textValue: null, priceDelta: 200 }),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt_unknown", textValue: null, priceDelta: 999 }),
     ];
 
     const result = applyFirstOptionFree(group, selected);

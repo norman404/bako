@@ -11,8 +11,8 @@ import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
 import * as checkoutHooks from "@/modules/checkout/hooks/use-checkout";
 import type { CheckoutCustomer, CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
 import { orderDrizzleRepository } from "@/modules/checkout/persistence/order-drizzle.repository";
-import type { Product } from "@/modules/menu/domain/product";
-import type { CartItem } from "@/modules/order/domain/cart";
+import { buildProduct } from "@/modules/menu/test/factories";
+import { buildCartItem } from "@/modules/order/test/factories";
 import { formatPosCurrency } from "@/lib/currency";
 import { fireEvent, renderWithProviders, screen, waitFor } from "@/test/test-utils";
 
@@ -28,32 +28,6 @@ const DELIVERY_CUSTOMER = {
   createdAt: FIXED_DATE,
   updatedAt: FIXED_DATE,
 } satisfies CheckoutCustomer;
-
-function buildProduct(id: string, price: number): Product {
-  return {
-    id,
-    categoryId: "coffee",
-    name: `Product ${id}`,
-    description: `Description ${id}`,
-    price,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    menuIds: [],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-  };
-}
-
-function buildCartItem(id = "product-1", price = 5500, quantity = 1): CartItem {
-  return {
-    lineId: `line-${id}`,
-    product: buildProduct(id, price),
-    quantity,
-    selectedModifiers: [],
-  };
-}
 
 type UseCustomersResult = ReturnType<typeof checkoutHooks.useCustomers>;
 
@@ -165,7 +139,7 @@ describe("CheckoutModal", () => {
   });
 
   it("calcula y muestra el cambio cuando el efectivo recibido supera el total", async () => {
-    const item = buildCartItem();
+    const item = buildCartItem({ product: buildProduct({ price: 5500 }) });
     const total = item.product.price * item.quantity;
     renderCheckoutModal({ items: [item] });
 
@@ -177,7 +151,7 @@ describe("CheckoutModal", () => {
   });
 
   it("valida montos vacíos, inválidos e insuficientes antes de habilitar pagar", async () => {
-    const item = buildCartItem();
+    const item = buildCartItem({ product: buildProduct({ price: 5500 }) });
     const total = item.product.price * item.quantity;
     renderCheckoutModal({ items: [item] });
 
@@ -305,7 +279,7 @@ describe("CheckoutModal", () => {
   });
 
   it("llama onConfirmCheckout con payload correcto para tarjeta", async () => {
-    const item = buildCartItem("product-1", 5500, 2);
+    const item = buildCartItem({ product: buildProduct({ id: "product-1", price: 5500 }), quantity: 2 });
     const total = item.product.price * item.quantity;
     const onConfirmCheckout = mock(async (_input: CreateOrderInput) => undefined);
 

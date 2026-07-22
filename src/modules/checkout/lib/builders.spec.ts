@@ -12,9 +12,10 @@ import {
   type CheckoutCustomerFormState,
 } from "@/modules/checkout/lib/builders";
 import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
-import type { Product } from "@/modules/menu/domain/product";
 import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
+import { buildProduct } from "@/modules/menu/test/factories";
 import type { CartItem } from "@/modules/order/domain/cart";
+import { buildCartItem } from "@/modules/order/test/factories";
 import { formatPosCurrency } from "@/lib/currency";
 
 const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
@@ -24,30 +25,8 @@ const CHECKOUT_FULFILLMENT_TYPE = {
   DELIVERY: "delivery",
 } as const;
 
-function buildProduct(id: string, price: number): Product {
-  return {
-    id,
-    categoryId: "coffee",
-    name: `Product ${id}`,
-    description: `Description ${id}`,
-    price,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    menuIds: [],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-  };
-}
-
-function buildCartItem(id: string, price: number, quantity = 1): CartItem {
-  return {
-    lineId: `line-${id}`,
-    product: buildProduct(id, price),
-    quantity,
-    selectedModifiers: [],
-  };
+function line(id: string, price: number, quantity = 1): CartItem {
+  return buildCartItem({ lineId: `line-${id}`, product: buildProduct({ id, price }), quantity });
 }
 
 function buildSelectedModifier(overrides: Partial<SelectedModifier> = {}): SelectedModifier {
@@ -58,20 +37,6 @@ function buildSelectedModifier(overrides: Partial<SelectedModifier> = {}): Selec
     optionName: overrides.optionName ?? "Extra",
     priceDelta: overrides.priceDelta ?? 0,
     textValue: overrides.textValue ?? null,
-  };
-}
-
-function buildCartItemWithModifiers(
-  id: string,
-  price: number,
-  quantity: number,
-  modifiers: SelectedModifier[],
-): CartItem {
-  return {
-    lineId: `line-${id}`,
-    product: buildProduct(id, price),
-    quantity,
-    selectedModifiers: modifiers,
   };
 }
 
@@ -156,7 +121,7 @@ describe("checkout builders", () => {
   });
 
   describe("order payload builder", () => {
-    const items = [buildCartItem("product-1", 2500, 2), buildCartItem("product-2", 1800, 1)];
+    const items = [line("product-1", 2500, 2), line("product-2", 1800, 1)];
     const total = 6800;
 
     it("returns null when there are no items", () => {
@@ -334,7 +299,14 @@ describe("checkout builders", () => {
         buildSelectedModifier({ groupId: "g1", groupName: "Hielo", optionId: "o1", optionName: "Extra", priceDelta: 500 }),
         buildSelectedModifier({ groupId: "g2", groupName: "Crema", optionId: "o2", optionName: "Crema", priceDelta: 300 }),
       ];
-      const cartItems = [buildCartItemWithModifiers("cafe", 5000, 1, modifiers)];
+      const cartItems = [
+        buildCartItem({
+          lineId: "line-cafe",
+          product: buildProduct({ id: "cafe", price: 5000 }),
+          quantity: 1,
+          selectedModifiers: modifiers,
+        }),
+      ];
 
       const result = buildOrderItemsInput(cartItems);
 
@@ -362,7 +334,7 @@ describe("checkout builders", () => {
     });
 
     it("handles item without modifiers: unitPrice = product price, modifiers = []", () => {
-      const cartItems = [buildCartItem("te", 4000, 2)];
+      const cartItems = [line("te", 4000, 2)];
 
       const result = buildOrderItemsInput(cartItems);
 
@@ -382,7 +354,14 @@ describe("checkout builders", () => {
           textValue: "sin azúcar",
         }),
       ];
-      const cartItems = [buildCartItemWithModifiers("cafe", 5000, 1, modifiers)];
+      const cartItems = [
+        buildCartItem({
+          lineId: "line-cafe",
+          product: buildProduct({ id: "cafe", price: 5000 }),
+          quantity: 1,
+          selectedModifiers: modifiers,
+        }),
+      ];
 
       const result = buildOrderItemsInput(cartItems);
 
@@ -394,10 +373,13 @@ describe("checkout builders", () => {
 
     it("propagates modifiers across multiple items independently", () => {
       const cartItems = [
-        buildCartItemWithModifiers("cafe", 5000, 1, [
-          buildSelectedModifier({ priceDelta: 500 }),
-        ]),
-        buildCartItem("te", 4000, 3),
+        buildCartItem({
+          lineId: "line-cafe",
+          product: buildProduct({ id: "cafe", price: 5000 }),
+          quantity: 1,
+          selectedModifiers: [buildSelectedModifier({ priceDelta: 500 })],
+        }),
+        line("te", 4000, 3),
       ];
 
       const result = buildOrderItemsInput(cartItems);

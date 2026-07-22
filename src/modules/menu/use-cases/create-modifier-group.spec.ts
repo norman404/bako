@@ -2,27 +2,12 @@ import { describe, expect, it, mock } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { MenuDomainError } from "@/modules/menu/domain/errors";
-import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import type {
   ModifierGroupRepository,
   ModifierGroupUpsertInput,
 } from "@/modules/menu/domain/ports";
 import { createModifierGroup } from "@/modules/menu/use-cases/create-modifier-group";
-
-function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
-  return {
-    id: overrides.id ?? "group-1",
-    name: overrides.name ?? "Nivel de hielo",
-    type: overrides.type ?? "single",
-    required: overrides.required ?? false,
-    sortOrder: overrides.sortOrder ?? 0,
-    firstOptionFree: overrides.firstOptionFree ?? false,
-    options: overrides.options ?? [],
-    createdAt: overrides.createdAt ?? new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: overrides.updatedAt ?? new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: overrides.deletedAt ?? null,
-  };
-}
+import { buildModifierGroup } from "@/modules/menu/test/factories";
 
 function validInput(): ModifierGroupUpsertInput {
   return {
@@ -39,7 +24,7 @@ function validInput(): ModifierGroupUpsertInput {
 
 describe("createModifierGroup", () => {
   it("delegates to repository.create and returns the created group", async () => {
-    const created = buildGroup({ id: "new-id" });
+    const created = buildModifierGroup({ id: "new-id" });
     const createSpy = mock(() => okAsync(created));
     const mockRepository = { create: createSpy } as unknown as ModifierGroupRepository;
 

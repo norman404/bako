@@ -106,6 +106,6 @@ export function applyFirstOptionFree(
 
   // Zero the priceDelta of the first one, keep the rest as-is
   return sorted.map((modifier, index) =>
-    index === 0 ? { ...modifier, priceDelta: 0 } : modifier,
+    index === 0 ? Object.assign({}, modifier, { priceDelta: 0 }) : modifier,
   );
 }

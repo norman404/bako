@@ -1,30 +1,13 @@
 import { describe, expect, it } from "bun:test";
 
-import type { Product } from "@/modules/menu/domain/product";
 import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
-
-function buildProduct(id: string, categoryId: string, name: string): Product {
-  return {
-    id,
-    categoryId,
-    name,
-    description: `${name} description`,
-    price: 1000,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    menuIds: [],
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
+import { buildProduct } from "@/modules/menu/test/factories";
 
 describe("filterProductsByCategory", () => {
   it("returns all products when category is all", () => {
     const products = [
-      buildProduct("coffee-1", "coffee", "Latte"),
-      buildProduct("bakery-1", "bakery", "Medialuna"),
+      buildProduct({ id: "coffee-1", categoryId: "coffee", name: "Latte" }),
+      buildProduct({ id: "bakery-1", categoryId: "bakery", name: "Medialuna" }),
     ];
 
     expect(filterProductsByCategory(products, "all")).toEqual(products);
@@ -32,9 +15,9 @@ describe("filterProductsByCategory", () => {
 
   it("returns only products from the selected category", () => {
     const products = [
-      buildProduct("coffee-1", "coffee", "Latte"),
-      buildProduct("bakery-1", "bakery", "Medialuna"),
-      buildProduct("coffee-2", "coffee", "Espresso"),
+      buildProduct({ id: "coffee-1", categoryId: "coffee", name: "Latte" }),
+      buildProduct({ id: "bakery-1", categoryId: "bakery", name: "Medialuna" }),
+      buildProduct({ id: "coffee-2", categoryId: "coffee", name: "Espresso" }),
     ];
 
     const filtered = filterProductsByCategory(products, "coffee");

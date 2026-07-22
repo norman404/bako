@@ -1,48 +1,19 @@
 import { describe, expect, it } from "bun:test";
 
-import type { Category } from "@/modules/menu/domain/category";
-import type { Product } from "@/modules/menu/domain/product";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
-
-function buildCategory(id: string, name: string): Category {
-  return {
-    id,
-    name,
-    description: `${name} description`,
-    color: null,
-    menuId: null,
-    printerId: null,
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
-
-function buildProduct(id: string, categoryId: string, name: string): Product {
-  return {
-    id,
-    categoryId,
-    name,
-    description: `${name} description`,
-    price: 1000,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    menuIds: [],
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
+import { buildCategory, buildProduct } from "@/modules/menu/test/factories";
 
 describe("sortProductsForMenu", () => {
   it("orders products by category order and then by product name", () => {
-    const categories = [buildCategory("bakery", "Panadería"), buildCategory("coffee", "Café")];
+    const categories = [
+      buildCategory({ id: "bakery", name: "Panadería" }),
+      buildCategory({ id: "coffee", name: "Café" }),
+    ];
     const products = [
-      buildProduct("coffee-latte", "coffee", "Latte"),
-      buildProduct("bakery-medialuna", "bakery", "Medialuna"),
-      buildProduct("coffee-espresso", "coffee", "Espresso"),
-      buildProduct("bakery-tostado", "bakery", "Tostado"),
+      buildProduct({ id: "coffee-latte", categoryId: "coffee", name: "Latte" }),
+      buildProduct({ id: "bakery-medialuna", categoryId: "bakery", name: "Medialuna" }),
+      buildProduct({ id: "coffee-espresso", categoryId: "coffee", name: "Espresso" }),
+      buildProduct({ id: "bakery-tostado", categoryId: "bakery", name: "Tostado" }),
     ];
 
     const sorted = sortProductsForMenu(products, categories);
@@ -56,10 +27,10 @@ describe("sortProductsForMenu", () => {
   });
 
   it("pushes products with unknown categories to the end", () => {
-    const categories = [buildCategory("coffee", "Café")];
+    const categories = [buildCategory({ id: "coffee", name: "Café" })];
     const products = [
-      buildProduct("unknown-product", "desserts", "Cheesecake"),
-      buildProduct("coffee-product", "coffee", "Latte"),
+      buildProduct({ id: "unknown-product", categoryId: "desserts", name: "Cheesecake" }),
+      buildProduct({ id: "coffee-product", categoryId: "coffee", name: "Latte" }),
     ];
 
     const sorted = sortProductsForMenu(products, categories);

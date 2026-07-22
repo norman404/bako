@@ -116,73 +116,13 @@ import * as filteredProductsHook from "@/modules/menu/hooks/use-filtered-product
 import * as modifierGroupsHook from "@/modules/menu/hooks/use-modifier-groups";
 import type { Category } from "@/modules/menu/domain/category";
 import type { Product } from "@/modules/menu/domain/product";
-import type { ModifierGroup, ModifierOption } from "@/modules/menu/domain/modifier-group";
-
-const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
-
-function buildOption(overrides: Partial<ModifierOption> = {}): ModifierOption {
-  return {
-    id: "opt-1",
-    groupId: "grp-1",
-    name: "Sin hielo",
-    priceDelta: 0,
-    isDefault: true,
-    sortOrder: 0,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
-  return {
-    id: "grp-1",
-    name: "Nivel de hielo",
-    type: "single",
-    required: false,
-    sortOrder: 0,
-    options: [buildOption()],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    firstOptionFree: false,
-    ...overrides,
-  };
-}
-
-function buildCategory(overrides: Partial<Category> = {}): Category {
-  return {
-    id: "cat-1",
-    name: "Bebidas",
-    description: "Bebidas frías y calientes",
-    color: null,
-    menuId: null,
-    printerId: null,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildProduct(overrides: Partial<Product> = {}): Product {
-  return {
-    id: "prod-cafe",
-    categoryId: "cat-1",
-    menuIds: [],
-    name: "Café",
-    description: "Café caliente",
-    price: 5000,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
+import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
+import {
+  buildCategory,
+  buildModifierGroup,
+  buildModifierOption,
+  buildProduct,
+} from "@/modules/menu/test/factories";
 
 type UseFilteredProductsResult = ReturnType<typeof filteredProductsHook.useFilteredProducts>;
 
@@ -272,14 +212,14 @@ describe("App — print ticket modifiers", () => {
     mockFilteredProducts({ products: [product] });
     mockProductModifierGroups({
       "prod-cafe": [
-        buildGroup({
+        buildModifierGroup({
           id: "g1",
           name: "Nivel de hielo",
           type: "single",
           required: false,
           options: [
-            buildOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-            buildOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+            buildModifierOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+            buildModifierOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
           ],
         }),
       ],
@@ -355,7 +295,7 @@ describe("App — handleAddToCart wiring (Phase 7)", () => {
     // AND a product "Café" with effective modifier groups ["g1"]
     const product = buildProduct({ id: "prod-cafe", name: "Café" });
     mockFilteredProducts({ products: [product] });
-    mockProductModifierGroups({ "prod-cafe": [buildGroup({ id: "g1" })] });
+    mockProductModifierGroups({ "prod-cafe": [buildModifierGroup({ id: "g1" })] });
 
     renderApp();
 
@@ -382,7 +322,7 @@ describe("App — handleAddToCart wiring (Phase 7)", () => {
     // AND a product "Café" with effective modifier groups ["g1"]
     const product = buildProduct({ id: "prod-cafe", name: "Café" });
     mockFilteredProducts({ products: [product] });
-    mockProductModifierGroups({ "prod-cafe": [buildGroup({ id: "g1", name: "Nivel de hielo" })] });
+    mockProductModifierGroups({ "prod-cafe": [buildModifierGroup({ id: "g1", name: "Nivel de hielo" })] });
 
     renderApp();
 
@@ -432,14 +372,14 @@ describe("App — handleAddToCart wiring (Phase 7)", () => {
     mockFilteredProducts({ products: [product] });
     mockProductModifierGroups({
       "prod-cafe": [
-        buildGroup({
+        buildModifierGroup({
           id: "g1",
           name: "Nivel de hielo",
           type: "single",
           required: false,
           options: [
-            buildOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-            buildOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+            buildModifierOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+            buildModifierOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
           ],
         }),
       ],
@@ -482,14 +422,14 @@ describe("App — handleAddToCart wiring (Phase 7)", () => {
     mockFilteredProducts({ products: [product] });
     mockProductModifierGroups({
       "prod-cafe": [
-        buildGroup({
+        buildModifierGroup({
           id: "g1",
           name: "Nivel de hielo",
           type: "single",
           required: false,
           options: [
-            buildOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-            buildOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+            buildModifierOption({ id: "opt-sin", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+            buildModifierOption({ id: "opt-extra", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
           ],
         }),
       ],

@@ -7,24 +7,7 @@ import type {
 } from "@/modules/menu/domain/ports";
 import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import { listProductModifierGroupsBatch } from "@/modules/menu/use-cases/list-product-modifier-groups-batch";
-
-const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
-
-function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
-  return {
-    id: overrides.id ?? "g1",
-    name: overrides.name ?? "Group",
-    type: overrides.type ?? "single",
-    required: overrides.required ?? false,
-    sortOrder: overrides.sortOrder ?? 0,
-    firstOptionFree: overrides.firstOptionFree ?? false,
-    options: overrides.options ?? [],
-    createdAt: overrides.createdAt ?? FIXED_DATE,
-    updatedAt: overrides.updatedAt ?? FIXED_DATE,
-    deletedAt: overrides.deletedAt ?? null,
-    ...overrides,
-  };
-}
+import { buildModifierGroup } from "@/modules/menu/test/factories";
 
 interface BatchInput {
   productId: string;
@@ -53,7 +36,7 @@ describe("listProductModifierGroupsBatch", () => {
     }));
 
     const listByCategoryIds = mock((_ids: string[]) =>
-      okAsync(new Map([["cat-A", [buildGroup({ id: "g-cat" })]]])),
+      okAsync(new Map([["cat-A", [buildModifierGroup({ id: "g-cat" })]]])),
     );
     const listByProductIds = mock((_ids: string[]) => okAsync(new Map<string, ModifierGroup[]>([])));
     const repo = { listByCategoryIds, listByProductIds } as unknown as ModifierGroupRepository;
@@ -77,15 +60,15 @@ describe("listProductModifierGroupsBatch", () => {
     const listByCategoryIds = mock((_ids: string[]) =>
       okAsync(
         new Map<string, ModifierGroup[]>([
-          ["cat-A", [buildGroup({ id: "g-cat-A" })]],
-          ["cat-B", [buildGroup({ id: "g-cat-B" })]],
+          ["cat-A", [buildModifierGroup({ id: "g-cat-A" })]],
+          ["cat-B", [buildModifierGroup({ id: "g-cat-B" })]],
         ]),
       ),
     );
     const listByProductIds = mock((_ids: string[]) =>
       okAsync(
         new Map<string, ModifierGroup[]>([
-          ["p1", [buildGroup({ id: "g-prod-p1" })]],
+          ["p1", [buildModifierGroup({ id: "g-prod-p1" })]],
         ]),
       ),
     );
@@ -106,7 +89,7 @@ describe("listProductModifierGroupsBatch", () => {
   it("deduplicates groupIds when the same group is assigned to both category and product", async () => {
     const products: BatchInput[] = [{ productId: "p1", categoryId: "cat-A" }];
 
-    const sharedGroup = buildGroup({ id: "g-shared" });
+    const sharedGroup = buildModifierGroup({ id: "g-shared" });
     const listByCategoryIds = mock(() =>
       okAsync(new Map<string, ModifierGroup[]>([["cat-A", [sharedGroup]]])),
     );

@@ -1,24 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
-import type { Category } from "@/modules/menu/domain/category";
 import { MenuDomainError } from "@/modules/menu/domain/errors";
 import type { CategoryRepository } from "@/modules/menu/domain/ports";
 import { listCategories } from "@/modules/menu/use-cases/list-categories";
-
-function buildCategory(overrides: Partial<Category> = {}): Category {
-  return {
-    id: overrides.id ?? "category-1",
-    name: overrides.name ?? "Bebidas calientes",
-    description: overrides.description ?? "Café, tés y chocolate",
-    color: overrides.color ?? null,
-    menuId: overrides.menuId ?? null,
-    printerId: overrides.printerId ?? null,
-    createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    deletedAt: overrides.deletedAt ?? null,
-  };
-}
+import { buildCategory } from "@/modules/menu/test/factories";
 
 describe("listCategories", () => {
   it("delegates to repository.list() without menuId", async () => {

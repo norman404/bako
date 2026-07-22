@@ -2,51 +2,17 @@ import { describe, expect, it, mock } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { MenuDomainError } from "@/modules/menu/domain/errors";
-import type { ModifierGroup, ModifierOption } from "@/modules/menu/domain/modifier-group";
 import type { ModifierGroupRepository } from "@/modules/menu/domain/ports";
 import { listProductModifiers } from "@/modules/menu/use-cases/list-product-modifiers";
-
-function buildOption(id: string, groupId: string, name: string, priceDelta = 0): ModifierOption {
-  return {
-    id,
-    groupId,
-    name,
-    priceDelta,
-    isDefault: false,
-    sortOrder: 0,
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
-
-function buildGroup(
-  id: string,
-  name: string,
-  sortOrder: number,
-  options: ModifierOption[] = [],
-): ModifierGroup {
-  return {
-    id,
-    name,
-    type: "single",
-    required: false,
-    sortOrder,
-    firstOptionFree: false,
-    options,
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    deletedAt: null,
-  };
-}
+import { buildModifierGroup, buildModifierOption } from "@/modules/menu/test/factories";
 
 describe("listProductModifiers", () => {
   it("merges disjoint category and product groups", async () => {
     const categoryGroups = [
-      buildGroup("g1", "Tamaño", 0),
-      buildGroup("g2", "Leche", 1),
+      buildModifierGroup({ id: "g1", name: "Tamaño", sortOrder: 0 }),
+      buildModifierGroup({ id: "g2", name: "Leche", sortOrder: 1 }),
     ];
-    const productGroups = [buildGroup("g3", "Extra", 2)];
+    const productGroups = [buildModifierGroup({ id: "g3", name: "Extra", sortOrder: 2 })];
 
     const listByCategorySpy = mock(() => okAsync(categoryGroups));
     const listByProductSpy = mock(() => okAsync(productGroups));
@@ -67,12 +33,20 @@ describe("listProductModifiers", () => {
   });
 
   it("product assignment wins on conflict (same groupId in both)", async () => {
-    const categoryG1 = buildGroup("g1", "Tamaño (cat)", 0, [
-      buildOption("opt-cat", "g1", "Grande", 0),
-    ]);
-    const productG1 = buildGroup("g1", "Tamaño (prod)", 0, [
-      buildOption("opt-prod", "g1", "Grande Pro", 100),
-    ]);
+    const categoryG1 = buildModifierGroup({
+      id: "g1",
+      name: "Tamaño (cat)",
+      sortOrder: 0,
+      options: [buildModifierOption({ id: "opt-cat", groupId: "g1", name: "Grande", priceDelta: 0 })],
+    });
+    const productG1 = buildModifierGroup({
+      id: "g1",
+      name: "Tamaño (prod)",
+      sortOrder: 0,
+      options: [
+        buildModifierOption({ id: "opt-prod", groupId: "g1", name: "Grande Pro", priceDelta: 100 }),
+      ],
+    });
 
     const mockRepository = {
       listByCategory: () => okAsync([categoryG1]),

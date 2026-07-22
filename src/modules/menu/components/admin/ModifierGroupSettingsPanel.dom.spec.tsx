@@ -9,11 +9,15 @@ import * as productHooks from "@/modules/menu/hooks/use-products";
 import { ModifierGroupNotFoundError } from "@/modules/menu/domain/errors";
 import { ModifierGroupSettingsPanel } from "@/modules/menu/components/admin/ModifierGroupSettingsPanel";
 import { fireEvent, renderWithProviders, screen, waitFor, within } from "@/test/test-utils";
-import type { ModifierGroup, ModifierOption } from "@/modules/menu/domain/modifier-group";
+import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import type { Category } from "@/modules/menu/domain/category";
 import type { Product } from "@/modules/menu/domain/product";
-
-const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
+import {
+  buildCategory,
+  buildModifierGroup,
+  buildModifierOption,
+  buildProduct,
+} from "@/modules/menu/test/factories";
 
 type UseModifierGroupsResult = ReturnType<typeof modifierHooks.useModifierGroups>;
 type CreateModifierGroupResult = ReturnType<typeof modifierHooks.useCreateModifierGroup>;
@@ -27,70 +31,6 @@ type UseProductAssignmentsResult = ReturnType<typeof modifierHooks.useProductAss
 type UseCategoriesResult = ReturnType<typeof categoryHooks.useCategories>;
 type UseProductsResult = ReturnType<typeof productHooks.useProducts>;
 
-function buildOption(overrides: Partial<ModifierOption> = {}): ModifierOption {
-  return {
-    id: "opt-1",
-    groupId: "grp-1",
-    name: "Sin hielo",
-    priceDelta: 0,
-    isDefault: true,
-    sortOrder: 0,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
-  return {
-    id: "grp-1",
-    name: "Nivel de hielo",
-    type: "single",
-    required: false,
-    sortOrder: 0,
-    options: [buildOption()],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    firstOptionFree: false,
-    ...overrides,
-  };
-}
-
-function buildCategory(overrides: Partial<Category> = {}): Category {
-  return {
-    id: "cat-1",
-    name: "Bebidas",
-    description: "Bebidas frías y calientes",
-    color: null,
-    menuId: null,
-    printerId: null,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildProduct(overrides: Partial<Product> = {}): Product {
-  return {
-    id: "prod-1",
-    categoryId: "cat-1",
-    menuIds: ["menu-1"],
-    name: "Capuchino",
-    description: "Café con leche",
-    price: 5000,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
 function mockAllHooks(opts: {
   groups?: ModifierGroup[];
   categories?: Category[];
@@ -101,7 +41,7 @@ function mockAllHooks(opts: {
   updateMutate?: ReturnType<typeof mock>;
   swapSortOrderMutate?: ReturnType<typeof mock>;
 } = {}) {
-  const groups = opts.groups ?? [buildGroup()];
+  const groups = opts.groups ?? [buildModifierGroup()];
   const categories = opts.categories ?? [buildCategory()];
   const products = opts.products ?? [buildProduct()];
 
@@ -176,8 +116,8 @@ describe("ModifierGroupSettingsPanel", () => {
       // VALIDATES: list shows group names
       mockAllHooks({
         groups: [
-          buildGroup({ id: "g1", name: "Nivel de hielo", type: "single" }),
-          buildGroup({ id: "g2", name: "Toppings", type: "multiple" }),
+          buildModifierGroup({ id: "g1", name: "Nivel de hielo", type: "single" }),
+          buildModifierGroup({ id: "g2", name: "Toppings", type: "multiple" }),
         ],
       });
 
@@ -197,7 +137,7 @@ describe("ModifierGroupSettingsPanel", () => {
 
     it("shows archive button per group in the list", () => {
       mockAllHooks({
-        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        groups: [buildModifierGroup({ id: "g1", name: "Nivel de hielo" })],
       });
 
       renderPanel();
@@ -252,7 +192,7 @@ describe("ModifierGroupSettingsPanel", () => {
   describe("archive action", () => {
     it("opens a confirmation dialog when the archive button is clicked", () => {
       mockAllHooks({
-        groups: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
+        groups: [buildModifierGroup({ id: "g-archive", name: "Nivel de hielo" })],
       });
 
       renderPanel();
@@ -272,7 +212,7 @@ describe("ModifierGroupSettingsPanel", () => {
       const archiveMutate = mock().mockResolvedValue(undefined);
 
       spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
-        data: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
+        data: [buildModifierGroup({ id: "g-archive", name: "Nivel de hielo" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
       spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
@@ -331,7 +271,7 @@ describe("ModifierGroupSettingsPanel", () => {
       const archiveMutate = mock().mockResolvedValue(undefined);
 
       spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
-        data: [buildGroup({ id: "g-archive", name: "Nivel de hielo" })],
+        data: [buildModifierGroup({ id: "g-archive", name: "Nivel de hielo" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
       spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
@@ -383,7 +323,7 @@ describe("ModifierGroupSettingsPanel", () => {
   describe("assignment controls", () => {
     it("renders assignment section with categories and products checkboxes", () => {
       mockAllHooks({
-        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        groups: [buildModifierGroup({ id: "g1", name: "Nivel de hielo" })],
         categories: [buildCategory({ id: "cat-1", name: "Bebidas" })],
         products: [buildProduct({ id: "prod-1", name: "Capuchino" })],
       });
@@ -401,7 +341,7 @@ describe("ModifierGroupSettingsPanel", () => {
     it("calls assign mutation when a category checkbox is toggled on", () => {
       const assignMutate = mock();
       spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
-        data: [buildGroup({ id: "g-assign", name: "Nivel de hielo" })],
+        data: [buildModifierGroup({ id: "g-assign", name: "Nivel de hielo" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
       spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
@@ -474,12 +414,12 @@ describe("ModifierGroupSettingsPanel", () => {
     it("switching to edit mode populates the form with the group's data", () => {
       mockAllHooks({
         groups: [
-          buildGroup({
+          buildModifierGroup({
             id: "g-edit",
             name: "Nivel de hielo",
             type: "single",
             required: true,
-            options: [buildOption({ id: "o1", name: "Sin hielo" })],
+            options: [buildModifierOption({ id: "o1", name: "Sin hielo" })],
           }),
         ],
       });
@@ -499,7 +439,7 @@ describe("ModifierGroupSettingsPanel", () => {
 
     it("'Nuevo' button resets the form to create mode", () => {
       mockAllHooks({
-        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        groups: [buildModifierGroup({ id: "g1", name: "Nivel de hielo" })],
       });
 
       renderPanel();
@@ -528,7 +468,7 @@ describe("ModifierGroupSettingsPanel", () => {
 
     it("pre-checks the category checkbox when the group is already assigned to that category", () => {
       mockAllHooks({
-        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        groups: [buildModifierGroup({ id: "g1", name: "Nivel de hielo" })],
         categories: [buildCategory({ id: "cat-1", name: "Bebidas" })],
         products: [],
         categoryAssignments: new Map([["cat-1", new Set(["g1"])]]),
@@ -546,7 +486,7 @@ describe("ModifierGroupSettingsPanel", () => {
 
     it("pre-checks the product checkbox when the group is already assigned to that product", () => {
       mockAllHooks({
-        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        groups: [buildModifierGroup({ id: "g1", name: "Nivel de hielo" })],
         categories: [],
         products: [buildProduct({ id: "prod-1", name: "Capuchino" })],
         productAssignments: new Map([["prod-1", new Set(["g1"])]]),
@@ -565,7 +505,7 @@ describe("ModifierGroupSettingsPanel", () => {
       const createMutate = mock().mockRejectedValue(new ModifierGroupNotFoundError("g-faltante"));
 
       spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
-        data: [buildGroup({ id: "g1", name: "Existente" })],
+        data: [buildModifierGroup({ id: "g1", name: "Existente" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
       spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
@@ -629,7 +569,7 @@ describe("ModifierGroupSettingsPanel", () => {
       const createMutate = mock().mockRejectedValue(new Error("Raw library error"));
 
       spyOn(modifierHooks, "useModifierGroups").mockReturnValue({
-        data: [buildGroup({ id: "g1", name: "Existente" })],
+        data: [buildModifierGroup({ id: "g1", name: "Existente" })],
         isLoading: false,
       } as unknown as UseModifierGroupsResult);
       spyOn(modifierHooks, "useCreateModifierGroup").mockReturnValue({
@@ -691,7 +631,7 @@ describe("ModifierGroupSettingsPanel", () => {
 
     it("hides assignment section when no group is selected (in create mode)", () => {
       mockAllHooks({
-        groups: [buildGroup({ id: "g1", name: "Nivel de hielo" })],
+        groups: [buildModifierGroup({ id: "g1", name: "Nivel de hielo" })],
         categories: [buildCategory()],
         products: [buildProduct()],
       });
@@ -716,17 +656,17 @@ describe("ModifierGroupSettingsPanel", () => {
       const reorderMutate = mock().mockResolvedValue(undefined);
       mockAllHooks({
         groups: [
-          buildGroup({
+          buildModifierGroup({
             id: "g-hielo",
             name: "Hielo",
             sortOrder: 0,
-            options: [buildOption({ id: "o1", name: "Sin hielo" })],
+            options: [buildModifierOption({ id: "o1", name: "Sin hielo" })],
           }),
-          buildGroup({
+          buildModifierGroup({
             id: "g-tamano",
             name: "Tamaño",
             sortOrder: 1,
-            options: [buildOption({ id: "o2", name: "Grande" })],
+            options: [buildModifierOption({ id: "o2", name: "Grande" })],
           }),
         ],
         swapSortOrderMutate: reorderMutate,
@@ -760,8 +700,8 @@ describe("ModifierGroupSettingsPanel", () => {
       const reorderMutate = mock().mockResolvedValue(undefined);
       mockAllHooks({
         groups: [
-          buildGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 }),
-          buildGroup({ id: "g-tamano", name: "Tamaño", sortOrder: 1 }),
+          buildModifierGroup({ id: "g-hielo", name: "Hielo", sortOrder: 0 }),
+          buildModifierGroup({ id: "g-tamano", name: "Tamaño", sortOrder: 1 }),
         ],
         swapSortOrderMutate: reorderMutate,
       });
@@ -793,8 +733,8 @@ describe("ModifierGroupSettingsPanel", () => {
     it("disables the up button on the first group", () => {
       mockAllHooks({
         groups: [
-          buildGroup({ id: "g1", name: "Hielo", sortOrder: 0 }),
-          buildGroup({ id: "g2", name: "Tamaño", sortOrder: 1 }),
+          buildModifierGroup({ id: "g1", name: "Hielo", sortOrder: 0 }),
+          buildModifierGroup({ id: "g2", name: "Tamaño", sortOrder: 1 }),
         ],
       });
 
@@ -808,8 +748,8 @@ describe("ModifierGroupSettingsPanel", () => {
     it("disables the down button on the last group", () => {
       mockAllHooks({
         groups: [
-          buildGroup({ id: "g1", name: "Hielo", sortOrder: 0 }),
-          buildGroup({ id: "g2", name: "Tamaño", sortOrder: 1 }),
+          buildModifierGroup({ id: "g1", name: "Hielo", sortOrder: 0 }),
+          buildModifierGroup({ id: "g2", name: "Tamaño", sortOrder: 1 }),
         ],
       });
 

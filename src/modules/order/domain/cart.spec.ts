@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 
 import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
 import type { Product } from "@/modules/menu/domain/product";
+import { buildProduct, buildSelectedModifier } from "@/modules/menu/test/factories";
 import {
   addItemToCart,
   calculateCartTotals,
@@ -10,60 +11,24 @@ import {
   removeItemFromCart,
   type CartItem,
 } from "@/modules/order/domain/cart";
+import { buildCartItem as buildCartItemFactory } from "@/modules/order/test/factories";
 
-const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
-
-function buildProduct(id: string, price: number): Product {
-  return {
-    id,
-    categoryId: "coffee",
-    menuIds: [],
-    name: `Product ${id}`,
-    description: "",
-    price,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-  };
-}
-
-function buildSelected(
-  groupId: string,
-  optionId: string | null,
-  textValue: string | null,
-  priceDelta = 0,
-  optionName: string | null = optionId ? `option-${optionId}` : null,
-): SelectedModifier {
-  return {
-    groupId,
-    groupName: `group-${groupId}`,
-    optionId,
-    optionName,
-    priceDelta,
-    textValue,
-  };
-}
-
+// Wrapper posicional local: el archivo tiene ~22 llamadas a buildCartItem, muchas
+// agrupadas dos-por-línea dentro de arrays literales. Convertir cada una a la forma
+// nombrada completa dañaría la legibilidad de esas tablas de casos, así que se
+// conserva la firma posicional pero delegando siempre en la factory compartida.
 function buildCartItem(
   lineId: string,
   product: Product,
   quantity: number,
   selectedModifiers: SelectedModifier[] = [],
 ): CartItem {
-  return {
-    lineId,
-    product,
-    quantity,
-    selectedModifiers,
-  };
+  return buildCartItemFactory({ lineId, product, quantity, selectedModifiers });
 }
 
 describe("CartItem identity", () => {
   it("has a lineId and selectedModifiers field", () => {
-    const product = buildProduct("p1", 5000);
+    const product = buildProduct({ id: "p1", price: 5000 });
     const item = buildCartItem("L1", product, 1, []);
 
     expect(item.lineId).toBe("L1");
@@ -71,9 +36,13 @@ describe("CartItem identity", () => {
   });
 
   it("treats the same product with different modifiers as separate lines", () => {
-    const capuchino = buildProduct("p1", 5000);
-    const withExtraHielo: SelectedModifier[] = [buildSelected("g1", "opt-extra", null, 500)];
-    const withSinHielo: SelectedModifier[] = [buildSelected("g1", "opt-sin", null, 0)];
+    const capuchino = buildProduct({ id: "p1", price: 5000 });
+    const withExtraHielo: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt-extra", priceDelta: 500 }),
+    ];
+    const withSinHielo: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt-sin" }),
+    ];
 
     const cart1 = addItemToCart([], capuchino, withExtraHielo, "L1");
     const cart2 = addItemToCart(cart1, capuchino, withSinHielo, "L2");
@@ -85,7 +54,7 @@ describe("CartItem identity", () => {
   });
 
   it("collapses the same product with identical modifiers into one line", () => {
-    const espresso = buildProduct("p1", 5000);
+    const espresso = buildProduct({ id: "p1", price: 5000 });
     const noModifiers: SelectedModifier[] = [];
 
     const cart1 = addItemToCart([], espresso, noModifiers, "L1");
@@ -98,8 +67,10 @@ describe("CartItem identity", () => {
 
 describe("addItemToCart — modifier-based collapse", () => {
   it("adds a new line with the provided lineId when the combo is new", () => {
-    const capuchino = buildProduct("p1", 5000);
-    const modifiers: SelectedModifier[] = [buildSelected("g1", "opt1", null, 100)];
+    const capuchino = buildProduct({ id: "p1", price: 5000 });
+    const modifiers: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", priceDelta: 100 }),
+    ];
 
     const result = addItemToCart([], capuchino, modifiers, "L1");
 
@@ -110,8 +81,10 @@ describe("addItemToCart — modifier-based collapse", () => {
   });
 
   it("increments quantity when the same product + identical modifiers are added again", () => {
-    const capuchino = buildProduct("p1", 5000);
-    const extra: SelectedModifier[] = [buildSelected("g1", "opt-extra", null, 500)];
+    const capuchino = buildProduct({ id: "p1", price: 5000 });
+    const extra: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt-extra", priceDelta: 500 }),
+    ];
 
     const cart1 = addItemToCart([], capuchino, extra, "L1");
     const cart2 = addItemToCart(cart1, capuchino, extra, "L2");
@@ -122,7 +95,7 @@ describe("addItemToCart — modifier-based collapse", () => {
   });
 
   it("collapses by product when both items have empty modifiers", () => {
-    const espresso = buildProduct("p1", 5000);
+    const espresso = buildProduct({ id: "p1", price: 5000 });
 
     const cart1 = addItemToCart([], espresso, [], "L1");
     const cart2 = addItemToCart(cart1, espresso, [], "L2");
@@ -132,9 +105,13 @@ describe("addItemToCart — modifier-based collapse", () => {
   });
 
   it("does not collapse when text values differ", () => {
-    const capuchino = buildProduct("p1", 5000);
-    const sinAzucar: SelectedModifier[] = [buildSelected("g1", null, "Sin azúcar", 0)];
-    const pocaAzucar: SelectedModifier[] = [buildSelected("g1", null, "Poca azúcar", 0)];
+    const capuchino = buildProduct({ id: "p1", price: 5000 });
+    const sinAzucar: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: null, textValue: "Sin azúcar" }),
+    ];
+    const pocaAzucar: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: null, textValue: "Poca azúcar" }),
+    ];
 
     const cart1 = addItemToCart([], capuchino, sinAzucar, "L1");
     const cart2 = addItemToCart(cart1, capuchino, pocaAzucar, "L2");
@@ -143,9 +120,13 @@ describe("addItemToCart — modifier-based collapse", () => {
   });
 
   it("does not collapse when same option but text value differs", () => {
-    const capuchino = buildProduct("p1", 5000);
-    const paraLlevar: SelectedModifier[] = [buildSelected("g1", "opt-normal", "para llevar", 0)];
-    const paraAqui: SelectedModifier[] = [buildSelected("g1", "opt-normal", "para aquí", 0)];
+    const capuchino = buildProduct({ id: "p1", price: 5000 });
+    const paraLlevar: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt-normal", textValue: "para llevar" }),
+    ];
+    const paraAqui: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt-normal", textValue: "para aquí" }),
+    ];
 
     const cart1 = addItemToCart([], capuchino, paraLlevar, "L1");
     const cart2 = addItemToCart(cart1, capuchino, paraAqui, "L2");
@@ -156,8 +137,10 @@ describe("addItemToCart — modifier-based collapse", () => {
 
 describe("calculateCartTotals — surcharges", () => {
   it("includes a single modifier surcharge in the line subtotal", () => {
-    const product = buildProduct("p1", 5000);
-    const modifiers: SelectedModifier[] = [buildSelected("g1", "opt1", null, 500)];
+    const product = buildProduct({ id: "p1", price: 5000 });
+    const modifiers: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", priceDelta: 500 }),
+    ];
     const items = [buildCartItem("L1", product, 2, modifiers)];
 
     const totals = calculateCartTotals(items);
@@ -166,10 +149,10 @@ describe("calculateCartTotals — surcharges", () => {
   });
 
   it("sums multiple modifier surcharges per unit", () => {
-    const product = buildProduct("p1", 5000);
+    const product = buildProduct({ id: "p1", price: 5000 });
     const modifiers: SelectedModifier[] = [
-      buildSelected("g1", "opt1", null, 500),
-      buildSelected("g2", "opt2", null, 800),
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", priceDelta: 500 }),
+      buildSelectedModifier({ groupId: "g2", optionId: "opt2", priceDelta: 800 }),
     ];
     const items = [buildCartItem("L1", product, 1, modifiers)];
 
@@ -179,9 +162,11 @@ describe("calculateCartTotals — surcharges", () => {
   });
 
   it("sums all line subtotals into the grand total", () => {
-    const productA = buildProduct("p1", 5000);
-    const productB = buildProduct("p2", 5000);
-    const modifiersA: SelectedModifier[] = [buildSelected("g1", "opt1", null, 500)];
+    const productA = buildProduct({ id: "p1", price: 5000 });
+    const productB = buildProduct({ id: "p2", price: 5000 });
+    const modifiersA: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt1", priceDelta: 500 }),
+    ];
     const items = [
       buildCartItem("L1", productA, 2, modifiersA),
       buildCartItem("L2", productB, 1, []),
@@ -193,8 +178,10 @@ describe("calculateCartTotals — surcharges", () => {
   });
 
   it("does not change the total when a text modifier has zero surcharge", () => {
-    const product = buildProduct("p1", 5000);
-    const modifiers: SelectedModifier[] = [buildSelected("g1", null, "Sin azúcar", 0)];
+    const product = buildProduct({ id: "p1", price: 5000 });
+    const modifiers: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: null, textValue: "Sin azúcar" }),
+    ];
     const items = [buildCartItem("L1", product, 3, modifiers)];
 
     const totals = calculateCartTotals(items);
@@ -203,7 +190,7 @@ describe("calculateCartTotals — surcharges", () => {
   });
 
   it("behaves like legacy total when modifiers are empty", () => {
-    const product = buildProduct("p1", 5000);
+    const product = buildProduct({ id: "p1", price: 5000 });
     const items = [buildCartItem("L1", product, 3, [])];
 
     const totals = calculateCartTotals(items);
@@ -212,7 +199,7 @@ describe("calculateCartTotals — surcharges", () => {
   });
 
   it("counts all item quantities in itemsCount", () => {
-    const product = buildProduct("p1", 5000);
+    const product = buildProduct({ id: "p1", price: 5000 });
     const items = [
       buildCartItem("L1", product, 2),
       buildCartItem("L2", product, 1),
@@ -225,8 +212,8 @@ describe("calculateCartTotals — surcharges", () => {
 });
 
 describe("line-based cart operations", () => {
-  const productA = buildProduct("p1", 5000);
-  const productB = buildProduct("p2", 3000);
+  const productA = buildProduct({ id: "p1", price: 5000 });
+  const productB = buildProduct({ id: "p2", price: 3000 });
 
   it("increments the quantity of the line matching the given lineId", () => {
     const items = [buildCartItem("L1", productA, 1), buildCartItem("L2", productB, 1)];
@@ -290,9 +277,13 @@ describe("line-based cart operations", () => {
   });
 
   it("does not match by productId — only the line with the matching lineId is affected", () => {
-    const capuchino = buildProduct("p1", 5000);
-    const withExtra: SelectedModifier[] = [buildSelected("g1", "opt-extra", null, 500)];
-    const withSin: SelectedModifier[] = [buildSelected("g1", "opt-sin", null, 0)];
+    const capuchino = buildProduct({ id: "p1", price: 5000 });
+    const withExtra: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt-extra", priceDelta: 500 }),
+    ];
+    const withSin: SelectedModifier[] = [
+      buildSelectedModifier({ groupId: "g1", optionId: "opt-sin" }),
+    ];
     const items = [
       buildCartItem("L1", capuchino, 1, withExtra),
       buildCartItem("L2", capuchino, 1, withSin),

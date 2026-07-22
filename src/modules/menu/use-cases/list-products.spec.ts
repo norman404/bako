@@ -3,25 +3,8 @@ import { errAsync, okAsync } from "neverthrow";
 
 import { MenuDomainError } from "@/modules/menu/domain/errors";
 import type { ProductRepository } from "@/modules/menu/domain/ports";
-import type { Product } from "@/modules/menu/domain/product";
 import { listProducts } from "@/modules/menu/use-cases/list-products";
-
-function buildProduct(overrides: Partial<Product> = {}): Product {
-  return {
-    id: overrides.id ?? "product-1",
-    name: overrides.name ?? "Cappuccino",
-    description: overrides.description ?? "Espresso con leche espumada",
-    price: overrides.price ?? 450,
-    categoryId: overrides.categoryId ?? "category-1",
-    menuIds: overrides.menuIds ?? [],
-    prepTimeMinutes: overrides.prepTimeMinutes ?? 5,
-    image: overrides.image ?? "☕",
-    isPopular: overrides.isPopular ?? false,
-    createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    deletedAt: overrides.deletedAt ?? null,
-  };
-}
+import { buildProduct } from "@/modules/menu/test/factories";
 
 describe("listProducts", () => {
   it("delegates to repository.list() without menuIds", async () => {

@@ -8,59 +8,12 @@ import {
   ProductCustomizationDialog,
   type ProductCustomizationDialogProps,
 } from "@/modules/menu/components/ProductCustomizationDialog";
-import type { ModifierGroup, ModifierOption, SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import type { Product } from "@/modules/menu/domain/product";
-
-const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
-
-function buildProduct(overrides: Partial<Product> = {}): Product {
-  return {
-    id: "prod-1",
-    categoryId: "cat-1",
-    menuIds: ["menu-1"],
-    name: "Capuchino",
-    description: "Café con leche",
-    price: 5000,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildOption(overrides: Partial<ModifierOption> = {}): ModifierOption {
-  return {
-    id: "opt-1",
-    groupId: "grp-1",
-    name: "Sin hielo",
-    priceDelta: 0,
-    isDefault: true,
-    sortOrder: 0,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildGroup(overrides: Partial<ModifierGroup> = {}): ModifierGroup {
-  return {
-    id: "grp-1",
-    name: "Nivel de hielo",
-    type: "single",
-    required: false,
-    sortOrder: 0,
-    options: [buildOption()],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    firstOptionFree: false,
-    ...overrides,
-  };
-}
+import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
+import {
+  buildModifierGroup,
+  buildModifierOption,
+  buildProduct,
+} from "@/modules/menu/test/factories";
 
 function renderDialog(props: Partial<ProductCustomizationDialogProps> = {}) {
   const defaultProps: ProductCustomizationDialogProps = {
@@ -84,15 +37,15 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a `single` group "Nivel de hielo" with options "Sin hielo" (default), "Poco", "Normal", "Extra"
       // WHEN the dialog opens
       // THEN "Sin hielo" is pre-selected; radio buttons rendered
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-single",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-sin", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-poco", name: "Poco", isDefault: false, sortOrder: 1 }),
-          buildOption({ id: "opt-normal", name: "Normal", isDefault: false, sortOrder: 2 }),
-          buildOption({ id: "opt-extra", name: "Extra", isDefault: false, sortOrder: 3 }),
+          buildModifierOption({ id: "opt-sin", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-poco", name: "Poco", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-normal", name: "Normal", isDefault: false, sortOrder: 2 }),
+          buildModifierOption({ id: "opt-extra", name: "Extra", isDefault: false, sortOrder: 3 }),
         ],
       });
 
@@ -115,14 +68,14 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a `multiple` group "Toppings" with two defaults
       // WHEN dialog opens
       // THEN both defaults pre-selected, "Bacon" not
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-multiple",
         name: "Toppings",
         type: "multiple",
         options: [
-          buildOption({ id: "opt-queso", groupId: "grp-multiple", name: "Extra queso", isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-cebolla", groupId: "grp-multiple", name: "Cebolla caramelizada", isDefault: true, sortOrder: 1 }),
-          buildOption({ id: "opt-bacon", groupId: "grp-multiple", name: "Bacon", isDefault: false, sortOrder: 2 }),
+          buildModifierOption({ id: "opt-queso", groupId: "grp-multiple", name: "Extra queso", isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-cebolla", groupId: "grp-multiple", name: "Cebolla caramelizada", isDefault: true, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-bacon", groupId: "grp-multiple", name: "Bacon", isDefault: false, sortOrder: 2 }),
         ],
       });
 
@@ -143,7 +96,7 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a `text` group "Comentarios"
       // WHEN dialog opens
       // THEN a textarea is rendered, no options list for that group
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-text",
         name: "Comentarios",
         type: "text",
@@ -165,13 +118,13 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a `single_text` group "Tamaño" with options "Normal" (default), "Grande"
       // WHEN dialog opens
       // THEN radio buttons for both AND a textarea, "Normal" pre-selected
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-single-text",
         name: "Tamaño",
         type: "single_text",
         options: [
-          buildOption({ id: "opt-normal", groupId: "grp-single-text", name: "Normal", isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-grande", groupId: "grp-single-text", name: "Grande", priceDelta: 1000, isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-normal", groupId: "grp-single-text", name: "Normal", isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-grande", groupId: "grp-single-text", name: "Grande", priceDelta: 1000, isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -190,21 +143,21 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN product with single group and multiple group
       // WHEN dialog opens
       // THEN both groups rendered
-      const singleGroup = buildGroup({
+      const singleGroup = buildModifierGroup({
         id: "grp-ice",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-ice", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-extra", groupId: "grp-ice", name: "Extra", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-ice", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-extra", groupId: "grp-ice", name: "Extra", isDefault: false, sortOrder: 1 }),
         ],
       });
-      const multipleGroup = buildGroup({
+      const multipleGroup = buildModifierGroup({
         id: "grp-top",
         name: "Toppings",
         type: "multiple",
         options: [
-          buildOption({ id: "opt-bacon", groupId: "grp-top", name: "Bacon", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-bacon", groupId: "grp-top", name: "Bacon", isDefault: false, sortOrder: 0 }),
         ],
       });
 
@@ -218,7 +171,7 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN dialog closed
       // WHEN open=false
       // THEN no dialog content shown
-      const group = buildGroup({ id: "grp-x", name: "Nivel de hielo", type: "single" });
+      const group = buildModifierGroup({ id: "grp-x", name: "Nivel de hielo", type: "single" });
       renderDialog({ groups: [group], open: false });
 
       expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
@@ -227,13 +180,13 @@ describe("ProductCustomizationDialog", () => {
 
   describe("single group with no default", () => {
     it("renders no option pre-selected when all options have isDefault=false", () => {
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-nodefault",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-nodefault", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
-          buildOption({ id: "opt-normal", groupId: "grp-nodefault", name: "Normal", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-nodefault", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-normal", groupId: "grp-nodefault", name: "Normal", isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -250,14 +203,14 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a required `single` group with no default and no selection
       // WHEN dialog open
       // THEN Add button disabled
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-req-single",
         name: "Nivel de hielo",
         type: "single",
         required: true,
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-req-single", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
-          buildOption({ id: "opt-normal", groupId: "grp-req-single", name: "Normal", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-req-single", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-normal", groupId: "grp-req-single", name: "Normal", isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -270,14 +223,14 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN required single group, button disabled
       // WHEN user selects "Normal"
       // THEN Add button becomes enabled
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-req-single2",
         name: "Nivel de hielo",
         type: "single",
         required: true,
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-req-single2", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
-          buildOption({ id: "opt-normal", groupId: "grp-req-single2", name: "Normal", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-req-single2", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-normal", groupId: "grp-req-single2", name: "Normal", isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -294,7 +247,7 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN required `text` group with empty textarea
       // WHEN dialog open
       // THEN Add button disabled
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-req-text",
         name: "Comentarios",
         type: "text",
@@ -311,7 +264,7 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN required text group, button disabled
       // WHEN user types "Sin azúcar"
       // THEN Add button enabled
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-req-text2",
         name: "Comentarios",
         type: "text",
@@ -334,13 +287,13 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN product with only optional groups, defaults pre-selected
       // WHEN dialog opens
       // THEN Add button enabled
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-opt",
         name: "Nivel de hielo",
         type: "single",
         required: false,
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-opt", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-opt", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
         ],
       });
 
@@ -353,23 +306,23 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN two required groups, only one satisfied
       // WHEN dialog open
       // THEN Add button remains disabled
-      const satisfiedGroup = buildGroup({
+      const satisfiedGroup = buildModifierGroup({
         id: "grp-req-a",
         name: "Nivel de hielo",
         type: "single",
         required: true,
         options: [
-          buildOption({ id: "opt-a-default", groupId: "grp-req-a", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-a-default", groupId: "grp-req-a", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
         ],
       });
-      const unsatisfiedGroup = buildGroup({
+      const unsatisfiedGroup = buildModifierGroup({
         id: "grp-req-b",
         name: "Leche alternativa",
         type: "single",
         required: true,
         options: [
-          buildOption({ id: "opt-b-none", groupId: "grp-req-b", name: "Ninguna", isDefault: false, sortOrder: 0 }),
-          buildOption({ id: "opt-b-oat", groupId: "grp-req-b", name: "Avena", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-b-none", groupId: "grp-req-b", name: "Ninguna", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-b-oat", groupId: "grp-req-b", name: "Avena", isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -385,13 +338,13 @@ describe("ProductCustomizationDialog", () => {
       // WHEN dialog opens with defaults pre-selected
       // THEN displayed price is 5500 cents → formatted currency of 55.00
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-price-default",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-price-default", name: "Sin hielo", priceDelta: 0, isDefault: false, sortOrder: 0 }),
-          buildOption({ id: "opt-extra", groupId: "grp-price-default", name: "Extra hielo", priceDelta: 500, isDefault: true, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-price-default", name: "Sin hielo", priceDelta: 0, isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-extra", groupId: "grp-price-default", name: "Extra hielo", priceDelta: 500, isDefault: true, sortOrder: 1 }),
         ],
       });
 
@@ -406,12 +359,12 @@ describe("ProductCustomizationDialog", () => {
       // WHEN user checks "Bacon"
       // THEN price becomes 5800
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-price-up",
         name: "Toppings",
         type: "multiple",
         options: [
-          buildOption({ id: "opt-bacon", groupId: "grp-price-up", name: "Bacon", priceDelta: 800, isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-bacon", groupId: "grp-price-up", name: "Bacon", priceDelta: 800, isDefault: false, sortOrder: 0 }),
         ],
       });
 
@@ -431,12 +384,12 @@ describe("ProductCustomizationDialog", () => {
       // WHEN user unchecks "Bacon"
       // THEN price becomes 5000
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-price-down",
         name: "Toppings",
         type: "multiple",
         options: [
-          buildOption({ id: "opt-bacon", groupId: "grp-price-down", name: "Bacon", priceDelta: 800, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-bacon", groupId: "grp-price-down", name: "Bacon", priceDelta: 800, isDefault: true, sortOrder: 0 }),
         ],
       });
 
@@ -456,7 +409,7 @@ describe("ProductCustomizationDialog", () => {
       // WHEN user types free text
       // THEN displayed price remains 5000
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-text-only",
         name: "Comentarios",
         type: "text",
@@ -478,14 +431,14 @@ describe("ProductCustomizationDialog", () => {
   describe("onConfirm builds SelectedModifier[] (6.1.3 confirm)", () => {
     it("calls onConfirm with default-selected single option when Add clicked", () => {
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-confirm-single",
         name: "Nivel de hielo",
         type: "single",
         required: false,
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-confirm-single", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-extra", groupId: "grp-confirm-single", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-confirm-single", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-extra", groupId: "grp-confirm-single", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
         ],
       });
       const onConfirm = mock();
@@ -508,13 +461,13 @@ describe("ProductCustomizationDialog", () => {
 
     it("calls onConfirm with updated selection when user changes radio", () => {
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-confirm-change",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-sin", groupId: "grp-confirm-change", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-extra", groupId: "grp-confirm-change", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-sin", groupId: "grp-confirm-change", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-extra", groupId: "grp-confirm-change", name: "Extra hielo", priceDelta: 500, isDefault: false, sortOrder: 1 }),
         ],
       });
       const onConfirm = mock();
@@ -534,7 +487,7 @@ describe("ProductCustomizationDialog", () => {
 
     it("captures textValue for text group in onConfirm", () => {
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-confirm-text",
         name: "Comentarios",
         type: "text",
@@ -561,7 +514,7 @@ describe("ProductCustomizationDialog", () => {
     });
 
     it("calls onClose when cancel/close button clicked", () => {
-      const group = buildGroup({ id: "grp-close", name: "Nivel de hielo", type: "single" });
+      const group = buildModifierGroup({ id: "grp-close", name: "Nivel de hielo", type: "single" });
       const onClose = mock();
 
       renderDialog({ groups: [group], onClose });
@@ -586,7 +539,7 @@ describe("ProductCustomizationDialog", () => {
         price: 4200,
         image: "☕",
       });
-      const group = buildGroup({ id: "g1", name: "Nivel de hielo", type: "single" });
+      const group = buildModifierGroup({ id: "g1", name: "Nivel de hielo", type: "single" });
 
       renderDialog({ product, groups: [group] });
 
@@ -603,14 +556,14 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a group with mix of free and paid options
       // WHEN dialog opens
       // THEN each paid option exposes its surcharge formatted as "+$X.XX"
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-surcharge",
         name: "Tamaño",
         type: "single",
         options: [
-          buildOption({ id: "opt-s", name: "Chico", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-m", name: "Mediano", priceDelta: 500, isDefault: false, sortOrder: 1 }),
-          buildOption({ id: "opt-l", name: "Grande", priceDelta: 1200, isDefault: false, sortOrder: 2 }),
+          buildModifierOption({ id: "opt-s", name: "Chico", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-m", name: "Mediano", priceDelta: 500, isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-l", name: "Grande", priceDelta: 1200, isDefault: false, sortOrder: 2 }),
         ],
       });
 
@@ -631,13 +584,13 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a group with a discount option (priceDelta < 0)
       // WHEN dialog opens
       // THEN the discount is rendered with a leading minus sign
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-discount",
         name: "Promo",
         type: "single",
         options: [
-          buildOption({ id: "opt-full", name: "Precio normal", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-promo", name: "Promo", priceDelta: -1000, isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-full", name: "Precio normal", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-promo", name: "Promo", priceDelta: -1000, isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -652,13 +605,13 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a single group with a default option
       // WHEN dialog opens
       // THEN the default option is marked as selected (aria-checked + data attr)
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-sel",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-a", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-b", name: "Con hielo", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-a", name: "Sin hielo", isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-b", name: "Con hielo", isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -677,14 +630,14 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a required single group
       // WHEN dialog opens
       // THEN the group header exposes a visible "Requerido" indicator
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-req",
         name: "Nivel de hielo",
         type: "single",
         required: true,
         options: [
-          buildOption({ id: "opt-a", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
-          buildOption({ id: "opt-b", name: "Con hielo", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-a", name: "Sin hielo", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-b", name: "Con hielo", isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -699,12 +652,12 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a product with one single group
       // WHEN dialog opens with the default pre-selected
       // THEN the footer summary lists the selected options grouped by groupName
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-sum",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-a", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-a", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
         ],
       });
 
@@ -720,13 +673,13 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a single group
       // WHEN user picks the non-default option
       // THEN summary reflects the new choice
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-sum-change",
         name: "Nivel de hielo",
         type: "single",
         options: [
-          buildOption({ id: "opt-a", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
-          buildOption({ id: "opt-b", name: "Con hielo", priceDelta: 200, isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-a", name: "Sin hielo", priceDelta: 0, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-b", name: "Con hielo", priceDelta: 200, isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -744,14 +697,14 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN a required single group with no defaults
       // WHEN dialog opens
       // THEN the CTA is disabled and exposes a hint naming the missing group
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-missing",
         name: "Tamaño del vaso",
         type: "single",
         required: true,
         options: [
-          buildOption({ id: "opt-a", name: "Chico", isDefault: false, sortOrder: 0 }),
-          buildOption({ id: "opt-b", name: "Grande", isDefault: false, sortOrder: 1 }),
+          buildModifierOption({ id: "opt-a", name: "Chico", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-b", name: "Grande", isDefault: false, sortOrder: 1 }),
         ],
       });
 
@@ -769,12 +722,12 @@ describe("ProductCustomizationDialog", () => {
       // WHEN dialog opens
       // THEN the footer shows total = 5500 cents (55.00) in a data-testid hook
       const product = buildProduct({ price: 5000 });
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-total",
         name: "Toppings",
         type: "multiple",
         options: [
-          buildOption({ id: "opt-bacon", name: "Bacon", priceDelta: 500, isDefault: true, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-bacon", name: "Bacon", priceDelta: 500, isDefault: true, sortOrder: 0 }),
         ],
       });
 
@@ -792,12 +745,12 @@ describe("ProductCustomizationDialog", () => {
       // GIVEN any group
       // WHEN dialog opens
       // THEN the DOM uses role=radio/checkbox on custom buttons, not native inputs
-      const group = buildGroup({
+      const group = buildModifierGroup({
         id: "grp-custom",
         name: "Toppings",
         type: "multiple",
         options: [
-          buildOption({ id: "opt-a", name: "Queso", isDefault: false, sortOrder: 0 }),
+          buildModifierOption({ id: "opt-a", name: "Queso", isDefault: false, sortOrder: 0 }),
         ],
       });
 

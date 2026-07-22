@@ -7,43 +7,7 @@ import { okAsync } from "neverthrow";
 import { useProductModifierGroupsMap } from "@/modules/menu/hooks/use-modifier-groups";
 import { modifierGroupDrizzleRepository } from "@/modules/menu/persistence/modifier-group-drizzle.repository";
 import * as batchUseCase from "@/modules/menu/use-cases/list-product-modifier-groups-batch";
-import type { Product } from "@/modules/menu/domain/product";
-import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
-
-const FIXED_DATE = new Date("2026-05-12T10:15:30.000Z");
-
-function buildProduct(overrides: Partial<Product> = {}): Product {
-  return {
-    id: overrides.id ?? "p1",
-    categoryId: overrides.categoryId ?? "cat-A",
-    menuIds: ["menu-1"],
-    name: overrides.name ?? "Café",
-    description: "",
-    price: 1000,
-    prepTimeMinutes: 5,
-    image: "☕",
-    isPopular: false,
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-    ...overrides,
-  };
-}
-
-function buildGroup(id: string): ModifierGroup {
-  return {
-    id,
-    name: `Group ${id}`,
-    type: "single",
-    required: false,
-    sortOrder: 0,
-    firstOptionFree: false,
-    options: [],
-    createdAt: FIXED_DATE,
-    updatedAt: FIXED_DATE,
-    deletedAt: null,
-  };
-}
+import { buildModifierGroup, buildProduct } from "@/modules/menu/test/factories";
 
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -86,7 +50,7 @@ describe("useProductModifierGroupsMap (batch)", () => {
   it("pre-fills the returned map with empty arrays for every input product", async () => {
     spyOn(batchUseCase, "listProductModifierGroupsBatch").mockReturnValue(
       okAsync({
-        p1: [buildGroup("g1")],
+        p1: [buildModifierGroup({ id: "g1" })],
         // p2 missing from result
       }),
     );
