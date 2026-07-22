@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from 'bun:test';
 import { screen } from '@testing-library/react';
 import { useTranslation } from 'react-i18next';
 import { renderWithI18n, createTestI18n } from './test-utils';

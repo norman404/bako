@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
 
-interface PrintTicketPayload {
+export interface PrintTicketPayload {
   printerType: string;
   printerAddress: string;
   ticketNumber: number;

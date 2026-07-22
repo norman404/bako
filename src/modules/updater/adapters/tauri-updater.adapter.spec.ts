@@ -64,7 +64,7 @@ describe("downloadAndInstallUpdate", () => {
 
     await downloadAndInstallUpdate(handle, () => undefined);
 
-    expect(downloadAndInstall).toHaveBeenCalledOnce();
+    expect(downloadAndInstall).toHaveBeenCalledTimes(1);
   });
 
   it("forwards download events to progress callback", async () => {
@@ -109,7 +109,7 @@ describe("relaunchApplication", () => {
 
     await relaunchApplication({ relaunch });
 
-    expect(relaunch).toHaveBeenCalledOnce();
+    expect(relaunch).toHaveBeenCalledTimes(1);
   });
 
   it("throws when relaunch fails", async () => {

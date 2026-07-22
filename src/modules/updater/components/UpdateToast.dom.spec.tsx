@@ -101,7 +101,7 @@ describe("UpdateToast", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /actualizar/i }));
 
-    expect(downloadAndInstall).toHaveBeenCalledOnce();
+    expect(downloadAndInstall).toHaveBeenCalledTimes(1);
   });
 
   it("renders download progress", () => {
@@ -127,7 +127,7 @@ describe("UpdateToast", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /reiniciar/i }));
 
-    expect(relaunch).toHaveBeenCalledOnce();
+    expect(relaunch).toHaveBeenCalledTimes(1);
   });
 
   it("renders error state, allows retry and dismiss", async () => {
@@ -146,10 +146,10 @@ describe("UpdateToast", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /reintentar/i }));
 
-    expect(checkForUpdates).toHaveBeenCalledOnce();
+    expect(checkForUpdates).toHaveBeenCalledTimes(1);
 
     await userEvent.click(screen.getByRole("button", { name: /cerrar/i }));
 
-    expect(reset).toHaveBeenCalledOnce();
+    expect(reset).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from "bun:test";
-import * as React from "react";
 
 import { renderWithProviders, screen, fireEvent } from "@/test/test-utils";
 import { ProductSearch } from "@/modules/menu/components/ProductSearch";

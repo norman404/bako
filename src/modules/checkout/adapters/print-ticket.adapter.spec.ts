@@ -6,7 +6,7 @@ mock.module("@tauri-apps/api/core", () => ({
 
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
-import { printOrder } from "@/modules/checkout/adapters/print-ticket.adapter";
+import { printOrder, type PrintTicketPayload } from "@/modules/checkout/adapters/print-ticket.adapter";
 import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
 
 const mockedInvoke = invoke as Mock<typeof invoke>;
@@ -50,7 +50,8 @@ describe("print-ticket adapter", () => {
 
     expect(result.isOk()).toBe(true);
     expect(mockedInvoke).toHaveBeenCalledTimes(1);
-    const payload = mockedInvoke.mock.calls[0][1].input;
+    const args = mockedInvoke.mock.calls[0]?.[1] as { input: PrintTicketPayload } | undefined;
+    const payload = args!.input;
     expect(payload.items).toHaveLength(1);
     expect(payload.items[0].modifiers).toEqual([
       { groupName: "Nivel de hielo", optionName: "Sin hielo", textValue: null },
@@ -73,7 +74,8 @@ describe("print-ticket adapter", () => {
     const result = await printOrder(options);
 
     expect(result.isOk()).toBe(true);
-    const payload = mockedInvoke.mock.calls[0][1].input;
+    const args = mockedInvoke.mock.calls[0]?.[1] as { input: PrintTicketPayload } | undefined;
+    const payload = args!.input;
     expect(payload.items[0].modifiers).toEqual([]);
   });
 

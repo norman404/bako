@@ -102,7 +102,7 @@ describe("useUpdater", () => {
       await result.current.checkForUpdates();
     });
 
-    expect(checkForUpdate).toHaveBeenCalledOnce();
+    expect(checkForUpdate).toHaveBeenCalledTimes(1);
     expect(result.current.hasUpdate).toBe(true);
     expect(useUpdaterStore.getState().status).toEqual(
       createAvailableStatus({ version: "1.2.0", notes: "" }),

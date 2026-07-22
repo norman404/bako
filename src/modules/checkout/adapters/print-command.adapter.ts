@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type { PrintCommandOptions } from "@/modules/checkout/domain/print-command";
 
-interface PrintCommandPayload {
+export interface PrintCommandPayload {
   printerType: string;
   printerAddress: string;
   headerText: string;

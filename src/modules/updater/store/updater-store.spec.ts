@@ -138,8 +138,8 @@ describe("useUpdaterStore", () => {
 
       expect(useUpdaterStore.getState().status).toEqual(createReadyToInstallStatus("2026.6.2"));
       expect(useUpdaterStore.getState().status.kind).toBe(UpdateStatus.ReadyToInstall);
-      expect(downloadAndInstallUpdate).toHaveBeenCalledOnce();
-      expect(handle.downloadAndInstall).toHaveBeenCalledOnce();
+      expect(downloadAndInstallUpdate).toHaveBeenCalledTimes(1);
+      expect(handle.downloadAndInstall).toHaveBeenCalledTimes(1);
     });
 
     it("sets the last downloading status with the accumulated progress", async () => {
@@ -190,7 +190,7 @@ describe("useUpdaterStore", () => {
 
       await useUpdaterStore.getState().relaunch();
 
-      expect(relaunchApplication).toHaveBeenCalledOnce();
+      expect(relaunchApplication).toHaveBeenCalledTimes(1);
     });
 
     it("sets error status when relaunch fails", async () => {

@@ -5,7 +5,7 @@ mock.module("@tauri-apps/api/core", () => ({
 }));
 
 import { invoke } from "@tauri-apps/api/core";
-import { printCommand } from "./print-command.adapter";
+import { printCommand, type PrintCommandPayload } from "./print-command.adapter";
 import type { PrintCommandOptions } from "@/modules/checkout/domain/print-command";
 
 const mockedInvoke = invoke as Mock<typeof invoke>;
@@ -43,7 +43,8 @@ describe("print-command adapter", () => {
     expect(mockedInvoke).toHaveBeenCalledTimes(1);
     expect(mockedInvoke.mock.calls[0]![0]).toBe("print_command");
 
-    const payload = mockedInvoke.mock.calls[0]![1].input;
+    const args = mockedInvoke.mock.calls[0]?.[1] as { input: PrintCommandPayload } | undefined;
+    const payload = args!.input;
     expect(payload.printerType).toBe("network");
     expect(payload.printerAddress).toBe("192.168.1.50:9100");
     expect(payload.headerText).toBe("COMANDA");
@@ -77,7 +78,8 @@ describe("print-command adapter", () => {
     const result = await printCommand(options);
 
     expect(result.isOk()).toBe(true);
-    const payload = mockedInvoke.mock.calls[0]![1].input;
+    const args = mockedInvoke.mock.calls[0]?.[1] as { input: PrintCommandPayload } | undefined;
+    const payload = args!.input;
     expect(payload.headerText).toBe("ENCABEZADO PERSONALIZADO");
   });
 });
