@@ -1,4 +1,4 @@
-import { Plus, Printer as PrinterIcon, Save, Trash2, Wifi, Usb, Play, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Printer as PrinterIcon, Save, Trash2, Wifi, Usb, Tag, Play, CheckCircle2, AlertCircle } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PRINTER_ROLE, PRINTER_TYPE, type Printer, type PrinterCreateInput, type PrinterRole, type PrinterType } from "@/modules/printer/domain/printer";
+import { PRINTER_LABEL_LANGUAGE, PRINTER_ROLE, PRINTER_TYPE, type LabelLanguage, type Printer, type PrinterCreateInput, type PrinterRole, type PrinterType } from "@/modules/printer/domain/printer";
 import {
   useArchivePrinter,
   useCreatePrinter,
@@ -32,6 +32,14 @@ import { useSettingsStore } from "@/modules/settings/store/settings-store";
 const PRINTER_TYPE_OPTIONS = [
   { value: PRINTER_TYPE.NETWORK, label: "Red (TCP)", icon: Wifi },
   { value: PRINTER_TYPE.USB, label: "USB", icon: Usb },
+  { value: PRINTER_TYPE.LABEL, label: "Etiqueta", icon: Tag },
+];
+
+const LABEL_LANGUAGE_OPTIONS = [
+  { value: PRINTER_LABEL_LANGUAGE.TSPL, label: "TSPL" },
+  { value: PRINTER_LABEL_LANGUAGE.ZPL, label: "ZPL" },
+  { value: PRINTER_LABEL_LANGUAGE.EPL, label: "EPL" },
+  { value: PRINTER_LABEL_LANGUAGE.CPCL, label: "CPCL" },
 ];
 
 const PRINTER_ROLE_OPTIONS = [
@@ -48,11 +56,20 @@ const PRINTER_FORM_MODE = {
 
 type PrinterFormMode = (typeof PRINTER_FORM_MODE)[keyof typeof PRINTER_FORM_MODE];
 
+const DEFAULT_LABEL_WIDTH_MM = 40;
+const DEFAULT_LABEL_HEIGHT_MM = 30;
+const DEFAULT_LABEL_GAP_MM = 2;
+const DEFAULT_LABEL_LANGUAGE = PRINTER_LABEL_LANGUAGE.TSPL;
+
 interface PrinterFormState {
   name: string;
   type: PrinterType;
   address: string;
   role: PrinterRole;
+  labelWidthMm: number;
+  labelHeightMm: number;
+  labelGapMm: number;
+  labelLanguage: LabelLanguage;
 }
 
 function buildEmptyFormState(): PrinterFormState {
@@ -61,6 +78,10 @@ function buildEmptyFormState(): PrinterFormState {
     type: PRINTER_TYPE.NETWORK,
     address: "",
     role: PRINTER_ROLE.KITCHEN,
+    labelWidthMm: DEFAULT_LABEL_WIDTH_MM,
+    labelHeightMm: DEFAULT_LABEL_HEIGHT_MM,
+    labelGapMm: DEFAULT_LABEL_GAP_MM,
+    labelLanguage: DEFAULT_LABEL_LANGUAGE,
   };
 }
 
@@ -70,6 +91,10 @@ function buildFormStateFromPrinter(printer: Printer): PrinterFormState {
     type: printer.type,
     address: printer.address,
     role: printer.role,
+    labelWidthMm: printer.labelWidthMm,
+    labelHeightMm: printer.labelHeightMm,
+    labelGapMm: printer.labelGapMm,
+    labelLanguage: printer.labelLanguage,
   };
 }
 
@@ -86,6 +111,10 @@ function toPrinterPayload(formState: PrinterFormState): PrinterCreateInput | nul
     type: formState.type,
     address,
     role: formState.role,
+    labelWidthMm: formState.labelWidthMm,
+    labelHeightMm: formState.labelHeightMm,
+    labelGapMm: formState.labelGapMm,
+    labelLanguage: formState.labelLanguage,
   };
 }
 
@@ -251,7 +280,14 @@ export function PrinterSettingsPanel() {
 
   const handleTest = async () => {
     try {
-      await testPrinter({ printerType: formState.type, printerAddress: formState.address });
+      await testPrinter({
+        printerType: formState.type,
+        printerAddress: formState.address,
+        labelWidthMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelWidthMm : undefined,
+        labelHeightMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelHeightMm : undefined,
+        labelGapMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelGapMm : undefined,
+        labelLanguage: formState.type === PRINTER_TYPE.LABEL ? formState.labelLanguage : undefined,
+      });
       toast.success("Impresora respondió correctamente", {
         description: "La comanda de prueba se envió exitosamente",
         icon: <CheckCircle2 className="h-4 w-4 text-success" />,
@@ -374,7 +410,15 @@ export function PrinterSettingsPanel() {
               <Select
                 value={formState.type}
                 onValueChange={(value) =>
-                  setFormState((previous) => ({ ...previous, type: value as PrinterType, address: "" }))
+                  setFormState((previous) => ({
+                    ...previous,
+                    type: value as PrinterType,
+                    address: "",
+                    labelWidthMm: DEFAULT_LABEL_WIDTH_MM,
+                    labelHeightMm: DEFAULT_LABEL_HEIGHT_MM,
+                    labelGapMm: DEFAULT_LABEL_GAP_MM,
+                    labelLanguage: value === PRINTER_TYPE.LABEL ? DEFAULT_LABEL_LANGUAGE : previous.labelLanguage,
+                  }))
                 }
               >
                 <SelectTrigger id="printer-type">
@@ -406,7 +450,13 @@ export function PrinterSettingsPanel() {
                     const value = event.currentTarget.value;
                     setFormState((previous) => ({ ...previous, address: value }));
                   }}
-                  placeholder={formState.type === "network" ? "192.168.1.100:9100" : "04b8:0e15"}
+                  placeholder={
+                    formState.type === "network"
+                      ? "192.168.1.100:9100"
+                      : formState.type === "usb"
+                        ? "04b8:0e15"
+                        : "04b8:0e15"
+                  }
                   className="pr-20 font-mono-tabular text-sm"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-2xs font-medium uppercase tracking-wider text-text-muted">
@@ -416,9 +466,74 @@ export function PrinterSettingsPanel() {
               <p className="text-2xs text-text-muted leading-relaxed">
                 {formState.type === "network"
                   ? "Ingresa la dirección IP y el puerto TCP separados por dos puntos. Puerto estándar ESC/POS: 9100."
-                  : "Ingresa el identificador USB en formato VID:PID (hexadecimal)."}
+                  : formState.type === "usb"
+                    ? "Ingresa el identificador USB en formato VID:PID (hexadecimal)."
+                    : "Ingresa el identificador USB en formato VID:PID (hexadecimal). La impresora de etiquetas usa TSPL."}
               </p>
             </div>
+
+            {formState.type === PRINTER_TYPE.LABEL && (
+              <div className="grid grid-cols-2 gap-2">
+                <FormField label="Ancho (mm)" htmlFor="printer-label-width">
+                  <Input
+                    id="printer-label-width"
+                    type="number"
+                    min={10}
+                    max={200}
+                    value={formState.labelWidthMm}
+                    onInput={(event) => {
+                      const value = Number.parseInt(event.currentTarget.value, 10) || DEFAULT_LABEL_WIDTH_MM;
+                      setFormState((previous) => ({ ...previous, labelWidthMm: value }));
+                    }}
+                  />
+                </FormField>
+                <FormField label="Alto (mm)" htmlFor="printer-label-height">
+                  <Input
+                    id="printer-label-height"
+                    type="number"
+                    min={10}
+                    max={200}
+                    value={formState.labelHeightMm}
+                    onInput={(event) => {
+                      const value = Number.parseInt(event.currentTarget.value, 10) || DEFAULT_LABEL_HEIGHT_MM;
+                      setFormState((previous) => ({ ...previous, labelHeightMm: value }));
+                    }}
+                  />
+                </FormField>
+                <FormField label="Gap (mm)" htmlFor="printer-label-gap">
+                  <Input
+                    id="printer-label-gap"
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={formState.labelGapMm}
+                    onInput={(event) => {
+                      const value = Number.parseInt(event.currentTarget.value, 10) || DEFAULT_LABEL_GAP_MM;
+                      setFormState((previous) => ({ ...previous, labelGapMm: value }));
+                    }}
+                  />
+                </FormField>
+                <FormField label="Lenguaje de etiqueta" htmlFor="printer-label-language">
+                  <Select
+                    value={formState.labelLanguage}
+                    onValueChange={(value) =>
+                      setFormState((previous) => ({ ...previous, labelLanguage: value as LabelLanguage }))
+                    }
+                  >
+                    <SelectTrigger id="printer-label-language">
+                      <SelectValue placeholder="Seleccionar lenguaje" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LABEL_LANGUAGE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              </div>
+            )}
 
             <FormError message={formError} />
 

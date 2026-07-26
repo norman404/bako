@@ -41,6 +41,10 @@ export function buildKitchenCommands(
           destination: {
             printerType: printer.type,
             printerAddress: printer.address,
+            labelWidthMm: printer.labelWidthMm,
+            labelHeightMm: printer.labelHeightMm,
+            labelGapMm: printer.labelGapMm,
+            labelLanguage: printer.labelLanguage,
           },
         });
       }

@@ -13,6 +13,7 @@
     "printerAddressRequired": "La dirección de la impresora es obligatoria.",
     "printerTypeInvalid": "Tipo de impresora inválido: {{type}}.",
     "printerRoleInvalid": "Rol de impresora inválido: {{role}}.",
+    "printerLabelLanguageInvalid": "Lenguaje de etiqueta inválido: {{labelLanguage}}.",
     "dbError": "No pudimos cargar las impresoras. Intentá de nuevo.",
     "generic": "Ocurrió un error con las impresoras."
   }

@@ -2,13 +2,43 @@ use escpos::printer::Printer;
 use escpos::printer_options::PrinterOptions;
 use escpos::utils::{JustifyMode, PageCode, Protocol};
 use super::error::PrintError;
+use super::label::{build_label_bytes, build_test_label, LabelLanguage, LabelPayload};
 use super::ticket::{build_command, build_ticket, CommandPayload, TicketPayload};
+#[cfg(not(target_os = "windows"))]
+use super::raw_usb::RawLabelUsbDriver;
+
+pub use super::label::{DEFAULT_LABEL_GAP_MM, DEFAULT_LABEL_HEIGHT_MM, DEFAULT_LABEL_WIDTH_MM};
+
+#[derive(Debug, Clone)]
+pub struct LabelConfig {
+    pub width_mm: u32,
+    pub height_mm: u32,
+    pub gap_mm: u32,
+    pub label_language: Option<String>,
+}
+
+impl Default for LabelConfig {
+    fn default() -> Self {
+        Self {
+            width_mm: DEFAULT_LABEL_WIDTH_MM,
+            height_mm: DEFAULT_LABEL_HEIGHT_MM,
+            gap_mm: DEFAULT_LABEL_GAP_MM,
+            label_language: None,
+        }
+    }
+}
+
+fn resolve_label_language(label_language: Option<&str>) -> LabelLanguage {
+    label_language.and_then(LabelLanguage::from_str).unwrap_or(LabelLanguage::Tspl)
+}
 
 pub enum PrinterDriver {
     #[cfg(target_os = "windows")]
     Usb(escpos::driver::WindowsUsbPrintDriver),
     #[cfg(not(target_os = "windows"))]
     Usb(escpos::driver::NativeUsbDriver),
+    #[cfg(not(target_os = "windows"))]
+    LabelUsb(super::raw_usb::RawLabelUsbDriver),
     Network(escpos::driver::NetworkDriver),
     None,
 }
@@ -36,8 +66,6 @@ fn parse_network_address(address: &str) -> Result<(String, u16), PrintError> {
 pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Result<PrinterDriver, PrintError> {
     match printer_type {
         "usb" => {
-            // Keep the parser call inside each cfg branch so rustc sees it as
-            // used on every target and never emits a dead_code warning.
             #[cfg(target_os = "windows")]
             {
                 let (vid, pid) = parse_usb_address(printer_address)?;
@@ -51,6 +79,24 @@ pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Resul
                 let driver = escpos::driver::NativeUsbDriver::open(vid, pid)
                     .map_err(|e| PrintError::UsbError(e.to_string()))?;
                 Ok(PrinterDriver::Usb(driver))
+            }
+        }
+        "label" => {
+            // Label printers often do not expose the same ESC/POS USB profile as receipt
+            // printers. Use a raw bulk-OUT transport so TSPL bytes reach the device.
+            #[cfg(target_os = "windows")]
+            {
+                let (vid, pid) = parse_usb_address(printer_address)?;
+                let driver = escpos::driver::WindowsUsbPrintDriver::open_by_vid_pid(vid, pid)
+                    .map_err(|e| PrintError::UsbError(e.to_string()))?;
+                Ok(PrinterDriver::Usb(driver))
+            }
+            #[cfg(not(target_os = "windows"))]
+            {
+                let (vid, pid) = parse_usb_address(printer_address)?;
+                let driver = RawLabelUsbDriver::open_by_vid_pid(vid, pid)
+                    .map_err(|e| PrintError::UsbError(e.to_string()))?;
+                Ok(PrinterDriver::LabelUsb(driver))
             }
         }
         "network" => {
@@ -75,75 +121,136 @@ fn build_printer<D: escpos::driver::Driver>(driver: D) -> Printer<D> {
     Printer::new(driver, Protocol::default(), Some(options))
 }
 
-pub fn print_command_with_driver(driver: PrinterDriver, payload: &CommandPayload) -> Result<(), PrintError> {
-    match driver {
-        PrinterDriver::Usb(usb_driver) => {
-            let mut printer = build_printer(usb_driver);
-            build_command(&mut printer, payload)?;
-            Ok(())
+fn print_escpos_command<D: escpos::driver::Driver>(driver: D, payload: &CommandPayload) -> Result<(), PrintError> {
+    let mut printer = build_printer(driver);
+    build_command(&mut printer, payload)?;
+    Ok(())
+}
+
+fn print_tspl_command(driver: &dyn escpos::driver::Driver, payload: &CommandPayload, config: LabelConfig) -> Result<(), PrintError> {
+    let label_payload = LabelPayload {
+        header_text: payload.header_text.clone(),
+        items: payload.items.clone(),
+        width_mm: Some(config.width_mm),
+        height_mm: Some(config.height_mm),
+        gap_mm: Some(config.gap_mm),
+    };
+
+    let lang = resolve_label_language(config.label_language.as_deref());
+    eprintln!("[print_tspl_command] label_language={:?}", lang);
+    let bytes = build_label_bytes(&label_payload, lang)?;
+    eprintln!("[label command payload] {}", String::from_utf8_lossy(&bytes).replace('\r', "\\r").replace('\n', "\\n"));
+    driver.write(&bytes).map_err(|e| PrintError::UsbError(e.to_string()))?;
+    driver.flush().map_err(|e| PrintError::UsbError(e.to_string()))?;
+    Ok(())
+}
+
+fn print_command_with_driver_ref(driver: &dyn escpos::driver::Driver, printer_type: &str, payload: &CommandPayload, label_config: Option<LabelConfig>) -> Result<(), PrintError> {
+    match printer_type {
+        "label" => print_tspl_command(driver, payload, label_config.unwrap_or_default()),
+        _ => {
+            // We cannot build an ESC/POS Printer from &dyn Driver because Printer<D>
+            // requires a concrete type. For the non-label path we clone the concrete
+            // driver and build the printer. In tests, use print_escpos_command directly.
+            Err(PrintError::InvalidAddress("non-label ESC/POS dispatch requires a concrete driver".to_string()))
         }
-        PrinterDriver::Network(net_driver) => {
-            let mut printer = build_printer(net_driver);
-            build_command(&mut printer, payload)?;
-            Ok(())
-        }
-        PrinterDriver::None => Ok(()),
     }
+}
+
+
+pub fn print_command_with_driver(driver: PrinterDriver, printer_type: &str, payload: &CommandPayload, label_config: Option<LabelConfig>) -> Result<(), PrintError> {
+    match printer_type {
+        "label" => {
+            let lang = resolve_label_language(label_config.as_ref().and_then(|c| c.label_language.as_deref()));
+            eprintln!("[print_command_with_driver] label_language={:?}", lang);
+            let driver_ref: &dyn escpos::driver::Driver = match &driver {
+                PrinterDriver::Usb(usb_driver) => usb_driver,
+                #[cfg(not(target_os = "windows"))]
+                PrinterDriver::LabelUsb(label_driver) => label_driver,
+                PrinterDriver::Network(net_driver) => net_driver,
+                PrinterDriver::None => return Ok(()),
+            };
+            print_command_with_driver_ref(driver_ref, printer_type, payload, label_config)
+        }
+        _ => match driver {
+            PrinterDriver::Usb(usb_driver) => print_escpos_command(usb_driver, payload),
+            #[cfg(not(target_os = "windows"))]
+            PrinterDriver::LabelUsb(label_driver) => print_escpos_command(label_driver, payload),
+            PrinterDriver::Network(net_driver) => print_escpos_command(net_driver, payload),
+            PrinterDriver::None => Ok(()),
+        },
+    }
+}
+
+fn print_ticket_inner<D: escpos::driver::Driver>(driver: D, payload: &TicketPayload) -> Result<(), PrintError> {
+    let mut printer = build_printer(driver);
+    build_ticket(&mut printer, payload)?;
+    Ok(())
 }
 
 pub fn print_ticket_with_driver(driver: PrinterDriver, payload: &TicketPayload) -> Result<(), PrintError> {
     match driver {
-        PrinterDriver::Usb(usb_driver) => {
-            let mut printer = build_printer(usb_driver);
-            build_ticket(&mut printer, payload)?;
-            Ok(())
-        }
-        PrinterDriver::Network(net_driver) => {
-            let mut printer = build_printer(net_driver);
-            build_ticket(&mut printer, payload)?;
-            Ok(())
-        }
+        PrinterDriver::Usb(usb_driver) => print_ticket_inner(usb_driver, payload),
+        #[cfg(not(target_os = "windows"))]
+        PrinterDriver::LabelUsb(label_driver) => print_ticket_inner(label_driver, payload),
+        PrinterDriver::Network(net_driver) => print_ticket_inner(net_driver, payload),
         PrinterDriver::None => Ok(()),
     }
 }
 
-pub fn test_printer_with_driver(driver: PrinterDriver) -> Result<(), PrintError> {
-    match driver {
-        PrinterDriver::Usb(usb_driver) => {
-            let mut printer = build_printer(usb_driver);
-            printer
-                .init().map_err(map_err)?
-                .size(2, 2).map_err(map_err)?
-                .bold(true).map_err(map_err)?
-                .justify(JustifyMode::CENTER).map_err(map_err)?
-                .writeln("BAKO - Test").map_err(map_err)?
-                .size(1, 1).map_err(map_err)?
-                .bold(false).map_err(map_err)?
-                .writeln("Printer connection OK").map_err(map_err)?
-                .print_cut().map_err(map_err)?;
-            Ok(())
+fn test_printer_inner<D: escpos::driver::Driver>(driver: D) -> Result<(), PrintError> {
+    let mut printer = build_printer(driver);
+    printer
+        .init().map_err(map_err)?
+        .size(2, 2).map_err(map_err)?
+        .bold(true).map_err(map_err)?
+        .justify(JustifyMode::CENTER).map_err(map_err)?
+        .writeln("BAKO - Test").map_err(map_err)?
+        .size(1, 1).map_err(map_err)?
+        .bold(false).map_err(map_err)?
+        .writeln("Printer connection OK").map_err(map_err)?
+        .print_cut().map_err(map_err)?;
+    Ok(())
+}
+
+fn print_tspl_test_page(driver: &dyn escpos::driver::Driver, label_config: Option<&LabelConfig>) -> Result<(), PrintError> {
+    let lang = resolve_label_language(label_config.and_then(|c| c.label_language.as_deref()));
+    eprintln!("[print_tspl_test_page] label_language={:?}", lang);
+    let bytes = build_test_label(lang);
+    eprintln!("[label test payload] {}", String::from_utf8_lossy(&bytes).replace('\r', "\\r").replace('\n', "\\n"));
+    driver.write(&bytes).map_err(|e| PrintError::UsbError(e.to_string()))?;
+    driver.flush().map_err(|e| PrintError::UsbError(e.to_string()))?;
+    Ok(())
+}
+
+pub fn test_printer_with_driver(driver: PrinterDriver, printer_type: &str, label_config: Option<LabelConfig>) -> Result<(), PrintError> {
+    match printer_type {
+        "label" => {
+            let driver_ref: &dyn escpos::driver::Driver = match &driver {
+                PrinterDriver::Usb(usb_driver) => usb_driver,
+                #[cfg(not(target_os = "windows"))]
+                PrinterDriver::LabelUsb(label_driver) => label_driver,
+                PrinterDriver::Network(net_driver) => net_driver,
+                PrinterDriver::None => return Ok(()),
+            };
+            print_tspl_test_page(driver_ref, label_config.as_ref())
         }
-        PrinterDriver::Network(net_driver) => {
-            let mut printer = build_printer(net_driver);
-            printer
-                .init().map_err(map_err)?
-                .size(2, 2).map_err(map_err)?
-                .bold(true).map_err(map_err)?
-                .justify(JustifyMode::CENTER).map_err(map_err)?
-                .writeln("BAKO - Test").map_err(map_err)?
-                .size(1, 1).map_err(map_err)?
-                .bold(false).map_err(map_err)?
-                .writeln("Printer connection OK").map_err(map_err)?
-                .print_cut().map_err(map_err)?;
-            Ok(())
-        }
-        PrinterDriver::None => Ok(()),
+        _ => match driver {
+            PrinterDriver::Usb(usb_driver) => test_printer_inner(usb_driver),
+            #[cfg(not(target_os = "windows"))]
+            PrinterDriver::LabelUsb(label_driver) => test_printer_inner(label_driver),
+            PrinterDriver::Network(net_driver) => test_printer_inner(net_driver),
+            PrinterDriver::None => Ok(()),
+        },
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, Mutex};
+    use escpos::driver::Driver;
     use super::*;
+    use crate::print::{CommandItem, CommandPayload, TicketItem, TicketPayload};
 
     #[test]
     fn parse_usb_address_parses_hex_vid_pid() {
@@ -176,5 +283,125 @@ mod tests {
     fn parse_network_address_rejects_invalid_port() {
         let err = parse_network_address("192.168.1.100:abc").unwrap_err();
         assert!(matches!(err, PrintError::InvalidAddress(_)));
+    }
+
+    #[derive(Clone)]
+    struct FlushTrackingDriver {
+        buffer: Arc<Mutex<Vec<u8>>>,
+        flush_count: Arc<Mutex<u32>>,
+    }
+
+    impl FlushTrackingDriver {
+        fn new() -> Self {
+            Self {
+                buffer: Arc::new(Mutex::new(Vec::new())),
+                flush_count: Arc::new(Mutex::new(0)),
+            }
+        }
+
+        fn flush_count(&self) -> u32 {
+            *self.flush_count.lock().unwrap()
+        }
+
+        fn has_data(&self) -> bool {
+            !self.buffer.lock().unwrap().is_empty()
+        }
+    }
+
+    impl Driver for FlushTrackingDriver {
+        fn name(&self) -> String {
+            "flush-tracking".to_owned()
+        }
+
+        fn write(&self, data: &[u8]) -> escpos::errors::Result<()> {
+            self.buffer.lock().unwrap().extend_from_slice(data);
+            Ok(())
+        }
+
+        fn read(&self, _buf: &mut [u8]) -> escpos::errors::Result<usize> {
+            Ok(0)
+        }
+
+        fn flush(&self) -> escpos::errors::Result<()> {
+            *self.flush_count.lock().unwrap() += 1;
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn print_ticket_flushes_driver_after_building_ticket() {
+        let driver = FlushTrackingDriver::new();
+        let payload = TicketPayload {
+            ticket_number: 1,
+            created_at: "2026-07-26".to_owned(),
+            total: 100,
+            items: vec![TicketItem {
+                name: "Test".to_owned(),
+                quantity: 1,
+                unit_price: 100,
+                modifiers: vec![],
+            }],
+            payment_method: "cash".to_owned(),
+            payment_amount: 100,
+            fulfillment_type: "local".to_owned(),
+            customer: None,
+        };
+
+        print_ticket_inner(driver.clone(), &payload).unwrap();
+
+        assert!(driver.has_data(), "expected ticket bytes to be written to driver");
+        assert!(driver.flush_count() >= 1, "expected at least one flush after printing ticket");
+    }
+
+    #[test]
+    fn print_command_flushes_driver_after_building_command() {
+        let driver = FlushTrackingDriver::new();
+        let payload = CommandPayload {
+            header_text: "COCINA".to_owned(),
+            items: vec![CommandItem {
+                name: "Taco".to_owned(),
+                quantity: 1,
+                modifiers: vec![],
+            }],
+        };
+
+        print_escpos_command(driver.clone(), &payload).unwrap();
+
+        assert!(driver.has_data(), "expected command bytes to be written to driver");
+        assert!(driver.flush_count() >= 1, "expected at least one flush after printing command");
+    }
+
+    #[test]
+    fn print_command_with_driver_ref_routes_label_printer_to_tspl() {
+        let driver = FlushTrackingDriver::new();
+        let payload = CommandPayload {
+            header_text: "COCINA".to_owned(),
+            items: vec![CommandItem {
+                name: "Taco".to_owned(),
+                quantity: 1,
+                modifiers: vec![],
+            }],
+        };
+
+        print_command_with_driver_ref(&driver, "label", &payload, None).unwrap();
+
+        let buffer = driver.buffer.lock().unwrap();
+        let output = String::from_utf8_lossy(&buffer);
+        assert!(output.contains("SIZE 40 mm,30 mm"), "expected TSPL SIZE command, got: {}", output);
+        assert!(output.contains("GAP 2 mm,0 mm"), "expected TSPL GAP command, got: {}", output);
+        assert!(output.contains("DIRECTION 1,0"), "expected DIRECTION command, got: {}", output);
+        assert!(output.contains("COCINA"), "expected header text in TSPL, got: {}", output);
+        assert!(output.contains("Taco"), "expected item text in TSPL, got: {}", output);
+        assert!(driver.flush_count() >= 1, "expected at least one flush after TSPL command");
+    }
+
+    #[test]
+    fn test_printer_flushes_driver_after_test_page() {
+        let driver = FlushTrackingDriver::new();
+
+        test_printer_inner(driver.clone()).unwrap();
+
+        assert!(driver.has_data(), "expected test page bytes to be written to driver");
+        assert!(driver.flush_count() >= 1, "expected at least one flush after test page");
     }
 }

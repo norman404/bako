@@ -7,6 +7,12 @@ import type { PrinterRepository } from "@/modules/printer/domain/ports";
 import { db } from "@/shared/db/client";
 import { printers, type PrinterRow } from "@/shared/db/schema";
 
+const DEFAULT_LABEL_WIDTH_MM = 40;
+const DEFAULT_LABEL_HEIGHT_MM = 30;
+const DEFAULT_LABEL_GAP_MM = 2;
+const DEFAULT_LABEL_LANGUAGE = "tspl";
+const VALID_LABEL_LANGUAGES = new Set(["tspl", "zpl", "epl", "cpcl"]);
+
 function rowToPrinter(row: PrinterRow): Printer {
   return {
     id: row.id,
@@ -14,6 +20,10 @@ function rowToPrinter(row: PrinterRow): Printer {
     type: row.type as Printer["type"],
     address: row.address,
     role: row.role as Printer["role"],
+    labelWidthMm: row.labelWidthMm ?? DEFAULT_LABEL_WIDTH_MM,
+    labelHeightMm: row.labelHeightMm ?? DEFAULT_LABEL_HEIGHT_MM,
+    labelGapMm: row.labelGapMm ?? DEFAULT_LABEL_GAP_MM,
+    labelLanguage: (row.labelLanguage ?? DEFAULT_LABEL_LANGUAGE) as Printer["labelLanguage"],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
@@ -34,12 +44,16 @@ function validatePrinterInput(input: PrinterCreateInput): PrinterDomainError | n
     return new PrinterValidationError("printerAddressRequired");
   }
 
-  if (!["usb", "network"].includes(input.type)) {
+  if (!["usb", "network", "label"].includes(input.type)) {
     return new PrinterValidationError("printerTypeInvalid", { type: input.type }, `Invalid printer type: ${input.type}`);
   }
 
   if (!["receipt", "kitchen", "bar", "other"].includes(input.role)) {
     return new PrinterValidationError("printerRoleInvalid", { role: input.role }, `Invalid printer role: ${input.role}`);
+  }
+
+  if (input.type === "label" && input.labelLanguage !== undefined && !VALID_LABEL_LANGUAGES.has(input.labelLanguage)) {
+    return new PrinterValidationError("printerLabelLanguageInvalid", { labelLanguage: input.labelLanguage }, `Invalid label language: ${input.labelLanguage}`);
   }
 
   return null;
@@ -95,6 +109,10 @@ export const printerDrizzleRepository: PrinterRepository = {
           type: input.type,
           address: input.address.trim(),
           role: input.role,
+          labelWidthMm: input.labelWidthMm ?? DEFAULT_LABEL_WIDTH_MM,
+          labelHeightMm: input.labelHeightMm ?? DEFAULT_LABEL_HEIGHT_MM,
+          labelGapMm: input.labelGapMm ?? DEFAULT_LABEL_GAP_MM,
+          labelLanguage: input.labelLanguage ?? DEFAULT_LABEL_LANGUAGE,
           createdAt: now,
           updatedAt: now,
         })
@@ -127,6 +145,10 @@ export const printerDrizzleRepository: PrinterRepository = {
             type: input.type,
             address: input.address.trim(),
             role: input.role,
+            labelWidthMm: input.labelWidthMm ?? DEFAULT_LABEL_WIDTH_MM,
+            labelHeightMm: input.labelHeightMm ?? DEFAULT_LABEL_HEIGHT_MM,
+            labelGapMm: input.labelGapMm ?? DEFAULT_LABEL_GAP_MM,
+            labelLanguage: input.labelLanguage ?? DEFAULT_LABEL_LANGUAGE,
             updatedAt: now,
           })
           .where(and(eq(printers.id, id), isNull(printers.deletedAt)))

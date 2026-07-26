@@ -11,6 +11,10 @@ function buildPrinter(overrides: Partial<Printer> = {}): Printer {
     type: (overrides.type ?? "network") as Printer["type"],
     address: overrides.address ?? "192.168.1.50:9100",
     role: (overrides.role ?? "kitchen") as Printer["role"],
+    labelWidthMm: overrides.labelWidthMm ?? 40,
+    labelHeightMm: overrides.labelHeightMm ?? 30,
+    labelGapMm: overrides.labelGapMm ?? 2,
+    labelLanguage: overrides.labelLanguage ?? "tspl",
     createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
     deletedAt: overrides.deletedAt ?? null,
@@ -84,6 +88,10 @@ describe("buildKitchenCommands", () => {
       expect(command.destination).toEqual({
         printerType: kitchenPrinter.type,
         printerAddress: kitchenPrinter.address,
+        labelWidthMm: 40,
+        labelHeightMm: 30,
+        labelGapMm: 2,
+        labelLanguage: "tspl",
       });
     }
   });
