@@ -20,9 +20,8 @@ pub struct RawLabelUsbDriver {
 
 impl RawLabelUsbDriver {
     pub fn open_by_vid_pid(vid: u16, pid: u16) -> Result<Self, PrintError> {
-        eprintln!("[raw_usb] listing devices for {:04X}:{:04X}", vid, pid);
         let devices = list_devices().wait().map_err(|e| {
-            eprintln!("[raw_usb] list_devices failed: {}", e);
+            log::error!("[raw_usb] list_devices failed: {}", e);
             PrintError::UsbError(format!("failed to list USB devices: {}", e))
         })?;
 
@@ -34,34 +33,26 @@ impl RawLabelUsbDriver {
             })
             .next()
             .ok_or_else(|| {
-                eprintln!("[raw_usb] device not found among {} listed", found_count);
+                log::error!("[raw_usb] device {:04X}:{:04X} not found among {} listed", vid, pid, found_count);
                 PrintError::UsbError(format!("USB device {:04X}:{:04X} not found", vid, pid))
             })?;
-        eprintln!("[raw_usb] found device: {:?}", device_info);
 
         let device = Arc::new(device_info.open().wait().map_err(|e| {
-            eprintln!("[raw_usb] open failed: {}", e);
+            log::error!("[raw_usb] open failed: {}", e);
             PrintError::UsbError(format!("failed to open USB device: {}", e))
         })?);
-        eprintln!("[raw_usb] device opened");
 
         let config = device.active_configuration().map_err(|e| {
-            eprintln!("[raw_usb] active_configuration failed: {}", e);
+            log::error!("[raw_usb] active_configuration failed: {}", e);
             PrintError::UsbError(format!("failed to read active configuration: {}", e))
         })?;
-        eprintln!("[raw_usb] active config interfaces: {}", config.interfaces().count());
-
         for interface in config.interfaces() {
             let interface_number = interface.interface_number();
-            eprintln!("[raw_usb] trying interface {}", interface_number);
             let claimed = device.claim_interface(interface_number).wait();
             let claimed_interface = match claimed {
-                Ok(iface) => {
-                    eprintln!("[raw_usb] claimed interface {}", interface_number);
-                    iface
-                }
+                Ok(iface) => iface,
                 Err(e) => {
-                    eprintln!("[raw_usb] claim_interface {} failed: {}", interface_number, e);
+                    log::debug!("[raw_usb] claim_interface {} failed: {}", interface_number, e);
                     continue;
                 }
             };
@@ -70,10 +61,7 @@ impl RawLabelUsbDriver {
             let mut out_address: Option<(u8, usize)> = None;
             let mut in_address: Option<u8> = None;
             for alt in interface.alt_settings() {
-                eprintln!("[raw_usb] alt setting class={} subclass={} protocol={}", alt.class(), alt.subclass(), alt.protocol());
                 for endpoint in alt.endpoints() {
-                    eprintln!("[raw_usb] endpoint addr={:02X} dir={:?} transfer_type={:?} max_packet={}",
-                        endpoint.address(), endpoint.direction(), endpoint.transfer_type(), endpoint.max_packet_size());
                     match endpoint.direction() {
                         nusb::transfer::Direction::Out if out_address.is_none() => {
                             out_address = Some((endpoint.address(), endpoint.max_packet_size() as usize));
@@ -87,7 +75,7 @@ impl RawLabelUsbDriver {
             }
 
             if let Some((address, max_packet_size)) = out_address {
-                eprintln!("[raw_usb] selected OUT endpoint {:02X}, IN endpoint {:?}", address, in_address);
+                log::info!("[raw_usb] opened {:04X}:{:04X} — OUT endpoint {:02X}, IN endpoint {:?}", vid, pid, address, in_address);
                 return Ok(Self {
                     device: device.clone(),
                     claimed_interface: Arc::new(claimed_interface),
@@ -99,51 +87,50 @@ impl RawLabelUsbDriver {
             }
         }
 
-        eprintln!("[raw_usb] no usable OUT endpoint");
+        log::error!("[raw_usb] no usable OUT endpoint on {:04X}:{:04X}", vid, pid);
         Err(PrintError::UsbError(
             "no suitable OUT endpoint found on label printer".to_string(),
         ))
     }
 
     pub fn write_all(&self, data: &[u8]) -> Result<(), PrintError> {
-        eprintln!("[raw_usb] writing {} bytes to endpoint {:02X}", data.len(), self.endpoint_address);
+        log::info!("[raw_usb] writing {} bytes to endpoint {:02X}", data.len(), self.endpoint_address);
 
-        // Perform the USB printer-class handshake before each job, similar to usbprint.sys.
         self.usb_printer_handshake()?;
 
         let endpoint = self.claimed_interface
             .endpoint::<Bulk, Out>(self.endpoint_address)
             .map_err(|e| {
-                eprintln!("[raw_usb] endpoint open failed: {}", e);
+                log::error!("[raw_usb] endpoint open failed: {}", e);
                 PrintError::UsbError(format!("failed to open endpoint: {}", e))
             })?;
 
         let mut writer = endpoint.writer(self.max_packet_size);
+
+        let nul_preamble = [0u8; 64];
+        std::io::Write::write_all(&mut writer, &nul_preamble).map_err(|e| {
+            log::error!("[raw_usb] nul preamble write failed: {}", e);
+            PrintError::UsbError(format!("failed to write NUL preamble: {}", e))
+        })?;
+
         std::io::Write::write_all(&mut writer, data).map_err(|e| {
-            eprintln!("[raw_usb] write failed: {}", e);
+            log::error!("[raw_usb] write failed: {}", e);
             PrintError::UsbError(format!("failed to write to USB endpoint: {}", e))
         })?;
-        std::io::Write::flush(&mut writer).map_err(|e| {
-            eprintln!("[raw_usb] flush failed: {}", e);
-            PrintError::UsbError(format!("failed to flush USB endpoint: {}", e))
+        writer.flush_end().map_err(|e| {
+            log::error!("[raw_usb] flush_end failed: {}", e);
+            PrintError::UsbError(format!("failed to flush_end USB endpoint: {}", e))
         })?;
-        eprintln!("[raw_usb] write complete");
+        log::info!("[raw_usb] write complete ({} bytes + 64-byte preamble)", data.len());
 
-        // Some label-printer firmwares expect the host to drain the IN endpoint after a write;
-        // otherwise the device stays in a busy/error state. Read and discard any status bytes.
         self.drain_in_endpoint();
 
         Ok(())
     }
 
-    /// Minimal USB printer-class handshake. The BEEPRT BY-480BT firmware
-    /// advertises class 0x07 but stalls on GET_PORT_STATUS/SOFT_RESET, so we
-    /// only issue GET_DEVICE_ID and clear any halt condition before writing.
     fn usb_printer_handshake(&self) -> Result<(), PrintError> {
         let index = self.interface_number as u16;
 
-        // GET_DEVICE_ID (request 0) — this one works on BY-480BT.
-        eprintln!("[raw_usb] GET_DEVICE_ID");
         match self.claimed_interface.control_in(ControlIn {
             control_type: ControlType::Class,
             recipient: Recipient::Interface,
@@ -154,12 +141,11 @@ impl RawLabelUsbDriver {
         }, Duration::from_millis(500)).wait() {
             Ok(buf) => {
                 let text = String::from_utf8_lossy(&buf);
-                eprintln!("[raw_usb] GET_DEVICE_ID ok ({} bytes): {}", buf.len(), text.trim())
+                log::debug!("[raw_usb] GET_DEVICE_ID: {}", text.trim());
             }
-            Err(e) => eprintln!("[raw_usb] GET_DEVICE_ID failed: {}", e),
+            Err(e) => log::debug!("[raw_usb] GET_DEVICE_ID failed: {}", e),
         }
 
-        // Clear any stall left by previous attempts on the OUT endpoint.
         self.clear_out_halt();
 
         Ok(())
@@ -169,13 +155,13 @@ impl RawLabelUsbDriver {
         let mut endpoint = match self.claimed_interface.endpoint::<Bulk, Out>(self.endpoint_address) {
             Ok(ep) => ep,
             Err(e) => {
-                eprintln!("[raw_usb] could not open OUT endpoint for clear_halt: {}", e);
+                log::debug!("[raw_usb] could not open OUT endpoint for clear_halt: {}", e);
                 return;
             }
         };
         match endpoint.clear_halt().wait() {
-            Ok(_) => eprintln!("[raw_usb] OUT endpoint halt cleared"),
-            Err(e) => eprintln!("[raw_usb] clear_halt failed: {}", e),
+            Ok(_) => {}
+            Err(e) => log::debug!("[raw_usb] clear_halt failed: {}", e),
         }
     }
 
@@ -185,16 +171,10 @@ impl RawLabelUsbDriver {
         };
         let mut reader = match self.claimed_interface.endpoint::<Bulk, In>(in_addr) {
             Ok(ep) => ep.reader(self.max_packet_size).with_read_timeout(Duration::from_millis(200)),
-            Err(e) => {
-                eprintln!("[raw_usb] could not open IN endpoint {:02X}: {}", in_addr, e);
-                return;
-            }
+            Err(_) => return,
         };
         let mut buf = [0u8; 64];
-        match std::io::Read::read(&mut reader, &mut buf) {
-            Ok(n) => eprintln!("[raw_usb] drained {} bytes from IN endpoint {:02X}", n, in_addr),
-            Err(e) => eprintln!("[raw_usb] IN endpoint drain finished (timeout/error): {}", e),
-        }
+        let _ = std::io::Read::read(&mut reader, &mut buf);
     }
 }
 

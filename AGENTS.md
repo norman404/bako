@@ -71,7 +71,7 @@ No asumas estado de BD ni del store. Protocolo: reproducir el bug con el usuario
 
 Decisiones arquitectónicas difíciles de revertir van en `docs/adr/` (template en `docs/adr/README.md`, archivo `docs/adr/NNNN-titulo-corto.md`). Un ADR `Accepted` no se edita salvo correcciones menores — si la decisión cambia, se crea un ADR nuevo que la supere.
 
-**Vigentes:** [0001 — Precios en centavos enteros](./docs/adr/0001-prices-in-cents.md) · [0002 — Traducir errores de dominio en el boundary de UI](./docs/adr/0002-domain-error-translation.md).
+**Vigentes:** [0001 — Precios en centavos enteros](./docs/adr/0001-prices-in-cents.md) · [0002 — Traducir errores de dominio en el boundary de UI](./docs/adr/0002-domain-error-translation.md) · [0003 — Renderizado bitmap para impresoras XPrinter](./docs/adr/0003-tspl-bitmap-raster-xprinter.md).
 
 ---
 
@@ -105,6 +105,7 @@ La `pubkey` en `src-tauri/tauri.conf.json` queda compilada dentro del binario en
 | `feature-flags` | Completo | Con optimistic updates |
 | `delivery` | Completo | Flag `delivery_enabled` |
 | `shift-reports` | Completo | Flag `shift_management_enabled` |
+| `printer` | Completo | CRUD + impresión TSPL con BITMAP raster (ver ADR-0003). Backend Rust en `src-tauri/src/print/` |
 | `updater` | Adapter, sin persistencia | Flag `auto_update_enabled` |
 
 ---

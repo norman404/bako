@@ -65,14 +65,14 @@ pub struct PrintCommandInput {
 
 #[tauri::command]
 pub fn print_command(input: PrintCommandInput) -> Result<(), String> {
-    eprintln!(
-        "[print_command] type={}, address={}, items={}",
+    log::info!(
+        "print_command: type={}, address={}, items={}",
         input.printer_type, input.printer_address, input.items.len()
     );
 
     let driver = create_printer_driver(&input.printer_type, &input.printer_address)
         .map_err(|e| {
-            eprintln!("[print_command] failed to create driver: {}", e);
+            log::error!("print_command: failed to create driver: {}", e);
             e.to_string()
         })?;
 
@@ -90,7 +90,7 @@ pub fn print_command(input: PrintCommandInput) -> Result<(), String> {
 
     print_command_with_driver(driver, &input.printer_type, &payload, label_config)
         .map_err(|e| {
-            eprintln!("[print_command] failed to print: {}", e);
+            log::error!("print_command: failed to print: {}", e);
             e.to_string()
         })
 }
@@ -120,7 +120,7 @@ pub fn debug_tspl(input: PrintCommandInput) -> Result<String, String> {
         .map_err(|e| e.to_string())?;
 
     let tspl_text = String::from_utf8_lossy(&bytes).to_string();
-    eprintln!("[debug_tspl] generated label payload (lang={:?}):\n{}", lang, tspl_text);
+    log::debug!("[debug_tspl] generated label payload (lang={:?}):\n{}", lang, tspl_text);
     Ok(tspl_text)
 }
 
@@ -137,14 +137,14 @@ pub struct TestPrinterInput {
 
 #[tauri::command]
 pub fn test_printer(input: TestPrinterInput) -> Result<(), String> {
-    eprintln!(
-        "[test_printer] type={}, address={}",
+    log::info!(
+        "test_printer: type={}, address={}",
         input.printer_type, input.printer_address
     );
 
     let driver = create_printer_driver(&input.printer_type, &input.printer_address)
         .map_err(|e| {
-            eprintln!("[test_printer] failed to create driver: {}", e);
+            log::error!("test_printer: failed to create driver: {}", e);
             e.to_string()
         })?;
 
@@ -157,7 +157,7 @@ pub fn test_printer(input: TestPrinterInput) -> Result<(), String> {
 
     test_printer_with_driver(driver, &input.printer_type, label_config)
         .map_err(|e| {
-            eprintln!("[test_printer] failed to print: {}", e);
+            log::error!("test_printer: failed to print: {}", e);
             e.to_string()
         })
 }

@@ -137,32 +137,16 @@ fn print_tspl_command(driver: &dyn escpos::driver::Driver, payload: &CommandPayl
     };
 
     let lang = resolve_label_language(config.label_language.as_deref());
-    eprintln!("[print_tspl_command] label_language={:?}", lang);
+    log::info!("[print_tspl_command] label_language={:?}", lang);
     let bytes = build_label_bytes(&label_payload, lang)?;
-    eprintln!("[label command payload] {}", String::from_utf8_lossy(&bytes).replace('\r', "\\r").replace('\n', "\\n"));
     driver.write(&bytes).map_err(|e| PrintError::UsbError(e.to_string()))?;
     driver.flush().map_err(|e| PrintError::UsbError(e.to_string()))?;
     Ok(())
 }
 
-fn print_command_with_driver_ref(driver: &dyn escpos::driver::Driver, printer_type: &str, payload: &CommandPayload, label_config: Option<LabelConfig>) -> Result<(), PrintError> {
-    match printer_type {
-        "label" => print_tspl_command(driver, payload, label_config.unwrap_or_default()),
-        _ => {
-            // We cannot build an ESC/POS Printer from &dyn Driver because Printer<D>
-            // requires a concrete type. For the non-label path we clone the concrete
-            // driver and build the printer. In tests, use print_escpos_command directly.
-            Err(PrintError::InvalidAddress("non-label ESC/POS dispatch requires a concrete driver".to_string()))
-        }
-    }
-}
-
-
 pub fn print_command_with_driver(driver: PrinterDriver, printer_type: &str, payload: &CommandPayload, label_config: Option<LabelConfig>) -> Result<(), PrintError> {
     match printer_type {
         "label" => {
-            let lang = resolve_label_language(label_config.as_ref().and_then(|c| c.label_language.as_deref()));
-            eprintln!("[print_command_with_driver] label_language={:?}", lang);
             let driver_ref: &dyn escpos::driver::Driver = match &driver {
                 PrinterDriver::Usb(usb_driver) => usb_driver,
                 #[cfg(not(target_os = "windows"))]
@@ -170,7 +154,7 @@ pub fn print_command_with_driver(driver: PrinterDriver, printer_type: &str, payl
                 PrinterDriver::Network(net_driver) => net_driver,
                 PrinterDriver::None => return Ok(()),
             };
-            print_command_with_driver_ref(driver_ref, printer_type, payload, label_config)
+            print_tspl_command(driver_ref, payload, label_config.unwrap_or_default())
         }
         _ => match driver {
             PrinterDriver::Usb(usb_driver) => print_escpos_command(usb_driver, payload),
@@ -215,9 +199,8 @@ fn test_printer_inner<D: escpos::driver::Driver>(driver: D) -> Result<(), PrintE
 
 fn print_tspl_test_page(driver: &dyn escpos::driver::Driver, label_config: Option<&LabelConfig>) -> Result<(), PrintError> {
     let lang = resolve_label_language(label_config.and_then(|c| c.label_language.as_deref()));
-    eprintln!("[print_tspl_test_page] label_language={:?}", lang);
+    log::info!("[print_tspl_test_page] label_language={:?}", lang);
     let bytes = build_test_label(lang);
-    eprintln!("[label test payload] {}", String::from_utf8_lossy(&bytes).replace('\r', "\\r").replace('\n', "\\n"));
     driver.write(&bytes).map_err(|e| PrintError::UsbError(e.to_string()))?;
     driver.flush().map_err(|e| PrintError::UsbError(e.to_string()))?;
     Ok(())
@@ -371,8 +354,12 @@ mod tests {
         assert!(driver.flush_count() >= 1, "expected at least one flush after printing command");
     }
 
+    fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+        haystack.windows(needle.len()).position(|w| w == needle)
+    }
+
     #[test]
-    fn print_command_with_driver_ref_routes_label_printer_to_tspl() {
+    fn print_tspl_command_routes_label_printer_to_tspl() {
         let driver = FlushTrackingDriver::new();
         let payload = CommandPayload {
             header_text: "COCINA".to_owned(),
@@ -383,15 +370,15 @@ mod tests {
             }],
         };
 
-        print_command_with_driver_ref(&driver, "label", &payload, None).unwrap();
+        print_tspl_command(&driver, &payload, LabelConfig::default()).unwrap();
 
         let buffer = driver.buffer.lock().unwrap();
-        let output = String::from_utf8_lossy(&buffer);
-        assert!(output.contains("SIZE 40 mm,30 mm"), "expected TSPL SIZE command, got: {}", output);
-        assert!(output.contains("GAP 2 mm,0 mm"), "expected TSPL GAP command, got: {}", output);
-        assert!(output.contains("DIRECTION 1,0"), "expected DIRECTION command, got: {}", output);
-        assert!(output.contains("COCINA"), "expected header text in TSPL, got: {}", output);
-        assert!(output.contains("Taco"), "expected item text in TSPL, got: {}", output);
+        assert!(find_subslice(&buffer, b"SIZE 40 mm,30 mm\r\n").is_some(), "expected TSPL SIZE command");
+        assert!(find_subslice(&buffer, b"GAP 16 dot,0 dot\r\n").is_some(), "expected TSPL GAP in dots");
+        assert!(find_subslice(&buffer, b"DENSITY 8\r\n").is_some(), "expected DENSITY command");
+        assert!(find_subslice(&buffer, b"BITMAP 0,0,40,240,0,").is_some(), "expected BITMAP command");
+        assert!(find_subslice(&buffer, b"PRINT 1,1\r\n").is_some(), "expected PRINT command");
+        assert!(!find_subslice(&buffer, b"TEXT ").is_some(), "TEXT command must not appear in TSPL output");
         assert!(driver.flush_count() >= 1, "expected at least one flush after TSPL command");
     }
 

@@ -56,3 +56,4 @@ pub mod tspl;
 pub mod zpl;
 pub mod epl;
 pub mod cpcl;
+pub mod raster;
