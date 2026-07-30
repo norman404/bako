@@ -14,6 +14,7 @@
     "printerTypeInvalid": "Invalid printer type: {{type}}.",
     "printerRoleInvalid": "Invalid printer role: {{role}}.",
     "printerLabelLanguageInvalid": "Invalid label language: {{labelLanguage}}.",
+    "printerDefaultRoleInvalid": "Only printers with role 'receipt' can be set as default.",
     "dbError": "We couldn't load printers. Please try again.",
     "generic": "An error occurred with printers."
   }

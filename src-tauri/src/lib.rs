@@ -140,6 +140,18 @@ pub fn run() {
             sql: include_str!("../migrations/0022_label_printer_language.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 23,
+            description: "printer_is_default",
+            sql: include_str!("../migrations/0023_printer_is_default.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 24,
+            description: "printer_role_comanda",
+            sql: include_str!("../migrations/0024_printer_role_comanda.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

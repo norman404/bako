@@ -1,4 +1,4 @@
-import { X, Globe, Flag, Printer, Download, type LucideIcon } from "lucide-react";
+import { X, Globe, Flag, Download, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/Button";
 import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { SystemSettingsPanel } from "./SystemSettingsPanel";
-import { PrinterSettingsPanel } from "./PrinterSettingsPanel";
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
 import { UpdateSettingsPanel } from "@/modules/updater/components/UpdateSettingsPanel";
 
@@ -57,7 +56,6 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
 
   const generalTabs: SettingsTabDefinition[] = [
     { id: "general", title: t('sections.general'), description: t('sections.generalDesc'), icon: Globe, Panel: SystemSettingsPanel },
-    { id: "printer", title: t('sections.printer'), description: t('sections.printerDesc'), icon: Printer, Panel: PrinterSettingsPanel },
     { id: "features", title: t('sections.features'), description: t('sections.featuresDesc'), icon: Flag, Panel: FeatureFlagsPanel },
     { id: "updater", title: t('sections.updater'), description: t('sections.updaterDesc'), icon: Download, Panel: UpdateSettingsPanel },
   ];

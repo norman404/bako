@@ -11,6 +11,8 @@ import { DeliveryPersonSelect } from "@/modules/delivery";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
 import { usePrintCommands } from "@/modules/checkout/hooks/use-print-commands";
+import { usePrinters } from "@/modules/printer/hooks/use-printers";
+import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
 import { CategoryNav } from "@/modules/menu/components/CategoryNav";
 import { MenuSelector } from "@/modules/menu/components/MenuSelector";
 import { ProductCustomizationDialog } from "@/modules/menu/components/ProductCustomizationDialog";
@@ -143,7 +145,11 @@ export function App() {
     : [];
 
   const createOrderMutation = useCreateOrder();
-  const { printCommands } = usePrintCommands({ enabled: comandasEnabled });
+  const { data: printers = [] } = usePrinters({ enabled: receiptPrintingEnabled || comandasEnabled });
+  const defaultReceiptPrinter = printers.find(
+    (p) => p.isDefault && p.role === PRINTER_ROLE.RECEIPT,
+  ) ?? null;
+  const { printCommands } = usePrintCommands({ enabled: comandasEnabled, categories });
 
   const synchronizedCartItems = currentOrder.map((item) => {
     const currentProduct = products.find((product) => product.id === item.product.id);
@@ -246,7 +252,7 @@ export function App() {
               address: createdOrder.customer.address,
             }
           : null,
-      });
+      }, defaultReceiptPrinter);
 
       printResult.mapErr((printError) => {
         toast.error(t('toast.printError'), {

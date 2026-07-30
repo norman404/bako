@@ -1,10 +1,11 @@
-import { Plus, Printer as PrinterIcon, Save, Trash2, Wifi, Usb, Tag, Play, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Printer as PrinterIcon, Save, Trash2, Wifi, Usb, Tag, Play, CheckCircle2, AlertCircle, Scan } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormError } from "@/components/ui/FormError";
 import { FormField } from "@/components/ui/FormField";
@@ -27,26 +28,14 @@ import {
 } from "@/modules/printer/hooks/use-printers";
 import { translatePrinterError } from "@/modules/printer/lib/translate-printer-error";
 import { testPrinter } from "@/modules/printer/adapters/test-printer.adapter";
+import { listUsbPrinters, type UsbPrinterInfo } from "@/modules/printer/adapters/list-usb-printers.adapter";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
-
-const PRINTER_TYPE_OPTIONS = [
-  { value: PRINTER_TYPE.NETWORK, label: "Red (TCP)", icon: Wifi },
-  { value: PRINTER_TYPE.USB, label: "USB", icon: Usb },
-  { value: PRINTER_TYPE.LABEL, label: "Etiqueta", icon: Tag },
-];
 
 const LABEL_LANGUAGE_OPTIONS = [
   { value: PRINTER_LABEL_LANGUAGE.TSPL, label: "TSPL" },
   { value: PRINTER_LABEL_LANGUAGE.ZPL, label: "ZPL" },
   { value: PRINTER_LABEL_LANGUAGE.EPL, label: "EPL" },
   { value: PRINTER_LABEL_LANGUAGE.CPCL, label: "CPCL" },
-];
-
-const PRINTER_ROLE_OPTIONS = [
-  { value: PRINTER_ROLE.RECEIPT, label: "Caja (ticket)" },
-  { value: PRINTER_ROLE.KITCHEN, label: "Cocina" },
-  { value: PRINTER_ROLE.BAR, label: "Barra" },
-  { value: PRINTER_ROLE.OTHER, label: "Otro" },
 ];
 
 const PRINTER_FORM_MODE = {
@@ -66,6 +55,7 @@ interface PrinterFormState {
   type: PrinterType;
   address: string;
   role: PrinterRole;
+  isDefault: boolean;
   labelWidthMm: number;
   labelHeightMm: number;
   labelGapMm: number;
@@ -77,7 +67,8 @@ function buildEmptyFormState(): PrinterFormState {
     name: "",
     type: PRINTER_TYPE.NETWORK,
     address: "",
-    role: PRINTER_ROLE.KITCHEN,
+    role: PRINTER_ROLE.COMANDA,
+    isDefault: false,
     labelWidthMm: DEFAULT_LABEL_WIDTH_MM,
     labelHeightMm: DEFAULT_LABEL_HEIGHT_MM,
     labelGapMm: DEFAULT_LABEL_GAP_MM,
@@ -91,6 +82,7 @@ function buildFormStateFromPrinter(printer: Printer): PrinterFormState {
     type: printer.type,
     address: printer.address,
     role: printer.role,
+    isDefault: printer.isDefault,
     labelWidthMm: printer.labelWidthMm,
     labelHeightMm: printer.labelHeightMm,
     labelGapMm: printer.labelGapMm,
@@ -111,6 +103,7 @@ function toPrinterPayload(formState: PrinterFormState): PrinterCreateInput | nul
     type: formState.type,
     address,
     role: formState.role,
+    isDefault: formState.isDefault,
     labelWidthMm: formState.labelWidthMm,
     labelHeightMm: formState.labelHeightMm,
     labelGapMm: formState.labelGapMm,
@@ -118,7 +111,7 @@ function toPrinterPayload(formState: PrinterFormState): PrinterCreateInput | nul
   };
 }
 
-function getStatusConfig(address: string): {
+function getStatusConfig(address: string, t: (key: string) => string): {
   color: string;
   bg: string;
   icon: typeof CheckCircle2;
@@ -129,7 +122,7 @@ function getStatusConfig(address: string): {
       color: "text-warning",
       bg: "bg-warning/10",
       icon: AlertCircle,
-      label: "Falta dirección",
+      label: t("settings:printer.statusMissingAddress"),
     };
   }
 
@@ -137,11 +130,12 @@ function getStatusConfig(address: string): {
     color: "text-success",
     bg: "bg-success/10",
     icon: CheckCircle2,
-    label: "Configurada",
+    label: t("settings:printer.statusConfigured"),
   };
 }
 
 function ComandaHeaderTextCard() {
+  const { t } = useTranslation(["settings", "errors"]);
   const { comandaHeaderText, updateComandaHeaderText, isLoading } = useSettingsStore();
 
   const [text, setText] = useState(comandaHeaderText ?? "");
@@ -152,27 +146,27 @@ function ComandaHeaderTextCard() {
     const result = await updateComandaHeaderText(text.trim() || null);
     result.match(
       () => {
-        toast.success("Encabezado de comanda guardado");
+        toast.success(t("settings:printer.comandaHeaderSaved"));
       },
-      () => toast.error("Error al guardar el encabezado de comanda"),
+      () => toast.error(t("settings:printer.comandaHeaderError")),
     );
   };
 
   return (
     <section className="border-b border-border-strong pb-3">
-      <FormField label="Texto de la comanda" htmlFor="comanda-header-text">
+      <FormField label={t("settings:printer.comandaHeaderTitle")} htmlFor="comanda-header-text">
         <Input
           id="comanda-header-text"
           value={text}
           onInput={(event) => setText(event.currentTarget.value)}
-          placeholder="COMANDA"
+          placeholder={t("settings:printer.comandaHeaderPlaceholder")}
         />
       </FormField>
       <p className="mt-1.5 text-2xs text-text-muted">
-        Texto que aparece en el encabezado de cada etiqueta de comanda. Si se deja vacío, se usa "COMANDA" por defecto.
+        {t("settings:printer.comandaHeaderHelper")}
       </p>
       <div className="mt-2.5 flex items-center justify-between">
-        <span className="text-2xs text-primary">{hasChanges ? "Cambios sin guardar" : ""}</span>
+        <span className="text-2xs text-primary">{hasChanges ? t("settings:printer.comandaHeaderChangesUnsaved") : ""}</span>
         <Button
           type="button"
           variant="default"
@@ -182,7 +176,7 @@ function ComandaHeaderTextCard() {
           className="gap-1.5"
         >
           <Save className="h-3.5 w-3.5" />
-          Guardar
+          {t("settings:printer.comandaHeaderSaveButton")}
         </Button>
       </div>
     </section>
@@ -205,6 +199,17 @@ export function PrinterSettingsPanel() {
   const updatePrinterMutation = useUpdatePrinter();
   const archivePrinterMutation = useArchivePrinter();
 
+  const printerTypeOptions = [
+    { value: PRINTER_TYPE.NETWORK, label: t("settings:printer.typeNetwork"), icon: Wifi },
+    { value: PRINTER_TYPE.USB, label: t("settings:printer.typeUsb"), icon: Usb },
+    { value: PRINTER_TYPE.LABEL, label: t("settings:printer.typeLabelPrinter"), icon: Tag },
+  ];
+
+  const printerRoleOptions = [
+    { value: PRINTER_ROLE.RECEIPT, label: t("settings:printer.roleReceipt") },
+    { value: PRINTER_ROLE.COMANDA, label: t("settings:printer.roleComanda") },
+  ];
+
   const initialPrinter = printers[0] ?? null;
   const [mode, setMode] = useState<PrinterFormMode>(
     initialPrinter ? PRINTER_FORM_MODE.EDIT : PRINTER_FORM_MODE.CREATE,
@@ -215,6 +220,8 @@ export function PrinterSettingsPanel() {
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<Printer | null>(null);
+  const [isScanningUsb, setIsScanningUsb] = useState(false);
+  const [detectedUsbPrinters, setDetectedUsbPrinters] = useState<UsbPrinterInfo[]>([]);
 
   const isSaving = createPrinterMutation.isPending || updatePrinterMutation.isPending;
   const isArchivePending = archivePrinterMutation.isPending;
@@ -224,6 +231,7 @@ export function PrinterSettingsPanel() {
     setSelectedPrinterId(null);
     setFormError(null);
     setFormState(buildEmptyFormState());
+    setDetectedUsbPrinters([]);
   };
 
   const beginEdit = (printer: Printer) => {
@@ -231,6 +239,7 @@ export function PrinterSettingsPanel() {
     setSelectedPrinterId(printer.id);
     setFormError(null);
     setFormState(buildFormStateFromPrinter(printer));
+    setDetectedUsbPrinters([]);
   };
 
   const handleArchive = (printer: Printer) => {
@@ -256,12 +265,12 @@ export function PrinterSettingsPanel() {
 
     const payload = toPrinterPayload(formState);
     if (!payload) {
-      setFormError("Completá nombre y dirección.");
+      setFormError(t("settings:printer.formErrorNameAddress"));
       return;
     }
 
     if (mode === PRINTER_FORM_MODE.EDIT && !selectedPrinterId) {
-      setFormError("Seleccioná una impresora.");
+      setFormError(t("settings:printer.formErrorSelectPrinter"));
       return;
     }
 
@@ -288,15 +297,39 @@ export function PrinterSettingsPanel() {
         labelGapMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelGapMm : undefined,
         labelLanguage: formState.type === PRINTER_TYPE.LABEL ? formState.labelLanguage : undefined,
       });
-      toast.success("Impresora respondió correctamente", {
-        description: "La comanda de prueba se envió exitosamente",
+      toast.success(t("settings:printer.testSuccess"), {
+        description: t("settings:printer.testSuccessDesc"),
         icon: <CheckCircle2 className="h-4 w-4 text-success" />,
       });
     } catch (e) {
-      toast.error("No se pudo conectar con la impresora", {
+      toast.error(t("settings:printer.testError"), {
         description: translatePrinterError(e, t),
         icon: <AlertCircle className="h-4 w-4 text-danger" />,
       });
+    }
+  };
+
+  const handleScanUsb = async () => {
+    setIsScanningUsb(true);
+    setDetectedUsbPrinters([]);
+    try {
+      const detected = await listUsbPrinters();
+
+      if (detected.length === 0) {
+        toast.info(t("settings:printer.scanUsbNoneFound"));
+      } else if (detected.length === 1) {
+        const address = detected[0]!.address;
+        setFormState((previous) => ({ ...previous, address }));
+        toast.success(t("settings:printer.scanUsbAutoSelected"), {
+          description: address,
+        });
+      } else {
+        setDetectedUsbPrinters(detected);
+      }
+    } catch {
+      toast.error(t("settings:printer.scanUsbError"));
+    } finally {
+      setIsScanningUsb(false);
     }
   };
 
@@ -305,11 +338,11 @@ export function PrinterSettingsPanel() {
       <ComandaHeaderTextCard />
 
       <header className="flex items-center justify-between gap-3 border-b border-border-strong pb-3">
-        <h2 className="font-display text-lg text-primary-strong">Impresoras</h2>
+        <h2 className="font-display text-lg text-primary-strong">{t("settings:printer.title")}</h2>
 
         <Button variant="secondary" size="small" onClick={beginCreate}>
           <Plus className="h-3.5 w-3.5" />
-          Nueva
+          {t("settings:printer.newButton")}
         </Button>
       </header>
 
@@ -318,7 +351,7 @@ export function PrinterSettingsPanel() {
           <div className="scrollbar-thin h-full space-y-1 overflow-y-auto pr-1">
             {printers.map((printer) => {
               const isActive = selectedPrinterId === printer.id && mode === PRINTER_FORM_MODE.EDIT;
-              const status = getStatusConfig(printer.address);
+              const status = getStatusConfig(printer.address, t);
               const StatusIcon = status.icon;
 
               return (
@@ -353,7 +386,7 @@ export function PrinterSettingsPanel() {
                       handleArchive(printer);
                     }}
                     className="h-auto min-h-[60px] w-8 rounded-card text-text-dim hover:bg-surface-sunken hover:text-danger"
-                    aria-label={`Archivar ${printer.name}`}
+                    aria-label={t("settings:printer.archiveAriaLabel", { name: printer.name })}
                     disabled={isArchivePending}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -362,19 +395,19 @@ export function PrinterSettingsPanel() {
               );
             })}
 
-            {printers.length === 0 ? <EmptyState>Sin impresoras.</EmptyState> : null}
+            {printers.length === 0 ? <EmptyState>{t("settings:printer.emptyState")}</EmptyState> : null}
           </div>
         </section>
 
         <section className="min-h-0 xl:pl-1">
           <div className="border-b border-border pb-2.5">
             <h3 className="text-md font-semibold text-text">
-              {mode === PRINTER_FORM_MODE.CREATE ? "Nueva impresora" : "Editar impresora"}
+              {mode === PRINTER_FORM_MODE.CREATE ? t("settings:printer.createTitle") : t("settings:printer.editTitle")}
             </h3>
           </div>
 
           <form className="mt-3.5 grid gap-2.5" onSubmit={(event) => void handleSubmit(event)}>
-            <FormField label="Nombre" htmlFor="printer-name">
+            <FormField label={t("settings:printer.nameLabel")} htmlFor="printer-name">
               <Input
                 id="printer-name"
                 value={formState.name}
@@ -382,11 +415,11 @@ export function PrinterSettingsPanel() {
                   const value = event.currentTarget.value;
                   setFormState((previous) => ({ ...previous, name: value }));
                 }}
-                placeholder="Cocina"
+                placeholder={t("settings:printer.namePlaceholder")}
               />
             </FormField>
 
-            <FormField label="Rol" htmlFor="printer-role">
+            <FormField label={t("settings:printer.roleLabel")} htmlFor="printer-role">
               <Select
                 value={formState.role}
                 onValueChange={(value) =>
@@ -394,10 +427,10 @@ export function PrinterSettingsPanel() {
                 }
               >
                 <SelectTrigger id="printer-role">
-                  <SelectValue placeholder="Seleccionar rol" />
+                  <SelectValue placeholder={t("settings:printer.rolePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRINTER_ROLE_OPTIONS.map((option) => (
+                  {printerRoleOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
@@ -406,10 +439,25 @@ export function PrinterSettingsPanel() {
               </Select>
             </FormField>
 
-            <FormField label="Tipo de conexión" htmlFor="printer-type">
+            {formState.role === PRINTER_ROLE.RECEIPT && (
+              <FormField label={t("settings:printer.defaultLabel")} htmlFor="printer-is-default">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="printer-is-default"
+                    checked={formState.isDefault}
+                    onCheckedChange={(checked) =>
+                      setFormState((prev) => ({ ...prev, isDefault: checked === true }))
+                    }
+                  />
+                  <span className="text-xs text-text-muted">{t("settings:printer.defaultDescription")}</span>
+                </div>
+              </FormField>
+            )}
+
+            <FormField label={t("settings:printer.typeLabel")} htmlFor="printer-type">
               <Select
                 value={formState.type}
-                onValueChange={(value) =>
+                onValueChange={(value) => {
                   setFormState((previous) => ({
                     ...previous,
                     type: value as PrinterType,
@@ -418,14 +466,15 @@ export function PrinterSettingsPanel() {
                     labelHeightMm: DEFAULT_LABEL_HEIGHT_MM,
                     labelGapMm: DEFAULT_LABEL_GAP_MM,
                     labelLanguage: value === PRINTER_TYPE.LABEL ? DEFAULT_LABEL_LANGUAGE : previous.labelLanguage,
-                  }))
-                }
+                  }));
+                  setDetectedUsbPrinters([]);
+                }}
               >
                 <SelectTrigger id="printer-type">
-                  <SelectValue placeholder="Seleccionar tipo" />
+                  <SelectValue placeholder={t("settings:printer.typePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {PRINTER_TYPE_OPTIONS.map((option) => {
+                  {printerTypeOptions.map((option) => {
                     const Icon = option.icon;
                     return (
                       <SelectItem key={option.value} value={option.value}>
@@ -441,7 +490,7 @@ export function PrinterSettingsPanel() {
             </FormField>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="printer-address">Dirección</Label>
+              <Label htmlFor="printer-address">{t("settings:printer.addressLabel")}</Label>
               <div className="relative">
                 <Input
                   id="printer-address"
@@ -452,10 +501,8 @@ export function PrinterSettingsPanel() {
                   }}
                   placeholder={
                     formState.type === "network"
-                      ? "192.168.1.100:9100"
-                      : formState.type === "usb"
-                        ? "04b8:0e15"
-                        : "04b8:0e15"
+                      ? t("settings:printer.addressPlaceholderNetwork")
+                      : t("settings:printer.addressPlaceholderUsb")
                   }
                   className="pr-20 font-mono-tabular text-sm"
                 />
@@ -465,16 +512,58 @@ export function PrinterSettingsPanel() {
               </div>
               <p className="text-2xs text-text-muted leading-relaxed">
                 {formState.type === "network"
-                  ? "Ingresa la dirección IP y el puerto TCP separados por dos puntos. Puerto estándar ESC/POS: 9100."
+                  ? t("settings:printer.addressHelperNetwork")
                   : formState.type === "usb"
-                    ? "Ingresa el identificador USB en formato VID:PID (hexadecimal)."
-                    : "Ingresa el identificador USB en formato VID:PID (hexadecimal). La impresora de etiquetas usa TSPL."}
+                    ? t("settings:printer.addressHelperUsb")
+                    : t("settings:printer.addressHelperLabel")}
               </p>
+
+              {(formState.type === PRINTER_TYPE.USB || formState.type === PRINTER_TYPE.LABEL) && (
+                <div className="flex flex-col gap-1.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="small"
+                    onClick={() => void handleScanUsb()}
+                    disabled={isScanningUsb}
+                    className="w-fit gap-1.5"
+                  >
+                    <Scan className="h-3.5 w-3.5" />
+                    {isScanningUsb
+                      ? t("settings:printer.scanUsbButtonScanning")
+                      : t("settings:printer.scanUsbButton")}
+                  </Button>
+
+                  {detectedUsbPrinters.length > 0 && (
+                    <div className="grid gap-1">
+                      <Label htmlFor="printer-usb-detected" className="sr-only">
+                        {t("settings:printer.scanUsbSelectPlaceholder")}
+                      </Label>
+                      <Select
+                        onValueChange={(value) =>
+                          setFormState((previous) => ({ ...previous, address: value }))
+                        }
+                      >
+                        <SelectTrigger id="printer-usb-detected">
+                          <SelectValue placeholder={t("settings:printer.scanUsbSelectPlaceholder")} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {detectedUsbPrinters.map((printer) => (
+                            <SelectItem key={printer.address} value={printer.address}>
+                              {printer.name} ({printer.address})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {formState.type === PRINTER_TYPE.LABEL && (
               <div className="grid grid-cols-2 gap-2">
-                <FormField label="Ancho (mm)" htmlFor="printer-label-width">
+                <FormField label={t("settings:printer.labelWidthMm")} htmlFor="printer-label-width">
                   <Input
                     id="printer-label-width"
                     type="number"
@@ -487,7 +576,7 @@ export function PrinterSettingsPanel() {
                     }}
                   />
                 </FormField>
-                <FormField label="Alto (mm)" htmlFor="printer-label-height">
+                <FormField label={t("settings:printer.labelHeightMm")} htmlFor="printer-label-height">
                   <Input
                     id="printer-label-height"
                     type="number"
@@ -500,7 +589,7 @@ export function PrinterSettingsPanel() {
                     }}
                   />
                 </FormField>
-                <FormField label="Gap (mm)" htmlFor="printer-label-gap">
+                <FormField label={t("settings:printer.labelGapMm")} htmlFor="printer-label-gap">
                   <Input
                     id="printer-label-gap"
                     type="number"
@@ -513,7 +602,7 @@ export function PrinterSettingsPanel() {
                     }}
                   />
                 </FormField>
-                <FormField label="Lenguaje de etiqueta" htmlFor="printer-label-language">
+                <FormField label={t("settings:printer.labelLanguageLabel")} htmlFor="printer-label-language">
                   <Select
                     value={formState.labelLanguage}
                     onValueChange={(value) =>
@@ -521,7 +610,7 @@ export function PrinterSettingsPanel() {
                     }
                   >
                     <SelectTrigger id="printer-label-language">
-                      <SelectValue placeholder="Seleccionar lenguaje" />
+                      <SelectValue placeholder={t("settings:printer.labelLanguagePlaceholder")} />
                     </SelectTrigger>
                     <SelectContent>
                       {LABEL_LANGUAGE_OPTIONS.map((option) => (
@@ -548,12 +637,12 @@ export function PrinterSettingsPanel() {
                   className="gap-1.5"
                 >
                   <Play className="h-3.5 w-3.5" />
-                  Probar
+                  {t("settings:printer.testButton")}
                 </Button>
               )}
               <Button type="submit" variant="default" size="small" disabled={isSaving} className="gap-1.5">
                 <Save className="h-3.5 w-3.5" />
-                {mode === PRINTER_FORM_MODE.CREATE ? "Crear impresora" : "Guardar cambios"}
+                {mode === PRINTER_FORM_MODE.CREATE ? t("settings:printer.createButton") : t("settings:printer.saveButton")}
               </Button>
             </div>
           </form>
@@ -563,13 +652,13 @@ export function PrinterSettingsPanel() {
       <ConfirmDialog
         open={archiveTarget !== null}
         onOpenChange={(open) => { if (!open) setArchiveTarget(null); }}
-        title="Archivar impresora"
+        title={t("settings:printer.archiveTitle")}
         description={
           archiveTarget
-            ? `¿Archivar ${archiveTarget.name}? Las categorías que la usen quedarán sin impresora asignada.`
+            ? t("settings:printer.archiveConfirm", { name: archiveTarget.name })
             : ""
         }
-        confirmLabel="Archivar"
+        confirmLabel={t("settings:printer.archiveButton")}
         confirmVariant="danger"
         isLoading={isArchivePending}
         onConfirm={() => void handleConfirmArchive()}

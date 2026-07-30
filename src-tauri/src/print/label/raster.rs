@@ -7,9 +7,24 @@ const FONT_BYTES: &[u8] = include_bytes!("DejaVuSansMono.ttf");
 
 const DOTS_PER_MM: u32 = 8;
 
-const HEADER_SIZE: f32 = 24.0;
-const ITEM_SIZE: f32 = 16.0;
-const MOD_SIZE: f32 = 14.0;
+/// Reference height in dots (30mm @ 8 dots/mm) used as baseline for font scaling.
+const REF_HEIGHT_DOTS: f32 = 240.0;
+
+/// Base font sizes for a 30mm (240 dots) label.
+/// Scaled proportionally for other label heights.
+const BASE_HEADER_SIZE: f32 = 36.0;
+const BASE_ITEM_SIZE: f32 = 28.0;
+const BASE_MOD_SIZE: f32 = 22.0;
+
+/// Minimum font sizes to keep text readable on very small labels.
+const MIN_HEADER_SIZE: f32 = 28.0;
+const MIN_ITEM_SIZE: f32 = 20.0;
+const MIN_MOD_SIZE: f32 = 16.0;
+
+/// Maximum font sizes to prevent absurdly large text on huge labels.
+const MAX_HEADER_SIZE: f32 = 72.0;
+const MAX_ITEM_SIZE: f32 = 56.0;
+const MAX_MOD_SIZE: f32 = 44.0;
 
 const LEFT_MARGIN: f32 = 10.0;
 const TOP_MARGIN: u32 = 4;
@@ -95,6 +110,16 @@ fn line_height(font: &FontRef, size: f32) -> u32 {
     h.ceil() as u32 + LINE_PADDING
 }
 
+/// Calculate font sizes proportional to label height.
+/// Uses 30mm (240 dots) as the reference height.
+fn calculate_font_sizes(height_dots: u32) -> (f32, f32, f32) {
+    let scale = (height_dots as f32 / REF_HEIGHT_DOTS).max(0.5).min(2.0);
+    let header = (BASE_HEADER_SIZE * scale).clamp(MIN_HEADER_SIZE, MAX_HEADER_SIZE);
+    let item = (BASE_ITEM_SIZE * scale).clamp(MIN_ITEM_SIZE, MAX_ITEM_SIZE);
+    let modifier = (BASE_MOD_SIZE * scale).clamp(MIN_MOD_SIZE, MAX_MOD_SIZE);
+    (header, item, modifier)
+}
+
 fn modifier_label(m: &crate::print::ticket::CommandItemModifier) -> String {
     match (&m.option_name, &m.text_value) {
         (Some(option), Some(text)) => format!("{}: {} - {}", m.group_name, option, text),
@@ -113,24 +138,33 @@ pub fn render_label(
     let font = load_font()?;
     let mut label = RasterLabel::new(width_mm, height_mm);
 
-    let scaled_header = font.as_scaled(HEADER_SIZE);
+    let height_dots = height_mm * DOTS_PER_MM;
+    let (header_size, item_size, mod_size) = calculate_font_sizes(height_dots);
+
+    let scaled_header = font.as_scaled(header_size);
     let mut cursor_y = TOP_MARGIN;
     let header_baseline = cursor_y as f32 + scaled_header.ascent();
-    label.render_text_line(&font, HEADER_SIZE, header_text, LEFT_MARGIN, header_baseline);
-    cursor_y += line_height(&font, HEADER_SIZE) + HEADER_GAP;
+    label.render_text_line(&font, header_size, header_text, LEFT_MARGIN, header_baseline);
+    cursor_y += line_height(&font, header_size) + HEADER_GAP;
 
     for item in items {
-        let scaled_item = font.as_scaled(ITEM_SIZE);
+        let display_name = if item.quantity > 1 {
+            format!("{}x {}", item.quantity, item.name)
+        } else {
+            item.name.clone()
+        };
+
+        let scaled_item = font.as_scaled(item_size);
         let item_baseline = cursor_y as f32 + scaled_item.ascent();
-        label.render_text_line(&font, ITEM_SIZE, &item.name, LEFT_MARGIN, item_baseline);
-        cursor_y += line_height(&font, ITEM_SIZE);
+        label.render_text_line(&font, item_size, &display_name, LEFT_MARGIN, item_baseline);
+        cursor_y += line_height(&font, item_size);
 
         for modifier in &item.modifiers {
             let label_text = modifier_label(modifier);
-            let scaled_mod = font.as_scaled(MOD_SIZE);
+            let scaled_mod = font.as_scaled(mod_size);
             let mod_baseline = cursor_y as f32 + scaled_mod.ascent();
-            label.render_text_line(&font, MOD_SIZE, &label_text, LEFT_MARGIN + 6.0, mod_baseline);
-            cursor_y += line_height(&font, MOD_SIZE);
+            label.render_text_line(&font, mod_size, &label_text, LEFT_MARGIN + 6.0, mod_baseline);
+            cursor_y += line_height(&font, mod_size);
         }
 
         cursor_y += ITEM_GAP;

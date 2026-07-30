@@ -17,6 +17,7 @@ export interface PrintCommandDestination {
   labelHeightMm?: number;
   labelGapMm?: number;
   labelLanguage?: string;
+  labelOrientation?: string;
 }
 
 export interface PrintCommandOptions {

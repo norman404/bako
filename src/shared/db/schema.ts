@@ -255,6 +255,7 @@ export const printers = sqliteTable(
     type: text("type").notNull(),
     address: text("address").notNull(),
     role: text("role").notNull(),
+    isDefault: integer("is_default", { mode: "boolean" }).notNull().default(false),
     labelWidthMm: integer("label_width_mm"),
     labelHeightMm: integer("label_height_mm"),
     labelGapMm: integer("label_gap_mm"),
