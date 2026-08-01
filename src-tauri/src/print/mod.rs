@@ -1,6 +1,7 @@
 pub mod adapter;
 pub mod error;
 pub mod label;
+#[cfg(not(target_os = "windows"))]
 pub mod raw_usb;
 pub mod ticket;
 pub mod usb_detection;
