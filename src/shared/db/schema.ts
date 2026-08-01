@@ -182,6 +182,9 @@ export const shifts = sqliteTable(
     openedAt: integer("opened_at", { mode: "timestamp_ms" }).notNull(),
     closedAt: integer("closed_at", { mode: "timestamp_ms" }),
     status: text("status").notNull().default("active"),
+    openingCash: integer("opening_cash"),
+    countedCash: integer("counted_cash"),
+    cashDifference: integer("cash_difference"),
   },
   (table) => [
     index("idx_shifts_status").on(table.status),
@@ -226,6 +229,19 @@ export const payments = sqliteTable(
     index("idx_payments_method").on(table.method),
     index("idx_payments_created_at").on(table.createdAt),
   ],
+);
+
+export const cashMovements = sqliteTable(
+  "cash_movements",
+  {
+    id: text("id").primaryKey(),
+    shiftId: text("shift_id").notNull(),
+    type: text("type").notNull(),
+    amount: integer("amount").notNull(),
+    reason: text("reason").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("idx_cash_movements_shift_id").on(table.shiftId)],
 );
 
 export const orderItems = sqliteTable(
@@ -316,6 +332,8 @@ export type SystemSettingsInsert = typeof systemSettings.$inferInsert;
 export type FeatureFlagInsert = typeof featureFlags.$inferInsert;
 export type ShiftRow = typeof shifts.$inferSelect;
 export type ShiftInsert = typeof shifts.$inferInsert;
+export type CashMovementRow = typeof cashMovements.$inferSelect;
+export type CashMovementInsert = typeof cashMovements.$inferInsert;
 export type ModifierGroupInsert = typeof modifierGroups.$inferInsert;
 export type ModifierOptionInsert = typeof modifierOptions.$inferInsert;
 export type CategoryModifierGroupInsert = typeof categoryModifierGroups.$inferInsert;

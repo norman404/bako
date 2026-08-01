@@ -2,10 +2,30 @@ import { asc, eq, inArray } from "drizzle-orm";
 import { ResultAsync } from "neverthrow";
 
 import { db, withTransaction } from "@/shared/db/client";
-import { orderItems, orderItemModifiers, orders, payments, products, shifts, customers, type ShiftRow } from "@/shared/db/schema";
+import {
+  cashMovements,
+  customers,
+  orderItems,
+  orderItemModifiers,
+  orders,
+  payments,
+  products,
+  shifts,
+  type CashMovementRow,
+  type ShiftRow,
+} from "@/shared/db/schema";
 import { ShiftPersistenceError } from "../domain/errors";
 import type { ShiftRepository } from "../domain/ports";
-import type { Shift, ShiftHistoryItem, ShiftReport, ShiftReportOrder } from "../domain/shift";
+import type {
+  CashMovement,
+  CashMovementInput,
+  CashMovementType,
+  Shift,
+  ShiftHistoryItem,
+  ShiftReport,
+  ShiftReportOrder,
+  UpdateCashMovementInput,
+} from "../domain/shift";
 import type { OrderDetail, OrderDetailItem, OrderDetailItemModifier, UpdateOrderInput } from "../domain/order-management";
 
 function wrapDbError(context: string) {
@@ -23,6 +43,20 @@ function rowToShift(row: ShiftRow): Shift {
     openedAt: row.openedAt,
     closedAt: row.closedAt ?? null,
     status: row.status as Shift["status"],
+    openingCash: row.openingCash ?? 0,
+    countedCash: row.countedCash ?? null,
+    cashDifference: row.cashDifference ?? null,
+  };
+}
+
+function rowToCashMovement(row: CashMovementRow): CashMovement {
+  return {
+    id: row.id,
+    shiftId: row.shiftId,
+    type: row.type as CashMovementType,
+    amount: row.amount,
+    reason: row.reason,
+    createdAt: row.createdAt,
   };
 }
 
@@ -132,7 +166,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
 }
 
 export const shiftDrizzleRepository: ShiftRepository = {
-  openShift(): ResultAsync<Shift, ShiftPersistenceError> {
+  openShift(openingCash: number): ResultAsync<Shift, ShiftPersistenceError> {
     return ResultAsync.fromPromise(
       (async () => {
         const activeRows = await db.select().from(shifts).where(eq(shifts.status, "active")).limit(1);
@@ -144,7 +178,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
         const id = crypto.randomUUID();
         const [created] = await db
           .insert(shifts)
-          .values({ id, openedAt: now, status: "active", closedAt: null })
+          .values({ id, openedAt: now, status: "active", closedAt: null, openingCash })
           .returning();
 
         if (!created) {
@@ -157,13 +191,52 @@ export const shiftDrizzleRepository: ShiftRepository = {
     );
   },
 
-  closeShift(shiftId: string): ResultAsync<Shift, ShiftPersistenceError> {
+  closeShift(shiftId: string, countedCash: number): ResultAsync<Shift, ShiftPersistenceError> {
     return ResultAsync.fromPromise(
       (async () => {
+        const shiftRows = await db.select().from(shifts).where(eq(shifts.id, shiftId)).limit(1);
+        const shift = shiftRows[0];
+        if (!shift) {
+          throw new ShiftPersistenceError("shiftNotFound", { shiftId });
+        }
+
+        const openingCash = shift.openingCash ?? 0;
+
+        const orderRows = await db
+          .select({
+            orderTotal: orders.total,
+            voidedAt: orders.voidedAt,
+            method: payments.method,
+          })
+          .from(orders)
+          .leftJoin(payments, eq(payments.orderId, orders.id))
+          .where(eq(orders.shiftId, shiftId))
+          .orderBy(asc(orders.createdAt));
+
+        let cashSales = 0;
+        for (const row of orderRows) {
+          if (row.voidedAt !== null) continue;
+          const method = row.method?.trim().toLowerCase() ?? "";
+          if (method === "cash") {
+            cashSales += row.orderTotal;
+          }
+        }
+
+        const movementRows = await db.select().from(cashMovements).where(eq(cashMovements.shiftId, shiftId));
+        const totalIncome = movementRows
+          .filter((m) => m.type === "income")
+          .reduce((sum, m) => sum + m.amount, 0);
+        const totalExpense = movementRows
+          .filter((m) => m.type === "expense")
+          .reduce((sum, m) => sum + m.amount, 0);
+
+        const expectedCash = openingCash + cashSales + totalIncome - totalExpense;
+        const cashDifference = countedCash - expectedCash;
+
         const now = new Date();
         const [updated] = await db
           .update(shifts)
-          .set({ closedAt: now, status: "closed" })
+          .set({ closedAt: now, status: "closed", countedCash, cashDifference })
           .where(eq(shifts.id, shiftId))
           .returning();
 
@@ -211,6 +284,8 @@ export const shiftDrizzleRepository: ShiftRepository = {
             closedAt: shift.closedAt ?? null,
             totalOrders: shiftOrders.length,
             totalSales: shiftOrders.reduce((sum, o) => sum + o.total, 0),
+            openingCash: shift.openingCash ?? 0,
+            cashDifference: shift.cashDifference ?? null,
           };
         });
       })(),
@@ -308,6 +383,18 @@ export const shiftDrizzleRepository: ShiftRepository = {
           });
         }
 
+        const movementRows = await db.select().from(cashMovements).where(eq(cashMovements.shiftId, shiftId));
+        const cashMovementsIn = movementRows
+          .filter((m) => m.type === "income")
+          .reduce((sum, m) => sum + m.amount, 0);
+        const cashMovementsOut = movementRows
+          .filter((m) => m.type === "expense")
+          .reduce((sum, m) => sum + m.amount, 0);
+        const openingCash = shift.openingCash ?? 0;
+        const expectedCash = openingCash + cashTotal + cashMovementsIn - cashMovementsOut;
+        const countedCash = shift.countedCash ?? null;
+        const cashDifference = shift.cashDifference ?? null;
+
         return {
           shiftId: shift.id,
           openedAt: shift.openedAt,
@@ -318,6 +405,13 @@ export const shiftDrizzleRepository: ShiftRepository = {
           cashTotal,
           cardTotal,
           orders: reportOrders,
+          openingCash,
+          cashMovementsIn,
+          cashMovementsOut,
+          expectedCash,
+          countedCash,
+          cashDifference,
+          cashMovements: movementRows.map(rowToCashMovement),
         };
       })(),
       wrapDbError("Failed to get shift report"),
@@ -458,6 +552,79 @@ export const shiftDrizzleRepository: ShiftRepository = {
         return await queryOrderDetail(orderId);
       })(),
       wrapDbError("Failed to update order"),
+    );
+  },
+
+  addCashMovement(shiftId: string, input: CashMovementInput): ResultAsync<CashMovement, ShiftPersistenceError> {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const now = new Date();
+        const id = crypto.randomUUID();
+        const [created] = await db
+          .insert(cashMovements)
+          .values({
+            id,
+            shiftId,
+            type: input.type,
+            amount: input.amount,
+            reason: input.reason,
+            createdAt: now,
+          })
+          .returning();
+
+        if (!created) {
+          throw new ShiftPersistenceError("dbError", { context: "Failed to create cash movement" });
+        }
+
+        return rowToCashMovement(created);
+      })(),
+      wrapDbError("Failed to add cash movement"),
+    );
+  },
+
+  updateCashMovement(id: string, input: UpdateCashMovementInput): ResultAsync<CashMovement, ShiftPersistenceError> {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const set: Record<string, unknown> = {};
+        if (input.amount !== undefined) set.amount = input.amount;
+        if (input.reason !== undefined) set.reason = input.reason;
+
+        const [updated] = await db
+          .update(cashMovements)
+          .set(set)
+          .where(eq(cashMovements.id, id))
+          .returning();
+
+        if (!updated) {
+          throw new ShiftPersistenceError("cashMovementNotFound", { id });
+        }
+
+        return rowToCashMovement(updated);
+      })(),
+      wrapDbError("Failed to update cash movement"),
+    );
+  },
+
+  deleteCashMovement(id: string): ResultAsync<void, ShiftPersistenceError> {
+    return ResultAsync.fromPromise(
+      (async () => {
+        await db.delete(cashMovements).where(eq(cashMovements.id, id));
+      })(),
+      wrapDbError("Failed to delete cash movement"),
+    );
+  },
+
+  listCashMovements(shiftId: string): ResultAsync<CashMovement[], ShiftPersistenceError> {
+    return ResultAsync.fromPromise(
+      (async () => {
+        const rows = await db
+          .select()
+          .from(cashMovements)
+          .where(eq(cashMovements.shiftId, shiftId))
+          .orderBy(asc(cashMovements.createdAt));
+        return rows.map(rowToCashMovement);
+      })(),
+      wrapDbError("Failed to list cash movements"),
     );
   },
 };

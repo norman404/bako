@@ -18,6 +18,10 @@ const LABELS: ReprintShiftReportLabels = {
   cashLabel: "Efectivo",
   cardLabel: "Tarjeta",
   totalLabel: "Total vendido",
+  openingCashLabel: "Efectivo inicial",
+  expectedCashLabel: "Efectivo esperado",
+  countedCashLabel: "Efectivo contado",
+  differenceLabel: "Diferencia",
 };
 
 function buildReport(overrides: Partial<ShiftReport> = {}): ShiftReport {
@@ -42,6 +46,13 @@ function buildReport(overrides: Partial<ShiftReport> = {}): ShiftReport {
         isVoided: false,
       },
     ],
+    openingCash: 10000,
+    cashMovementsIn: 2000,
+    cashMovementsOut: 1000,
+    expectedCash: 11000,
+    countedCash: 11000,
+    cashDifference: 0,
+    cashMovements: [],
     ...overrides,
   };
 }
@@ -76,6 +87,58 @@ describe("reprintShiftReport", () => {
     expect(names[3]).toContain(LABELS.cashLabel);
     expect(names[4]).toContain(LABELS.cardLabel);
     expect(names[5]).toContain(LABELS.totalLabel);
-    expect(names[6]).toContain("#42");
+    expect(names.some((n) => n.includes("#42"))).toBe(true);
+  });
+});
+
+describe("reprintShiftReport — cash lines", () => {
+  beforeEach(() => {
+    mockedInvoke.mockReset();
+    mockedInvoke.mockResolvedValue(undefined);
+  });
+
+  it("includes opening cash line in the ticket", async () => {
+    const printer = buildPrinter({ id: "p-1", type: "network", address: "192.168.1.10:9100" });
+    const report = buildReport({ openingCash: 10000 });
+    const result = await reprintShiftReport(report, printer, LABELS);
+    expect(result.isOk()).toBe(true);
+    const args = mockedInvoke.mock.calls[0]?.[1] as { input: { items: Array<{ name: string }> } };
+    const names = args.input.items.map((item) => item.name);
+    expect(names.some((n) => n.includes(LABELS.openingCashLabel))).toBe(true);
+  });
+
+  it("includes expected cash, counted cash, and difference lines for closed shifts", async () => {
+    const printer = buildPrinter({ id: "p-1", type: "network", address: "192.168.1.10:9100" });
+    const report = buildReport({
+      openingCash: 10000,
+      cashTotal: 5000,
+      cashMovementsIn: 2000,
+      cashMovementsOut: 1000,
+      expectedCash: 16000,
+      countedCash: 15500,
+      cashDifference: -500,
+    });
+    const result = await reprintShiftReport(report, printer, LABELS);
+    expect(result.isOk()).toBe(true);
+    const args = mockedInvoke.mock.calls[0]?.[1] as { input: { items: Array<{ name: string }> } };
+    const names = args.input.items.map((item) => item.name);
+    expect(names.some((n) => n.includes(LABELS.expectedCashLabel))).toBe(true);
+    expect(names.some((n) => n.includes(LABELS.countedCashLabel))).toBe(true);
+    expect(names.some((n) => n.includes(LABELS.differenceLabel))).toBe(true);
+  });
+
+  it("omits counted cash and difference lines for active shifts (null values)", async () => {
+    const printer = buildPrinter({ id: "p-1", type: "network", address: "192.168.1.10:9100" });
+    const report = buildReport({
+      closedAt: null,
+      countedCash: null,
+      cashDifference: null,
+    });
+    const result = await reprintShiftReport(report, printer, LABELS);
+    expect(result.isOk()).toBe(true);
+    const args = mockedInvoke.mock.calls[0]?.[1] as { input: { items: Array<{ name: string }> } };
+    const names = args.input.items.map((item) => item.name);
+    expect(names.some((n) => n.includes(LABELS.countedCashLabel))).toBe(false);
+    expect(names.some((n) => n.includes(LABELS.differenceLabel))).toBe(false);
   });
 });

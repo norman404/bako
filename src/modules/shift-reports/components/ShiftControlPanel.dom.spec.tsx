@@ -105,6 +105,8 @@ function buildHistoryItem(overrides: Partial<ShiftHistoryItem> = {}): ShiftHisto
     closedAt: new Date("2026-06-04T16:00:00.000Z"),
     totalOrders: 2,
     totalSales: 12500,
+    openingCash: 10000,
+    cashDifference: 0,
     ...overrides,
   };
 }
@@ -147,6 +149,13 @@ function buildReport(overrides: Partial<ShiftReport> = {}): ShiftReport {
         isVoided: true,
       },
     ],
+    openingCash: 10000,
+    cashMovementsIn: 0,
+    cashMovementsOut: 0,
+    expectedCash: 18000,
+    countedCash: 18000,
+    cashDifference: 0,
+    cashMovements: [],
     ...overrides,
   };
 }

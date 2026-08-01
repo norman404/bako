@@ -4,6 +4,10 @@ export type ShiftErrorCode =
   | "shiftNotFound"
   | "orderNotFound"
   | "orderAlreadyVoided"
+  | "invalidOpeningCash"
+  | "invalidCountedCash"
+  | "invalidCashMovement"
+  | "cashMovementNotFound"
   | "dbError";
 
 export interface ShiftTranslatableError {

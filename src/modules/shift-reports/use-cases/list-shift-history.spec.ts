@@ -17,6 +17,10 @@ function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
     getOrderDetail: mock(() => okAsync({} as OrderDetail)),
     voidOrder: mock(() => okAsync(undefined)),
     updateOrder: mock(() => okAsync({} as OrderDetail)),
+    addCashMovement: mock(() => okAsync({} as any)),
+    updateCashMovement: mock(() => okAsync({} as any)),
+    deleteCashMovement: mock(() => okAsync(undefined)),
+    listCashMovements: mock(() => okAsync([])),
     ...overrides,
   };
 }
@@ -40,6 +44,8 @@ describe("listShiftHistory use-case", () => {
         closedAt: new Date("2026-06-04T16:00:00.000Z"),
         totalOrders: 5,
         totalSales: 12500,
+        openingCash: 10000,
+        cashDifference: null,
       },
     ];
     const repo = buildRepo({

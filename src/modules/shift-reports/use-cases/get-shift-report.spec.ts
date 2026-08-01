@@ -16,6 +16,10 @@ function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
     getOrderDetail: mock(() => okAsync({} as OrderDetail)),
     voidOrder: mock(() => okAsync(undefined)),
     updateOrder: mock(() => okAsync({} as OrderDetail)),
+    addCashMovement: mock(() => okAsync({} as any)),
+    updateCashMovement: mock(() => okAsync({} as any)),
+    deleteCashMovement: mock(() => okAsync(undefined)),
+    listCashMovements: mock(() => okAsync([])),
     ...overrides,
   };
 }
@@ -49,6 +53,13 @@ describe("getShiftReport use-case", () => {
       cashTotal: 3000,
       cardTotal: 2000,
       orders: [order],
+      openingCash: 10000,
+      cashMovementsIn: 0,
+      cashMovementsOut: 0,
+      expectedCash: 13000,
+      countedCash: null,
+      cashDifference: null,
+      cashMovements: [],
     };
     const repo = buildRepo({
       getReport: mock(() => okAsync(report)),

@@ -28,7 +28,7 @@ import { calculateCartTotals } from "@/modules/order/domain/cart";
 import { useOrderStore } from "@/modules/order/store/order-store";
 import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
-import { ShiftButton } from "@/modules/shift-reports";
+import { ShiftButton, CashMovementsButton } from "@/modules/shift-reports";
 import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { useUpdater, UpdateToast } from "@/modules/updater";
@@ -297,7 +297,10 @@ export function App() {
           {/* Search + actions — right */}
           <div className="ml-auto flex items-center gap-1.5">
             {shiftManagementEnabled ? (
-              <ShiftButton />
+              <>
+                <ShiftButton />
+                <CashMovementsButton />
+              </>
             ) : null}
 
             <Button

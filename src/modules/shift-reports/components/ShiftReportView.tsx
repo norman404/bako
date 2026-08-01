@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChefHat, ChevronDown, ChevronUp, Edit3, Package, Printer, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Banknote, ChefHat, ChevronDown, ChevronUp, Edit3, Package, Printer, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
@@ -45,8 +45,8 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
   return (
     <div className="rounded-card border border-border bg-surface-sunken overflow-hidden">
       <div className="border-b border-border bg-surface-raised/40 px-4 py-3">
-        <h3 className="flex items-center gap-2 text-sm font-semibold text-text">
-          <Package className="h-4 w-4 text-primary" />
+        <h3 className="flex items-center gap-2 eyebrow">
+          <Package className="h-3.5 w-3.5 text-primary" />
           {t("salesList")}
         </h3>
       </div>
@@ -194,13 +194,13 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
       {/* Fechas */}
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-card border border-border bg-surface-sunken p-3">
-          <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+          <p className="eyebrow">
             {t("openedAt")}
           </p>
           <p className="mt-1 text-sm font-medium text-text">{report.openedAt.toLocaleString()}</p>
         </div>
         <div className="rounded-card border border-border bg-surface-sunken p-3">
-          <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+          <p className="eyebrow">
             {t("closedAt")}
           </p>
           <p className="mt-1 text-sm font-medium text-text">
@@ -210,45 +210,149 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
       </div>
 
       {/* Hero: Total Sales */}
-      <div className="rounded-card border border-border/60 bg-surface-sunken p-5 text-center">
-        <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+      <div className="rounded-card border border-border/40 bg-surface-sunken p-6 text-center">
+        <p className="eyebrow">
           {t("totalSales")}
         </p>
         <p className="font-mono-tabular mt-2 text-display font-bold leading-none tracking-tight text-primary-strong">
           {formatPosCurrency(report.totalSales)}
         </p>
+        <p className="mt-1.5 text-xs text-text-dim">
+          {report.openedAt.toLocaleString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+          })}
+          {" — "}
+          {report.closedAt
+            ? report.closedAt.toLocaleString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                day: "2-digit",
+                month: "2-digit",
+              })
+            : "—"}
+        </p>
       </div>
 
       {/* Métricas secundarias */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="rounded-card border border-border bg-surface-sunken p-3 text-center">
-          <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="rounded-card border border-border bg-surface-sunken p-4">
+          <p className="eyebrow">
             {t("totalOrders")}
           </p>
-          <p className="font-mono-tabular mt-1 text-xl font-bold text-text">{report.totalOrders}</p>
+          <p className="font-mono-tabular mt-1 text-lg font-semibold text-text">{report.totalOrders}</p>
         </div>
-        <div className="rounded-card border border-border bg-surface-sunken p-3 text-center">
-          <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+        <div className="rounded-card border border-border bg-surface-sunken p-4">
+          <p className="eyebrow">
             {t("totalItems")}
           </p>
-          <p className="font-mono-tabular mt-1 text-xl font-bold text-text">{report.totalItems}</p>
+          <p className="font-mono-tabular mt-1 text-lg font-semibold text-text">{report.totalItems}</p>
         </div>
-        <div className="rounded-card border border-border bg-surface-sunken p-3 text-center">
-          <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+        <div className="rounded-card border border-border bg-surface-sunken p-4">
+          <p className="eyebrow">
             {t("cashTotal")}
           </p>
           <p className="font-mono-tabular mt-1 text-lg font-semibold text-text">
             {formatPosCurrency(report.cashTotal)}
           </p>
         </div>
-        <div className="rounded-card border border-border bg-surface-sunken p-3 text-center">
-          <p className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+        <div className="rounded-card border border-border bg-surface-sunken p-4">
+          <p className="eyebrow">
             {t("cardTotal")}
           </p>
           <p className="font-mono-tabular mt-1 text-lg font-semibold text-text">
             {formatPosCurrency(report.cardTotal)}
           </p>
         </div>
+      </div>
+
+      {/* Resumen de efectivo */}
+      <div className="rounded-card border border-border bg-surface-sunken p-4">
+        <h3 className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wider text-text-muted">
+          <Banknote className="h-3.5 w-3.5 text-primary" />
+          {t("cashSummary")}
+        </h3>
+        <div className="mt-3">
+          <div className="flex items-center justify-between py-1.5 text-sm">
+            <span className="text-text-muted">{t("cashSummaryOpening")}</span>
+            <span className="font-mono-tabular text-text">{formatPosCurrency(report.openingCash)}</span>
+          </div>
+          <div className="flex items-center justify-between py-1.5 text-sm">
+            <span className="text-text-muted">{t("cashSummarySales")}</span>
+            <span className="font-mono-tabular text-text">+{formatPosCurrency(report.cashTotal)}</span>
+          </div>
+          <div className="flex items-center justify-between py-1.5 text-sm">
+            <span className="text-text-muted">{t("cashSummaryIncome")}</span>
+            <span className="font-mono-tabular text-text">+{formatPosCurrency(report.cashMovementsIn)}</span>
+          </div>
+          <div className="flex items-center justify-between py-1.5 text-sm">
+            <span className="text-text-muted">{t("cashSummaryExpense")}</span>
+            <span className="font-mono-tabular text-text">-{formatPosCurrency(report.cashMovementsOut)}</span>
+          </div>
+          <div className="flex items-center justify-between border-t border-border-strong pt-2 mt-1 text-sm font-semibold">
+            <span className="text-text">{t("cashSummaryExpected")}</span>
+            <span className="font-mono-tabular text-text">{formatPosCurrency(report.expectedCash)}</span>
+          </div>
+          {report.countedCash !== null && (
+            <div className="flex items-center justify-between py-1.5 text-sm">
+              <span className="text-text-muted">{t("cashSummaryCounted")}</span>
+              <span className="font-mono-tabular text-text">{formatPosCurrency(report.countedCash)}</span>
+            </div>
+          )}
+          {report.cashDifference !== null && (
+            <div
+              className={[
+                "mt-2 flex items-center justify-between rounded-card px-2.5 py-2 text-sm font-semibold",
+                report.cashDifference === 0
+                  ? "bg-success/5"
+                  : report.cashDifference > 0
+                    ? "bg-warning/5"
+                    : "bg-danger/5",
+              ].join(" ")}
+            >
+              <span className="text-text">{t("cashSummaryDifference")}</span>
+              <span
+                className={`font-mono-tabular ${
+                  report.cashDifference === 0
+                    ? "text-success"
+                    : report.cashDifference > 0
+                      ? "text-warning"
+                      : "text-danger"
+                }`}
+              >
+                {report.cashDifference > 0 ? "+" : ""}
+                {formatPosCurrency(report.cashDifference)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {report.cashMovements.length > 0 && (
+          <div className="mt-3 border-t border-border pt-3">
+            <div className="grid gap-1.5">
+              {report.cashMovements.map((movement) => (
+                <div key={movement.id} className="flex items-center justify-between text-2xs">
+                  <span className="flex items-center gap-1.5 text-text-muted">
+                    {movement.type === "income" ? (
+                      <ArrowDown className="h-3 w-3 text-success" />
+                    ) : (
+                      <ArrowUp className="h-3 w-3 text-danger" />
+                    )}
+                    {movement.reason}
+                  </span>
+                  <span
+                    className={`font-mono-tabular ${movement.type === "income" ? "text-success" : "text-danger"}`}
+                  >
+                    {movement.type === "income" ? "+" : "-"}
+                    {formatPosCurrency(movement.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Listado de ventas */}

@@ -12,6 +12,10 @@ export interface ReprintShiftReportLabels {
   cashLabel: string;
   cardLabel: string;
   totalLabel: string;
+  openingCashLabel: string;
+  expectedCashLabel: string;
+  countedCashLabel: string;
+  differenceLabel: string;
 }
 
 interface ReprintShiftReportPayload {
@@ -92,6 +96,38 @@ export function reprintShiftReport(
         unitPrice: 0,
         modifiers: [],
       },
+      {
+        name: `${labels.openingCashLabel}: ${formatPosCurrency(report.openingCash)}`,
+        quantity: 1,
+        unitPrice: 0,
+        modifiers: [],
+      },
+      {
+        name: `${labels.expectedCashLabel}: ${formatPosCurrency(report.expectedCash)}`,
+        quantity: 1,
+        unitPrice: 0,
+        modifiers: [],
+      },
+      ...(report.countedCash !== null
+        ? [
+            {
+              name: `${labels.countedCashLabel}: ${formatPosCurrency(report.countedCash)}`,
+              quantity: 1,
+              unitPrice: 0,
+              modifiers: [],
+            },
+          ]
+        : []),
+      ...(report.cashDifference !== null
+        ? [
+            {
+              name: `${labels.differenceLabel}: ${report.cashDifference >= 0 ? "+" : ""}${formatPosCurrency(report.cashDifference)}`,
+              quantity: 1,
+              unitPrice: 0,
+              modifiers: [],
+            },
+          ]
+        : []),
       ...report.orders.map((order) => ({
         name: `#${order.ticketNumber} — ${formatPosCurrency(order.total)}`,
         quantity: 1,

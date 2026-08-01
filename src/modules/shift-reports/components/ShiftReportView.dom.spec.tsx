@@ -2,6 +2,7 @@ import { describe, expect, it, mock } from "bun:test";
 
 import { ShiftReportView } from "./ShiftReportView";
 import { renderWithProviders, screen, fireEvent } from "@/test/test-utils";
+import { formatPosCurrency } from "@/lib/currency";
 import type { ShiftReport } from "@/modules/shift-reports/domain/shift";
 
 const baseReport: ShiftReport = {
@@ -39,6 +40,30 @@ const baseReport: ShiftReport = {
         { productId: "p4", productName: "Jugo", quantity: 1, unitPrice: 1500 },
       ],
       isVoided: true,
+    },
+  ],
+  openingCash: 10000,
+  cashMovementsIn: 2000,
+  cashMovementsOut: 1000,
+  expectedCash: 19000,
+  countedCash: 19000,
+  cashDifference: 0,
+  cashMovements: [
+    {
+      id: "mv-1",
+      shiftId: "shift-1",
+      type: "income",
+      amount: 2000,
+      reason: "Fondo adicional",
+      createdAt: new Date("2026-06-04T09:00:00.000Z"),
+    },
+    {
+      id: "mv-2",
+      shiftId: "shift-1",
+      type: "expense",
+      amount: 1000,
+      reason: "Compra de bolsas",
+      createdAt: new Date("2026-06-04T11:00:00.000Z"),
     },
   ],
 };
@@ -192,5 +217,86 @@ describe("ShiftReportView — reprint command", () => {
 
     expect(onReprintCommand).toHaveBeenCalledTimes(1);
     expect(onReprintCommand.mock.calls[0][0].orderId).toBe("order-1");
+  });
+});
+
+describe("ShiftReportView — cash summary section", () => {
+  it("renders the cash summary section with opening cash, sales, income, expense, expected", () => {
+    renderWithProviders(<ShiftReportView report={baseReport} />);
+
+    expect(screen.getByText("Resumen de efectivo")).toBeInTheDocument();
+    expect(screen.getByText("Efectivo inicial")).toBeInTheDocument();
+    expect(screen.getByText("Ventas en efectivo")).toBeInTheDocument();
+    expect(screen.getByText("Entradas")).toBeInTheDocument();
+    expect(screen.getByText("Salidas")).toBeInTheDocument();
+    expect(screen.getByText("Esperado")).toBeInTheDocument();
+
+    expect(screen.getByText(formatPosCurrency(baseReport.openingCash))).toBeInTheDocument();
+    expect(screen.getByText(`+${formatPosCurrency(baseReport.cashTotal)}`)).toBeInTheDocument();
+    expect(screen.getAllByText(`+${formatPosCurrency(baseReport.cashMovementsIn)}`).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(`-${formatPosCurrency(baseReport.cashMovementsOut)}`).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders the expected cash value correctly", () => {
+    renderWithProviders(<ShiftReportView report={baseReport} />);
+
+    expect(screen.getAllByText(formatPosCurrency(baseReport.expectedCash)).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders the cash difference with zero/surplus/shortage styling", () => {
+    const zeroReport: ShiftReport = {
+      ...baseReport,
+      cashDifference: 0,
+      countedCash: 19000,
+    };
+    const { unmount: unmountZero } = renderWithProviders(<ShiftReportView report={zeroReport} />);
+    expect(screen.getByText("Diferencia")).toBeInTheDocument();
+    expect(screen.getByText(formatPosCurrency(0))).toBeInTheDocument();
+    const zeroDiff = screen.getByText(formatPosCurrency(0));
+    expect(zeroDiff.className).toContain("text-success");
+    unmountZero();
+
+    const surplusReport: ShiftReport = {
+      ...baseReport,
+      cashDifference: 500,
+      countedCash: 19500,
+    };
+    const { unmount: unmountSurplus } = renderWithProviders(<ShiftReportView report={surplusReport} />);
+    const surplusDiff = screen.getByText(`+${formatPosCurrency(500)}`);
+    expect(surplusDiff.className).toContain("text-warning");
+    unmountSurplus();
+
+    const shortageReport: ShiftReport = {
+      ...baseReport,
+      cashDifference: -500,
+      countedCash: 18500,
+    };
+    renderWithProviders(<ShiftReportView report={shortageReport} />);
+    const shortageDiff = screen.getByText(`-${formatPosCurrency(500)}`);
+    expect(shortageDiff.className).toContain("text-danger");
+  });
+
+  it("renders the list of cash movements", () => {
+    renderWithProviders(<ShiftReportView report={baseReport} />);
+
+    expect(screen.getByText("Fondo adicional")).toBeInTheDocument();
+    expect(screen.getByText("Compra de bolsas")).toBeInTheDocument();
+    expect(screen.getAllByText(`+${formatPosCurrency(2000)}`).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(`-${formatPosCurrency(1000)}`).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("hides counted cash and difference when shift is still active (null values)", () => {
+    const activeReport: ShiftReport = {
+      ...baseReport,
+      closedAt: null,
+      countedCash: null,
+      cashDifference: null,
+    };
+    renderWithProviders(<ShiftReportView report={activeReport} />);
+
+    expect(screen.getByText("Resumen de efectivo")).toBeInTheDocument();
+    expect(screen.getByText("Esperado")).toBeInTheDocument();
+    expect(screen.queryByText("Contado")).toBeNull();
+    expect(screen.queryByText("Diferencia")).toBeNull();
   });
 });

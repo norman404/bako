@@ -158,6 +158,12 @@ pub fn run() {
             sql: include_str!("../migrations/0025_voided_at_orders.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 26,
+            description: "cash_management",
+            sql: include_str!("../migrations/0026_cash_management.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

@@ -1,10 +1,35 @@
 export type ShiftStatus = "active" | "closed";
 
+export type CashMovementType = "income" | "expense";
+
+export interface CashMovement {
+  id: string;
+  shiftId: string;
+  type: CashMovementType;
+  amount: number;
+  reason: string;
+  createdAt: Date;
+}
+
+export interface CashMovementInput {
+  type: CashMovementType;
+  amount: number;
+  reason: string;
+}
+
+export interface UpdateCashMovementInput {
+  amount?: number;
+  reason?: string;
+}
+
 export interface Shift {
   id: string;
   openedAt: Date;
   closedAt: Date | null;
   status: ShiftStatus;
+  openingCash: number;
+  countedCash: number | null;
+  cashDifference: number | null;
 }
 
 export interface ShiftReportOrderItem {
@@ -35,6 +60,13 @@ export interface ShiftReport {
   cashTotal: number;
   cardTotal: number;
   orders: ShiftReportOrder[];
+  openingCash: number;
+  cashMovementsIn: number;
+  cashMovementsOut: number;
+  expectedCash: number;
+  countedCash: number | null;
+  cashDifference: number | null;
+  cashMovements: CashMovement[];
 }
 
 export interface ShiftHistoryItem {
@@ -43,4 +75,6 @@ export interface ShiftHistoryItem {
   closedAt: Date | null;
   totalOrders: number;
   totalSales: number;
+  openingCash: number;
+  cashDifference: number | null;
 }

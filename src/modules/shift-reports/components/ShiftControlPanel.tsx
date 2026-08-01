@@ -193,6 +193,10 @@ export function ShiftControlPanel() {
       cashLabel: t("cashTotal"),
       cardLabel: t("cardTotal"),
       totalLabel: t("totalSales"),
+      openingCashLabel: t("openingCashLabel"),
+      expectedCashLabel: t("expectedCash"),
+      countedCashLabel: t("countedCashLabel"),
+      differenceLabel: t("cashDifference"),
     });
     if (result.isErr()) {
       toast.error(t("reprintFailed"));
