@@ -277,6 +277,7 @@ export const printers = sqliteTable(
     labelHeightMm: integer("label_height_mm"),
     labelGapMm: integer("label_gap_mm"),
     labelLanguage: text("label_language").$default(() => "tspl"),
+    labelOrientation: text("label_orientation").$default(() => "landscape"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),

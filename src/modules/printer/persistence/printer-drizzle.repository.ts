@@ -2,7 +2,7 @@ import { and, eq, isNull, ne } from "drizzle-orm";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 
 import { PrinterNotFoundError, PrinterValidationError, type PrinterDomainError } from "@/modules/printer/domain/errors";
-import { PRINTER_ROLE, type Printer, type PrinterCreateInput, type PrinterUpdateInput } from "@/modules/printer/domain/printer";
+import { DEFAULT_LABEL_ORIENTATION, PRINTER_ROLE, type Printer, type PrinterCreateInput, type PrinterUpdateInput } from "@/modules/printer/domain/printer";
 import type { PrinterRepository } from "@/modules/printer/domain/ports";
 import { db } from "@/shared/db/client";
 import { printers, type PrinterRow } from "@/shared/db/schema";
@@ -25,6 +25,7 @@ function rowToPrinter(row: PrinterRow): Printer {
     labelHeightMm: row.labelHeightMm ?? DEFAULT_LABEL_HEIGHT_MM,
     labelGapMm: row.labelGapMm ?? DEFAULT_LABEL_GAP_MM,
     labelLanguage: (row.labelLanguage ?? DEFAULT_LABEL_LANGUAGE) as Printer["labelLanguage"],
+    labelOrientation: (row.labelOrientation ?? DEFAULT_LABEL_ORIENTATION) as Printer["labelOrientation"],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,

@@ -61,6 +61,7 @@ function buildPrinterRow(overrides: Partial<PrinterRow> = {}): PrinterRow {
     labelHeightMm: overrides.labelHeightMm ?? 30,
     labelGapMm: overrides.labelGapMm ?? 2,
     labelLanguage: overrides.labelLanguage ?? "tspl",
+    labelOrientation: overrides.labelOrientation ?? "landscape",
     createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
     updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
     deletedAt: overrides.deletedAt ?? null,

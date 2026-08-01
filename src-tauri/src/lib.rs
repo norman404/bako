@@ -164,6 +164,12 @@ pub fn run() {
             sql: include_str!("../migrations/0026_cash_management.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 27,
+            description: "printer_label_orientation",
+            sql: include_str!("../migrations/0027_printer_label_orientation.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
