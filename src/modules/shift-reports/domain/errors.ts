@@ -2,6 +2,8 @@ export type ShiftErrorCode =
   | "shiftAlreadyActive"
   | "noActiveShift"
   | "shiftNotFound"
+  | "orderNotFound"
+  | "orderAlreadyVoided"
   | "dbError";
 
 export interface ShiftTranslatableError {

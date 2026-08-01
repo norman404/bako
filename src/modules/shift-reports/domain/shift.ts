@@ -22,6 +22,7 @@ export interface ShiftReportOrder {
   paymentMethod: string;
   itemCount: number;
   items: ShiftReportOrderItem[];
+  isVoided: boolean;
 }
 
 export interface ShiftReport {

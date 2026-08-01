@@ -1,8 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { okAsync, errAsync } from "neverthrow";
-import { getShiftReport } from "./get-shift-report";
+import { getOrderDetail } from "./get-order-detail";
 import type { ShiftRepository } from "../domain/ports";
-import type { Shift, ShiftReport, ShiftReportOrder } from "../domain/shift";
+import type { Shift } from "../domain/shift";
 import type { OrderDetail } from "../domain/order-management";
 import { ShiftPersistenceError } from "../domain/errors";
 
@@ -20,59 +20,54 @@ function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
   };
 }
 
-describe("getShiftReport use-case", () => {
-  it("returns report for a shift", async () => {
-    const order: ShiftReportOrder = {
-      orderId: "order-1",
-      ticketNumber: 1,
+describe("getOrderDetail use-case", () => {
+  it("returns order detail for a valid orderId", async () => {
+    const orderDetail: OrderDetail = {
+      id: "order-1",
+      ticketNumber: 42,
       createdAt: new Date("2026-06-04T10:00:00.000Z"),
       total: 5000,
       paymentMethod: "cash",
-      itemCount: 3,
+      paymentAmount: 5000,
+      fulfillmentType: "local",
+      customer: null,
       items: [
         {
+          id: "item-1",
           productId: "product-1",
           productName: "Café con leche",
+          categoryId: "category-1",
           quantity: 2,
           unitPrice: 2500,
+          modifiers: [],
         },
       ],
       isVoided: false,
-    };
-    const report: ShiftReport = {
-      shiftId: "shift-1",
-      openedAt: new Date("2026-06-04T08:00:00.000Z"),
-      closedAt: null,
-      totalOrders: 10,
-      totalItems: 25,
-      totalSales: 5000,
-      cashTotal: 3000,
-      cardTotal: 2000,
-      orders: [order],
+      voidedAt: null,
     };
     const repo = buildRepo({
-      getReport: mock(() => okAsync(report)),
+      getOrderDetail: mock(() => okAsync(orderDetail)),
     });
 
-    const result = await getShiftReport(repo, "shift-1");
+    const result = await getOrderDetail(repo, "order-1");
 
     expect(result.isOk()).toBe(true);
     if (result.isErr()) throw result.error;
-    expect(result.value).toEqual(report);
-    expect(result.value.totalItems).toBe(25);
-    expect(result.value.orders).toHaveLength(1);
-    expect(repo.getReport).toHaveBeenCalledWith("shift-1");
+    expect(result.value).toEqual(orderDetail);
+    expect(result.value.ticketNumber).toBe(42);
+    expect(result.value.items).toHaveLength(1);
+    expect(repo.getOrderDetail).toHaveBeenCalledWith("order-1");
   });
 
   it("forwards repository errors", async () => {
     const repo = buildRepo({
-      getReport: mock(() => errAsync(new ShiftPersistenceError("dbError", { context: "DB error" }))),
+      getOrderDetail: mock(() => errAsync(new ShiftPersistenceError("orderNotFound", { orderId: "order-1" }))),
     });
 
-    const result = await getShiftReport(repo, "shift-1");
+    const result = await getOrderDetail(repo, "order-1");
 
     expect(result.isErr()).toBe(true);
     if (result.isOk()) throw new Error("Expected error");
-    expect(result.error.code).toBe("dbError");
+    expect(result.error.code).toBe("orderNotFound");
   });
 });

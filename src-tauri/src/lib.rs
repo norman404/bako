@@ -152,6 +152,12 @@ pub fn run() {
             sql: include_str!("../migrations/0024_printer_role_comanda.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 25,
+            description: "voided_at_orders",
+            sql: include_str!("../migrations/0025_voided_at_orders.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

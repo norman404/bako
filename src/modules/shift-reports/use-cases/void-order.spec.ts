@@ -1,6 +1,6 @@
 import { describe, expect, it, mock } from "bun:test";
 import { okAsync, errAsync } from "neverthrow";
-import { getActiveShift } from "./get-active-shift";
+import { voidOrder } from "./void-order";
 import type { ShiftRepository } from "../domain/ports";
 import type { Shift } from "../domain/shift";
 import type { OrderDetail } from "../domain/order-management";
@@ -20,44 +20,40 @@ function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
   };
 }
 
-describe("getActiveShift use-case", () => {
-  it("returns null when no active shift", async () => {
-    const repo = buildRepo();
-
-    const result = await getActiveShift(repo);
-
-    expect(result.isOk()).toBe(true);
-    if (result.isErr()) throw result.error;
-    expect(result.value).toBeNull();
-  });
-
-  it("returns the active shift", async () => {
-    const active: Shift = {
-      id: "shift-1",
-      openedAt: new Date(),
-      closedAt: null,
-      status: "active",
-    };
+describe("voidOrder use-case", () => {
+  it("voids an order successfully", async () => {
     const repo = buildRepo({
-      getActive: mock(() => okAsync(active)),
+      voidOrder: mock(() => okAsync(undefined)),
     });
 
-    const result = await getActiveShift(repo);
+    const result = await voidOrder(repo, "order-1");
 
     expect(result.isOk()).toBe(true);
     if (result.isErr()) throw result.error;
-    expect(result.value).toEqual(active);
+    expect(repo.voidOrder).toHaveBeenCalledWith("order-1");
   });
 
   it("forwards repository errors", async () => {
     const repo = buildRepo({
-      getActive: mock(() => errAsync(new ShiftPersistenceError("dbError", { context: "DB error" }))),
+      voidOrder: mock(() => errAsync(new ShiftPersistenceError("orderNotFound", { orderId: "order-1" }))),
     });
 
-    const result = await getActiveShift(repo);
+    const result = await voidOrder(repo, "order-1");
 
     expect(result.isErr()).toBe(true);
     if (result.isOk()) throw new Error("Expected error");
-    expect(result.error.code).toBe("dbError");
+    expect(result.error.code).toBe("orderNotFound");
+  });
+
+  it("forwards already voided error", async () => {
+    const repo = buildRepo({
+      voidOrder: mock(() => errAsync(new ShiftPersistenceError("orderAlreadyVoided", { orderId: "order-1" }))),
+    });
+
+    const result = await voidOrder(repo, "order-1");
+
+    expect(result.isErr()).toBe(true);
+    if (result.isOk()) throw new Error("Expected error");
+    expect(result.error.code).toBe("orderAlreadyVoided");
   });
 });

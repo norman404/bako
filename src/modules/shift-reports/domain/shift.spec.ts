@@ -46,6 +46,7 @@ describe("shift domain types", () => {
       paymentMethod: "cash",
       itemCount: 2,
       items: [orderItem],
+      isVoided: false,
     };
     const report: ShiftReport = {
       shiftId: "shift-1",

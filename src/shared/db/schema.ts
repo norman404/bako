@@ -199,6 +199,7 @@ export const orders = sqliteTable(
     shiftId: text("shift_id"),
     total: integer("total").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    voidedAt: integer("voided_at", { mode: "timestamp_ms" }),
   },
   (table) => [
     uniqueIndex("idx_orders_ticket_number").on(table.ticketNumber),

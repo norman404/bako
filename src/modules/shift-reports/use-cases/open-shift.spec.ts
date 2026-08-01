@@ -3,6 +3,7 @@ import { okAsync, errAsync } from "neverthrow";
 import { openShift } from "./open-shift";
 import type { ShiftRepository } from "../domain/ports";
 import type { Shift } from "../domain/shift";
+import type { OrderDetail } from "../domain/order-management";
 import { ShiftAlreadyActiveError, ShiftPersistenceError } from "../domain/errors";
 
 function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
@@ -12,6 +13,9 @@ function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
     getActive: mock(() => okAsync(null)),
     listHistory: mock(() => okAsync([])),
     getReport: mock(() => okAsync({} as any)),
+    getOrderDetail: mock(() => okAsync({} as OrderDetail)),
+    voidOrder: mock(() => okAsync(undefined)),
+    updateOrder: mock(() => okAsync({} as OrderDetail)),
     ...overrides,
   };
 }
