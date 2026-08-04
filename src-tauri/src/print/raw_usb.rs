@@ -1,8 +1,8 @@
+use super::error::PrintError;
+use nusb::transfer::{Bulk, ControlIn, ControlType, In, Out, Recipient};
+use nusb::{list_devices, MaybeFuture};
 use std::sync::Arc;
 use std::time::Duration;
-use nusb::{list_devices, MaybeFuture};
-use nusb::transfer::{Bulk, ControlIn, ControlType, In, Out, Recipient};
-use super::error::PrintError;
 
 /// Raw USB transport for label printers that do not expose an ESC/POS USB profile.
 /// Uses `nusb` directly to claim an interface, open the first bulk OUT endpoint,
@@ -33,7 +33,12 @@ impl RawLabelUsbDriver {
             })
             .next()
             .ok_or_else(|| {
-                log::error!("[raw_usb] device {:04X}:{:04X} not found among {} listed", vid, pid, found_count);
+                log::error!(
+                    "[raw_usb] device {:04X}:{:04X} not found among {} listed",
+                    vid,
+                    pid,
+                    found_count
+                );
                 PrintError::UsbError(format!("USB device {:04X}:{:04X} not found", vid, pid))
             })?;
 
@@ -52,7 +57,11 @@ impl RawLabelUsbDriver {
             let claimed_interface = match claimed {
                 Ok(iface) => iface,
                 Err(e) => {
-                    log::debug!("[raw_usb] claim_interface {} failed: {}", interface_number, e);
+                    log::debug!(
+                        "[raw_usb] claim_interface {} failed: {}",
+                        interface_number,
+                        e
+                    );
                     continue;
                 }
             };
@@ -64,7 +73,8 @@ impl RawLabelUsbDriver {
                 for endpoint in alt.endpoints() {
                     match endpoint.direction() {
                         nusb::transfer::Direction::Out if out_address.is_none() => {
-                            out_address = Some((endpoint.address(), endpoint.max_packet_size() as usize));
+                            out_address =
+                                Some((endpoint.address(), endpoint.max_packet_size() as usize));
                         }
                         nusb::transfer::Direction::In if in_address.is_none() => {
                             in_address = Some(endpoint.address());
@@ -75,7 +85,13 @@ impl RawLabelUsbDriver {
             }
 
             if let Some((address, max_packet_size)) = out_address {
-                log::info!("[raw_usb] opened {:04X}:{:04X} — OUT endpoint {:02X}, IN endpoint {:?}", vid, pid, address, in_address);
+                log::info!(
+                    "[raw_usb] opened {:04X}:{:04X} — OUT endpoint {:02X}, IN endpoint {:?}",
+                    vid,
+                    pid,
+                    address,
+                    in_address
+                );
                 return Ok(Self {
                     device: device.clone(),
                     claimed_interface: Arc::new(claimed_interface),
@@ -87,18 +103,27 @@ impl RawLabelUsbDriver {
             }
         }
 
-        log::error!("[raw_usb] no usable OUT endpoint on {:04X}:{:04X}", vid, pid);
+        log::error!(
+            "[raw_usb] no usable OUT endpoint on {:04X}:{:04X}",
+            vid,
+            pid
+        );
         Err(PrintError::UsbError(
             "no suitable OUT endpoint found on label printer".to_string(),
         ))
     }
 
     pub fn write_all(&self, data: &[u8]) -> Result<(), PrintError> {
-        log::info!("[raw_usb] writing {} bytes to endpoint {:02X}", data.len(), self.endpoint_address);
+        log::info!(
+            "[raw_usb] writing {} bytes to endpoint {:02X}",
+            data.len(),
+            self.endpoint_address
+        );
 
         self.usb_printer_handshake()?;
 
-        let endpoint = self.claimed_interface
+        let endpoint = self
+            .claimed_interface
             .endpoint::<Bulk, Out>(self.endpoint_address)
             .map_err(|e| {
                 log::error!("[raw_usb] endpoint open failed: {}", e);
@@ -121,7 +146,10 @@ impl RawLabelUsbDriver {
             log::error!("[raw_usb] flush_end failed: {}", e);
             PrintError::UsbError(format!("failed to flush_end USB endpoint: {}", e))
         })?;
-        log::info!("[raw_usb] write complete ({} bytes + 64-byte preamble)", data.len());
+        log::info!(
+            "[raw_usb] write complete ({} bytes + 64-byte preamble)",
+            data.len()
+        );
 
         self.drain_in_endpoint();
 
@@ -131,14 +159,21 @@ impl RawLabelUsbDriver {
     fn usb_printer_handshake(&self) -> Result<(), PrintError> {
         let index = self.interface_number as u16;
 
-        match self.claimed_interface.control_in(ControlIn {
-            control_type: ControlType::Class,
-            recipient: Recipient::Interface,
-            request: 0,
-            value: 0,
-            index,
-            length: 256,
-        }, Duration::from_millis(500)).wait() {
+        match self
+            .claimed_interface
+            .control_in(
+                ControlIn {
+                    control_type: ControlType::Class,
+                    recipient: Recipient::Interface,
+                    request: 0,
+                    value: 0,
+                    index,
+                    length: 256,
+                },
+                Duration::from_millis(500),
+            )
+            .wait()
+        {
             Ok(buf) => {
                 let text = String::from_utf8_lossy(&buf);
                 log::debug!("[raw_usb] GET_DEVICE_ID: {}", text.trim());
@@ -152,10 +187,16 @@ impl RawLabelUsbDriver {
     }
 
     fn clear_out_halt(&self) {
-        let mut endpoint = match self.claimed_interface.endpoint::<Bulk, Out>(self.endpoint_address) {
+        let mut endpoint = match self
+            .claimed_interface
+            .endpoint::<Bulk, Out>(self.endpoint_address)
+        {
             Ok(ep) => ep,
             Err(e) => {
-                log::debug!("[raw_usb] could not open OUT endpoint for clear_halt: {}", e);
+                log::debug!(
+                    "[raw_usb] could not open OUT endpoint for clear_halt: {}",
+                    e
+                );
                 return;
             }
         };
@@ -170,7 +211,9 @@ impl RawLabelUsbDriver {
             return;
         };
         let mut reader = match self.claimed_interface.endpoint::<Bulk, In>(in_addr) {
-            Ok(ep) => ep.reader(self.max_packet_size).with_read_timeout(Duration::from_millis(200)),
+            Ok(ep) => ep
+                .reader(self.max_packet_size)
+                .with_read_timeout(Duration::from_millis(200)),
             Err(_) => return,
         };
         let mut buf = [0u8; 64];
@@ -180,14 +223,12 @@ impl RawLabelUsbDriver {
 
 impl escpos::driver::Driver for RawLabelUsbDriver {
     fn name(&self) -> String {
-        format!(
-            "raw label usb (endpoint={:02X})",
-            self.endpoint_address
-        )
+        format!("raw label usb (endpoint={:02X})", self.endpoint_address)
     }
 
     fn write(&self, data: &[u8]) -> escpos::errors::Result<()> {
-        self.write_all(data).map_err(|e| escpos::errors::PrinterError::Io(e.to_string()))
+        self.write_all(data)
+            .map_err(|e| escpos::errors::PrinterError::Io(e.to_string()))
     }
 
     fn read(&self, _buf: &mut [u8]) -> escpos::errors::Result<usize> {

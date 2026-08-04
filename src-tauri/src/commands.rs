@@ -7,12 +7,12 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Manager, Runtime};
 
+use crate::print::usb_detection::detect_usb_printers;
 use crate::print::{
     create_printer_driver, print_command_with_driver, print_ticket_with_driver,
     test_printer_with_driver, CommandItem, CommandPayload, LabelConfig, TicketCustomer, TicketItem,
     TicketPayload,
 };
-use crate::print::usb_detection::detect_usb_printers;
 
 const DATABASE_BACKUP_DIRECTORY: &str = "backups";
 const MAX_DATABASE_SIZE_BYTES: u64 = 512 * 1024 * 1024;
@@ -42,8 +42,8 @@ pub fn print_ticket(input: PrintTicketInput) -> Result<(), String> {
         input.items.len()
     );
 
-    let driver = create_printer_driver(&input.printer_type, &input.printer_address)
-        .map_err(|e| {
+    let driver =
+        create_printer_driver(&input.printer_type, &input.printer_address).map_err(|e| {
             log::error!("print_ticket: failed to create driver: {}", e);
             e.to_string()
         })?;
@@ -59,11 +59,10 @@ pub fn print_ticket(input: PrintTicketInput) -> Result<(), String> {
         customer: input.customer,
     };
 
-    print_ticket_with_driver(driver, &payload)
-        .map_err(|e| {
-            log::error!("print_ticket: failed to print: {}", e);
-            e.to_string()
-        })
+    print_ticket_with_driver(driver, &payload).map_err(|e| {
+        log::error!("print_ticket: failed to print: {}", e);
+        e.to_string()
+    })
 }
 
 #[derive(Debug, Deserialize)]
@@ -83,11 +82,13 @@ pub struct PrintCommandInput {
 pub fn print_command(input: PrintCommandInput) -> Result<(), String> {
     log::info!(
         "print_command: type={}, address={}, items={}",
-        input.printer_type, input.printer_address, input.items.len()
+        input.printer_type,
+        input.printer_address,
+        input.items.len()
     );
 
-    let driver = create_printer_driver(&input.printer_type, &input.printer_address)
-        .map_err(|e| {
+    let driver =
+        create_printer_driver(&input.printer_type, &input.printer_address).map_err(|e| {
             log::error!("print_command: failed to create driver: {}", e);
             e.to_string()
         })?;
@@ -98,25 +99,36 @@ pub fn print_command(input: PrintCommandInput) -> Result<(), String> {
     };
 
     let label_config = (input.printer_type == "label").then_some(LabelConfig {
-        width_mm: input.label_width_mm.unwrap_or(crate::print::DEFAULT_LABEL_WIDTH_MM),
-        height_mm: input.label_height_mm.unwrap_or(crate::print::DEFAULT_LABEL_HEIGHT_MM),
-        gap_mm: input.label_gap_mm.unwrap_or(crate::print::DEFAULT_LABEL_GAP_MM),
+        width_mm: input
+            .label_width_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_WIDTH_MM),
+        height_mm: input
+            .label_height_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_HEIGHT_MM),
+        gap_mm: input
+            .label_gap_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_GAP_MM),
         label_language: input.label_language.clone(),
     });
 
-    print_command_with_driver(driver, &input.printer_type, &payload, label_config)
-        .map_err(|e| {
-            log::error!("print_command: failed to print: {}", e);
-            e.to_string()
-        })
+    print_command_with_driver(driver, &input.printer_type, &payload, label_config).map_err(|e| {
+        log::error!("print_command: failed to print: {}", e);
+        e.to_string()
+    })
 }
 
 #[tauri::command]
 pub fn debug_tspl(input: PrintCommandInput) -> Result<String, String> {
     let config = LabelConfig {
-        width_mm: input.label_width_mm.unwrap_or(crate::print::DEFAULT_LABEL_WIDTH_MM),
-        height_mm: input.label_height_mm.unwrap_or(crate::print::DEFAULT_LABEL_HEIGHT_MM),
-        gap_mm: input.label_gap_mm.unwrap_or(crate::print::DEFAULT_LABEL_GAP_MM),
+        width_mm: input
+            .label_width_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_WIDTH_MM),
+        height_mm: input
+            .label_height_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_HEIGHT_MM),
+        gap_mm: input
+            .label_gap_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_GAP_MM),
         label_language: input.label_language.clone(),
     };
 
@@ -129,14 +141,19 @@ pub fn debug_tspl(input: PrintCommandInput) -> Result<String, String> {
     };
 
     let lang = crate::print::label::LabelLanguage::from_str(
-        config.label_language.as_deref().unwrap_or("tspl")
-    ).unwrap_or(crate::print::label::LabelLanguage::Tspl);
+        config.label_language.as_deref().unwrap_or("tspl"),
+    )
+    .unwrap_or(crate::print::label::LabelLanguage::Tspl);
 
-    let bytes = crate::print::label::build_label_bytes(&debug_payload, lang)
-        .map_err(|e| e.to_string())?;
+    let bytes =
+        crate::print::label::build_label_bytes(&debug_payload, lang).map_err(|e| e.to_string())?;
 
     let tspl_text = String::from_utf8_lossy(&bytes).to_string();
-    log::debug!("[debug_tspl] generated label payload (lang={:?}):\n{}", lang, tspl_text);
+    log::debug!(
+        "[debug_tspl] generated label payload (lang={:?}):\n{}",
+        lang,
+        tspl_text
+    );
     Ok(tspl_text)
 }
 
@@ -155,27 +172,33 @@ pub struct TestPrinterInput {
 pub fn test_printer(input: TestPrinterInput) -> Result<(), String> {
     log::info!(
         "test_printer: type={}, address={}",
-        input.printer_type, input.printer_address
+        input.printer_type,
+        input.printer_address
     );
 
-    let driver = create_printer_driver(&input.printer_type, &input.printer_address)
-        .map_err(|e| {
+    let driver =
+        create_printer_driver(&input.printer_type, &input.printer_address).map_err(|e| {
             log::error!("test_printer: failed to create driver: {}", e);
             e.to_string()
         })?;
 
     let label_config = (input.printer_type == "label").then_some(LabelConfig {
-        width_mm: input.label_width_mm.unwrap_or(crate::print::DEFAULT_LABEL_WIDTH_MM),
-        height_mm: input.label_height_mm.unwrap_or(crate::print::DEFAULT_LABEL_HEIGHT_MM),
-        gap_mm: input.label_gap_mm.unwrap_or(crate::print::DEFAULT_LABEL_GAP_MM),
+        width_mm: input
+            .label_width_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_WIDTH_MM),
+        height_mm: input
+            .label_height_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_HEIGHT_MM),
+        gap_mm: input
+            .label_gap_mm
+            .unwrap_or(crate::print::DEFAULT_LABEL_GAP_MM),
         label_language: input.label_language.clone(),
     });
 
-    test_printer_with_driver(driver, &input.printer_type, label_config)
-        .map_err(|e| {
-            log::error!("test_printer: failed to print: {}", e);
-            e.to_string()
-        })
+    test_printer_with_driver(driver, &input.printer_type, label_config).map_err(|e| {
+        log::error!("test_printer: failed to print: {}", e);
+        e.to_string()
+    })
 }
 
 #[tauri::command]
@@ -418,7 +441,8 @@ pub async fn prepare_database_restore<R: Runtime>(app: AppHandle<R>) -> Result<(
 }
 
 fn replace_database_file(staged: &Path, current: &Path, timestamp: u128) -> Result<(), String> {
-    let rollback = current.with_file_name(format!("{}.rollback-{timestamp}", crate::DATABASE_FILENAME));
+    let rollback =
+        current.with_file_name(format!("{}.rollback-{timestamp}", crate::DATABASE_FILENAME));
     if current.exists() {
         fs::rename(current, &rollback).map_err(|error| {
             let _ = remove_if_exists(staged);
@@ -454,10 +478,15 @@ pub async fn restore_database<R: Runtime>(app: AppHandle<R>, source: String) -> 
     validate_bako_database(&source).await?;
 
     let timestamp = now_millis()?;
-    let staged = current.with_file_name(format!("{}.restore-{timestamp}.tmp", crate::DATABASE_FILENAME));
+    let staged = current.with_file_name(format!(
+        "{}.restore-{timestamp}.tmp",
+        crate::DATABASE_FILENAME
+    ));
     fs::copy(&source, &staged)
         .map_err(|error| format!("Could not stage selected database: {error}"))?;
-    if let Err(error) = crate::database_migrations::repair_partial_label_orientation_migration(&staged).await {
+    if let Err(error) =
+        crate::database_migrations::repair_partial_label_orientation_migration(&staged).await
+    {
         let _ = remove_if_exists(&staged);
         return Err(error);
     }
@@ -472,8 +501,8 @@ pub async fn restore_database<R: Runtime>(app: AppHandle<R>, source: String) -> 
 #[cfg(test)]
 mod database_tests {
     use super::{
-        ensure_database_source, remove_database_sidecars, replace_database_file, validate_bako_database,
-        vacuum_into, SQLITE_HEADER,
+        ensure_database_source, remove_database_sidecars, replace_database_file, vacuum_into,
+        validate_bako_database, SQLITE_HEADER,
     };
     use sqlx::sqlite::SqliteConnectOptions;
     use sqlx::{Connection, Executor, SqliteConnection};

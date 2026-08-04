@@ -1,7 +1,7 @@
 use std::fmt::Write as FmtWrite;
 
-use crate::print::error::PrintError;
 use super::{LabelPayload, DEFAULT_LABEL_GAP_MM, DEFAULT_LABEL_HEIGHT_MM, DEFAULT_LABEL_WIDTH_MM};
+use crate::print::error::PrintError;
 
 fn map_err(e: std::fmt::Error) -> PrintError {
     PrintError::LabelGeneration(e.to_string())
@@ -14,10 +14,12 @@ fn write_setup_commands(
     gap: u32,
 ) -> Result<(), PrintError> {
     let mut s = String::new();
-    s.write_fmt(format_args!("SIZE {} mm,{} mm\r\n", width, height)).map_err(map_err)?;
+    s.write_fmt(format_args!("SIZE {} mm,{} mm\r\n", width, height))
+        .map_err(map_err)?;
     s.push_str("SET RIBBON OFF\r\n");
     s.push_str("REFERENCE 0,0\r\n");
-    s.write_fmt(format_args!("GAP {} dot,0 dot\r\n", gap * 8)).map_err(map_err)?;
+    s.write_fmt(format_args!("GAP {} dot,0 dot\r\n", gap * 8))
+        .map_err(map_err)?;
     s.push_str("OFFSET 0 dot\r\n");
     s.push_str("DENSITY 8\r\n");
     s.push_str("SETC AUTODOTTED OFF\r\n");
@@ -39,7 +41,12 @@ pub fn build_label_bytes(payload: &LabelPayload) -> Result<Vec<u8>, PrintError> 
     write_setup_commands(&mut output, width, height, gap)?;
 
     let mut cmd = String::new();
-    write!(cmd, "BITMAP 0,0,{},{},0,", label.width_bytes, label.height_dots).map_err(map_err)?;
+    write!(
+        cmd,
+        "BITMAP 0,0,{},{},0,",
+        label.width_bytes, label.height_dots
+    )
+    .map_err(map_err)?;
     output.extend_from_slice(cmd.as_bytes());
     output.extend_from_slice(&label.data);
     output.extend_from_slice(b"\r\n");
@@ -63,7 +70,12 @@ pub fn build_minimal_test_label() -> Vec<u8> {
     };
     build_label_bytes(&payload).unwrap_or_else(|_| {
         let mut output = Vec::new();
-        let _ = write_setup_commands(&mut output, DEFAULT_LABEL_WIDTH_MM, DEFAULT_LABEL_HEIGHT_MM, DEFAULT_LABEL_GAP_MM);
+        let _ = write_setup_commands(
+            &mut output,
+            DEFAULT_LABEL_WIDTH_MM,
+            DEFAULT_LABEL_HEIGHT_MM,
+            DEFAULT_LABEL_GAP_MM,
+        );
         output.extend_from_slice(b"PRINT 1,1\r\n");
         output
     })
@@ -94,13 +106,34 @@ mod tests {
 
         let bytes = build_label_bytes(&payload).unwrap();
 
-        assert!(find_subslice(&bytes, b"SIZE 40 mm,30 mm\r\n").is_some(), "expected SIZE command");
-        assert!(find_subslice(&bytes, b"GAP 16 dot,0 dot\r\n").is_some(), "expected GAP in dots");
-        assert!(find_subslice(&bytes, b"DENSITY 8\r\n").is_some(), "expected DENSITY command");
-        assert!(find_subslice(&bytes, b"CLS\r\n").is_some(), "expected CLS command");
-        assert!(find_subslice(&bytes, b"BITMAP 0,0,40,240,0,").is_some(), "expected BITMAP command");
-        assert!(find_subslice(&bytes, b"PRINT 1,1\r\n").is_some(), "expected PRINT command");
-        assert!(!find_subslice(&bytes, b"END\r\n").is_some(), "END must not appear");
+        assert!(
+            find_subslice(&bytes, b"SIZE 40 mm,30 mm\r\n").is_some(),
+            "expected SIZE command"
+        );
+        assert!(
+            find_subslice(&bytes, b"GAP 16 dot,0 dot\r\n").is_some(),
+            "expected GAP in dots"
+        );
+        assert!(
+            find_subslice(&bytes, b"DENSITY 8\r\n").is_some(),
+            "expected DENSITY command"
+        );
+        assert!(
+            find_subslice(&bytes, b"CLS\r\n").is_some(),
+            "expected CLS command"
+        );
+        assert!(
+            find_subslice(&bytes, b"BITMAP 0,0,40,240,0,").is_some(),
+            "expected BITMAP command"
+        );
+        assert!(
+            find_subslice(&bytes, b"PRINT 1,1\r\n").is_some(),
+            "expected PRINT command"
+        );
+        assert!(
+            !find_subslice(&bytes, b"END\r\n").is_some(),
+            "END must not appear"
+        );
     }
 
     #[test]
@@ -154,8 +187,14 @@ mod tests {
     fn build_test_label_does_not_contain_end() {
         let bytes = build_minimal_test_label();
 
-        assert!(find_subslice(&bytes, b"PRINT 1,1\r\n").is_some(), "expected PRINT command");
-        assert!(!find_subslice(&bytes, b"END\r\n").is_some(), "END must not appear");
+        assert!(
+            find_subslice(&bytes, b"PRINT 1,1\r\n").is_some(),
+            "expected PRINT command"
+        );
+        assert!(
+            !find_subslice(&bytes, b"END\r\n").is_some(),
+            "END must not appear"
+        );
     }
 
     #[test]
@@ -174,8 +213,14 @@ mod tests {
 
         let bytes = build_label_bytes(&payload).unwrap();
 
-        assert!(find_subslice(&bytes, b"SIZE 40 mm,30 mm\r\n").is_some(), "expected default SIZE");
-        assert!(find_subslice(&bytes, b"GAP 16 dot,0 dot\r\n").is_some(), "expected default GAP");
+        assert!(
+            find_subslice(&bytes, b"SIZE 40 mm,30 mm\r\n").is_some(),
+            "expected default SIZE"
+        );
+        assert!(
+            find_subslice(&bytes, b"GAP 16 dot,0 dot\r\n").is_some(),
+            "expected default GAP"
+        );
     }
 
     #[test]
@@ -198,9 +243,18 @@ mod tests {
 
         let bytes = build_label_bytes(&payload).unwrap();
 
-        assert!(find_subslice(&bytes, b"SIZE 50 mm,25 mm\r\n").is_some(), "expected custom SIZE");
-        assert!(find_subslice(&bytes, b"GAP 24 dot,0 dot\r\n").is_some(), "expected custom GAP (3mm=24dots)");
-        assert!(find_subslice(&bytes, b"BITMAP 0,0,50,200,0,").is_some(), "expected BITMAP for 50mm width (400 dots = 50 bytes)");
+        assert!(
+            find_subslice(&bytes, b"SIZE 50 mm,25 mm\r\n").is_some(),
+            "expected custom SIZE"
+        );
+        assert!(
+            find_subslice(&bytes, b"GAP 24 dot,0 dot\r\n").is_some(),
+            "expected custom GAP (3mm=24dots)"
+        );
+        assert!(
+            find_subslice(&bytes, b"BITMAP 0,0,50,200,0,").is_some(),
+            "expected BITMAP for 50mm width (400 dots = 50 bytes)"
+        );
     }
 
     #[test]
@@ -219,6 +273,9 @@ mod tests {
 
         let bytes = build_label_bytes(&payload).unwrap();
 
-        assert!(!find_subslice(&bytes, b"TEXT ").is_some(), "TEXT command must not appear");
+        assert!(
+            !find_subslice(&bytes, b"TEXT ").is_some(),
+            "TEXT command must not appear"
+        );
     }
 }

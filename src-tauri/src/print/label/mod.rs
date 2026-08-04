@@ -34,7 +34,10 @@ impl LabelLanguage {
     }
 }
 
-pub fn build_label_bytes(payload: &LabelPayload, language: LabelLanguage) -> Result<Vec<u8>, PrintError> {
+pub fn build_label_bytes(
+    payload: &LabelPayload,
+    language: LabelLanguage,
+) -> Result<Vec<u8>, PrintError> {
     match language {
         LabelLanguage::Tspl => tspl::build_label_bytes(payload),
         LabelLanguage::Zpl => zpl::build_label_bytes(payload),
@@ -52,8 +55,8 @@ pub fn build_test_label(language: LabelLanguage) -> Vec<u8> {
     }
 }
 
+pub mod cpcl;
+pub mod epl;
+pub mod raster;
 pub mod tspl;
 pub mod zpl;
-pub mod epl;
-pub mod cpcl;
-pub mod raster;

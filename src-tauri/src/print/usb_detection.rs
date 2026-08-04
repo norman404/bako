@@ -1,8 +1,8 @@
-use serde::Serialize;
 #[cfg(not(target_os = "windows"))]
 use nusb::list_devices;
 #[cfg(not(target_os = "windows"))]
 use nusb::MaybeFuture;
+use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct UsbPrinterInfo {

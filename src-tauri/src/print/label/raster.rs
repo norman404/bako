@@ -1,4 +1,4 @@
-use ab_glyph::{Font, FontRef, PxScale, ScaleFont, point};
+use ab_glyph::{point, Font, FontRef, PxScale, ScaleFont};
 
 use crate::print::error::PrintError;
 use crate::print::ticket::CommandItem;
@@ -47,7 +47,11 @@ impl RasterLabel {
         let height_dots = (height_mm * DOTS_PER_MM) as usize;
         let width_bytes = width_dots.div_ceil(8);
         let data = vec![0xFFu8; width_bytes * height_dots];
-        Self { width_bytes, height_dots, data }
+        Self {
+            width_bytes,
+            height_dots,
+            data,
+        }
     }
 
     fn width_dots(&self) -> usize {
@@ -68,7 +72,14 @@ impl RasterLabel {
         self.data[byte_idx] &= !(1u8 << bit);
     }
 
-    fn render_text_line(&mut self, font: &FontRef, size: f32, text: &str, x_start: f32, baseline: f32) {
+    fn render_text_line(
+        &mut self,
+        font: &FontRef,
+        size: f32,
+        text: &str,
+        x_start: f32,
+        baseline: f32,
+    ) {
         let scaled = font.as_scaled(size);
         let mut x = x_start;
         let mut last_id: Option<ab_glyph::GlyphId> = None;
@@ -144,7 +155,13 @@ pub fn render_label(
     let scaled_header = font.as_scaled(header_size);
     let mut cursor_y = TOP_MARGIN;
     let header_baseline = cursor_y as f32 + scaled_header.ascent();
-    label.render_text_line(&font, header_size, header_text, LEFT_MARGIN, header_baseline);
+    label.render_text_line(
+        &font,
+        header_size,
+        header_text,
+        LEFT_MARGIN,
+        header_baseline,
+    );
     cursor_y += line_height(&font, header_size) + HEADER_GAP;
 
     for item in items {
@@ -163,7 +180,13 @@ pub fn render_label(
             let label_text = modifier_label(modifier);
             let scaled_mod = font.as_scaled(mod_size);
             let mod_baseline = cursor_y as f32 + scaled_mod.ascent();
-            label.render_text_line(&font, mod_size, &label_text, LEFT_MARGIN + 6.0, mod_baseline);
+            label.render_text_line(
+                &font,
+                mod_size,
+                &label_text,
+                LEFT_MARGIN + 6.0,
+                mod_baseline,
+            );
             cursor_y += line_height(&font, mod_size);
         }
 
@@ -185,7 +208,10 @@ mod tests {
     #[test]
     fn render_label_dimensions_match_40x30mm() {
         let label = render_default("X", &[]);
-        assert_eq!(label.width_bytes, 40, "40mm @ 8 dots/mm = 320 dots = 40 bytes/row");
+        assert_eq!(
+            label.width_bytes, 40,
+            "40mm @ 8 dots/mm = 320 dots = 40 bytes/row"
+        );
         assert_eq!(label.height_dots, 240, "30mm @ 8 dots/mm = 240 dots");
     }
 
@@ -198,14 +224,24 @@ mod tests {
     #[test]
     fn render_label_blank_is_all_white() {
         let label = render_default("", &[]);
-        assert!(label.data.iter().all(|&b| b == 0xFF), "blank label should be all 1s (white)");
+        assert!(
+            label.data.iter().all(|&b| b == 0xFF),
+            "blank label should be all 1s (white)"
+        );
     }
 
     #[test]
     fn render_label_text_produces_black_pixels() {
         let label = render_default("BAKO", &[]);
-        let black_count = label.data.iter().map(|&b| b.count_zeros() as usize).sum::<usize>();
-        assert!(black_count > 0, "expected some black (0) bits for rendered text");
+        let black_count = label
+            .data
+            .iter()
+            .map(|&b| b.count_zeros() as usize)
+            .sum::<usize>();
+        assert!(
+            black_count > 0,
+            "expected some black (0) bits for rendered text"
+        );
     }
 
     #[test]
@@ -219,8 +255,10 @@ mod tests {
             if extra_bits > 0 {
                 let mask = !((1u8 << extra_bits) - 1);
                 assert_eq!(
-                    last_byte & mask, mask,
-                    "padding bits in last byte of row {} must stay white", row
+                    last_byte & mask,
+                    mask,
+                    "padding bits in last byte of row {} must stay white",
+                    row
                 );
             }
         }
@@ -239,8 +277,19 @@ mod tests {
         }];
         let blank = render_default("", &[]);
         let with_text = render_default("COMANDA", &items);
-        let blank_black = blank.data.iter().map(|&b| b.count_zeros() as usize).sum::<usize>();
-        let text_black = with_text.data.iter().map(|&b| b.count_zeros() as usize).sum::<usize>();
-        assert!(text_black > blank_black, "items+modifiers should add black pixels beyond header");
+        let blank_black = blank
+            .data
+            .iter()
+            .map(|&b| b.count_zeros() as usize)
+            .sum::<usize>();
+        let text_black = with_text
+            .data
+            .iter()
+            .map(|&b| b.count_zeros() as usize)
+            .sum::<usize>();
+        assert!(
+            text_black > blank_black,
+            "items+modifiers should add black pixels beyond header"
+        );
     }
 }

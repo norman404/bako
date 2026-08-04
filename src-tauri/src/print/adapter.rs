@@ -1,11 +1,11 @@
+use super::error::PrintError;
+use super::label::{build_label_bytes, build_test_label, LabelLanguage, LabelPayload};
+#[cfg(not(target_os = "windows"))]
+use super::raw_usb::RawLabelUsbDriver;
+use super::ticket::{build_command, build_ticket, CommandPayload, TicketPayload};
 use escpos::printer::Printer;
 use escpos::printer_options::PrinterOptions;
 use escpos::utils::{JustifyMode, PageCode, Protocol};
-use super::error::PrintError;
-use super::label::{build_label_bytes, build_test_label, LabelLanguage, LabelPayload};
-use super::ticket::{build_command, build_ticket, CommandPayload, TicketPayload};
-#[cfg(not(target_os = "windows"))]
-use super::raw_usb::RawLabelUsbDriver;
 
 pub use super::label::{DEFAULT_LABEL_GAP_MM, DEFAULT_LABEL_HEIGHT_MM, DEFAULT_LABEL_WIDTH_MM};
 
@@ -29,7 +29,9 @@ impl Default for LabelConfig {
 }
 
 fn resolve_label_language(label_language: Option<&str>) -> LabelLanguage {
-    label_language.and_then(LabelLanguage::from_str).unwrap_or(LabelLanguage::Tspl)
+    label_language
+        .and_then(LabelLanguage::from_str)
+        .unwrap_or(LabelLanguage::Tspl)
 }
 
 pub enum PrinterDriver {
@@ -46,24 +48,37 @@ pub enum PrinterDriver {
 fn parse_usb_address(address: &str) -> Result<(u16, u16), PrintError> {
     let parts: Vec<&str> = address.split(':').collect();
     if parts.len() != 2 {
-        return Err(PrintError::InvalidAddress(format!("USB address must be VID:PID, got: {}", address)));
+        return Err(PrintError::InvalidAddress(format!(
+            "USB address must be VID:PID, got: {}",
+            address
+        )));
     }
-    let vid = u16::from_str_radix(parts[0], 16).map_err(|_| PrintError::InvalidAddress(format!("Invalid VID: {}", parts[0])))?;
-    let pid = u16::from_str_radix(parts[1], 16).map_err(|_| PrintError::InvalidAddress(format!("Invalid PID: {}", parts[1])))?;
+    let vid = u16::from_str_radix(parts[0], 16)
+        .map_err(|_| PrintError::InvalidAddress(format!("Invalid VID: {}", parts[0])))?;
+    let pid = u16::from_str_radix(parts[1], 16)
+        .map_err(|_| PrintError::InvalidAddress(format!("Invalid PID: {}", parts[1])))?;
     Ok((vid, pid))
 }
 
 fn parse_network_address(address: &str) -> Result<(String, u16), PrintError> {
     let parts: Vec<&str> = address.split(':').collect();
     if parts.len() != 2 {
-        return Err(PrintError::InvalidAddress(format!("Network address must be IP:PORT, got: {}", address)));
+        return Err(PrintError::InvalidAddress(format!(
+            "Network address must be IP:PORT, got: {}",
+            address
+        )));
     }
     let ip = parts[0].to_string();
-    let port = parts[1].parse::<u16>().map_err(|_| PrintError::InvalidAddress(format!("Invalid port: {}", parts[1])))?;
+    let port = parts[1]
+        .parse::<u16>()
+        .map_err(|_| PrintError::InvalidAddress(format!("Invalid port: {}", parts[1])))?;
     Ok((ip, port))
 }
 
-pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Result<PrinterDriver, PrintError> {
+pub fn create_printer_driver(
+    printer_type: &str,
+    printer_address: &str,
+) -> Result<PrinterDriver, PrintError> {
     match printer_type {
         "usb" => {
             #[cfg(target_os = "windows")]
@@ -106,7 +121,10 @@ pub fn create_printer_driver(printer_type: &str, printer_address: &str) -> Resul
             Ok(PrinterDriver::Network(driver))
         }
         "none" => Ok(PrinterDriver::None),
-        _ => Err(PrintError::InvalidAddress(format!("Unknown printer type: {}", printer_type))),
+        _ => Err(PrintError::InvalidAddress(format!(
+            "Unknown printer type: {}",
+            printer_type
+        ))),
     }
 }
 
@@ -121,13 +139,20 @@ fn build_printer<D: escpos::driver::Driver>(driver: D) -> Printer<D> {
     Printer::new(driver, Protocol::default(), Some(options))
 }
 
-fn print_escpos_command<D: escpos::driver::Driver>(driver: D, payload: &CommandPayload) -> Result<(), PrintError> {
+fn print_escpos_command<D: escpos::driver::Driver>(
+    driver: D,
+    payload: &CommandPayload,
+) -> Result<(), PrintError> {
     let mut printer = build_printer(driver);
     build_command(&mut printer, payload)?;
     Ok(())
 }
 
-fn print_tspl_command(driver: &dyn escpos::driver::Driver, payload: &CommandPayload, config: LabelConfig) -> Result<(), PrintError> {
+fn print_tspl_command(
+    driver: &dyn escpos::driver::Driver,
+    payload: &CommandPayload,
+    config: LabelConfig,
+) -> Result<(), PrintError> {
     let label_payload = LabelPayload {
         header_text: payload.header_text.clone(),
         items: payload.items.clone(),
@@ -139,12 +164,21 @@ fn print_tspl_command(driver: &dyn escpos::driver::Driver, payload: &CommandPayl
     let lang = resolve_label_language(config.label_language.as_deref());
     log::info!("[print_tspl_command] label_language={:?}", lang);
     let bytes = build_label_bytes(&label_payload, lang)?;
-    driver.write(&bytes).map_err(|e| PrintError::UsbError(e.to_string()))?;
-    driver.flush().map_err(|e| PrintError::UsbError(e.to_string()))?;
+    driver
+        .write(&bytes)
+        .map_err(|e| PrintError::UsbError(e.to_string()))?;
+    driver
+        .flush()
+        .map_err(|e| PrintError::UsbError(e.to_string()))?;
     Ok(())
 }
 
-pub fn print_command_with_driver(driver: PrinterDriver, printer_type: &str, payload: &CommandPayload, label_config: Option<LabelConfig>) -> Result<(), PrintError> {
+pub fn print_command_with_driver(
+    driver: PrinterDriver,
+    printer_type: &str,
+    payload: &CommandPayload,
+    label_config: Option<LabelConfig>,
+) -> Result<(), PrintError> {
     match printer_type {
         "label" => {
             let driver_ref: &dyn escpos::driver::Driver = match &driver {
@@ -166,13 +200,19 @@ pub fn print_command_with_driver(driver: PrinterDriver, printer_type: &str, payl
     }
 }
 
-fn print_ticket_inner<D: escpos::driver::Driver>(driver: D, payload: &TicketPayload) -> Result<(), PrintError> {
+fn print_ticket_inner<D: escpos::driver::Driver>(
+    driver: D,
+    payload: &TicketPayload,
+) -> Result<(), PrintError> {
     let mut printer = build_printer(driver);
     build_ticket(&mut printer, payload)?;
     Ok(())
 }
 
-pub fn print_ticket_with_driver(driver: PrinterDriver, payload: &TicketPayload) -> Result<(), PrintError> {
+pub fn print_ticket_with_driver(
+    driver: PrinterDriver,
+    payload: &TicketPayload,
+) -> Result<(), PrintError> {
     match driver {
         PrinterDriver::Usb(usb_driver) => print_ticket_inner(usb_driver, payload),
         #[cfg(not(target_os = "windows"))]
@@ -185,28 +225,48 @@ pub fn print_ticket_with_driver(driver: PrinterDriver, payload: &TicketPayload) 
 fn test_printer_inner<D: escpos::driver::Driver>(driver: D) -> Result<(), PrintError> {
     let mut printer = build_printer(driver);
     printer
-        .init().map_err(map_err)?
-        .size(2, 2).map_err(map_err)?
-        .bold(true).map_err(map_err)?
-        .justify(JustifyMode::CENTER).map_err(map_err)?
-        .writeln("BAKO - Test").map_err(map_err)?
-        .size(1, 1).map_err(map_err)?
-        .bold(false).map_err(map_err)?
-        .writeln("Printer connection OK").map_err(map_err)?
-        .print_cut().map_err(map_err)?;
+        .init()
+        .map_err(map_err)?
+        .size(2, 2)
+        .map_err(map_err)?
+        .bold(true)
+        .map_err(map_err)?
+        .justify(JustifyMode::CENTER)
+        .map_err(map_err)?
+        .writeln("BAKO - Test")
+        .map_err(map_err)?
+        .size(1, 1)
+        .map_err(map_err)?
+        .bold(false)
+        .map_err(map_err)?
+        .writeln("Printer connection OK")
+        .map_err(map_err)?
+        .print_cut()
+        .map_err(map_err)?;
     Ok(())
 }
 
-fn print_tspl_test_page(driver: &dyn escpos::driver::Driver, label_config: Option<&LabelConfig>) -> Result<(), PrintError> {
+fn print_tspl_test_page(
+    driver: &dyn escpos::driver::Driver,
+    label_config: Option<&LabelConfig>,
+) -> Result<(), PrintError> {
     let lang = resolve_label_language(label_config.and_then(|c| c.label_language.as_deref()));
     log::info!("[print_tspl_test_page] label_language={:?}", lang);
     let bytes = build_test_label(lang);
-    driver.write(&bytes).map_err(|e| PrintError::UsbError(e.to_string()))?;
-    driver.flush().map_err(|e| PrintError::UsbError(e.to_string()))?;
+    driver
+        .write(&bytes)
+        .map_err(|e| PrintError::UsbError(e.to_string()))?;
+    driver
+        .flush()
+        .map_err(|e| PrintError::UsbError(e.to_string()))?;
     Ok(())
 }
 
-pub fn test_printer_with_driver(driver: PrinterDriver, printer_type: &str, label_config: Option<LabelConfig>) -> Result<(), PrintError> {
+pub fn test_printer_with_driver(
+    driver: PrinterDriver,
+    printer_type: &str,
+    label_config: Option<LabelConfig>,
+) -> Result<(), PrintError> {
     match printer_type {
         "label" => {
             let driver_ref: &dyn escpos::driver::Driver = match &driver {
@@ -230,10 +290,10 @@ pub fn test_printer_with_driver(driver: PrinterDriver, printer_type: &str, label
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
-    use escpos::driver::Driver;
     use super::*;
     use crate::print::{CommandItem, CommandPayload, TicketItem, TicketPayload};
+    use escpos::driver::Driver;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn parse_usb_address_parses_hex_vid_pid() {
@@ -259,7 +319,10 @@ mod tests {
 
     #[test]
     fn parse_network_address_parses_ip_and_port() {
-        assert_eq!(parse_network_address("192.168.1.100:9100").unwrap(), ("192.168.1.100".to_owned(), 9100));
+        assert_eq!(
+            parse_network_address("192.168.1.100:9100").unwrap(),
+            ("192.168.1.100".to_owned(), 9100)
+        );
     }
 
     #[test]
@@ -332,8 +395,14 @@ mod tests {
 
         print_ticket_inner(driver.clone(), &payload).unwrap();
 
-        assert!(driver.has_data(), "expected ticket bytes to be written to driver");
-        assert!(driver.flush_count() >= 1, "expected at least one flush after printing ticket");
+        assert!(
+            driver.has_data(),
+            "expected ticket bytes to be written to driver"
+        );
+        assert!(
+            driver.flush_count() >= 1,
+            "expected at least one flush after printing ticket"
+        );
     }
 
     #[test]
@@ -350,8 +419,14 @@ mod tests {
 
         print_escpos_command(driver.clone(), &payload).unwrap();
 
-        assert!(driver.has_data(), "expected command bytes to be written to driver");
-        assert!(driver.flush_count() >= 1, "expected at least one flush after printing command");
+        assert!(
+            driver.has_data(),
+            "expected command bytes to be written to driver"
+        );
+        assert!(
+            driver.flush_count() >= 1,
+            "expected at least one flush after printing command"
+        );
     }
 
     fn find_subslice(haystack: &[u8], needle: &[u8]) -> Option<usize> {
@@ -373,13 +448,34 @@ mod tests {
         print_tspl_command(&driver, &payload, LabelConfig::default()).unwrap();
 
         let buffer = driver.buffer.lock().unwrap();
-        assert!(find_subslice(&buffer, b"SIZE 40 mm,30 mm\r\n").is_some(), "expected TSPL SIZE command");
-        assert!(find_subslice(&buffer, b"GAP 16 dot,0 dot\r\n").is_some(), "expected TSPL GAP in dots");
-        assert!(find_subslice(&buffer, b"DENSITY 8\r\n").is_some(), "expected DENSITY command");
-        assert!(find_subslice(&buffer, b"BITMAP 0,0,40,240,0,").is_some(), "expected BITMAP command");
-        assert!(find_subslice(&buffer, b"PRINT 1,1\r\n").is_some(), "expected PRINT command");
-        assert!(!find_subslice(&buffer, b"TEXT ").is_some(), "TEXT command must not appear in TSPL output");
-        assert!(driver.flush_count() >= 1, "expected at least one flush after TSPL command");
+        assert!(
+            find_subslice(&buffer, b"SIZE 40 mm,30 mm\r\n").is_some(),
+            "expected TSPL SIZE command"
+        );
+        assert!(
+            find_subslice(&buffer, b"GAP 16 dot,0 dot\r\n").is_some(),
+            "expected TSPL GAP in dots"
+        );
+        assert!(
+            find_subslice(&buffer, b"DENSITY 8\r\n").is_some(),
+            "expected DENSITY command"
+        );
+        assert!(
+            find_subslice(&buffer, b"BITMAP 0,0,40,240,0,").is_some(),
+            "expected BITMAP command"
+        );
+        assert!(
+            find_subslice(&buffer, b"PRINT 1,1\r\n").is_some(),
+            "expected PRINT command"
+        );
+        assert!(
+            !find_subslice(&buffer, b"TEXT ").is_some(),
+            "TEXT command must not appear in TSPL output"
+        );
+        assert!(
+            driver.flush_count() >= 1,
+            "expected at least one flush after TSPL command"
+        );
     }
 
     #[test]
@@ -388,7 +484,13 @@ mod tests {
 
         test_printer_inner(driver.clone()).unwrap();
 
-        assert!(driver.has_data(), "expected test page bytes to be written to driver");
-        assert!(driver.flush_count() >= 1, "expected at least one flush after test page");
+        assert!(
+            driver.has_data(),
+            "expected test page bytes to be written to driver"
+        );
+        assert!(
+            driver.flush_count() >= 1,
+            "expected at least one flush after test page"
+        );
     }
 }

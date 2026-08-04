@@ -1,7 +1,7 @@
 use std::fmt::Write;
 
-use crate::print::error::PrintError;
 use super::{LabelPayload, DEFAULT_LABEL_GAP_MM, DEFAULT_LABEL_HEIGHT_MM, DEFAULT_LABEL_WIDTH_MM};
+use crate::print::error::PrintError;
 
 fn map_err(e: std::fmt::Error) -> PrintError {
     PrintError::LabelGeneration(e.to_string())
@@ -27,25 +27,45 @@ pub fn build_label_bytes(payload: &LabelPayload) -> Result<Vec<u8>, PrintError> 
     let h = mm_to_cpcl_dots(height);
 
     // ! command: start label, horizontal offset, max label width, max label height, copies
-    output.write_fmt(format_args!("! 0 200 200 {} 1\r\n", h)).map_err(map_err)?;
-    output.write_fmt(format_args!("PAGE-WIDTH {}\r\n", w)).map_err(map_err)?;
+    output
+        .write_fmt(format_args!("! 0 200 200 {} 1\r\n", h))
+        .map_err(map_err)?;
+    output
+        .write_fmt(format_args!("PAGE-WIDTH {}\r\n", w))
+        .map_err(map_err)?;
 
     let mut y: u32 = 30;
-    output.write_fmt(format_args!("T 4 0 10 {} {}\r\n", y, escape_cpcl(&payload.header_text))).map_err(map_err)?;
+    output
+        .write_fmt(format_args!(
+            "T 4 0 10 {} {}\r\n",
+            y,
+            escape_cpcl(&payload.header_text)
+        ))
+        .map_err(map_err)?;
     y += 36;
 
     for item in &payload.items {
-        output.write_fmt(format_args!("T 3 0 10 {} {}\r\n", y, escape_cpcl(&item.name))).map_err(map_err)?;
+        output
+            .write_fmt(format_args!(
+                "T 3 0 10 {} {}\r\n",
+                y,
+                escape_cpcl(&item.name)
+            ))
+            .map_err(map_err)?;
         y += 28;
 
         for modifier in &item.modifiers {
             let label = match (&modifier.option_name, &modifier.text_value) {
-                (Some(option), Some(text)) => format!("{}: {} - {}", modifier.group_name, option, text),
+                (Some(option), Some(text)) => {
+                    format!("{}: {} - {}", modifier.group_name, option, text)
+                }
                 (Some(option), None) => format!("{}: {}", modifier.group_name, option),
                 (None, Some(text)) => format!("{}: {}", modifier.group_name, text),
                 (None, None) => modifier.group_name.clone(),
             };
-            output.write_fmt(format_args!("T 2 0 10 {} {}\r\n", y, escape_cpcl(&label))).map_err(map_err)?;
+            output
+                .write_fmt(format_args!("T 2 0 10 {} {}\r\n", y, escape_cpcl(&label)))
+                .map_err(map_err)?;
             y += 24;
         }
 
@@ -89,10 +109,30 @@ mod tests {
         let bytes = build_label_bytes(&payload).unwrap();
         let output = String::from_utf8(bytes).unwrap();
 
-        assert!(output.starts_with("! 0 200 200"), "expected CPCL start, got: {}", output);
-        assert!(output.contains("PAGE-WIDTH 320"), "expected width, got: {}", output);
-        assert!(output.contains("COMANDA"), "expected header text, got: {}", output);
-        assert!(output.contains("Taco"), "expected item text, got: {}", output);
-        assert!(output.contains("PRINT"), "expected PRINT command, got: {}", output);
+        assert!(
+            output.starts_with("! 0 200 200"),
+            "expected CPCL start, got: {}",
+            output
+        );
+        assert!(
+            output.contains("PAGE-WIDTH 320"),
+            "expected width, got: {}",
+            output
+        );
+        assert!(
+            output.contains("COMANDA"),
+            "expected header text, got: {}",
+            output
+        );
+        assert!(
+            output.contains("Taco"),
+            "expected item text, got: {}",
+            output
+        );
+        assert!(
+            output.contains("PRINT"),
+            "expected PRINT command, got: {}",
+            output
+        );
     }
 }
