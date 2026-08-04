@@ -29,6 +29,25 @@
     "saveSuccessDesc": "Region: {{locale}} · Currency: {{currency}}",
     "saveError": "Could not save settings"
   },
+  "database": {
+    "title": "Database",
+    "description": "Download a backup or restore Bako data from a SQLite file.",
+    "locationLabel": "Database location",
+    "locationUnavailable": "Could not determine the location",
+    "loading": "Loading location",
+    "copyPathAriaLabel": "Copy database location",
+    "copySuccess": "Location copied",
+    "exportButton": "Download backup",
+    "exportSuccess": "Backup downloaded",
+    "restoreButton": "Restore database",
+    "restoreConfirmTitle": "Restore database",
+    "restoreConfirmDescription": "This will replace products, sales, shifts, settings, and printers. A safety backup of the current data will be created and Bako will restart.",
+    "restoreConfirmButton": "Restore database",
+    "restoreSuccess": "Database restored",
+    "restoreErrorAfterRestart": "The database could not be restored. Your previous data was preserved.",
+    "operationError": "The operation could not be completed",
+    "working": "Processing database..."
+  },
   "locales": {
     "esMX": "Español (México)",
     "esAR": "Español (Argentina)",

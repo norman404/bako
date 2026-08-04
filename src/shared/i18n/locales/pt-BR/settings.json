@@ -29,6 +29,25 @@
     "saveSuccessDesc": "Região: {{locale}} · Moeda: {{currency}}",
     "saveError": "Não foi possível salvar as configurações"
   },
+  "database": {
+    "title": "Banco de dados",
+    "description": "Baixe uma cópia ou restaure os dados do Bako a partir de um arquivo SQLite.",
+    "locationLabel": "Localização do banco de dados",
+    "locationUnavailable": "Não foi possível obter a localização",
+    "loading": "Carregando localização",
+    "copyPathAriaLabel": "Copiar localização do banco de dados",
+    "copySuccess": "Localização copiada",
+    "exportButton": "Baixar cópia",
+    "exportSuccess": "Cópia de segurança baixada",
+    "restoreButton": "Restaurar banco de dados",
+    "restoreConfirmTitle": "Restaurar banco de dados",
+    "restoreConfirmDescription": "Esta ação substituirá produtos, vendas, turnos, configurações e impressoras. Uma cópia automática dos dados atuais será criada e o Bako será reiniciado.",
+    "restoreConfirmButton": "Restaurar banco de dados",
+    "restoreSuccess": "Banco de dados restaurado",
+    "restoreErrorAfterRestart": "Não foi possível restaurar o banco de dados. Seus dados anteriores foram preservados.",
+    "operationError": "Não foi possível concluir a operação",
+    "working": "Processando banco de dados..."
+  },
   "locales": {
     "esMX": "Español (México)",
     "esAR": "Español (Argentina)",

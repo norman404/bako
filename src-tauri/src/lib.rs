@@ -1,9 +1,14 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 mod commands;
+mod database_migrations;
 mod print;
 
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
+
+pub const DATABASE_FILENAME: &str = "bako.db";
+pub const DATABASE_URL: &str = "sqlite:bako.db";
+pub const CURRENT_MIGRATION_VERSION: i64 = database_migrations::LABEL_ORIENTATION_MIGRATION_VERSION;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -165,7 +170,7 @@ pub fn run() {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: 27,
+            version: CURRENT_MIGRATION_VERSION,
             description: "printer_label_orientation",
             sql: include_str!("../migrations/0027_printer_label_orientation.sql"),
             kind: MigrationKind::Up,
@@ -173,11 +178,13 @@ pub fn run() {
     ];
 
     tauri::Builder::default()
+        .plugin(database_migrations::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(
             SqlBuilder::default()
-                .add_migrations("sqlite:bako.db", migrations)
+                .add_migrations(DATABASE_URL, migrations)
                 .build(),
         )
         .setup(|app| {
@@ -185,7 +192,18 @@ pub fn run() {
             app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::print_command, commands::test_printer, commands::list_usb_printers, commands::debug_tspl])
+        .invoke_handler(tauri::generate_handler![
+            commands::print_ticket,
+            commands::print_command,
+            commands::test_printer,
+            commands::list_usb_printers,
+            commands::debug_tspl,
+            commands::validate_database,
+            commands::get_database_info,
+            commands::export_database,
+            commands::prepare_database_restore,
+            commands::restore_database,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
