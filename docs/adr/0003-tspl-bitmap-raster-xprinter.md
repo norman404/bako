@@ -78,7 +78,7 @@ El transporte USB usa `nusb` con `flush_end()` (short-packet termination) en vez
 - Si se agrega soporte para otra impresora de etiqueta que SÍ soporta `TEXT`, considerar un flag de render mode (text vs raster) en `LabelConfig` en vez de hardcodear raster.
 - El código afectado vive en: `src-tauri/src/print/label/tspl.rs`, `src-tauri/src/print/label/raster.rs`, `src-tauri/src/print/raw_usb.rs`.
 
-## Related
+## Referencias
 
 - `src-tauri/src/print/label/tspl.rs` — builder de comandos TSPL con BITMAP
 - `src-tauri/src/print/label/raster.rs` — renderer de texto a bitmap 1-bit

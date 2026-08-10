@@ -2,7 +2,7 @@
 
 Este directorio guarda decisiones técnicas importantes de Bako. La idea es que cualquier agente o desarrollador pueda entender **por qué** el sistema funciona como funciona, no solo **qué** hace el código.
 
-Ver también: sección [Decisiones técnicas](../../AGENTS.md#decisiones-técnicas) en `AGENTS.md`.
+Ver también: [`BAKO.md`](../../BAKO.md), la fuente de verdad para arquitectura.
 
 ## ADRs vigentes
 
@@ -41,7 +41,12 @@ Vamos a usar X para Y. Voz activa, 1-2 oraciones.
 - Qué NO cambiar sin una nueva ADR.
 - Qué tests/runbooks hay que mantener.
 - Dónde vive el código afectado.
+
+## Referencias
+- Archivos, ADRs o documentos relacionados.
 ```
+
+La sección de cierre se llama **`Referencias`** — en español, como el resto del ADR. No uses un encabezado en inglés para la misma sección.
 
 ## Reglas de lifecycle
 

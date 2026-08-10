@@ -43,15 +43,16 @@ Los inputs de UI deben mostrar **unidades monetarias** al usuario (`15`, `15.50`
 
 ## Agent guidance
 
-- Usar siempre `formatProductPriceInput()` y `parseProductPriceInput()` de `modules/menu/lib/product-price.ts` para cualquier input de precio.
+- Usar siempre `formatProductPriceInput()` y `parseProductPriceInput()` de `src/modules/menu/lib/product-price.ts` para cualquier input de precio.
 - **Nunca** aceptar un número crudo de un input de UI y tratarlo como centavos: si el usuario escribe `15`, eso significa `$15.00` → `1500` centavos.
 - Si se agrega un nuevo campo de precio, reutilizar los mismos helpers o pedir una revisión de ADR.
 - Este ADR rige cualquier input en el frontend; el dominio y la persistencia solo ven centavos.
 
-## Related
+## Referencias
 
 - `src/modules/menu/lib/product-price.ts`
 - `src/modules/menu/components/admin/ProductSettingsPanel.tsx`
 - `src/modules/menu/components/admin/OptionsEditor.tsx`
-- `src/modules/menu/persistence/modifier-group-drizzle.repository.ts`
-- `src/modules/menu/persistence/product-drizzle.repository.ts`
+- El acceso a datos del módulo `menu` — productos y grupos de modificadores: lee y escribe
+  los precios ya en centavos, sin convertir. Dónde vive hoy ese código:
+  [`docs/architecture/migration-status.md`](../architecture/migration-status.md).

@@ -71,10 +71,11 @@ Want just the web dev server (no Tauri shell)? `bun run dev` boots Vite alone �
 | `bun run dev` | Vite dev server only (no Tauri/native APIs) |
 | `bun run tauri dev` | Full desktop app — **recommended for feature work** |
 | `bun run build` | Production build (`tsc` + `vite build`) |
-| `bun run test` | Unit tests via Vitest |
-| `bun run test:dom` | DOM tests via `@testing-library/react` |
+| `bun run test` | Full test suite (`*.spec.ts` + `*.dom.spec.tsx`) via `scripts/run-tests.ts` |
+| `bun run test:node` | Only `*.spec.ts` |
+| `bun run test:dom` | Only `*.dom.spec.tsx` via `@testing-library/react` |
 
-Bako uses **oxlint** as its linter — run `bun run lint` before opening a PR. There is no formatter configured yet, so follow the style of surrounding code, and run `bun run build` to catch type errors.
+Bako uses **oxlint** as its linter, and there is no formatter configured yet — follow the style of the surrounding code. The commands a change has to pass before you open a PR are the canonical gate in [`BAKO.md`](./BAKO.md#verify-before-claiming-done).
 
 ---
 
@@ -86,70 +87,56 @@ Tests are **co-located** with the implementation they cover, not in a separate `
 
 | File | Purpose |
 | --- | --- |
-| `*.spec.ts` | Unit test (pure logic — domain, use-cases, lib) |
+| `*.spec.ts` | Unit test (pure logic) |
 | `*.dom.spec.tsx` | DOM test using `@testing-library/react` (components, hooks with UI) |
 
-DOM tests use `@testing-library/react` with `happy-dom` (registered globally via `bunfig.toml` → `src/test/setup-bun.ts`). The runner `scripts/run-tests.ts` executes each spec in its own `bun test` process to keep `mock.module()` isolated between files.
+Tests run on Bun's native `bun:test`, orchestrated by a custom runner at `scripts/run-tests.ts`. DOM tests use `@testing-library/react` with `happy-dom` (registered globally via `bunfig.toml` → `src/test/setup-bun.ts`).
 
-### Targeting a single spec during TDD
+### Always use `bun run test`, never bare `bun test`
+
+`bun test` flattens `mock.module()` to global scope when several specs share a process, so a mock in one file can leak into an unrelated one. `scripts/run-tests.ts` avoids that by running each spec in its own `bun test <file>` subprocess. Calling `bun test` yourself skips that isolation — always go through the wrapped commands:
 
 ```bash
-# Run a single unit spec
-bun test src/modules/menu/domain/product.spec.ts
-
-# Run a single DOM spec
-bun test src/modules/menu/components/ProductGrid.dom.spec.tsx
+bun run test         # full suite
+bun run test:node    # only *.spec.ts
+bun run test:dom     # only *.dom.spec.tsx
 ```
 
-> ⚠️ Usa `bun run test`, NUNCA `bun test` — `bun test` invoca el test runner nativo de Bun sobre los specs de Vitest y falla. Los tests corren deliberadamente bajo Node (Vitest no soporta el runtime de Bun — bug [oven-sh/bun#27002](https://github.com/oven-sh/bun/issues/27002)), por lo que Node ≥20.19 sigue siendo requisito local para correr tests aunque ya no esté en `engines`.
+To target a single spec during TDD, pass its path to the runner:
+
+```bash
+bun run scripts/run-tests.ts src/modules/menu/product.spec.ts
+```
+
+See [`docs/contributing/testing.md`](./docs/contributing/testing.md) for the full rationale, setup, and the locale-completeness guard.
 
 ---
 
 ## Project Architecture
 
-Bako follows **Clean Architecture organized by feature**, not by layer. Each module in `src/modules/<feature>/` is a vertical slice with its own internal layers.
+Each feature lives in `src/modules/<feature>/` as a flat module. Subfolders like `components/` or `lib/` only get added once a module's file count actually justifies them. The layers a module does not get by default are listed in [`BAKO.md`](./BAKO.md#layers-that-do-not-exist-in-this-model) — that list lives there and nowhere else.
 
-```
-domain/       ← entities + ports (pure, no framework deps)
-use-cases/    ← pure functions that take a port, return ResultAsync
-persistence/  ← port implementations (Drizzle + SQLite)
-hooks/        ← DI + React Query/Zustand binding, no business logic
-components/   ← pure UI, receive props + callbacks only
-```
+[`BAKO.md`](./BAKO.md) is the **authoritative source of truth** for architecture: project structure, the module system, and the barrel-as-boundary rule. For the module system in depth — folder shape, the barrel rule, and how it's enforced in review — see [`docs/architecture/module-system.md`](./docs/architecture/module-system.md).
 
-### Dependency rule (enforced, not optional)
-
-Dependencies point **inward only**. Never the other way.
-
-```
-domain ← use-cases ← persistence
-                      ↑
-                    hooks
-                      ↑
-                  components
-```
-
-- `domain/` imports nothing from the project (only `src/lib/` and `neverthrow`).
-- `components/` never import a repository or a use-case directly — they go through hooks.
-- `ports.ts` always lives at `domain/ports.ts`, never at the module root.
-
-The `menu` module (`src/modules/menu/`) is the reference implementation — read it when in doubt.
-
-> For the full rules, signals of breakage, and the canonical module structure, see [`AGENTS.md`](./AGENTS.md). It's the authoritative architecture guide.
+Some existing modules still carry an older layered shape; that's legacy, not the pattern to copy for new code. Follow `BAKO.md`, not whatever a given module happens to look like today — [`docs/architecture/migration-status.md`](./docs/architecture/migration-status.md) tracks which modules have not moved yet.
 
 ## Error handling pattern
 
-Domain errors should never be shown to users as raw `error.message` strings. The
-`domain/` and `persistence/` layers are framework-agnostic and therefore cannot
-use `react-i18next`.
+Domain errors should never be shown to users as raw `error.message` strings.
+The pure-logic core of a module is framework-agnostic and therefore cannot use
+`react-i18next` directly.
 
 When an error type has a user-facing meaning, give it a translatable `code` and
-`params` in `domain/{feature}/errors.ts` (see `src/modules/menu/domain/errors.ts`
-for the reference shape). Then:
+`params` on the error type itself. The module emits codes; the translation
+happens at the UI boundary, so the module's core never has to import
+`react-i18next`. (`src/modules/menu/domain/errors.ts` is the closest worked
+example in the tree today, but it sits in a legacy `domain/` folder — see
+[`docs/architecture/migration-status.md`](./docs/architecture/migration-status.md).)
+Then:
 
-1. Create or update `src/modules/{feature}/lib/translate-{feature}-error.ts` to
+1. Create or update a `translate-{feature}-error.ts` helper in the module to
    map the code to an i18n key under `errors:{feature}.{code}`.
-2. Add the key and value to `src/shared/i18n/locales/*/{feature}.json` (or
+2. Add the key and value to `src/i18n/locales/*/{feature}.json` (or
    `errors.json`) for all supported locales.
 3. Use the helper in components instead of `error.message`:
    ```tsx
@@ -185,9 +172,9 @@ We use [Conventional Commits](https://www.conventionalcommits.org/). Keep the su
 ### Examples
 
 ```
-feat(checkout): add cancel order use-case
+feat(checkout): add cancel order flow
 fix(menu): filter products by category case-insensitively
-refactor(order): extract price calculation to domain
+refactor(order): extract price calculation into cart.ts
 docs: add CONTRIBUTING.md
 chore: bump tauri to 2.1.0
 test(feature-flags): cover optimistic update rollback
@@ -225,8 +212,8 @@ refactor/<short-description>
 
 ### Before opening a PR
 
-- [ ] `bun run build` passes (no type errors)
-- [ ] `bun run test` and `bun run test:dom` pass
+- [ ] The canonical gate in [`BAKO.md`](./BAKO.md#verify-before-claiming-done) passes — CI runs exactly that list and fails the PR otherwise
+- [ ] If the change reaches `src-tauri/src/print/`, the local Rust gate in that same section passes too — CI does **not** run it for you
 - [ ] New behavior is covered by tests written **first** (Red phase observed)
 - [ ] Commits follow Conventional Commits, no AI-attribution trailers
 - [ ] No unrelated formatting churn
@@ -285,7 +272,7 @@ Because the PolyForm Small Business License is **not** OSI-approved open source,
 
 ## Questions
 
-- **Architecture & internals** — read [`AGENTS.md`](./AGENTS.md) and the per-module `README.md` files under `src/modules/`.
+- **Architecture & internals** — read [`BAKO.md`](./BAKO.md) and [`AGENTS.md`](./AGENTS.md).
 - **General questions** — [GitHub Discussions](https://github.com/norman404/bako/discussions) (if enabled) or open an issue with the `question` label.
 - **Security-sensitive issues** — do **not** open a public issue. Email the maintainer directly at [norman.torres.mx@gmail.com](mailto:norman.torres.mx@gmail.com).
 

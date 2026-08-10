@@ -38,5 +38,5 @@ strict_tdd: true
 
 # Stack
 type: react
-test_runner: vitest
+test_runner: bun   # bun:test nativo via scripts/run-tests.ts — NO vitest (no está instalado)
 build_tool: vite

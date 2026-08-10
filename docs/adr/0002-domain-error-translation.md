@@ -4,6 +4,14 @@
 
 Accepted
 
+> **Nota editorial (2026-08-09).** La decisión de este ADR no cambió: traducir los errores de
+> dominio en el boundary de UI sigue vigente tal cual. Lo único que se corrigió fue la
+> formulación: antes nombraba carpetas de una arquitectura por capas que el modelo destino
+> elimina, así que quedaba prescribiendo una estructura muerta. Ahora se enuncia por
+> **rol** — lógica de dominio, acceso a datos, boundary de UI — y las rutas apuntan a la
+> convención destino. Es una corrección menor de las que permite el lifecycle en
+> [`README.md`](./README.md#reglas-de-lifecycle), no un ADR nuevo.
+
 ## Context
 
 Bako soporta cinco locales (`es-MX`, `es-AR`, `es-ES`, `en-US`, `pt-BR`) y la UI
@@ -11,11 +19,11 @@ está casi completamente traducida con `react-i18next`. Sin embargo, varios
 mensajes de error llegaban al usuario en inglés incluso cuando la app estaba
 configurada en español.
 
-La causa era que la capa de dominio/persistencia generaba errores con mensajes
-hardcodeados en inglés (p. ej. `"Product not found: abc"`,
+La causa era que la lógica de dominio y el acceso a datos generaban errores con
+mensajes hardcodeados en inglés (p. ej. `"Product not found: abc"`,
 `"Payment method must be cash or card"`) y los componentes mostraban
-`error.message` directamente. Como `domain/` no puede depender de `react-i18next`
-según las reglas de Clean Architecture del proyecto, nunca se traducían.
+`error.message` directamente. Como esa lógica no depende de `react-i18next` —
+no conoce el idioma activo ni el framework de UI — nunca se traducían.
 
 ## Decision
 
@@ -25,8 +33,10 @@ Vamos a:
    `params` con los datos a interpolar.
 2. Mantener el mensaje en inglés de `Error.message` como texto de diagnóstico
    para logs y desarrollo.
-3. Crear un helper `translate{Module}Error(error, t)` en `modules/{feature}/lib/`
-   que mapee `error.code` a keys de i18n (`errors:{module}.{code}`).
+3. Crear un helper `translate{Module}Error(error, t)` **dentro del módulo dueño
+   de esos errores** — `src/modules/{feature}/translate-{feature}-error.ts`
+   según la convención destino — que mapee `error.code` a keys de i18n
+   (`errors:{module}.{code}`).
 4. Usar ese helper en los componentes en lugar de mostrar `error.message`.
 5. Caídas sin código (errores genéricos de dominio, `Error` nativos, o
    excepciones técnicas) se muestran con un mensaje genérico localizado,
@@ -34,9 +44,10 @@ Vamos a:
 
 ## Alternatives considered
 
-- **Traducir en `domain/` o `persistence/`:** rechazado. Acoplaría el dominio a
-  `react-i18next`, rompiendo la regla de que `domain/` no importa nada del
-  proyecto. También haría los tests de dominio dependientes del setup de i18n.
+- **Traducir en la lógica de dominio o en el acceso a datos:** rechazado.
+  Acoplaría la lógica de negocio a `react-i18next`, rompiendo la regla de que no
+  depende del framework de UI ni de sus librerías. También haría los tests de
+  dominio dependientes del setup de i18n.
 - **Seguir mostrando `error.message`:** rechazado. Es exactamente el bug que
   estamos arreglando: mensajes en inglés filtrándose a usuarios no angloparlantes.
 - **Manejo ad-hoc por componente:** rechazado. Cada panel tendría su propia
@@ -49,20 +60,21 @@ Vamos a:
   de i18n del proyecto.
 - (+) Se reutiliza `locale-completeness.spec.ts` como guard de regresión para
   nuevas keys de error.
-- (-) Agregar un nuevo tipo de error requiere tres pasos: código en `domain/`,
-  entrada en los 5 locales, y manejo en el helper de traducción.
+- (-) Agregar un nuevo tipo de error requiere tres pasos: el código en la lógica
+  de dominio, la entrada en los 5 locales, y el manejo en el helper de traducción.
 - (-) Los mensajes genéricos de base de datos (`Failed to list...`) pierden
   detalle en la UI; el detalle sigue disponible en consola/logs.
 
 ## Agent guidance
 
-- No traduzcas errores dentro de `domain/` ni `persistence/`. Esas capas deben
-  emitir códigos, no textos localizados.
+- La traducción ocurre **en el boundary de UI**, y solo ahí. La lógica de dominio
+  y el acceso a datos emiten **códigos** de error, nunca textos localizados: no
+  conocen el idioma activo ni deben conocerlo.
 - Si agregás un error translatable nuevo en un módulo, también debés:
-  1. Agregar su código al helper `translate{Module}Error`.
-  2. Agregar la key y valor en `src/shared/i18n/locales/*/errors.json` bajo la
+  1. Agregar su código al helper `translate{Module}Error` del módulo.
+  2. Agregar la key y valor en `src/i18n/locales/*/errors.json` bajo la
      sección del módulo.
-  3. Extender `src/shared/i18n/locale-completeness.spec.ts` si aún no cubre ese
+  3. Extender `src/i18n/locale-completeness.spec.ts` si aún no cubre ese
      namespace.
 - No mostrés `error.message` directamente en componentes. Usá el helper del módulo.
 - El fallback genérico es intencional: errores técnicos no mapeados deben
@@ -70,7 +82,9 @@ Vamos a:
 
 ## Referencias
 
-- Implementación de referencia: `src/modules/menu/domain/errors.ts`,
-  `src/modules/menu/lib/translate-menu-error.ts`,
-  `src/shared/i18n/locales/es-MX/errors.json`.
+- Implementación de referencia: los errores tipados del módulo `menu`, su helper
+  `src/modules/menu/translate-menu-error.ts`, y
+  `src/i18n/locales/es-MX/errors.json`.
 - Sección "Error handling pattern" en `CONTRIBUTING.md`.
+- [`BAKO.md`](../../BAKO.md#layers-that-do-not-exist-in-this-model) — por qué este
+  ADR ya no se enuncia nombrando carpetas.

@@ -10,7 +10,7 @@ A local-first desktop point-of-sale (POS) application for restaurants, cafeteria
 
 Bako is a single-screen desktop POS built with **Tauri 2 + React 19 + TypeScript**. The UI runs on Vite and persists data locally in **SQLite** through `@tauri-apps/plugin-sql` and **Drizzle ORM**. No application backend is required for the core local workflow.
 
-The project is moving toward a lightweight module architecture internally and a permission-aware SDK boundary for future external plugins. The SDK/plugin runtime is an architectural direction and is not yet a supported production plugin platform.
+The project is moving toward a flat, feature-oriented module architecture internally, with [`BAKO.md`](BAKO.md) as the living architecture document.
 
 > **Note:** The checkout flow is local-only; it does not integrate a real payment gateway.
 
@@ -40,7 +40,7 @@ The project is moving toward a lightweight module architecture internally and a 
 | Desktop | Tauri 2 |
 | Local database | SQLite via `@tauri-apps/plugin-sql` |
 | ORM | Drizzle ORM + drizzle-kit |
-| Testing | Vitest + Testing Library |
+| Testing | `bun:test` + Testing Library |
 
 ---
 
@@ -124,84 +124,45 @@ bun run tauri dev
 New and refactored features live under `src/modules/<feature>` and should use the smallest useful structure.
 
 ```txt
-src/modules/delivery/
+src/modules/<feature>/
 ├── index.ts
 ├── types.ts
-├── delivery-service.ts
-├── delivery-store.ts
-├── DeliveryPanel.tsx
-└── delivery-service.test.ts
+├── <feature>.ts
+├── <feature>.spec.ts
+├── <feature>-store.ts
+├── repository.ts
+├── use-<feature>.ts
+├── manifest.ts
+└── <Feature>Panel.tsx
 ```
 
-Larger modules can introduce `components/`, `lib/`, or other cohesive subdirectories when needed. `domain/`, `use-cases/`, `repositories/`, and infrastructure layers are no longer required by default.
+Larger modules can introduce `components/`, `lib/`, or other cohesive subdirectories when needed. The layers this model does not bring back are listed in [`BAKO.md`](BAKO.md#layers-that-do-not-exist-in-this-model).
 
 ### Application composition
 
-`src/app` composes modules and global providers. Cross-cutting platform infrastructure belongs in a small `core` surface rather than inside arbitrary feature modules.
+`src/app` composes modules and global providers — composition only, no business logic.
 
-The intended direction is:
+The target structure is:
 
 ```txt
 src/
 ├── app/
-├── core/
-│   ├── db/
-│   ├── events/
-│   ├── plugins/
-│   └── sdk/
 ├── components/
-├── modules/
+├── db/
+├── i18n/
 ├── lib/
+├── modules/
+├── styles/
+├── test/
+├── assets/
 └── main.tsx
 ```
 
-This is a target structure. Existing code does not need to move until there is a useful reason to touch it.
-
-### External plugins: planned
-
-Bako is being designed so future external modules can be authored with standard web technologies and communicate with the application through a versioned Bako SDK.
-
-External plugins are different from trusted internal modules. They will not receive direct access to application stores, SQLite/Drizzle, or arbitrary Tauri commands.
-
-Conceptually:
-
-```txt
-Plugin (HTML/CSS/JS)
-        │
-        ▼
-     Bako SDK
-        │
-        ▼
-Permissions + validation
-        │
-        ▼
-Bako capabilities
-```
-
-The plugin manifest, SDK API, isolation mechanism, permission runtime, package signing, and distribution model are still under design. See [`BAKO.md`](BAKO.md) for the current architectural proposal.
+There is no `shared/` folder. It is the name that lets anything end up in it, so it does not exist: the Drizzle client and schema live in `db/`, the i18n engine and locales in `i18n/`, reusable UI in `components/`. Every folder is named after what it holds. For where the code sits today and when each folder moves, see [`docs/architecture/migration-status.md`](docs/architecture/migration-status.md).
 
 ### Local database
 
-Bako uses a local SQLite database named `bako.db`. Migrations are executed by Tauri at application startup. The database remains application infrastructure; future external plugins must use supported SDK capabilities rather than raw SQL access.
-
----
-
-## Security direction
-
-The future plugin system is designed around **default deny** and narrow capabilities.
-
-Planned security invariants include:
-
-- external plugins cannot access SQLite directly;
-- external plugins cannot invoke arbitrary Tauri commands;
-- capabilities are granted through explicit permissions;
-- privileged native operations validate authorization and input on the Rust side;
-- filesystem and network access are restricted by default;
-- Bako-owned credentials are never exposed to plugin JavaScript;
-- financial mutations use dedicated business operations rather than generic record updates;
-- security-sensitive plugin actions can be attributed to a plugin identity/version.
-
-For the complete security and trust-boundary proposal, including permissions, filesystem/network access, secrets, UI isolation, financial operations, auditing, and plugin installation, read [`BAKO.md`](BAKO.md).
+Bako uses a local SQLite database named `bako.db`. How migrations run and the rules that govern them are in [`BAKO.md`](BAKO.md#database).
 
 ---
 
@@ -209,6 +170,7 @@ For the complete security and trust-boundary proposal, including permissions, fi
 
 ```bash
 bun run test
+bun run test:node
 bun run test:dom
 ```
 
