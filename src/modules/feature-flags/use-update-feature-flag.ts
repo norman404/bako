@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag";
-import { updateFeatureFlag } from "@/modules/feature-flags/use-cases/update-feature-flag";
-import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import type { FeatureFlagKey } from "./feature-flag";
+import { updateFeatureFlag } from "./update-feature-flag";
+import { featureFlagDrizzleRepository } from "./repository";
+import { useFeatureFlagsStore } from "./feature-flags-store";
 import { FEATURE_FLAGS_QUERY_KEY } from "./use-feature-flags";
 
 interface UpdateFeatureFlagInput {

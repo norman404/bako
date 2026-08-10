@@ -6,7 +6,7 @@ import { fireEvent, renderWithProviders, screen } from "@/test/test-utils";
 import type { Product } from "@/modules/menu/domain/product";
 import type { Category } from "@/modules/menu/domain/category";
 import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { buildCategory, buildModifierGroup, buildProduct } from "@/modules/menu/test/factories";
 
 // Import dinámico DESPUÉS de mock.module: en bun los imports estáticos se evalúan

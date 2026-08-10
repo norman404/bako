@@ -1,9 +1,4 @@
-export * from "./domain/feature-flag";
-export * from "./domain/errors";
-export * from "./domain/ports";
-export * from "./use-cases/list-feature-flags";
-export * from "./use-cases/update-feature-flag";
-export * from "./persistence/feature-flag-drizzle.repository";
-export * from "./hooks/use-feature-flags";
-export * from "./hooks/use-update-feature-flag";
-export * from "./store/feature-flags-store";
+export type { FeatureFlagKey } from "./feature-flag";
+export { featureFlagDrizzleRepository } from "./repository";
+export { useUpdateFeatureFlag } from "./use-update-feature-flag";
+export { useFeatureFlagsStore } from "./feature-flags-store";

@@ -30,7 +30,7 @@ import { SettingsModal } from "@/modules/settings/components/SettingsModal";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { ShiftButton, CashMovementsButton } from "@/modules/shift-reports";
 import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useUpdater, UpdateToast } from "@/modules/updater";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos";
 import { formatPosCurrency } from "@/lib/currency";

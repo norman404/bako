@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { ResultAsync, okAsync } from "neverthrow";
-import type { FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag";
-import type { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
-import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+import type { FeatureFlagKey } from "./feature-flag";
+import type { FeatureFlagPersistenceError } from "./errors";
+import { featureFlagDrizzleRepository } from "./repository";
 
 const DEFAULT_FLAGS: Record<string, boolean> = {
   categories_enabled: false,

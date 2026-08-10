@@ -105,7 +105,7 @@ afterAll(() => {
 
 import { fireEvent, renderWithProviders, screen, waitFor, within } from "@/test/test-utils";
 import { App } from "@/app/App";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useOrderStore } from "@/modules/order/store/order-store";
 import { usePosStore } from "@/modules/pos";
 import { useCreateOrder } from "@/modules/checkout/hooks/use-checkout";

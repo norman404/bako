@@ -19,7 +19,7 @@ import {
   parseProductPriceInput,
 } from "@/modules/menu/lib/product-price";
 import { formatPosCurrency } from "@/lib/currency";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { translateMenuError } from "@/modules/menu/lib/translate-menu-error";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";

@@ -1,9 +1,7 @@
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
-import { useUpdateFeatureFlag } from "@/modules/feature-flags/hooks/use-update-feature-flag";
+import { useFeatureFlagsStore, useUpdateFeatureFlag, type FeatureFlagKey } from "@/modules/feature-flags";
 import { Switch } from "@/components/ui/switch";
-import type { FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag";
 
 interface ModuleConfig {
   id: string;

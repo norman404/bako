@@ -4,16 +4,16 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { okAsync, errAsync } from "neverthrow";
 import { useFeatureFlags } from "./use-feature-flags";
-import type { FeatureFlag } from "@/modules/feature-flags/domain/feature-flag";
-import { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
+import type { FeatureFlag } from "./feature-flag";
+import { FeatureFlagPersistenceError } from "./errors";
 
-mock.module("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
+mock.module("./repository", () => ({
   featureFlagDrizzleRepository: {
     list: mock(),
   },
 }));
 
-import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+import { featureFlagDrizzleRepository } from "./repository";
 
 const listMock = featureFlagDrizzleRepository.list as Mock<typeof featureFlagDrizzleRepository.list>;
 

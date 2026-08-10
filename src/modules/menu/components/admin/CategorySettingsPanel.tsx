@@ -13,7 +13,7 @@ import {
 } from "@/modules/menu/hooks/use-categories";
 import { useCategories } from "@/modules/menu/hooks/use-categories";
 import { useMenus } from "@/modules/menu/hooks/use-menus";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { usePrinters } from "@/modules/printer/hooks/use-printers";
 import { translateMenuError } from "@/modules/menu/lib/translate-menu-error";
 import { Button } from "@/components/ui/Button";

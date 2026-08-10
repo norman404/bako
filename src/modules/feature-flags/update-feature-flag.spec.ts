@@ -1,8 +1,8 @@
 import { describe, expect, it, mock } from "bun:test";
 import { okAsync } from "neverthrow";
 
-import type { FeatureFlagRepository } from "@/modules/feature-flags/domain/ports";
-import { updateFeatureFlag } from "@/modules/feature-flags/use-cases/update-feature-flag";
+import type { FeatureFlagRepository } from "./ports";
+import { updateFeatureFlag } from "./update-feature-flag";
 
 describe("updateFeatureFlag", () => {
   it("delegates to repository.update() with correct parameters", async () => {

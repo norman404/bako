@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 import { ResultAsync } from "neverthrow";
 
-import type { FeatureFlag, FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag";
-import { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
-import type { FeatureFlagRepository } from "@/modules/feature-flags/domain/ports";
+import type { FeatureFlag, FeatureFlagKey } from "./feature-flag";
+import { FeatureFlagPersistenceError } from "./errors";
+import type { FeatureFlagRepository } from "./ports";
 import { db } from "@/db/client";
 import { featureFlags, type FeatureFlagRow } from "@/db/schema";
 

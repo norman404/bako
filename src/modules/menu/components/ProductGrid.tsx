@@ -5,7 +5,7 @@ import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
 import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
 import type { Product } from "@/modules/menu/domain/product";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { formatPosCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
 

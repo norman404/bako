@@ -5,7 +5,7 @@ import { toast, Toaster } from "sonner";
 import { App } from "./app/App";
 import { initDatabase } from "@/db/client";
 import { useSettingsStore } from "./modules/settings/store/settings-store";
-import { useFeatureFlagsStore } from "./modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { initI18n, I18nProvider, i18n } from "@/i18n";
 import { wireI18nWithSettings } from "@/i18n/sync-with-settings";
 import { consumeDatabaseRestoreFailure } from "./modules/settings/lib/database-restore-notice";

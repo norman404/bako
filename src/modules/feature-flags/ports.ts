@@ -1,7 +1,7 @@
 import type { ResultAsync } from "neverthrow";
 
-import type { FeatureFlag, FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag";
-import type { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
+import type { FeatureFlag, FeatureFlagKey } from "./feature-flag";
+import type { FeatureFlagPersistenceError } from "./errors";
 
 export interface FeatureFlagRepository {
   list(): ResultAsync<FeatureFlag[], FeatureFlagPersistenceError>;

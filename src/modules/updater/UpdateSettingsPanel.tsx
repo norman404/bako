@@ -6,7 +6,7 @@ import { APP_VERSION } from "@/lib/app-version";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/Button";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useUpdater } from "./use-updater";
 import {
   UpdateStatus,

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { listFeatureFlags } from "@/modules/feature-flags/use-cases/list-feature-flags";
-import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+import { listFeatureFlags } from "./list-feature-flags";
+import { featureFlagDrizzleRepository } from "./repository";
 
 export const FEATURE_FLAGS_QUERY_KEY = ["feature-flags"] as const;
 

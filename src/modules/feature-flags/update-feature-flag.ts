@@ -1,8 +1,8 @@
 import type { ResultAsync } from "neverthrow";
 
-import type { FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag";
-import type { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
-import type { FeatureFlagRepository } from "@/modules/feature-flags/domain/ports";
+import type { FeatureFlagKey } from "./feature-flag";
+import type { FeatureFlagPersistenceError } from "./errors";
+import type { FeatureFlagRepository } from "./ports";
 
 export function updateFeatureFlag(
   repository: FeatureFlagRepository,

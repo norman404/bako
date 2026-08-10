@@ -7,7 +7,7 @@ import { Cart } from "@/modules/order/components/Cart";
 import type { CartItem } from "@/modules/order/domain/cart";
 import { buildSelectedModifier } from "@/modules/menu/test/factories";
 import { buildCartItem } from "@/modules/order/test/factories";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 
 function setModifierFlag(value: boolean) {
   useFeatureFlagsStore.setState({

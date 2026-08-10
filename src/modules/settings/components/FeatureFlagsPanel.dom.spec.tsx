@@ -3,16 +3,16 @@ import { describe, it, expect, mock, beforeEach, type Mock } from "bun:test";
 import userEvent from "@testing-library/user-event";
 import { okAsync } from "neverthrow";
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { renderWithProviders, screen } from "@/test/test-utils";
 
-mock.module("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
+mock.module("@/modules/feature-flags", () => ({
   featureFlagDrizzleRepository: {
     update: mock(),
   },
 }));
 
-import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+import { featureFlagDrizzleRepository } from "@/modules/feature-flags";
 
 describe("FeatureFlagsPanel", () => {
   beforeEach(() => {

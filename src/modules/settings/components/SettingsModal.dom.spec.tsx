@@ -14,7 +14,7 @@ mock.module("sonner", () => ({
   },
   Toaster: () => null,
 }));
-import * as featureFlagsStoreModule from "@/modules/feature-flags/store/feature-flags-store";
+import * as featureFlagsStoreModule from "@/modules/feature-flags";
 
 // Snapshot del módulo real ANTES de mockearlo — bun corre todos los archivos de
 // test en un solo proceso y mock.module no se aísla entre archivos, así que al
@@ -47,7 +47,8 @@ mock.module("./FeatureFlagsPanel", () => ({
   ),
 }));
 
-mock.module("@/modules/feature-flags/store/feature-flags-store", () => ({
+mock.module("@/modules/feature-flags", () => ({
+  ...realFeatureFlagsStoreModule,
   useFeatureFlagsStore: mock(() => ({
     flags: { categories_enabled: true, multiple_menus_enabled: false },
     isLoading: false,
@@ -57,7 +58,7 @@ mock.module("@/modules/feature-flags/store/feature-flags-store", () => ({
 afterAll(() => {
   // Restaura el módulo real del store para los archivos que corren después
   // en el mismo proceso de bun test (Cart.dom, App.dom usan setState/getState).
-  mock.module("@/modules/feature-flags/store/feature-flags-store", () => realFeatureFlagsStoreModule);
+  mock.module("@/modules/feature-flags", () => realFeatureFlagsStoreModule);
 });
 
 import { SettingsModal } from "@/modules/settings/components/SettingsModal";

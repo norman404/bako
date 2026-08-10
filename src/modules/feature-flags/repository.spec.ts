@@ -28,7 +28,7 @@ mock.module("@/db/client", () => ({
   },
 }));
 
-import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+import { featureFlagDrizzleRepository } from "./repository";
 
 function buildFeatureFlagRow(overrides: Partial<FeatureFlagRow> = {}): FeatureFlagRow {
   return {

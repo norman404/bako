@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { calculateCartTotals, type CartItem } from "@/modules/order/domain/cart";
 import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
 import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { Button } from "@/components/ui/Button";
 import { formatPosCurrency } from "@/lib/currency";
 

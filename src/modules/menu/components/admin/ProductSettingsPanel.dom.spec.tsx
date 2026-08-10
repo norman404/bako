@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import * as productHooks from "@/modules/menu/hooks/use-products";
 import * as categoryHooks from "@/modules/menu/hooks/use-categories";
 import * as menuHooks from "@/modules/menu/hooks/use-menus";
-import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { ProductSettingsPanel } from "@/modules/menu/components/admin/ProductSettingsPanel";
 import { fireEvent, renderWithProviders, screen, waitFor } from "@/test/test-utils";
 

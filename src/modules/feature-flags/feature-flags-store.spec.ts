@@ -2,14 +2,14 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 import { useFeatureFlagsStore } from "./feature-flags-store";
 
 // Mock the repository module
-mock.module("@/modules/feature-flags/persistence/feature-flag-drizzle.repository", () => ({
+mock.module("./repository", () => ({
   featureFlagDrizzleRepository: {
     list: mock(),
     update: mock(),
   },
 }));
 
-import { featureFlagDrizzleRepository } from "@/modules/feature-flags/persistence/feature-flag-drizzle.repository";
+import { featureFlagDrizzleRepository } from "./repository";
 
 describe("useFeatureFlagsStore", () => {
   beforeEach(() => {
