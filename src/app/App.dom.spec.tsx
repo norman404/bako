@@ -107,7 +107,7 @@ import { fireEvent, renderWithProviders, screen, waitFor, within } from "@/test/
 import { App } from "@/app/App";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { useOrderStore } from "@/modules/order/store/order-store";
-import { usePosStore } from "@/shared/stores/pos-store";
+import { usePosStore } from "@/modules/pos";
 import { useCreateOrder } from "@/modules/checkout/hooks/use-checkout";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { usePrintCommands } from "@/modules/checkout/hooks/use-print-commands";

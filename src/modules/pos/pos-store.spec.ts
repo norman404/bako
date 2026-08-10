@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
+import { POS_CATEGORY_FILTER, usePosStore } from "./pos-store";
 
 describe("usePosStore", () => {
   it("should omit legacy dashboard and manager state from the pos ui store", () => {

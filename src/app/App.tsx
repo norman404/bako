@@ -32,7 +32,7 @@ import { ShiftButton, CashMovementsButton } from "@/modules/shift-reports";
 import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { useUpdater, UpdateToast } from "@/modules/updater";
-import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
+import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos";
 import { formatPosCurrency } from "@/lib/currency";
 import { IS_MAC } from "@/lib/platform";
 import { useMountEffect } from "@/lib/use-mount-effect";

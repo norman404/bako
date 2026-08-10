@@ -1,4 +1,4 @@
-import { ColorInput } from "@/shared/components/ColorInput";
+import { ColorInput } from "@/components/ColorInput";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 

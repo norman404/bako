@@ -1,4 +1,4 @@
-import { ColorInput } from "@/shared/components/ColorInput";
+import { ColorInput } from "@/components/ColorInput";
 import { Plus, Trash2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";

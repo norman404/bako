@@ -3,7 +3,7 @@ import { useProducts } from "@/modules/menu/hooks/use-products";
 import { filterProductsByCategory, filterProductsByName } from "@/modules/menu/domain/product-filters";
 import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
 import { useMenuStore } from "@/modules/menu/store/menu-store";
-import { POS_CATEGORY_FILTER, usePosStore } from "@/shared/stores/pos-store";
+import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos";
 
 interface UseFilteredProductsOptions {
   menuId?: string | null;
