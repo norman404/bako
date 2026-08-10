@@ -12,7 +12,7 @@ import {
   type CheckoutCustomerFormState,
 } from "@/modules/checkout/lib/builders";
 import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
+import type { SelectedModifier } from "@/modules/menu";
 import { buildProduct } from "@/modules/menu/test/factories";
 import type { CartItem } from "@/modules/order/domain/cart";
 import { buildCartItem } from "@/modules/order/test/factories";

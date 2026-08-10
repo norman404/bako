@@ -13,16 +13,18 @@ import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/
 import { usePrintCommands } from "@/modules/checkout/hooks/use-print-commands";
 import { usePrinters } from "@/modules/printer";
 import { PRINTER_ROLE } from "@/modules/printer";
-import { CategoryNav } from "@/modules/menu/components/CategoryNav";
-import { MenuSelector } from "@/modules/menu/components/MenuSelector";
-import { ProductCustomizationDialog } from "@/modules/menu/components/ProductCustomizationDialog";
-import { ProductGrid } from "@/modules/menu/components/ProductGrid";
-import { ProductSearch } from "@/modules/menu/components/ProductSearch";
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import type { Product } from "@/modules/menu/domain/product";
-import { useMenus } from "@/modules/menu/hooks/use-menus";
-import { useFilteredProducts } from "@/modules/menu/hooks/use-filtered-products";
-import { useProductModifierGroupsMap } from "@/modules/menu/hooks/use-modifier-groups";
+import {
+  CategoryNav,
+  MenuSelector,
+  ProductCustomizationDialog,
+  ProductGrid,
+  ProductSearch,
+  useFilteredProducts,
+  useMenus,
+  useProductModifierGroupsMap,
+  type Product,
+  type SelectedModifier,
+} from "@/modules/menu";
 import { Cart } from "@/modules/order/components/Cart";
 import { calculateCartTotals } from "@/modules/order/domain/cart";
 import { useOrderStore } from "@/modules/order/store/order-store";

@@ -2,8 +2,7 @@ import { Minus, Plus, ShoppingBasket, Trash2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { calculateCartTotals, type CartItem } from "@/modules/order/domain/cart";
-import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
+import { calculateItemUnitPrice, type SelectedModifier } from "@/modules/menu";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { Button } from "@/components/ui/Button";
 import { formatPosCurrency } from "@/lib/currency";

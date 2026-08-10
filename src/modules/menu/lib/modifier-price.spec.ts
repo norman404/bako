@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
-import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
-import { buildProduct } from "@/modules/menu/test/factories";
+import { calculateItemUnitPrice } from "./modifier-price";
+import { buildProduct } from "../test/factories";
 
 describe("calculateItemUnitPrice", () => {
   it("returns the product price when modifiers array is empty", () => {

@@ -23,20 +23,32 @@ const realFeatureFlagsStoreModule = { ...featureFlagsStoreModule };
 
 
 
-mock.module("@/modules/menu/components/admin/ProductSettingsPanel", () => ({
-  ProductSettingsPanel: () => (
-    <section aria-label="Panel de productos">
-      <p>Contenido de productos</p>
-    </section>
-  ),
-}));
+import * as menuManifestModule from "@/modules/menu/manifest";
 
-mock.module("@/modules/menu/components/admin/CategorySettingsPanel", () => ({
-  CategorySettingsPanel: () => (
-    <section aria-label="Panel de categorías">
-      <p>Contenido de categorías</p>
-    </section>
-  ),
+// Los paneles de menu se alcanzan por el manifest, no por el barrel: el registry
+// los toma de ahí. Se conservan id/flagKey/label/icon reales (las tabs se
+// asertan por su label) y sólo se sustituye el panel, que de otro modo pegaría
+// a la base de datos al renderizar.
+const realMenuManifest = { ...menuManifestModule };
+
+mock.module("@/modules/menu/manifest", () => ({
+  ...realMenuManifest,
+  productsManifest: {
+    ...realMenuManifest.productsManifest,
+    settingsPanel: () => (
+      <section aria-label="Panel de productos">
+        <p>Contenido de productos</p>
+      </section>
+    ),
+  },
+  categoriesManifest: {
+    ...realMenuManifest.categoriesManifest,
+    settingsPanel: () => (
+      <section aria-label="Panel de categorías">
+        <p>Contenido de categorías</p>
+      </section>
+    ),
+  },
 }));
 
 mock.module("./FeatureFlagsPanel", () => ({

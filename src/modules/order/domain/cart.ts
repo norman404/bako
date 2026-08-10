@@ -1,7 +1,9 @@
-import { buildCartItemKey } from "@/modules/menu/domain/modifier-group";
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import type { Product } from "@/modules/menu/domain/product";
-import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
+import {
+  buildCartItemKey,
+  calculateItemUnitPrice,
+  type Product,
+  type SelectedModifier,
+} from "@/modules/menu";
 
 export interface CartItem {
   lineId: string;

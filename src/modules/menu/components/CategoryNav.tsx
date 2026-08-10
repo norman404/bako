@@ -1,4 +1,4 @@
-import type { Category } from "@/modules/menu/domain/category";
+import type { Category } from "../category";
 import { categoryAccent } from "@/lib/color";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";

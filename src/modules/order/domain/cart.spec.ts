@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import type { Product } from "@/modules/menu/domain/product";
+import type { Product, SelectedModifier } from "@/modules/menu";
 import { buildProduct, buildSelectedModifier } from "@/modules/menu/test/factories";
 import {
   addItemToCart,

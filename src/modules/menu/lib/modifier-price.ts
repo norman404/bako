@@ -1,4 +1,4 @@
-import type { Product } from "@/modules/menu/domain/product";
+import type { Product } from "../product";
 
 export function calculateItemUnitPrice(
   product: Product,

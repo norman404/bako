@@ -39,8 +39,15 @@ mock.module("@/modules/printer", () => ({
   usePrinters: usePrintersMock,
 }));
 
+import * as menuModule from "@/modules/menu";
+
+// Snapshot del módulo real ANTES de mockearlo: el barrel también exporta
+// parseProductPriceInput, que los diálogos de turno usan con su valor real.
+const realMenuModule = { ...menuModule };
+
 const useCategoriesMock = mock();
-mock.module("@/modules/menu/hooks/use-categories", () => ({
+mock.module("@/modules/menu", () => ({
+  ...realMenuModule,
   useCategories: useCategoriesMock,
 }));
 

@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 
-import { MenuDomainError, type MenuTranslatableError } from "@/modules/menu/domain/errors";
+import { MenuDomainError, type MenuTranslatableError } from "../errors";
 
 function isMenuTranslatableError(error: unknown): error is MenuTranslatableError {
   return error instanceof MenuDomainError && "code" in error && typeof error.code === "string";

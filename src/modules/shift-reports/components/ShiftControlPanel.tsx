@@ -9,7 +9,7 @@ import { useShiftHistory, useShiftReport, SHIFT_QUERY_KEYS } from "@/modules/shi
 import { useFetchOrderDetail } from "@/modules/shift-reports/hooks/use-order-management";
 import { usePrinters } from "@/modules/printer";
 import { PRINTER_ROLE } from "@/modules/printer";
-import { useCategories } from "@/modules/menu/hooks/use-categories";
+import { useCategories } from "@/modules/menu";
 import { useSettingsStore } from "@/modules/settings";
 import { formatPosCurrency } from "@/lib/currency";
 import { reprintOrder } from "@/modules/shift-reports/lib/reprint-order";

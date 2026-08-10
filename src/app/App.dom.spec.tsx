@@ -22,18 +22,22 @@ mock.module("sonner", () => ({
 import * as actualSonner from "sonner";
 import * as actualTauriCore from "@tauri-apps/api/core";
 import * as actualUseMountEffect from "@/lib/use-mount-effect";
-import * as actualUseMenus from "@/modules/menu/hooks/use-menus";
+import * as menuModule from "@/modules/menu";
 import * as actualUseShiftReports from "@/modules/shift-reports/hooks/use-shift-reports";
 import * as actualUpdater from "@/modules/updater";
 import * as actualPrintTicket from "@/modules/checkout/components/print-ticket";
 import * as actualUsePrintCommands from "@/modules/checkout/hooks/use-print-commands";
 import * as actualUseCheckoutModule from "@/modules/checkout/hooks/use-checkout";
 
+// Congelado ANTES de mock.module: bun parchea el namespace del módulo en vivo,
+// así que sólo un spread previo conserva las implementaciones reales.
+const actualMenu = { ...menuModule };
+
 const REAL_MODULES: ReadonlyArray<[specifier: string, exports: Record<string, unknown>]> = [
   ["sonner", { ...actualSonner }],
   ["@tauri-apps/api/core", { ...actualTauriCore }],
   ["@/lib/use-mount-effect", { ...actualUseMountEffect }],
-  ["@/modules/menu/hooks/use-menus", { ...actualUseMenus }],
+  ["@/modules/menu", { ...actualMenu }],
   ["@/modules/shift-reports/hooks/use-shift-reports", { ...actualUseShiftReports }],
   ["@/modules/updater", { ...actualUpdater }],
   ["@/modules/checkout/components/print-ticket", { ...actualPrintTicket }],
@@ -51,7 +55,8 @@ mock.module("@/lib/use-mount-effect", () => ({
   useMountEffect: mock(() => undefined),
 }));
 
-mock.module("@/modules/menu/hooks/use-menus", () => ({
+mock.module("@/modules/menu", () => ({
+  ...actualMenu,
   useMenus: mock(() => ({ data: [], isLoading: false })),
 }));
 
@@ -111,11 +116,7 @@ import { usePosStore } from "@/modules/pos";
 import { useCreateOrder } from "@/modules/checkout/hooks/use-checkout";
 import { printOrder } from "@/modules/checkout/components/print-ticket";
 import { usePrintCommands } from "@/modules/checkout/hooks/use-print-commands";
-import * as filteredProductsHook from "@/modules/menu/hooks/use-filtered-products";
-import * as modifierGroupsHook from "@/modules/menu/hooks/use-modifier-groups";
-import type { Category } from "@/modules/menu/domain/category";
-import type { Product } from "@/modules/menu/domain/product";
-import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
+import type { Category, ModifierGroup, Product } from "@/modules/menu";
 import {
   buildCategory,
   buildModifierGroup,
@@ -123,7 +124,7 @@ import {
   buildProduct,
 } from "@/modules/menu/test/factories";
 
-type UseFilteredProductsResult = ReturnType<typeof filteredProductsHook.useFilteredProducts>;
+type UseFilteredProductsResult = ReturnType<typeof menuModule.useFilteredProducts>;
 
 function setModifierFlag(value: boolean) {
   useFeatureFlagsStore.setState({
@@ -148,7 +149,7 @@ function mockFilteredProducts(opts: {
   categories?: Category[];
 } = { products: [] }) {
   const categories = opts.categories ?? [buildCategory()];
-  return spyOn(filteredProductsHook, "useFilteredProducts")
+  return spyOn(menuModule, "useFilteredProducts")
     .mockReturnValue({
       products: opts.products,
       categories,
@@ -159,7 +160,7 @@ function mockFilteredProducts(opts: {
 }
 
 function mockProductModifierGroups(groupsByProductId: Record<string, ModifierGroup[]>) {
-  return spyOn(modifierGroupsHook, "useProductModifierGroupsMap").mockImplementation(
+  return spyOn(menuModule, "useProductModifierGroupsMap").mockImplementation(
     (products: Product[]) => {
       const map: Record<string, ModifierGroup[]> = {};
       for (const product of products) {

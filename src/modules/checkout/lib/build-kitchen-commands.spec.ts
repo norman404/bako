@@ -4,8 +4,7 @@ import { buildKitchenCommands, type CartLine } from "./build-kitchen-commands";
 import { buildPrinter } from "@/modules/printer/test/factories";
 import { buildCategory } from "@/modules/menu/test/factories";
 import { buildSelectedModifier } from "@/modules/menu/test/factories";
-import type { Category } from "@/modules/menu/domain/category";
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
+import type { Category, SelectedModifier } from "@/modules/menu";
 
 function buildLine(overrides: {
   product?: Partial<{ id: string; name: string; categoryId: string | null }>;

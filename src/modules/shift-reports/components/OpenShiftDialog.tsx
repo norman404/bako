@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { parseProductPriceInput } from "@/modules/menu/lib/product-price";
+import { parseProductPriceInput } from "@/modules/menu";
 import { useOpenShift } from "@/modules/shift-reports/hooks/use-shift-reports";
 import { translateShiftError } from "@/modules/shift-reports/lib/translate-shift-error";
 import { CurrencyInput } from "./CurrencyInput";

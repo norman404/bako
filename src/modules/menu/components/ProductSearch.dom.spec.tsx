@@ -1,8 +1,8 @@
 import { describe, expect, it, beforeEach } from "bun:test";
 
 import { renderWithProviders, screen, fireEvent } from "@/test/test-utils";
-import { ProductSearch } from "@/modules/menu/components/ProductSearch";
-import { useMenuStore } from "@/modules/menu/store/menu-store";
+import { ProductSearch } from "./ProductSearch";
+import { useMenuStore } from "../menu-store";
 
 describe("ProductSearch", () => {
   beforeEach(() => {

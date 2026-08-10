@@ -1,7 +1,6 @@
 import { create } from "zustand";
 
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import type { Product } from "@/modules/menu/domain/product";
+import type { Product, SelectedModifier } from "@/modules/menu";
 import {
   addItemToCart,
   decrementItemQuantity,

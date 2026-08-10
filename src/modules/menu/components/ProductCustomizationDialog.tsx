@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, Plus, X } from "lucide-react";
 
-import type { ModifierGroup, ModifierOption, SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import { applyFirstOptionFree } from "@/modules/menu/domain/modifier-group";
-import type { Product } from "@/modules/menu/domain/product";
-import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
+import type { ModifierGroup, ModifierOption, SelectedModifier } from "../modifier-group";
+import { applyFirstOptionFree } from "../modifier-group";
+import type { Product } from "../product";
+import { calculateItemUnitPrice } from "../lib/modifier-price";
 import { formatPosCurrency } from "@/lib/currency";
 import { Button } from "@/components/ui/Button";
 import {

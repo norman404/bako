@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { Menu } from "@/modules/menu/domain/menu";
+import type { Menu } from "../menu";
 import { cn } from "@/lib/utils";
 
 interface MenuSelectorProps {

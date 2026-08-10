@@ -1,9 +1,9 @@
 import { LayoutGrid, Package, SlidersHorizontal, UtensilsCrossed } from "lucide-react";
 import type { ModuleManifest } from "@/modules/settings";
-import { CategorySettingsPanel } from "./components/admin/CategorySettingsPanel";
-import { MenuSettingsPanel } from "./components/admin/MenuSettingsPanel";
-import { ModifierGroupSettingsPanel } from "./components/admin/ModifierGroupSettingsPanel";
-import { ProductSettingsPanel } from "./components/admin/ProductSettingsPanel";
+import { CategorySettingsPanel } from "./components/CategorySettingsPanel";
+import { MenuSettingsPanel } from "./components/MenuSettingsPanel";
+import { ModifierGroupSettingsPanel } from "./components/ModifierGroupSettingsPanel";
+import { ProductSettingsPanel } from "./components/ProductSettingsPanel";
 
 export const productsManifest: ModuleManifest = {
   id: "products",

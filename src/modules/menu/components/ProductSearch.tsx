@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { useMenuStore } from "@/modules/menu/store/menu-store";
+import { useMenuStore } from "../menu-store";
 
 interface ProductSearchProps {
   className?: string;

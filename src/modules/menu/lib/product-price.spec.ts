@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { formatProductPriceInput, parseProductPriceInput } from "@/modules/menu/lib/product-price";
+import { formatProductPriceInput, parseProductPriceInput } from "./product-price";
 
 describe("product price helpers", () => {
   it("formats cents into a peso string with two decimals", () => {

@@ -1,10 +1,10 @@
-import type { Category } from "@/modules/menu/domain/category";
+import type { Category } from "../category";
 import type {
   ModifierGroup,
   ModifierOption,
   SelectedModifier,
-} from "@/modules/menu/domain/modifier-group";
-import type { Product } from "@/modules/menu/domain/product";
+} from "../modifier-group";
+import type { Product } from "../product";
 
 const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
 

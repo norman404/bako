@@ -8,7 +8,7 @@ import {
   ModifierGroupNotFoundError,
   ModifierOptionNotFoundError,
   ProductNotFoundError,
-} from "@/modules/menu/domain/errors";
+} from "../errors";
 
 import { translateMenuError } from "./translate-menu-error";
 

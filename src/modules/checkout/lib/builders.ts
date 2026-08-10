@@ -8,7 +8,7 @@ import {
   type CreateOrderInput,
 } from "@/modules/checkout/domain/order";
 import { parsePaymentAmountInput } from "@/modules/checkout/lib/formatters";
-import { calculateItemUnitPrice } from "@/modules/menu/lib/modifier-price";
+import { calculateItemUnitPrice } from "@/modules/menu";
 import type { CartItem } from "@/modules/order/domain/cart";
 import { formatPosCurrency } from "@/lib/currency";
 

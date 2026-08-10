@@ -3,15 +3,15 @@ import { describe, expect, it, mock, beforeEach } from "bun:test";
 
 
 import { fireEvent, renderWithProviders, screen } from "@/test/test-utils";
-import type { Product } from "@/modules/menu/domain/product";
-import type { Category } from "@/modules/menu/domain/category";
-import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
+import type { Product } from "../product";
+import type { Category } from "../category";
+import type { ModifierGroup } from "../modifier-group";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
-import { buildCategory, buildModifierGroup, buildProduct } from "@/modules/menu/test/factories";
+import { buildCategory, buildModifierGroup, buildProduct } from "../test/factories";
 
 // Import dinámico DESPUÉS de mock.module: en bun los imports estáticos se evalúan
 // antes del cuerpo del módulo, y mock.module no re-parchea bindings ya evaluados.
-const { ProductGrid } = await import("@/modules/menu/components/ProductGrid");
+const { ProductGrid } = await import("./ProductGrid");
 
 function setModifierFlag(value: boolean) {
   useFeatureFlagsStore.setState({

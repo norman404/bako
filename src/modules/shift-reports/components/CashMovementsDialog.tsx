@@ -15,7 +15,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { formatPosCurrency } from "@/lib/currency";
-import { parseProductPriceInput } from "@/modules/menu/lib/product-price";
+import { parseProductPriceInput } from "@/modules/menu";
 import {
   useCashMovements,
   useAddCashMovement,

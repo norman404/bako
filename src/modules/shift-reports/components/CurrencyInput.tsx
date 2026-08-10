@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
-import { parseProductPriceInput } from "@/modules/menu/lib/product-price";
+import { parseProductPriceInput } from "@/modules/menu";
 
 interface CurrencyInputProps {
   id: string;

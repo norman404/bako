@@ -1,10 +1,10 @@
 import { SearchX, SlidersHorizontal } from "lucide-react";
 
-import type { Category } from "@/modules/menu/domain/category";
-import type { ModifierGroup } from "@/modules/menu/domain/modifier-group";
-import { filterProductsByCategory } from "@/modules/menu/domain/product-filters";
-import { sortProductsForMenu } from "@/modules/menu/domain/product-order";
-import type { Product } from "@/modules/menu/domain/product";
+import type { Category } from "../category";
+import type { ModifierGroup } from "../modifier-group";
+import { filterProductsByCategory } from "../product-filters";
+import { sortProductsForMenu } from "../product-order";
+import type { Product } from "../product";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { formatPosCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";

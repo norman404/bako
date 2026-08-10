@@ -6,13 +6,13 @@ import { fireEvent, renderWithProviders, screen, within } from "@/test/test-util
 import {
   ProductCustomizationDialog,
   type ProductCustomizationDialogProps,
-} from "@/modules/menu/components/ProductCustomizationDialog";
-import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
+} from "./ProductCustomizationDialog";
+import type { SelectedModifier } from "../modifier-group";
 import {
   buildModifierGroup,
   buildModifierOption,
   buildProduct,
-} from "@/modules/menu/test/factories";
+} from "../test/factories";
 
 function renderDialog(props: Partial<ProductCustomizationDialogProps> = {}) {
   const defaultProps: ProductCustomizationDialogProps = {
