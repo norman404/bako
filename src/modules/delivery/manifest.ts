@@ -1,6 +1,6 @@
 import { Bike } from "lucide-react";
 
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "@/modules/settings";
 import { DeliveryCutPanel } from "./components/admin/DeliveryCutPanel";
 import { DeliveryPersonSettingsPanel } from "./components/admin/DeliveryPersonSettingsPanel";
 

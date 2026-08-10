@@ -1,4 +1,4 @@
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "@/modules/settings";
 
 export const checkoutManifest: ModuleManifest = {
   id: "checkout",

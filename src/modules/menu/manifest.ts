@@ -1,5 +1,5 @@
 import { LayoutGrid, Package, SlidersHorizontal, UtensilsCrossed } from "lucide-react";
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "@/modules/settings";
 import { CategorySettingsPanel } from "./components/admin/CategorySettingsPanel";
 import { MenuSettingsPanel } from "./components/admin/MenuSettingsPanel";
 import { ModifierGroupSettingsPanel } from "./components/admin/ModifierGroupSettingsPanel";

@@ -5,7 +5,7 @@ mock.module("@/modules/printer/hooks/use-printers", () => ({
   usePrinters: mock(() => ({ data: [] })),
 }));
 
-mock.module("@/modules/settings/store/settings-store", () => ({
+mock.module("@/modules/settings", () => ({
   useSettingsStore: mock((selector: (state: { comandaHeaderText: string }) => string) =>
     selector({ comandaHeaderText: "COMANDA" }),
   ),

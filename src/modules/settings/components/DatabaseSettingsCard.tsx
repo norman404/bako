@@ -5,9 +5,9 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import type { DatabaseBackupService } from "../domain/database-backup";
-import { tauriDatabaseBackupService } from "../adapters/tauri-database-backup.adapter";
-import { useDatabaseBackup } from "../hooks/use-database-backup";
+import type { DatabaseBackupService } from "../ports";
+import { tauriDatabaseBackupService } from "../tauri-database-backup.adapter";
+import { useDatabaseBackup } from "../use-database-backup";
 
 interface DatabaseSettingsCardProps {
   service?: DatabaseBackupService;

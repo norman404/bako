@@ -26,8 +26,8 @@ import { useProductModifierGroupsMap } from "@/modules/menu/hooks/use-modifier-g
 import { Cart } from "@/modules/order/components/Cart";
 import { calculateCartTotals } from "@/modules/order/domain/cart";
 import { useOrderStore } from "@/modules/order/store/order-store";
-import { SettingsModal } from "@/modules/settings/components/SettingsModal";
-import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { SettingsModal } from "@/modules/settings";
+import { useSettingsStore } from "@/modules/settings";
 import { ShiftButton, CashMovementsButton } from "@/modules/shift-reports";
 import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";

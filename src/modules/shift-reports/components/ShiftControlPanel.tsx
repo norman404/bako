@@ -10,7 +10,7 @@ import { useFetchOrderDetail } from "@/modules/shift-reports/hooks/use-order-man
 import { usePrinters } from "@/modules/printer/hooks/use-printers";
 import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
 import { useCategories } from "@/modules/menu/hooks/use-categories";
-import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { useSettingsStore } from "@/modules/settings";
 import { formatPosCurrency } from "@/lib/currency";
 import { reprintOrder } from "@/modules/shift-reports/lib/reprint-order";
 import { reprintShiftReport } from "@/modules/shift-reports/lib/reprint-shift-report";

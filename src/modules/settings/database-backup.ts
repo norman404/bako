@@ -1,5 +1,5 @@
-import type { DatabaseBackupPort } from "../domain/database-backup";
-import { recordDatabaseRestoreFailure } from "../lib/database-restore-notice";
+import type { DatabaseBackupPort } from "./ports";
+import { recordDatabaseRestoreFailure } from "./lib/database-restore-notice";
 
 export async function performDatabaseExport(
   port: DatabaseBackupPort,

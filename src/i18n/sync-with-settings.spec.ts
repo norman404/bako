@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, mock } from 'bun:test';
 import type { i18n } from 'i18next';
 import { wireI18nWithSettings } from './sync-with-settings';
-import { useSettingsStore } from '@/modules/settings/store/settings-store';
+import { useSettingsStore } from '@/modules/settings';
 
 function createFakeI18n(initialLanguage = 'es-MX'): i18n {
   let currentLanguage = initialLanguage;

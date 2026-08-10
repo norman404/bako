@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 import userEvent from "@testing-library/user-event";
 
-import type { DatabaseBackupService } from "../domain/database-backup";
+import type { DatabaseBackupService } from "../ports";
 import { DatabaseSettingsCard } from "./DatabaseSettingsCard";
 import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 

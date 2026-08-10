@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { useSettingsStore } from "../settings-store";
 
 export function GeneralSettingsCard() {
   const { t } = useTranslation("settings");

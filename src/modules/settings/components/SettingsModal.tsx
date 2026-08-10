@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "../module-manifest";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { SystemSettingsPanel } from "./SystemSettingsPanel";
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";

@@ -1,5 +1,5 @@
 import type { i18n } from 'i18next';
-import { useSettingsStore } from '@/modules/settings/store/settings-store';
+import { useSettingsStore } from '@/modules/settings';
 
 let isChangingLanguage = false;
 

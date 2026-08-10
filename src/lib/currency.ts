@@ -1,4 +1,4 @@
-import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { useSettingsStore } from "@/modules/settings";
 
 const formatterCache = new Map<string, Intl.NumberFormat>();
 

@@ -1,5 +1,5 @@
 import { Download } from "lucide-react";
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "@/modules/settings";
 import { UpdateSettingsPanel } from "./UpdateSettingsPanel";
 
 export const updaterManifest: ModuleManifest = {

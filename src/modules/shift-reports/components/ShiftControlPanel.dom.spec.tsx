@@ -44,7 +44,7 @@ const useSettingsStoreMock = mock((selector: (state: typeof SETTINGS_STATE) => u
   getState: () => typeof SETTINGS_STATE;
 };
 useSettingsStoreMock.getState = () => SETTINGS_STATE;
-mock.module("@/modules/settings/store/settings-store", () => ({
+mock.module("@/modules/settings", () => ({
   useSettingsStore: useSettingsStoreMock,
 }));
 

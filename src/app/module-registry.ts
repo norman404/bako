@@ -4,7 +4,7 @@ import { deliveryPersonsManifest, deliveryCutManifest } from "@/modules/delivery
 import { printerManifest } from "@/modules/printer/manifest";
 import { shiftReportsManifest } from "@/modules/shift-reports/manifest";
 import { updaterManifest } from "@/modules/updater/manifest";
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "@/modules/settings";
 
 export const MODULE_REGISTRY: ModuleManifest[] = [
   productsManifest,

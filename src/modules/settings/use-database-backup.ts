@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
-import type { DatabaseBackupService, DatabaseInfo } from "../domain/database-backup";
-import { tauriDatabaseBackupService } from "../adapters/tauri-database-backup.adapter";
-import { performDatabaseExport, performDatabaseRestore } from "../use-cases/database-backup";
+import type { DatabaseBackupService, DatabaseInfo } from "./ports";
+import { tauriDatabaseBackupService } from "./tauri-database-backup.adapter";
+import { performDatabaseExport, performDatabaseRestore } from "./database-backup";
 
 const DATABASE_INFO_QUERY_KEY = ["settings", "database-info"] as const;
 

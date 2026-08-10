@@ -2,7 +2,7 @@ import { describe, expect, it, mock, spyOn, beforeEach } from "bun:test";
 import { toast } from "sonner";
 
 import * as printerHooks from "@/modules/printer/hooks/use-printers";
-import * as settingsStore from "@/modules/settings/store/settings-store";
+import * as settingsStore from "@/modules/settings";
 import * as testPrinterModule from "@/modules/printer/adapters/test-printer.adapter";
 import * as usbAdapterModule from "@/modules/printer/adapters/list-usb-printers.adapter";
 import { PrinterSettingsPanel } from "@/modules/printer/components/admin/PrinterSettingsPanel";

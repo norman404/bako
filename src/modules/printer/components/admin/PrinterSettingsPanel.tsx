@@ -29,7 +29,7 @@ import {
 import { translatePrinterError } from "@/modules/printer/lib/translate-printer-error";
 import { testPrinter } from "@/modules/printer/adapters/test-printer.adapter";
 import { listUsbPrinters, type UsbPrinterInfo } from "@/modules/printer/adapters/list-usb-printers.adapter";
-import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { useSettingsStore } from "@/modules/settings";
 
 const LABEL_LANGUAGE_OPTIONS = [
   { value: PRINTER_LABEL_LANGUAGE.TSPL, label: "TSPL" },

@@ -1,5 +1,5 @@
 import { Clock } from "lucide-react";
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "@/modules/settings";
 import { ShiftControlPanel } from "./components/ShiftControlPanel";
 
 export const shiftReportsManifest: ModuleManifest = {

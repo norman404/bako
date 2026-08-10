@@ -3,7 +3,7 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { relaunch } from "@tauri-apps/plugin-process";
 
 import { closeDatabase } from "@/db/client";
-import type { DatabaseBackupService, DatabaseInfo } from "../domain/database-backup";
+import type { DatabaseBackupService, DatabaseInfo } from "./ports";
 
 const DATABASE_FILTERS = [
   { name: "SQLite", extensions: ["sqlite", "db"] },

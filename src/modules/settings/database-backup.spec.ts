@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from "bun:test";
 
 import { performDatabaseExport, performDatabaseRestore } from "./database-backup";
-import type { DatabaseBackupPort } from "../domain/database-backup";
+import type { DatabaseBackupPort } from "./ports";
 
 function createPort(events: string[]): DatabaseBackupPort {
   return {

@@ -61,12 +61,12 @@ afterAll(() => {
   mock.module("@/modules/feature-flags", () => realFeatureFlagsStoreModule);
 });
 
-import { SettingsModal } from "@/modules/settings/components/SettingsModal";
+import { SettingsModal } from "./SettingsModal";
 import { fireEvent, renderWithProviders, screen, within } from "@/test/test-utils";
-import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import { useSettingsStore } from "../settings-store";
 import { DEFAULT_CURRENCY_CONFIG } from "@/lib/currency-config";
 import { MODULE_REGISTRY } from "@/app/module-registry";
-import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
+import type { ModuleManifest } from "../module-manifest";
 
 type SettingsModalProps = Parameters<typeof SettingsModal>[0];
 
