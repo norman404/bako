@@ -1,7 +1,7 @@
 import { ResultAsync, okAsync } from "neverthrow";
 import { invoke } from "@tauri-apps/api/core";
 
-import type { Printer } from "@/modules/printer/domain/printer";
+import type { Printer } from "@/modules/printer";
 import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
 
 export interface PrintTicketPayload {
@@ -73,5 +73,5 @@ export function printOrder(
 }
 
 export async function testPrinter(): Promise<void> {
-  throw new Error("testPrinter is deprecated. Use testPrinter from @/modules/printer/adapters/test-printer.adapter instead.");
+  throw new Error("testPrinter is deprecated. Use testPrinter from the printer module (src/modules/printer/test-printer.adapter) instead.");
 }

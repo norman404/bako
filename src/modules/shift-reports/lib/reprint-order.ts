@@ -2,7 +2,7 @@ import { ResultAsync } from "neverthrow";
 
 import { printOrder } from "@/modules/checkout/adapters/print-ticket.adapter";
 import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
-import type { Printer } from "@/modules/printer/domain/printer";
+import type { Printer } from "@/modules/printer";
 import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
 
 function toPrintPaymentMethod(method: string): "cash" | "card" {

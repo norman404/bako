@@ -19,16 +19,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PRINTER_LABEL_LANGUAGE, PRINTER_ROLE, PRINTER_TYPE, type LabelLanguage, type Printer, type PrinterCreateInput, type PrinterRole, type PrinterType } from "@/modules/printer/domain/printer";
+import { PRINTER_LABEL_LANGUAGE, PRINTER_ROLE, PRINTER_TYPE, type LabelLanguage, type Printer, type PrinterCreateInput, type PrinterRole, type PrinterType } from "./printer";
 import {
   useArchivePrinter,
   useCreatePrinter,
   usePrinters,
   useUpdatePrinter,
-} from "@/modules/printer/hooks/use-printers";
-import { translatePrinterError } from "@/modules/printer/lib/translate-printer-error";
-import { testPrinter } from "@/modules/printer/adapters/test-printer.adapter";
-import { listUsbPrinters, type UsbPrinterInfo } from "@/modules/printer/adapters/list-usb-printers.adapter";
+} from "./use-printers";
+import { translatePrinterError } from "./translate-printer-error";
+import { testPrinter } from "./test-printer.adapter";
+import { listUsbPrinters, type UsbPrinterInfo } from "./list-usb-printers.adapter";
 import { useSettingsStore } from "@/modules/settings";
 
 const LABEL_LANGUAGE_OPTIONS = [

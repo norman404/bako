@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
-import type { PrinterCreateInput } from "@/modules/printer/domain/printer";
-import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
+import type { PrinterCreateInput } from "./printer";
+import { PRINTER_ROLE } from "./printer";
 import type { PrinterRow } from "@/db/schema";
 
 const dbMocks = (() => {
@@ -46,8 +46,8 @@ mock.module("@/db/client", () => ({
   },
 }));
 
-import { PrinterValidationError } from "@/modules/printer/domain/errors";
-import { printerDrizzleRepository } from "@/modules/printer/persistence/printer-drizzle.repository";
+import { PrinterValidationError } from "./errors";
+import { printerDrizzleRepository } from "./repository";
 
 function buildPrinterRow(overrides: Partial<PrinterRow> = {}): PrinterRow {
   return {

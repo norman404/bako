@@ -9,7 +9,7 @@ import { useSettingsStore } from "@/modules/settings";
 import { printOrder, type PrintTicketPayload } from "@/modules/checkout/adapters/print-ticket.adapter";
 import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
 import { buildPrinter } from "@/modules/printer/test/factories";
-import { PRINTER_TYPE, PRINTER_ROLE } from "@/modules/printer/domain/printer";
+import { PRINTER_TYPE, PRINTER_ROLE } from "@/modules/printer";
 
 const mockedInvoke = invoke as Mock<typeof invoke>;
 

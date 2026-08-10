@@ -1,7 +1,7 @@
 import { ResultAsync, okAsync } from "neverthrow";
 import { invoke } from "@tauri-apps/api/core";
 
-import type { Printer } from "@/modules/printer/domain/printer";
+import type { Printer } from "@/modules/printer";
 import type { ShiftReport } from "@/modules/shift-reports/domain/shift";
 import { formatPosCurrency } from "@/lib/currency";
 

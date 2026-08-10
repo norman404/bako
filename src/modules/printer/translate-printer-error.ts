@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 
-import { PrinterDomainError, type PrinterTranslatableError } from "@/modules/printer/domain/errors";
+import { PrinterDomainError, type PrinterTranslatableError } from "./errors";
 
 function isPrinterTranslatableError(error: unknown): error is PrinterTranslatableError {
   return error instanceof PrinterDomainError;

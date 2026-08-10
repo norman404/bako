@@ -1,5 +1,5 @@
-import type { Printer } from "@/modules/printer/domain/printer";
-import { PRINTER_TYPE, PRINTER_ROLE, PRINTER_LABEL_LANGUAGE, PRINTER_ORIENTATION } from "@/modules/printer/domain/printer";
+import type { Printer } from "../printer";
+import { PRINTER_TYPE, PRINTER_ROLE, PRINTER_LABEL_LANGUAGE, PRINTER_ORIENTATION } from "../printer";
 
 const FIXED_DATE = new Date("2026-01-01T00:00:00.000Z");
 

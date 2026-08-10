@@ -1,15 +1,15 @@
 import { describe, expect, it, mock, spyOn, beforeEach } from "bun:test";
 import { toast } from "sonner";
 
-import * as printerHooks from "@/modules/printer/hooks/use-printers";
+import * as printerHooks from "./use-printers";
 import * as settingsStore from "@/modules/settings";
-import * as testPrinterModule from "@/modules/printer/adapters/test-printer.adapter";
-import * as usbAdapterModule from "@/modules/printer/adapters/list-usb-printers.adapter";
-import { PrinterSettingsPanel } from "@/modules/printer/components/admin/PrinterSettingsPanel";
+import * as testPrinterModule from "./test-printer.adapter";
+import * as usbAdapterModule from "./list-usb-printers.adapter";
+import { PrinterSettingsPanel } from "./PrinterSettingsPanel";
 import { fireEvent, renderWithProviders, screen, waitFor } from "@/test/test-utils";
-import { buildPrinter } from "@/modules/printer/test/factories";
-import { PRINTER_ROLE, PRINTER_TYPE } from "@/modules/printer/domain/printer";
-import type { Printer } from "@/modules/printer/domain/printer";
+import { buildPrinter } from "./test/factories";
+import { PRINTER_ROLE, PRINTER_TYPE } from "./printer";
+import type { Printer } from "./printer";
 
 type UsePrintersResult = ReturnType<typeof printerHooks.usePrinters>;
 type UseCreatePrinterResult = ReturnType<typeof printerHooks.useCreatePrinter>;

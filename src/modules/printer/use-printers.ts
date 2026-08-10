@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { archivePrinter } from "@/modules/printer/use-cases/archive-printer";
-import { createPrinter } from "@/modules/printer/use-cases/create-printer";
-import { listPrinters } from "@/modules/printer/use-cases/list-printers";
-import { updatePrinter } from "@/modules/printer/use-cases/update-printer";
-import type { PrinterCreateInput, PrinterUpdateInput } from "@/modules/printer/domain/printer";
-import { printerDrizzleRepository } from "@/modules/printer/persistence/printer-drizzle.repository";
+import { archivePrinter } from "./archive-printer";
+import { createPrinter } from "./create-printer";
+import { listPrinters } from "./list-printers";
+import { updatePrinter } from "./update-printer";
+import type { PrinterCreateInput, PrinterUpdateInput } from "./printer";
+import { printerDrizzleRepository } from "./repository";
 
 export const PRINTERS_QUERY_KEY = ["printers"] as const;
 

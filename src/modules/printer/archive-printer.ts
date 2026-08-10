@@ -1,7 +1,7 @@
 import type { ResultAsync } from "neverthrow";
 
-import type { PrinterDomainError } from "@/modules/printer/domain/errors";
-import type { PrinterRepository } from "@/modules/printer/domain/ports";
+import type { PrinterDomainError } from "./errors";
+import type { PrinterRepository } from "./ports";
 
 export function archivePrinter(
   repository: PrinterRepository,

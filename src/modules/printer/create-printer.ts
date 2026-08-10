@@ -1,11 +1,11 @@
 import { errAsync, type ResultAsync } from "neverthrow";
 
-import { PrinterValidationError, type PrinterDomainError } from "@/modules/printer/domain/errors";
-import type { Printer, PrinterUpdateInput } from "@/modules/printer/domain/printer";
-import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
-import type { PrinterRepository } from "@/modules/printer/domain/ports";
+import { PrinterValidationError, type PrinterDomainError } from "./errors";
+import type { Printer, PrinterCreateInput } from "./printer";
+import { PRINTER_ROLE } from "./printer";
+import type { PrinterRepository } from "./ports";
 
-function validatePrinterInput(input: PrinterUpdateInput): PrinterDomainError | null {
+function validatePrinterInput(input: PrinterCreateInput): PrinterDomainError | null {
   if (input.name.trim().length === 0) {
     return new PrinterValidationError("printerNameRequired");
   }
@@ -21,7 +21,7 @@ function validatePrinterInput(input: PrinterUpdateInput): PrinterDomainError | n
   return null;
 }
 
-function normalizePrinterInput(input: PrinterUpdateInput): PrinterUpdateInput {
+function normalizePrinterInput(input: PrinterCreateInput): PrinterCreateInput {
   return {
     name: input.name.trim(),
     type: input.type,
@@ -35,15 +35,14 @@ function normalizePrinterInput(input: PrinterUpdateInput): PrinterUpdateInput {
   };
 }
 
-export function updatePrinter(
+export function createPrinter(
   repository: PrinterRepository,
-  id: string,
-  input: PrinterUpdateInput,
+  input: PrinterCreateInput,
 ): ResultAsync<Printer, PrinterDomainError> {
   const validationError = validatePrinterInput(input);
   if (validationError) {
     return errAsync(validationError);
   }
 
-  return repository.update(id, normalizePrinterInput(input));
+  return repository.create(normalizePrinterInput(input));
 }

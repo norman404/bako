@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import i18next from "i18next";
 
-import { PrinterNotFoundError, PrinterValidationError } from "@/modules/printer/domain/errors";
+import { PrinterNotFoundError, PrinterValidationError } from "./errors";
 
 import { translatePrinterError } from "./translate-printer-error";
 

@@ -27,8 +27,15 @@ mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
   },
 }));
 
+import * as printerModule from "@/modules/printer";
+
+// Snapshot del módulo real ANTES de mockearlo: el barrel también exporta
+// PRINTER_ROLE, que el componente y este spec necesitan con su valor real.
+const realPrinterModule = { ...printerModule };
+
 const usePrintersMock = mock();
-mock.module("@/modules/printer/hooks/use-printers", () => ({
+mock.module("@/modules/printer", () => ({
+  ...realPrinterModule,
   usePrinters: usePrintersMock,
 }));
 
@@ -84,7 +91,7 @@ mock.module("./EditOrderModal", () => ({
 
 import { ShiftControlPanel } from "./ShiftControlPanel";
 import { SHIFT_QUERY_KEYS } from "@/modules/shift-reports/hooks/use-shift-reports";
-import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
+import { PRINTER_ROLE } from "@/modules/printer";
 import { buildPrinter } from "@/modules/printer/test/factories";
 import type { ShiftHistoryItem, ShiftReport } from "@/modules/shift-reports/domain/shift";
 import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";

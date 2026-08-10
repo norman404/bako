@@ -1,6 +1,6 @@
 import { Printer } from "lucide-react";
 import type { ModuleManifest } from "@/modules/settings";
-import { PrinterSettingsPanel } from "./components/admin/PrinterSettingsPanel";
+import { PrinterSettingsPanel } from "./PrinterSettingsPanel";
 
 export const printerManifest: ModuleManifest = {
   id: "printers",

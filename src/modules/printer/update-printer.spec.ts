@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
-import { PrinterDomainError, PrinterValidationError } from "@/modules/printer/domain/errors";
-import type { PrinterUpdateInput } from "@/modules/printer/domain/printer";
-import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
-import type { PrinterRepository } from "@/modules/printer/domain/ports";
-import { buildPrinter } from "@/modules/printer/test/factories";
+import { PrinterDomainError, PrinterValidationError } from "./errors";
+import type { PrinterUpdateInput } from "./printer";
+import { PRINTER_ROLE } from "./printer";
+import type { PrinterRepository } from "./ports";
+import { buildPrinter } from "./test/factories";
 import { updatePrinter } from "./update-printer";
 
 function buildMockRepository(

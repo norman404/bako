@@ -1,4 +1,4 @@
-import { usePrinters } from "@/modules/printer/hooks/use-printers";
+import { usePrinters } from "@/modules/printer";
 import type { CartItem } from "@/modules/order/domain/cart";
 import type { Category } from "@/modules/menu/domain/category";
 import { buildKitchenCommands } from "@/modules/checkout/lib/build-kitchen-commands";

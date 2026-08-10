@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { buildPrinter } from "@/modules/printer/test/factories";
-import { PRINTER_TYPE, PRINTER_ROLE, PRINTER_LABEL_LANGUAGE } from "@/modules/printer/domain/printer";
+import { buildPrinter } from "./factories";
+import { PRINTER_TYPE, PRINTER_ROLE, PRINTER_LABEL_LANGUAGE } from "../printer";
 
 describe("buildPrinter", () => {
   it("generates a valid Printer with defaults", () => {

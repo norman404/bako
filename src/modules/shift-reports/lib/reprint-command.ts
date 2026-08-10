@@ -1,5 +1,5 @@
 import type { Category } from "@/modules/menu/domain/category";
-import type { Printer } from "@/modules/printer/domain/printer";
+import type { Printer } from "@/modules/printer";
 import { buildKitchenCommands, type CartLine } from "@/modules/checkout/lib/build-kitchen-commands";
 import { printCommand } from "@/modules/checkout/adapters/print-command.adapter";
 import type { CommandItemSelection, OrderDetail, OrderDetailItem } from "@/modules/shift-reports/domain/order-management";

@@ -1,6 +1,6 @@
 import type { Category } from "@/modules/menu/domain/category";
 import type { SelectedModifier } from "@/modules/menu/domain/modifier-group";
-import type { Printer } from "@/modules/printer/domain/printer";
+import type { Printer } from "@/modules/printer";
 import type { PrintCommandItemModifier, PrintCommandOptions } from "@/modules/checkout/domain/print-command";
 
 export interface CartLine {

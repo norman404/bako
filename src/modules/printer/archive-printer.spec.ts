@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
-import { PrinterDomainError } from "@/modules/printer/domain/errors";
-import type { PrinterRepository } from "@/modules/printer/domain/ports";
-import { buildPrinter } from "@/modules/printer/test/factories";
-import { listPrinters } from "./list-printers";
+import { PrinterDomainError } from "./errors";
+import type { PrinterRepository } from "./ports";
+import { buildPrinter } from "./test/factories";
+import { archivePrinter } from "./archive-printer";
 
 function buildMockRepository(
   overrides: Partial<PrinterRepository> = {},
@@ -20,30 +20,35 @@ function buildMockRepository(
   } as PrinterRepository;
 }
 
-describe("listPrinters", () => {
-  it("delegates to repository.list()", async () => {
-    const mockPrinters = [buildPrinter({ id: "p1" }), buildPrinter({ id: "p2", name: "Barra" })];
-    const mockRepository = buildMockRepository({ list: () => okAsync(mockPrinters) });
+describe("archivePrinter", () => {
+  it("delegates to repository.archive()", async () => {
+    const id = "printer-1";
+    const mockRepository = buildMockRepository({
+      archive: (receivedId) => {
+        expect(receivedId).toBe(id);
+        return okAsync(undefined);
+      },
+    });
 
-    const result = await listPrinters(mockRepository);
+    const result = await archivePrinter(mockRepository, id);
 
     expect(result.isOk()).toBe(true);
     if (result.isErr()) {
       throw result.error;
     }
 
-    expect(result.value).toEqual(mockPrinters);
+    expect(result.value).toBeUndefined();
   });
 
   it("propagates repository errors", async () => {
     const mockError = new PrinterDomainError("dbError", { context: "Database connection failed" });
-    const mockRepository = buildMockRepository({ list: () => errAsync(mockError) });
+    const mockRepository = buildMockRepository({ archive: () => errAsync(mockError) });
 
-    const result = await listPrinters(mockRepository);
+    const result = await archivePrinter(mockRepository, "printer-1");
 
     expect(result.isErr()).toBe(true);
     if (result.isOk()) {
-      throw new Error("Expected listPrinters to fail");
+      throw new Error("Expected archivePrinter to fail");
     }
 
     expect(result.error).toBe(mockError);

@@ -1,7 +1,7 @@
 import { describe, expect, it, mock, beforeEach } from "bun:test";
 import type { Mock } from "bun:test";
 
-mock.module("@/modules/printer/hooks/use-printers", () => ({
+mock.module("@/modules/printer", () => ({
   usePrinters: mock(() => ({ data: [] })),
 }));
 
@@ -21,7 +21,7 @@ mock.module("@/modules/checkout/adapters/print-command.adapter", () => ({
 
 import { renderHook } from "@testing-library/react";
 import { usePrintCommands } from "./use-print-commands";
-import { usePrinters } from "@/modules/printer/hooks/use-printers";
+import { usePrinters } from "@/modules/printer";
 import { buildKitchenCommands } from "@/modules/checkout/lib/build-kitchen-commands";
 import { buildCartItem } from "@/modules/order/test/factories";
 import { buildCategory } from "@/modules/menu/test/factories";
