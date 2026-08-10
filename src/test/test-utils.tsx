@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, type RenderOptions } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
-import { I18nProvider, createTestI18n } from "@/shared/i18n/test-utils";
+import { I18nProvider, createTestI18n } from "@/i18n/test-utils";
 
 const TEST_QUERY_CLIENT_DEFAULT_OPTIONS = {
   queries: {
