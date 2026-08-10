@@ -1,11 +1,11 @@
 import { Download, RefreshCw, AlertCircle, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import type { UseUpdaterResult } from "@/modules/updater/hooks/use-updater";
+import type { UseUpdaterResult } from "./use-updater";
 import {
   UpdateStatus,
   type UpdateInfo,
-} from "@/modules/updater/domain/update-status";
+} from "./update-status";
 
 export interface UpdateToastProps {
   updater: UseUpdaterResult;

@@ -4,14 +4,14 @@ import { renderHook, act } from "@testing-library/react";
 // The updater status MUST be a single source of truth shared across every
 // consumer (the App toast + the Settings panel). We mock the adapter so the
 // check resolves a controlled update without needing the Tauri runtime.
-mock.module("@/modules/updater/adapters/tauri-updater.adapter", () => ({
+mock.module("./tauri-updater.adapter", () => ({
   checkForUpdate: mock(),
   downloadAndInstallUpdate: mock(),
   relaunchApplication: mock(),
 }));
 
-import { checkForUpdate, type UpdateHandle } from "@/modules/updater/adapters/tauri-updater.adapter";
-import { createAvailableStatus } from "@/modules/updater/domain/update-status";
+import { checkForUpdate, type UpdateHandle } from "./tauri-updater.adapter";
+import { createAvailableStatus } from "./update-status";
 
 import { useUpdater } from "./use-updater";
 

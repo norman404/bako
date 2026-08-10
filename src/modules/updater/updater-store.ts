@@ -9,13 +9,13 @@ import {
   createDownloadingStatus,
   createReadyToInstallStatus,
   createErrorStatus,
-} from "@/modules/updater/domain/update-status";
+} from "./update-status";
 import {
   type UpdateHandle,
   checkForUpdate,
   downloadAndInstallUpdate,
   relaunchApplication,
-} from "@/modules/updater/adapters/tauri-updater.adapter";
+} from "./tauri-updater.adapter";
 
 interface UpdateHandleInfo {
   version: string;

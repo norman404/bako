@@ -7,11 +7,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/Button";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
-import { useUpdater } from "@/modules/updater";
+import { useUpdater } from "./use-updater";
 import {
   UpdateStatus,
   type UpdateInfo,
-} from "@/modules/updater/domain/update-status";
+} from "./update-status";
 
 function translateUpdaterMessage(_message: string, t: TFunction): string {
   return t("panel.genericError");

@@ -30,8 +30,8 @@ import {
   createReadyToInstallStatus,
   createErrorStatus,
   createCheckingStatus,
-} from "@/modules/updater/domain/update-status";
-import type { UseUpdaterResult } from "@/modules/updater/hooks/use-updater";
+} from "./update-status";
+import type { UseUpdaterResult } from "./use-updater";
 
 import { UpdateToast, type UpdateToastProps } from "./UpdateToast";
 

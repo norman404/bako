@@ -196,8 +196,8 @@ describe("SettingsModal (settings feature)", () => {
   it("should render the updater panel supplied by the registry manifest", () => {
     // CASE: el módulo updater aporta su panel a través del registry.
     // VALIDATES: SettingsModal resuelve el panel desde el manifest con id "updater"
-    // y NO desde un import directo a @/modules/updater/components/... — ese import
-    // es el ciclo settings ↔ updater que documenta docs/architecture/module-system.md.
+    // y NO desde un import directo al componente — ese import era el ciclo
+    // settings ↔ updater que documenta docs/architecture/module-system.md.
     const sentinelRegistry: ModuleManifest[] = [
       {
         id: "updater",

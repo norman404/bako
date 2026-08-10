@@ -1,7 +1,7 @@
 import { describe, expect, it, mock, beforeEach, type Mock } from "bun:test";
 import type { DownloadEvent } from "@tauri-apps/plugin-updater";
 
-mock.module("@/modules/updater/adapters/tauri-updater.adapter", () => ({
+mock.module("./tauri-updater.adapter", () => ({
   checkForUpdate: mock(),
   downloadAndInstallUpdate: mock(),
   relaunchApplication: mock(),
@@ -12,7 +12,7 @@ import {
   downloadAndInstallUpdate,
   relaunchApplication,
   type UpdateHandle,
-} from "@/modules/updater/adapters/tauri-updater.adapter";
+} from "./tauri-updater.adapter";
 import {
   UpdateStatus,
   createIdleStatus,
@@ -20,7 +20,7 @@ import {
   createAvailableStatus,
   createReadyToInstallStatus,
   createErrorStatus,
-} from "@/modules/updater/domain/update-status";
+} from "./update-status";
 import { useUpdaterStore } from "./updater-store";
 
 const checkForUpdateMock = checkForUpdate as Mock<typeof checkForUpdate>;

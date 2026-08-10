@@ -1,13 +1,13 @@
 import { describe, expect, it, mock, beforeEach, type Mock } from "bun:test";
 import { renderHook, act, waitFor } from "@testing-library/react";
 
-mock.module("@/modules/updater/adapters/tauri-updater.adapter", () => ({
+mock.module("./tauri-updater.adapter", () => ({
   checkForUpdate: mock(),
   downloadAndInstallUpdate: mock(),
   relaunchApplication: mock(),
 }));
 
-import { checkForUpdate, type UpdateHandle } from "@/modules/updater/adapters/tauri-updater.adapter";
+import { checkForUpdate, type UpdateHandle } from "./tauri-updater.adapter";
 import {
   createIdleStatus,
   createCheckingStatus,
@@ -15,8 +15,8 @@ import {
   createDownloadingStatus,
   createReadyToInstallStatus,
   createErrorStatus,
-} from "@/modules/updater/domain/update-status";
-import { useUpdaterStore } from "@/modules/updater/store/updater-store";
+} from "./update-status";
+import { useUpdaterStore } from "./updater-store";
 
 import { useUpdater } from "./use-updater";
 

@@ -1,7 +1,7 @@
 import { useShallow } from "zustand/react/shallow";
 
-import { useUpdaterStore } from "@/modules/updater/store/updater-store";
-import { UpdateStatus, type UpdateInfo } from "@/modules/updater/domain/update-status";
+import { useUpdaterStore } from "./updater-store";
+import { UpdateStatus, type UpdateInfo } from "./update-status";
 
 export interface UseUpdaterResult {
   status: UpdateInfo;
