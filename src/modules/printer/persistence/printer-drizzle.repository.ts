@@ -4,8 +4,8 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { PrinterNotFoundError, PrinterValidationError, type PrinterDomainError } from "@/modules/printer/domain/errors";
 import { DEFAULT_LABEL_ORIENTATION, PRINTER_ROLE, type Printer, type PrinterCreateInput, type PrinterUpdateInput } from "@/modules/printer/domain/printer";
 import type { PrinterRepository } from "@/modules/printer/domain/ports";
-import { db } from "@/shared/db/client";
-import { printers, type PrinterRow } from "@/shared/db/schema";
+import { db } from "@/db/client";
+import { printers, type PrinterRow } from "@/db/schema";
 
 const DEFAULT_LABEL_WIDTH_MM = 40;
 const DEFAULT_LABEL_HEIGHT_MM = 30;

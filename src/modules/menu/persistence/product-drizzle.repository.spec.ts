@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { ProductUpsertInput } from "@/modules/menu/domain/ports";
-import type { ProductMenuRow, ProductRow } from "@/shared/db/schema";
+import type { ProductMenuRow, ProductRow } from "@/db/schema";
 
 const dbMocks = (() => {
   const selectLimitMock = mock<any>(() => Promise.resolve([]));
@@ -42,7 +42,7 @@ const dbMocks = (() => {
   };
 })();
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,

@@ -4,8 +4,8 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import type { DeliveryPerson, DeliveryPersonCutRow } from "@/modules/delivery/domain/delivery-person";
 import { DeliveryPersonError, DeliveryPersonNotFoundError } from "@/modules/delivery/domain/errors";
 import type { DeliveryPersonCreateInput, DeliveryPersonRepository } from "@/modules/delivery/domain/ports";
-import { db } from "@/shared/db/client";
-import { deliveryPersons, orders, type DeliveryPersonRow } from "@/shared/db/schema";
+import { db } from "@/db/client";
+import { deliveryPersons, orders, type DeliveryPersonRow } from "@/db/schema";
 
 function rowToDeliveryPerson(row: DeliveryPersonRow): DeliveryPerson {
   return {

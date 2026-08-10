@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { relaunch } from "@tauri-apps/plugin-process";
 
-import { closeDatabase } from "@/shared/db/client";
+import { closeDatabase } from "@/db/client";
 import type { DatabaseBackupService, DatabaseInfo } from "../domain/database-backup";
 
 const DATABASE_FILTERS = [

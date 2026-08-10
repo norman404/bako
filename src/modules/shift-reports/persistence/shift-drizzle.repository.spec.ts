@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 
-import type { CashMovementRow, OrderRow, ShiftRow } from "@/shared/db/schema";
+import type { CashMovementRow, OrderRow, ShiftRow } from "@/db/schema";
 
 // ─── db.select() mock: a chainable, thenable node ──────────────────────────
 //
@@ -39,7 +39,7 @@ const dbMocks = (() => {
   return { selectMock, insertMock, updateMock, deleteMock };
 })();
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,

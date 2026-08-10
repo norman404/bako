@@ -9,7 +9,7 @@ import type {
 } from "@/modules/menu/domain/ports";
 import type { ModifierGroup, ModifierOption, ModifierGroupType } from "@/modules/menu/domain/modifier-group";
 import { MenuDomainError, ModifierGroupNotFoundError } from "@/modules/menu/domain/errors";
-import { db } from "@/shared/db/client";
+import { db } from "@/db/client";
 import {
   categoryModifierGroups,
   modifierGroups,
@@ -17,7 +17,7 @@ import {
   productModifierGroups,
   type ModifierGroupRow,
   type ModifierOptionRow,
-} from "@/shared/db/schema";
+} from "@/db/schema";
 
 const VALID_MODIFIER_GROUP_TYPES: readonly ModifierGroupType[] = [
   "single",

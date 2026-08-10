@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { eq } from "drizzle-orm";
 import { ResultAsync, okAsync } from "neverthrow";
-import { db } from "@/shared/db/client";
-import { systemSettings } from "@/shared/db/schema";
+import { db } from "@/db/client";
+import { systemSettings } from "@/db/schema";
 import { DEFAULT_CURRENCY_CONFIG } from "@/lib/currency-config";
 
 type PrinterType = "usb" | "network" | "none";

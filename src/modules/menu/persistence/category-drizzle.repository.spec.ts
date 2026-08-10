@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { CategoryCreateInput } from "@/modules/menu/domain/ports";
-import type { CategoryRow } from "@/shared/db/schema";
+import type { CategoryRow } from "@/db/schema";
 
 const dbMocks = (() => {
   const selectLimitMock = mock<any>(() => Promise.resolve([]));
@@ -46,7 +46,7 @@ const dbMocks = (() => {
   };
 })();
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,

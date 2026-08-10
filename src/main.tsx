@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { toast, Toaster } from "sonner";
 
 import { App } from "./app/App";
-import { initDatabase } from "./shared/db/client";
+import { initDatabase } from "@/db/client";
 import { useSettingsStore } from "./modules/settings/store/settings-store";
 import { useFeatureFlagsStore } from "./modules/feature-flags/store/feature-flags-store";
 import { initI18n, I18nProvider, i18n } from "./shared/i18n";

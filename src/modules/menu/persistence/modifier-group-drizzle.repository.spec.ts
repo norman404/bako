@@ -9,7 +9,7 @@ import type {
   ModifierGroupRow,
   ModifierOptionRow,
   ProductModifierGroupRow,
-} from "@/shared/db/schema";
+} from "@/db/schema";
 
 const dbMocks = (() => {
   const selectMock = mock<any>();
@@ -40,7 +40,7 @@ const dbMocks = (() => {
   };
 })();
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,

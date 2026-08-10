@@ -4,8 +4,8 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import type { Category } from "@/modules/menu/domain/category";
 import { CategoryNotFoundError, MenuDomainError } from "@/modules/menu/domain/errors";
 import type { CategoryCreateInput, CategoryRepository } from "@/modules/menu/domain/ports";
-import { db } from "@/shared/db/client";
-import { categories, type CategoryRow, productMenus, products } from "@/shared/db/schema";
+import { db } from "@/db/client";
+import { categories, type CategoryRow, productMenus, products } from "@/db/schema";
 
 function rowToCategory(row: CategoryRow): Category {
   return {

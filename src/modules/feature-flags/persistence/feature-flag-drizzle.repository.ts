@@ -4,8 +4,8 @@ import { ResultAsync } from "neverthrow";
 import type { FeatureFlag, FeatureFlagKey } from "@/modules/feature-flags/domain/feature-flag";
 import { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
 import type { FeatureFlagRepository } from "@/modules/feature-flags/domain/ports";
-import { db } from "@/shared/db/client";
-import { featureFlags, type FeatureFlagRow } from "@/shared/db/schema";
+import { db } from "@/db/client";
+import { featureFlags, type FeatureFlagRow } from "@/db/schema";
 
 function wrapDbError(context: string) {
   return (cause: unknown) => new FeatureFlagPersistenceError(`${context}: ${String(cause)}`);

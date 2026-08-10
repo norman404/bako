@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 
-import type { FeatureFlagRow } from "@/shared/db/schema";
+import type { FeatureFlagRow } from "@/db/schema";
 
 const dbMocks = (() => {
   const selectFromMock = mock<() => Promise<FeatureFlagRow[]>>();
@@ -21,7 +21,7 @@ const dbMocks = (() => {
   };
 })();
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     update: dbMocks.updateMock,

@@ -5,7 +5,7 @@ import type {
   OrderItemRow,
   OrderRow,
   PaymentRow,
-} from "@/shared/db/schema";
+} from "@/db/schema";
 
 const txMocks = (() => {
   const selectMock = mock<any>();
@@ -43,7 +43,7 @@ const txClient = {
   update: txMocks.updateMock,
 };
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: dbMocks,
   withTransaction: async (operation: (tx: any) => Promise<any>) => operation(txClient),
 }));

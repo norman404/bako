@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { DeliveryPersonCreateInput } from "@/modules/delivery/domain/ports";
-import type { DeliveryPersonRow } from "@/shared/db/schema";
+import type { DeliveryPersonRow } from "@/db/schema";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const dbMocks = (() => {
@@ -46,7 +46,7 @@ const dbMocks = (() => {
 })();
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,

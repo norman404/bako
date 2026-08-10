@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, inArray, like, lt, or } from "drizzle-orm";
 import { errAsync, ResultAsync } from "neverthrow";
 
-import { db, withTransaction, type DatabaseClient } from "@/shared/db/client";
+import { db, withTransaction, type DatabaseClient } from "@/db/client";
 import {
   customers,
   orderItems,
@@ -19,7 +19,7 @@ import {
   type OrderRow,
   type PaymentInsert,
   type PaymentRow,
-} from "@/shared/db/schema";
+} from "@/db/schema";
 import {
   CHECKOUT_FULFILLMENT_TYPE,
   CHECKOUT_PAYMENT_METHOD,

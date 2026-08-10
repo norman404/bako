@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { MenuCreateInput } from "@/modules/menu/domain/ports";
-import type { MenuRow } from "@/shared/db/schema";
+import type { MenuRow } from "@/db/schema";
 
 const dbMocks = (() => {
   const selectFromMock = mock<() => Promise<MenuRow[]>>();
@@ -22,7 +22,7 @@ const dbMocks = (() => {
   };
 })();
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,

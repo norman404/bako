@@ -4,8 +4,8 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import type { Menu } from "@/modules/menu/domain/menu";
 import { MenuDomainError } from "@/modules/menu/domain/errors";
 import type { MenuCreateInput, MenuRepository } from "@/modules/menu/domain/ports";
-import { db } from "@/shared/db/client";
-import { menus, type MenuRow } from "@/shared/db/schema";
+import { db } from "@/db/client";
+import { menus, type MenuRow } from "@/db/schema";
 
 function rowToMenu(row: MenuRow): Menu {
   return {

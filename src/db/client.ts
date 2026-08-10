@@ -1,7 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 
-import * as schema from "@/shared/db/schema";
+import * as schema from "@/db/schema";
 
 export const DATABASE_URL = "sqlite:bako.db";
 

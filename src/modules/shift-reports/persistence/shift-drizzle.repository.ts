@@ -1,7 +1,7 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import { ResultAsync } from "neverthrow";
 
-import { db, withTransaction } from "@/shared/db/client";
+import { db, withTransaction } from "@/db/client";
 import {
   cashMovements,
   customers,
@@ -13,7 +13,7 @@ import {
   shifts,
   type CashMovementRow,
   type ShiftRow,
-} from "@/shared/db/schema";
+} from "@/db/schema";
 import { ShiftPersistenceError } from "../domain/errors";
 import type { ShiftRepository } from "../domain/ports";
 import type {

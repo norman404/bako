@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
 import type { PrinterCreateInput } from "@/modules/printer/domain/printer";
 import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
-import type { PrinterRow } from "@/shared/db/schema";
+import type { PrinterRow } from "@/db/schema";
 
 const dbMocks = (() => {
   const selectLimitMock = mock<() => Promise<PrinterRow[]>>();
@@ -38,7 +38,7 @@ const dbMocks = (() => {
   };
 })();
 
-mock.module("@/shared/db/client", () => ({
+mock.module("@/db/client", () => ({
   db: {
     select: dbMocks.selectMock,
     insert: dbMocks.insertMock,

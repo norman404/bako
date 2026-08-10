@@ -4,8 +4,8 @@ import { errAsync, okAsync, ResultAsync } from "neverthrow";
 import { MenuDomainError, ProductNotFoundError } from "@/modules/menu/domain/errors";
 import type { ProductRepository, ProductUpsertInput } from "@/modules/menu/domain/ports";
 import type { Product } from "@/modules/menu/domain/product";
-import { db } from "@/shared/db/client";
-import { productMenus, products, type ProductRow } from "@/shared/db/schema";
+import { db } from "@/db/client";
+import { productMenus, products, type ProductRow } from "@/db/schema";
 
 function rowToProduct(row: ProductRow, menuIds: string[] = []): Product {
   return {
