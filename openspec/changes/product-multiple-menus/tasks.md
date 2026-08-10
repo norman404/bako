@@ -4,7 +4,7 @@
 
 - [ ] 1.1 Create `src-tauri/migrations/0009_product_menus.sql` — junction table, index, data migration (Spec: product-menu-many-to-many/spec.md:15-17, 70-74)
 - [ ] 1.2 Register migration 9 in `src-tauri/src/lib.rs:56` (design.md:84)
-- [ ] 1.3 Add `productMenus` table to `src/shared/db/schema.ts:26`, mark `products.menuId` deprecated (design.md:85, spec: product-menu-many-to-many/spec.md:82-87)
+- [ ] 1.3 Add `productMenus` table to `src/db/schema.ts:26`, mark `products.menuId` deprecated (design.md:85, spec: product-menu-many-to-many/spec.md:82-87)
 - [ ] 1.4 Update `src/modules/menu/domain/product.ts:4` — change `menuId: string | null` → `menuIds: string[]` (design.md:88, spec: product-management/spec.md:98-107)
 - [ ] 1.5 Update `src/modules/menu/domain/ports.ts:8-17` — `ProductUpsertInput.menuId` → `menuIds: string[]` (design.md:89)
 - [ ] 1.6 Update `src/modules/menu/domain/ports.ts:31-38` — `ProductRepository.list(menuIds?: string[])`, remove `listByMenuId()` (design.md:90)

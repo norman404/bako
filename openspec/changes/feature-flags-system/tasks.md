@@ -5,7 +5,7 @@
 - [ ] 1.1 Create `src-tauri/migrations/0007_feature_flags.sql` with `feature_flags` table (`key TEXT PK`, `value TEXT`, `updated_at INTEGER`) and insert initial rows (`categories_enabled='false'`, `multiple_menus_enabled='false'`)
 - [ ] 1.2 Create `src-tauri/migrations/0008_menus.sql` with `menus` table (`id TEXT PK`, `name TEXT`, `is_default INTEGER`, `created_at INTEGER`, `updated_at INTEGER`), add `menu_id TEXT` to `categories` and `products`, create default menu, assign all existing records to it
 - [ ] 1.3 Modify `src-tauri/src/lib.rs`: register migrations 7 and 8 in `migrations` vec
-- [ ] 1.4 Modify `src/shared/db/schema.ts`: add `featureFlags` table schema, add `menus` table schema, add `menuId` FK to `categories` and `products` schemas
+- [ ] 1.4 Modify `src/db/schema.ts`: add `featureFlags` table schema, add `menus` table schema, add `menuId` FK to `categories` and `products` schemas
 
 ## Phase 2: Feature Flags Module (Domain → Persistence → Hooks)
 

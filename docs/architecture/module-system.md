@@ -8,7 +8,7 @@ This guide elaborates on [`BAKO.md`](../../BAKO.md). If anything here conflicts 
 
 ## 1. Project structure
 
-The target tree — and why there is no `shared/` folder in it — is in [`BAKO.md` § Project structure](../../BAKO.md#project-structure). What moves where, and why none of it has run yet, is in [`migration-status.md`](migration-status.md).
+The target tree — and why there is no `shared/` folder in it — is in [`BAKO.md` § Project structure](../../BAKO.md#project-structure). `src/shared/` has since been retired: the folder is deleted and its four occupants moved to `src/db/`, `src/i18n/`, `src/components/`, and the new `src/modules/pos/`. The move table is in [`migration-status.md`](migration-status.md) § Migration order 2.
 
 ### The `pos-store.ts` decision
 
@@ -45,20 +45,38 @@ This guide adds two things to the rule: `manifest.ts` is a documented exception 
 
 ---
 
-## 4. The `settings` ↔ `updater` cycle
+## 4. The `settings` ↔ `updater` cycle — resolved
 
-This is a fact about the current code, not a hypothesis:
+**This cycle no longer exists.** It is documented here because the reasoning that removed it is the reasoning the next module migration will need, not because there is anything left to fix.
 
-- `src/modules/settings/components/SettingsModal.tsx:12` imports `UpdateSettingsPanel` directly: `import { UpdateSettingsPanel } from "@/modules/updater/components/UpdateSettingsPanel";`
-- `src/modules/updater/manifest.ts:2` imports the type contract from settings: `import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";`
+### What the cycle was
 
-The old `updater/README.md` claimed "`settings` NUNCA importa este módulo." The code contradicts it.
+Two edges, both facts about the code as it stood:
 
-There already is a mechanism built to prevent exactly this: `src/app/module-registry.ts` builds `MODULE_REGISTRY: ModuleManifest[]` by importing every module's `manifest.ts` and handing the array to `SettingsModal` as a prop. `updaterManifest` already carries `settingsPanel: UpdateSettingsPanel` inside that array — the registry entry for `updater` already *is* the reference `SettingsModal` needs.
+- `src/modules/settings/components/SettingsModal.tsx:12` imported `UpdateSettingsPanel` directly: `import { UpdateSettingsPanel } from "@/modules/updater/components/UpdateSettingsPanel";`
+- `src/modules/updater/manifest.ts:2` imported the type contract from settings: `import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";`
 
-`SettingsModal.tsx` receives that full registry, then does this: it filters `manifest.id === "updater"` **out** of the generic module-tabs loop (line 42, comment: "Updater is now in the general group"), and instead hand-builds an equivalent tab in `generalTabs` by importing `UpdateSettingsPanel` again, directly, from `@/modules/updater/components/UpdateSettingsPanel`. The registry already had the exact component reference; the direct import duplicates data the registry already carries, and that duplication is the entire cycle.
+The old `updater/README.md` claimed "`settings` NUNCA importa este módulo." The code contradicted it.
 
-**Decision: the registry is the correct mechanism. The direct import in `SettingsModal.tsx:12` is the violation to remove — not the registry to replace.** The fix, applied when `updater` migrates, is to read the Panel off the matching registry entry — `registry.find((m) => m.id === "updater")?.settingsPanel` — instead of importing the component by path, and keep placing that tab in the "general" group as today. That removes the `settings → updater` edge entirely. `updater/manifest.ts` keeps its edge to the `ModuleManifest` contract `settings` owns, but that one is one-directional and type-only — a module depending on a contract, not a cycle.
+There already was a mechanism built to prevent exactly this: `src/app/module-registry.ts` builds `MODULE_REGISTRY: ModuleManifest[]` by importing every module's `manifest.ts` and handing the array to `SettingsModal` as a prop. `updaterManifest` already carried `settingsPanel: UpdateSettingsPanel` inside that array — the registry entry for `updater` already *was* the reference `SettingsModal` needed.
+
+`SettingsModal.tsx` received that full registry, then did this: it filtered `manifest.id === "updater"` **out** of the generic module-tabs loop (comment: "Updater is now in the general group"), and instead hand-built an equivalent tab in `generalTabs` by importing `UpdateSettingsPanel` again, directly, by path. The registry already held the exact component reference; the direct import duplicated data the registry already carried, and that duplication was the entire cycle.
+
+### What was decided, and why
+
+**The registry was the correct mechanism. The direct import in `SettingsModal.tsx` was the violation to remove — not the registry to replace.** This is the part worth keeping: the cycle was not evidence that registration-by-manifest is the wrong design. It was evidence that one call site had bypassed a mechanism that already solved its problem.
+
+### What it looks like now
+
+`SettingsModal.tsx` reads the panel off the matching registry entry instead of importing the component by path:
+
+```ts
+const updaterPanel = registry.find((manifest) => manifest.id === "updater")?.settingsPanel;
+```
+
+The tab still lands in the "general" group, exactly where it was. There is deliberately no fallback: if the manifest ever stops carrying a panel, the tab disappears rather than quietly rendering something else. That removed the `settings → updater` edge entirely — `rg "modules/updater" src/modules/settings/` now returns nothing.
+
+`updater/manifest.ts` keeps its edge to the `ModuleManifest` contract `settings` owns, and that is correct: it is one-directional and type-only — a module depending on a contract, not a cycle. Do not "fix" it.
 
 ---
 
@@ -110,7 +128,7 @@ A module migrates only when real work already touches it — never as a standalo
 
 5. **Verify.** Re-run the module's tests, then the full gate in [`BAKO.md` § Verify before claiming done](../../BAKO.md#verify-before-claiming-done). The tests must pass **without a single assertion changed**. If you had to edit an assertion, this stopped being a structural migration and became a behavior change — and that is a different PR.
 
-`updater` is the pilot. Its one structural blocker is the cycle in §4, resolved as part of its migration rather than before it. Migration order and per-module traps are in [`migration-status.md`](migration-status.md).
+`updater` was the pilot, and it has migrated. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The five steps above are therefore not a proposal — they have been run end to end against a real module, tests green, no assertion touched. The eight modules still on the legacy layout and their per-module traps are in [`migration-status.md`](migration-status.md).
 
 ---
 
