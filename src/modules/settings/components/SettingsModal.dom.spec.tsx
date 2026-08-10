@@ -65,6 +65,7 @@ import { fireEvent, renderWithProviders, screen, within } from "@/test/test-util
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 import { DEFAULT_CURRENCY_CONFIG } from "@/lib/currency-config";
 import { MODULE_REGISTRY } from "@/app/module-registry";
+import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
 
 type SettingsModalProps = Parameters<typeof SettingsModal>[0];
 
@@ -190,6 +191,35 @@ describe("SettingsModal (settings feature)", () => {
     // The updater tab now lives in the general group alongside General, Printer, and Features.
     renderSettingsModal();
     expect(screen.getByRole("tab", { name: /actualizaciones/i })).toBeInTheDocument();
+  });
+
+  it("should render the updater panel supplied by the registry manifest", () => {
+    // CASE: el módulo updater aporta su panel a través del registry.
+    // VALIDATES: SettingsModal resuelve el panel desde el manifest con id "updater"
+    // y NO desde un import directo a @/modules/updater/components/... — ese import
+    // es el ciclo settings ↔ updater que documenta docs/architecture/module-system.md.
+    const sentinelRegistry: ModuleManifest[] = [
+      {
+        id: "updater",
+        settingsPanel: () => <p>Panel centinela de actualizaciones</p>,
+      },
+    ];
+
+    renderSettingsModal({ registry: sentinelRegistry });
+
+    fireEvent.click(screen.getByRole("tab", { name: /actualizaciones/i }));
+
+    expect(screen.getByText("Panel centinela de actualizaciones")).toBeInTheDocument();
+  });
+
+  it("should not render the updater tab when no manifest in the registry provides its panel", () => {
+    // CASE: el registry no trae el módulo updater (build sin updater, flag apagado
+    // aguas arriba, etc.).
+    // VALIDATES: la tab desaparece con el manifest. Sin fallback hardcodeado — si
+    // el panel no viene del registry, no hay nada que mostrar.
+    renderSettingsModal({ registry: [] });
+
+    expect(screen.queryByRole("tab", { name: /actualizaciones/i })).toBeNull();
   });
 
 });

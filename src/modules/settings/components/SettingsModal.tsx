@@ -9,7 +9,6 @@ import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { SystemSettingsPanel } from "./SystemSettingsPanel";
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
-import { UpdateSettingsPanel } from "@/modules/updater/components/UpdateSettingsPanel";
 
 interface SettingsModalProps {
   open: boolean;
@@ -34,6 +33,15 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
   const { t } = useTranslation('settings');
   const { flags } = useFeatureFlagsStore();
 
+  // El panel del updater sale del registry, no de un import directo: es lo que
+  // rompe el ciclo settings ↔ updater. Sin fallback a propósito — si el manifest
+  // desapareciera del registry, la tab debe desaparecer con él, no fingir que existe.
+  const updaterPanel = registry.find((manifest) => manifest.id === "updater")?.settingsPanel;
+
+  const updaterTabs: SettingsTabDefinition[] = updaterPanel
+    ? [{ id: "updater", title: t('sections.updater'), description: t('sections.updaterDesc'), icon: Download, Panel: updaterPanel }]
+    : [];
+
   const moduleTabs: SettingsTabDefinition[] = registry
     .filter((manifest) => {
       if (!manifest.settingsPanel) return false;
@@ -57,7 +65,7 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
   const generalTabs: SettingsTabDefinition[] = [
     { id: "general", title: t('sections.general'), description: t('sections.generalDesc'), icon: Globe, Panel: SystemSettingsPanel },
     { id: "features", title: t('sections.features'), description: t('sections.featuresDesc'), icon: Flag, Panel: FeatureFlagsPanel },
-    { id: "updater", title: t('sections.updater'), description: t('sections.updaterDesc'), icon: Download, Panel: UpdateSettingsPanel },
+    ...updaterTabs,
   ];
 
   const sidebarGroups: TabGroup[] = [
