@@ -2,7 +2,7 @@ import * as React from "react";
 import { describe, it, expect, mock, beforeEach, type Mock } from "bun:test";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { okAsync, errAsync } from "neverthrow";
+import { okAsync, errAsync, ResultAsync } from "neverthrow";
 import { useUpdateFeatureFlag } from "./use-update-feature-flag";
 import { useFeatureFlagsStore } from "@/modules/feature-flags/store/feature-flags-store";
 import { FeatureFlagPersistenceError } from "@/modules/feature-flags/domain/errors";
@@ -71,20 +71,44 @@ describe("useUpdateFeatureFlag", () => {
   });
 
   it("should perform optimistic update", async () => {
-    updateMock.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          setTimeout(() => resolve(okAsync(undefined) as any), 100);
-        }) as any,
-    );
+    // La persistencia queda en vuelo hasta que el test la resuelve a mano:
+    // así se puede observar el estado del store MIENTRAS sigue pendiente.
+    let resolvePersistence!: () => void;
+    let persistenceSettled = false;
+    let flagWhenPersistenceStarted: boolean | undefined;
+
+    const pendingPersistence = new Promise<void>((resolve) => {
+      resolvePersistence = resolve;
+    }).then(() => {
+      persistenceSettled = true;
+    });
+
+    updateMock.mockImplementation(() => {
+      flagWhenPersistenceStarted = useFeatureFlagsStore.getState().flags.categories_enabled;
+      return ResultAsync.fromSafePromise<void, FeatureFlagPersistenceError>(pendingPersistence);
+    });
 
     const { result } = renderHook(() => useUpdateFeatureFlag(), { wrapper: createWrapper() });
 
-    act(() => {
+    await act(async () => {
       result.current.mutate({ key: "categories_enabled", value: true });
     });
 
-    // Optimistic update should be immediate
+    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1));
+
+    // La persistencia arrancó pero NO ha resuelto...
+    expect(updateMock).toHaveBeenCalledWith("categories_enabled", true);
+    expect(persistenceSettled).toBe(false);
+
+    // ...y aun así el store ya refleja el valor nuevo: eso es el optimismo.
+    expect(flagWhenPersistenceStarted).toBe(true);
     expect(useFeatureFlagsStore.getState().flags.categories_enabled).toBe(true);
+
+    // Cerrar la mutación para no dejar trabajo pendiente al terminar el test.
+    await act(async () => {
+      resolvePersistence();
+      await pendingPersistence;
+    });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
