@@ -1,12 +1,19 @@
 import { describe, expect, it, mock, beforeEach, type Mock } from "bun:test";
 import { okAsync } from "neverthrow";
 
-mock.module("@/modules/checkout/adapters/print-ticket.adapter", () => ({
+// Congelado ANTES de mock.module: bun parchea el namespace del módulo en vivo,
+// así que sólo un spread previo conserva las implementaciones reales.
+import * as checkoutModule from "@/modules/checkout";
+
+const actualCheckout = { ...checkoutModule };
+
+mock.module("@/modules/checkout", () => ({
+  ...actualCheckout,
   printOrder: mock(() => okAsync(undefined)),
 }));
 
 import { reprintOrder } from "./reprint-order";
-import { printOrder } from "@/modules/checkout/adapters/print-ticket.adapter";
+import { printOrder } from "@/modules/checkout";
 import { buildPrinter } from "@/modules/printer/test/factories";
 import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
 

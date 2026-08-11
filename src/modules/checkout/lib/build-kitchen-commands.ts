@@ -1,6 +1,6 @@
 import type { Category, SelectedModifier } from "@/modules/menu";
 import type { Printer } from "@/modules/printer";
-import type { PrintCommandItemModifier, PrintCommandOptions } from "@/modules/checkout/domain/print-command";
+import type { PrintCommandItemModifier, PrintCommandOptions } from "../print-command";
 
 export interface CartLine {
   product: { id: string; name: string; categoryId: string | null };

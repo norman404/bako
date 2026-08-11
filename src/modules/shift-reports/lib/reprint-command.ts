@@ -1,7 +1,6 @@
 import type { Category } from "@/modules/menu";
 import type { Printer } from "@/modules/printer";
-import { buildKitchenCommands, type CartLine } from "@/modules/checkout/lib/build-kitchen-commands";
-import { printCommand } from "@/modules/checkout/adapters/print-command.adapter";
+import { buildKitchenCommands, printCommand, type CartLine } from "@/modules/checkout";
 import type { CommandItemSelection, OrderDetail, OrderDetailItem } from "@/modules/shift-reports/domain/order-management";
 
 export interface ReprintCommandResult {

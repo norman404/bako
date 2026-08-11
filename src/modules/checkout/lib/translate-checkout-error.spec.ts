@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import i18next from "i18next";
 
-import { CheckoutPersistenceError } from "@/modules/checkout/domain/errors";
+import { CheckoutPersistenceError } from "../errors";
 
 import { translateCheckoutError } from "./translate-checkout-error";
 

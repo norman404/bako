@@ -3,13 +3,13 @@ import { describe, expect, it, mock, spyOn } from "bun:test";
 
 
 
-import { CheckoutPersistenceError } from "@/modules/checkout/domain/errors";
+import { CheckoutPersistenceError } from "../errors";
 
 
-import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
-import * as checkoutHooks from "@/modules/checkout/hooks/use-checkout";
-import type { CheckoutCustomer, CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
-import { orderDrizzleRepository } from "@/modules/checkout/persistence/order-drizzle.repository";
+import { CheckoutModal } from "./CheckoutModal";
+import * as checkoutHooks from "../use-checkout";
+import type { CheckoutCustomer, CreateOrderInput } from "../use-checkout";
+import { orderDrizzleRepository } from "../repository";
 import { buildProduct } from "@/modules/menu/test/factories";
 import { buildCartItem } from "@/modules/order/test/factories";
 import { formatPosCurrency } from "@/lib/currency";

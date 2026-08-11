@@ -48,12 +48,12 @@ mock.module("@/db/client", () => ({
   withTransaction: async (operation: (tx: any) => Promise<any>) => operation(txClient),
 }));
 
-import { orderDrizzleRepository } from "@/modules/checkout/persistence/order-drizzle.repository";
+import { orderDrizzleRepository } from "./repository";
 import type {
   CheckoutOrderItemInput,
   CheckoutOrderItemModifierInput,
   CreateOrderInput,
-} from "@/modules/checkout/domain/order";
+} from "./order";
 
 const now = new Date("2026-01-01T10:00:00.000Z");
 

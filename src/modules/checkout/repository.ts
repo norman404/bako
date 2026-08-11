@@ -35,12 +35,12 @@ import {
   type CheckoutPaymentInput,
   type CheckoutPaymentMethod,
   type CreateOrderInput,
-} from "../domain/order";
+} from "./order";
 import {
   type PosMetrics,
   type PosMetricsTopProduct,
-} from "../domain/metrics";
-import { CheckoutPersistenceError } from "../domain/errors";
+} from "./metrics";
+import { CheckoutPersistenceError } from "./errors";
 
 export {
   CHECKOUT_FULFILLMENT_TYPE,
@@ -51,9 +51,9 @@ export {
   type CreateOrderInput,
   type CheckoutCustomer,
   type CheckoutOrder,
-} from "../domain/order";
-export type { PosMetrics } from "../domain/metrics";
-export { CheckoutPersistenceError } from "../domain/errors";
+} from "./order";
+export type { PosMetrics } from "./metrics";
+export { CheckoutPersistenceError } from "./errors";
 
 const CUSTOMER_LIST_LIMIT = {
   RECENT: 6,

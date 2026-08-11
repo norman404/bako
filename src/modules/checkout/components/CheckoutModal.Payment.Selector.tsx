@@ -5,7 +5,7 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import {
   CHECKOUT_PAYMENT_METHOD,
   type CheckoutPaymentMethod
-} from '@/modules/checkout/lib/builders';
+} from '../lib/builders';
 
 interface CheckoutPaymentMethodSelectorProps {
   isCashPayment: boolean;

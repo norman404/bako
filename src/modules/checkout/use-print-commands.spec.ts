@@ -11,18 +11,18 @@ mock.module("@/modules/settings", () => ({
   ),
 }));
 
-mock.module("@/modules/checkout/lib/build-kitchen-commands", () => ({
+mock.module("./lib/build-kitchen-commands", () => ({
   buildKitchenCommands: mock(() => []),
 }));
 
-mock.module("@/modules/checkout/adapters/print-command.adapter", () => ({
+mock.module("./print-command.adapter", () => ({
   printCommand: mock(() => Promise.resolve({ isOk: () => true, isErr: () => false, error: null })),
 }));
 
 import { renderHook } from "@testing-library/react";
 import { usePrintCommands } from "./use-print-commands";
 import { usePrinters } from "@/modules/printer";
-import { buildKitchenCommands } from "@/modules/checkout/lib/build-kitchen-commands";
+import { buildKitchenCommands } from "./lib/build-kitchen-commands";
 import { buildCartItem } from "@/modules/order/test/factories";
 import { buildCategory } from "@/modules/menu/test/factories";
 import { buildPrinter } from "@/modules/printer/test/factories";

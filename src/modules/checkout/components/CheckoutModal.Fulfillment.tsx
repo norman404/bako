@@ -1,8 +1,8 @@
 import type {
   CheckoutCustomer,
   CheckoutFulfillmentType,
-} from "@/modules/checkout/hooks/use-checkout";
-import type { CheckoutCustomerFormState } from "@/modules/checkout/lib/builders";
+} from "../use-checkout";
+import type { CheckoutCustomerFormState } from "../lib/builders";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -12,7 +12,7 @@ import { CustomerSearchPanel } from "./CheckoutModal.Fulfillment.CustomerSearch"
 import { CheckoutFulfillmentSelector } from "./CheckoutModal.Fulfillment.Selector";
 
 type CustomerQueryResult = ReturnType<
-  typeof import("@/modules/checkout/hooks/use-checkout").useCustomers
+  typeof import("../use-checkout").useCustomers
 >;
 
 interface CheckoutModalFulfillmentPanelProps {

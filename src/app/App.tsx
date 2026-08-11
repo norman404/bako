@@ -6,11 +6,14 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 
-import { CheckoutModal } from "@/modules/checkout/components/CheckoutModal";
+import {
+  CheckoutModal,
+  printOrder,
+  useCreateOrder,
+  usePrintCommands,
+  type CreateOrderInput,
+} from "@/modules/checkout";
 import { DeliveryPersonSelect } from "@/modules/delivery";
-import { printOrder } from "@/modules/checkout/components/print-ticket";
-import { useCreateOrder, type CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
-import { usePrintCommands } from "@/modules/checkout/hooks/use-print-commands";
 import { usePrinters } from "@/modules/printer";
 import { PRINTER_ROLE } from "@/modules/printer";
 import {

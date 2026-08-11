@@ -2,7 +2,7 @@ import { ResultAsync, okAsync } from "neverthrow";
 import { invoke } from "@tauri-apps/api/core";
 
 import type { Printer } from "@/modules/printer";
-import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
+import type { PrintOrderOptions } from "./print-ticket";
 
 export interface PrintTicketPayload {
   printerType: string;

@@ -6,13 +6,13 @@ import {
   type CheckoutFulfillmentType,
   type CheckoutPaymentMethod,
   type CreateOrderInput,
-} from "@/modules/checkout/domain/order";
-import { parsePaymentAmountInput } from "@/modules/checkout/lib/formatters";
+} from "../order";
+import { parsePaymentAmountInput } from "./formatters";
 import { calculateItemUnitPrice } from "@/modules/menu";
 import type { CartItem } from "@/modules/order";
 import { formatPosCurrency } from "@/lib/currency";
 
-export { CHECKOUT_PAYMENT_METHOD, type CheckoutPaymentMethod } from "@/modules/checkout/domain/order";
+export { CHECKOUT_PAYMENT_METHOD, type CheckoutPaymentMethod } from "../order";
 
 export interface CheckoutCustomerFormState {
   name: string;

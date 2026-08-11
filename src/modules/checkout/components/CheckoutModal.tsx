@@ -5,12 +5,12 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { Dialog, DialogPortal, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
-import { CheckoutModalFooterActions } from "@/modules/checkout/components/CheckoutModal.Footer";
-import { CheckoutModalFulfillmentPanel } from "@/modules/checkout/components/CheckoutModal.Fulfillment";
-import { CheckoutModalOrderSummary } from "@/modules/checkout/components/CheckoutModal.OrderSummary";
-import { CheckoutModalPaymentPanel } from "@/modules/checkout/components/CheckoutModal.Payment";
-import type { CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
-import { useCheckoutForm } from "@/modules/checkout/hooks/use-checkout-form";
+import { CheckoutModalFooterActions } from "./CheckoutModal.Footer";
+import { CheckoutModalFulfillmentPanel } from "./CheckoutModal.Fulfillment";
+import { CheckoutModalOrderSummary } from "./CheckoutModal.OrderSummary";
+import { CheckoutModalPaymentPanel } from "./CheckoutModal.Payment";
+import type { CreateOrderInput } from "../use-checkout";
+import { useCheckoutForm } from "../use-checkout-form";
 import { calculateCartTotals, type CartItem } from "@/modules/order";
 
 interface CheckoutModalProps {

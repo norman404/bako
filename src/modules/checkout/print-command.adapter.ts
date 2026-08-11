@@ -1,7 +1,7 @@
 import { ResultAsync } from "neverthrow";
 import { invoke } from "@tauri-apps/api/core";
 
-import type { PrintCommandOptions } from "@/modules/checkout/domain/print-command";
+import type { PrintCommandOptions } from "./print-command";
 
 export interface PrintCommandPayload {
   printerType: string;

@@ -5,7 +5,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   CHECKOUT_FULFILLMENT_TYPE,
   type CheckoutFulfillmentType,
-} from "@/modules/checkout/hooks/use-checkout";
+} from "../use-checkout";
 
 interface CheckoutFulfillmentSelectorProps {
   fulfillmentType: CheckoutFulfillmentType;

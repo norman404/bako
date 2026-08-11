@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import {
   CheckoutPersistenceError,
   type CheckoutTranslatableError,
-} from "@/modules/checkout/domain/errors";
+} from "../errors";
 
 function isCheckoutTranslatableError(error: unknown): error is CheckoutTranslatableError {
   return error instanceof CheckoutPersistenceError;

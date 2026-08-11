@@ -6,10 +6,10 @@ import {
   type CheckoutCustomerInput,
   type CheckoutFulfillmentType,
   type CreateOrderInput,
-} from "@/modules/checkout/domain/order";
-import { orderDrizzleRepository } from "@/modules/checkout/persistence/order-drizzle.repository";
-import { createOrder } from "@/modules/checkout/use-cases/create-order";
-import { listCustomers } from "@/modules/checkout/use-cases/list-customers";
+} from "./order";
+import { orderDrizzleRepository } from "./repository";
+import { createOrder } from "./create-order";
+import { listCustomers } from "./list-customers";
 
 export const CHECKOUT_CUSTOMERS_QUERY_KEY = ["checkout", "customers"] as const;
 

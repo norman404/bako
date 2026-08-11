@@ -1,7 +1,7 @@
 import { Wallet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { formatPaymentAmountInput } from '@/modules/checkout/lib/formatters';
+import { formatPaymentAmountInput } from '../lib/formatters';
 import { formatPosCurrency } from '@/lib/currency';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

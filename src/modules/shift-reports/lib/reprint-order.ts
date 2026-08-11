@@ -1,7 +1,6 @@
 import { ResultAsync } from "neverthrow";
 
-import { printOrder } from "@/modules/checkout/adapters/print-ticket.adapter";
-import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
+import { printOrder, type PrintOrderOptions } from "@/modules/checkout";
 import type { Printer } from "@/modules/printer";
 import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
 

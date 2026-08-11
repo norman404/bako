@@ -25,13 +25,12 @@ import * as actualUseMountEffect from "@/lib/use-mount-effect";
 import * as menuModule from "@/modules/menu";
 import * as actualUseShiftReports from "@/modules/shift-reports/hooks/use-shift-reports";
 import * as actualUpdater from "@/modules/updater";
-import * as actualPrintTicket from "@/modules/checkout/components/print-ticket";
-import * as actualUsePrintCommands from "@/modules/checkout/hooks/use-print-commands";
-import * as actualUseCheckoutModule from "@/modules/checkout/hooks/use-checkout";
+import * as checkoutModule from "@/modules/checkout";
 
 // Congelado ANTES de mock.module: bun parchea el namespace del módulo en vivo,
 // así que sólo un spread previo conserva las implementaciones reales.
 const actualMenu = { ...menuModule };
+const actualCheckout = { ...checkoutModule };
 
 const REAL_MODULES: ReadonlyArray<[specifier: string, exports: Record<string, unknown>]> = [
   ["sonner", { ...actualSonner }],
@@ -40,12 +39,8 @@ const REAL_MODULES: ReadonlyArray<[specifier: string, exports: Record<string, un
   ["@/modules/menu", { ...actualMenu }],
   ["@/modules/shift-reports/hooks/use-shift-reports", { ...actualUseShiftReports }],
   ["@/modules/updater", { ...actualUpdater }],
-  ["@/modules/checkout/components/print-ticket", { ...actualPrintTicket }],
-  ["@/modules/checkout/hooks/use-print-commands", { ...actualUsePrintCommands }],
-  ["@/modules/checkout/hooks/use-checkout", { ...actualUseCheckoutModule }],
+  ["@/modules/checkout", { ...actualCheckout }],
 ];
-
-const actualUseCheckout = { ...actualUseCheckoutModule };
 
 mock.module("@tauri-apps/api/core", () => ({
   invoke: mock(),
@@ -80,20 +75,14 @@ mock.module("@/modules/updater", () => ({
   UpdateToast: () => null,
 }));
 
-mock.module("@/modules/checkout/components/print-ticket", () => ({
+mock.module("@/modules/checkout", () => ({
+  ...actualCheckout,
   printOrder: mock(() => ({
     mapErr: mock(() => undefined),
   })),
-}));
-
-mock.module("@/modules/checkout/hooks/use-print-commands", () => ({
   usePrintCommands: mock(() => ({
     printCommands: mock().mockResolvedValue([]),
   })),
-}));
-
-mock.module("@/modules/checkout/hooks/use-checkout", () => ({
-  ...actualUseCheckout,
   useCreateOrder: mock(() => ({
     mutateAsync: mock(),
     isPending: false,
@@ -113,9 +102,7 @@ import { App } from "@/app/App";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useOrderStore } from "@/modules/order";
 import { usePosStore } from "@/modules/pos";
-import { useCreateOrder } from "@/modules/checkout/hooks/use-checkout";
-import { printOrder } from "@/modules/checkout/components/print-ticket";
-import { usePrintCommands } from "@/modules/checkout/hooks/use-print-commands";
+import { printOrder, useCreateOrder, usePrintCommands } from "@/modules/checkout";
 import type { Category, ModifierGroup, Product } from "@/modules/menu";
 import {
   buildCategory,

@@ -4,8 +4,8 @@ import {
   computeChangeAmount,
   computeIsDisabled,
   computeReceivedAmount,
-} from "@/modules/checkout/hooks/use-checkout-form";
-import { CHECKOUT_PAYMENT_METHOD } from "@/modules/checkout/lib/builders";
+} from "./use-checkout-form";
+import { CHECKOUT_PAYMENT_METHOD } from "./lib/builders";
 import { buildCartItem } from "@/modules/order/test/factories";
 
 describe("useCheckoutForm helpers", () => {

@@ -8,8 +8,8 @@ import {
   type CheckoutCustomer,
   type CheckoutFulfillmentType,
   type CreateOrderInput,
-} from "@/modules/checkout/hooks/use-checkout";
-import { translateCheckoutError } from "@/modules/checkout/lib/translate-checkout-error";
+} from "./use-checkout";
+import { translateCheckoutError } from "./lib/translate-checkout-error";
 import {
   buildCreateOrderInput,
   buildCustomerFormState,
@@ -18,12 +18,12 @@ import {
   getPaymentValidationMessage,
   type CheckoutCustomerFormState,
   type CheckoutPaymentMethod,
-} from "@/modules/checkout/lib/builders";
+} from "./lib/builders";
 import {
   formatPaymentAmountInput,
   parsePaymentAmountInput,
   sanitizePaymentAmountInput,
-} from "@/modules/checkout/lib/formatters";
+} from "./lib/formatters";
 import { calculateCartTotals, type CartItem } from "@/modules/order";
 
 const CHECKOUT_CUSTOMER_ENTRY_MODE = {

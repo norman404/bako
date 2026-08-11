@@ -4,7 +4,7 @@ import {
   formatPaymentAmountInput,
   parsePaymentAmountInput,
   sanitizePaymentAmountInput,
-} from "@/modules/checkout/lib/formatters";
+} from "./formatters";
 
 describe("checkout payment formatters", () => {
   it("formats cents into a decimal string with two decimals", () => {

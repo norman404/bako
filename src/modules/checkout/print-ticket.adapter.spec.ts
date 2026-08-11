@@ -6,8 +6,8 @@ mock.module("@tauri-apps/api/core", () => ({
 
 import { invoke } from "@tauri-apps/api/core";
 import { useSettingsStore } from "@/modules/settings";
-import { printOrder, type PrintTicketPayload } from "@/modules/checkout/adapters/print-ticket.adapter";
-import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
+import { printOrder, type PrintTicketPayload } from "./print-ticket.adapter";
+import type { PrintOrderOptions } from "./print-ticket";
 import { buildPrinter } from "@/modules/printer/test/factories";
 import { PRINTER_TYPE, PRINTER_ROLE } from "@/modules/printer";
 

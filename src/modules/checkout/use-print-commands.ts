@@ -1,8 +1,8 @@
 import { usePrinters } from "@/modules/printer";
 import type { CartItem } from "@/modules/order";
 import type { Category } from "@/modules/menu";
-import { buildKitchenCommands } from "@/modules/checkout/lib/build-kitchen-commands";
-import { printCommand } from "@/modules/checkout/adapters/print-command.adapter";
+import { buildKitchenCommands } from "./lib/build-kitchen-commands";
+import { printCommand } from "./print-command.adapter";
 import { useSettingsStore } from "@/modules/settings";
 
 export interface UsePrintCommandsOptions {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { calculateOrderTotal } from "@/modules/checkout/domain/order";
+import { calculateOrderTotal } from "./order";
 
 describe("calculateOrderTotal", () => {
   it("sums unitPrice * quantity for plain items without modifiers", () => {

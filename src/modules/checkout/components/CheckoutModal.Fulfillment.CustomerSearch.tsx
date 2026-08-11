@@ -1,17 +1,17 @@
 import { LoaderCircle, MapPin, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
+import type { CheckoutCustomer } from "../use-checkout";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { FormField } from "@/components/ui/FormField";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { translateCheckoutError } from "@/modules/checkout/lib/translate-checkout-error";
+import { translateCheckoutError } from "../lib/translate-checkout-error";
 import { cn } from "@/lib/utils";
 
 type CustomerQueryResult = ReturnType<
-  typeof import("@/modules/checkout/hooks/use-checkout").useCustomers
+  typeof import("../use-checkout").useCustomers
 >;
 
 interface CustomerSearchPanelProps {

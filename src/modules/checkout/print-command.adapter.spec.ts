@@ -6,7 +6,7 @@ mock.module("@tauri-apps/api/core", () => ({
 
 import { invoke } from "@tauri-apps/api/core";
 import { printCommand, type PrintCommandPayload } from "./print-command.adapter";
-import type { PrintCommandOptions } from "@/modules/checkout/domain/print-command";
+import type { PrintCommandOptions } from "./print-command";
 
 const mockedInvoke = invoke as Mock<typeof invoke>;
 
