@@ -40,7 +40,7 @@ The project is moving toward a flat, feature-oriented module architecture intern
 | Desktop | Tauri 2 |
 | Local database | SQLite via `@tauri-apps/plugin-sql` |
 | ORM | Drizzle ORM + drizzle-kit |
-| Testing | `bun:test` + Testing Library |
+| Testing | Rust `cargo test` |
 
 ---
 
@@ -101,9 +101,7 @@ bun run tauri dev
 | `bun run preview` | Preview the production build locally |
 | `bun run tauri dev` | Run as a Tauri desktop app (development) |
 | `bun run tauri build` | Build the desktop app for production |
-| `bun run test` | Run tests (`bun:test` via `scripts/run-tests.ts`) |
-| `bun run test:node` | Run unit tests (`.spec.ts`) |
-| `bun run test:dom` | Run DOM tests (`.dom.spec.tsx` + happy-dom) |
+| `bun run test` | Run Rust tests (`cargo test --manifest-path src-tauri/Cargo.toml`) |
 
 ### Development philosophy
 
@@ -128,7 +126,6 @@ src/modules/<feature>/
 ├── index.ts
 ├── types.ts
 ├── <feature>.ts
-├── <feature>.spec.ts
 ├── <feature>-store.ts
 ├── repository.ts
 ├── use-<feature>.ts
@@ -153,7 +150,6 @@ src/
 ├── lib/
 ├── modules/
 ├── styles/
-├── test/
 ├── assets/
 └── main.tsx
 ```
@@ -170,11 +166,9 @@ Bako uses a local SQLite database named `bako.db`. How migrations run and the ru
 
 ```bash
 bun run test
-bun run test:node
-bun run test:dom
 ```
 
-Tests are co-located when practical. Prioritize business calculations, validation, payment/order invariants, regressions, migrations, and security boundaries. Pure functions should remain inexpensive to test.
+Rust tests are kept next to the implementation under `src-tauri/src` and run with Cargo. The frontend has no test suite.
 
 ---
 

@@ -25,13 +25,13 @@ The split is deliberate; do not translate a document into the other language whi
 
 ## Architecture
 
-- [Module system](architecture/module-system.md) — the flat module shape, where each top-level folder's contents belong, the barrel rule and its two exceptions (`manifest.ts` and `test/factories`), the `settings ↔ updater` import cycle, and the procedure for restructuring a module.
+- [Module system](architecture/module-system.md) — the flat module shape, where each top-level folder's contents belong, the barrel rule and its `manifest.ts` exception, the `settings ↔ updater` import cycle, and the procedure for restructuring a module.
 - [Database](architecture/database.md) — the SQLite client's serialization queue, the schema, and the Tauri-only migration flow.
 - [Printing](architecture/printing.md) — what a frontend contributor needs before touching a print call: which module owns what, which Tauri commands exist, and how a print job travels from a button click to a physical printer. The Rust engine is documented separately, in [`src-tauri/src/print/README.md`](../src-tauri/src/print/README.md).
 
 ## Contributing
 
-- [Testing](contributing/testing.md) — why `scripts/run-tests.ts` exists, the `.spec.ts` / `.dom.spec.tsx` convention, the test setup, and the locale-completeness guard.
+- [Testing](contributing/testing.md) — Rust test commands and conventions.
 
 ## Architecture decisions
 

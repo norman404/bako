@@ -71,9 +71,7 @@ Want just the web dev server (no Tauri shell)? `bun run dev` boots Vite alone �
 | `bun run dev` | Vite dev server only (no Tauri/native APIs) |
 | `bun run tauri dev` | Full desktop app — **recommended for feature work** |
 | `bun run build` | Production build (`tsc` + `vite build`) |
-| `bun run test` | Full test suite (`*.spec.ts` + `*.dom.spec.tsx`) via `scripts/run-tests.ts` |
-| `bun run test:node` | Only `*.spec.ts` |
-| `bun run test:dom` | Only `*.dom.spec.tsx` via `@testing-library/react` |
+| `bun run test` | Rust test suite via `cargo test --manifest-path src-tauri/Cargo.toml` |
 
 Bako uses **oxlint** as its linter, and there is no formatter configured yet — follow the style of the surrounding code. The commands a change has to pass before you open a PR are the canonical gate in [`BAKO.md`](./BAKO.md#verify-before-claiming-done).
 
@@ -81,34 +79,21 @@ Bako uses **oxlint** as its linter, and there is no formatter configured yet —
 
 ## Testing
 
-Tests are **co-located** with the implementation they cover, not in a separate `tests/` tree.
+Tests are written in Rust and live next to the implementation under `src-tauri/src`, usually in `#[cfg(test)]` modules.
 
-### Naming conventions
-
-| File | Purpose |
-| --- | --- |
-| `*.spec.ts` | Unit test (pure logic) |
-| `*.dom.spec.tsx` | DOM test using `@testing-library/react` (components, hooks with UI) |
-
-Tests run on Bun's native `bun:test`, orchestrated by a custom runner at `scripts/run-tests.ts`. DOM tests use `@testing-library/react` with `happy-dom` (registered globally via `bunfig.toml` → `src/test/setup-bun.ts`).
-
-### Always use `bun run test`, never bare `bun test`
-
-`bun test` flattens `mock.module()` to global scope when several specs share a process, so a mock in one file can leak into an unrelated one. `scripts/run-tests.ts` avoids that by running each spec in its own `bun test <file>` subprocess. Calling `bun test` yourself skips that isolation — always go through the wrapped commands:
+Run the complete suite with:
 
 ```bash
-bun run test         # full suite
-bun run test:node    # only *.spec.ts
-bun run test:dom     # only *.dom.spec.tsx
+bun run test
 ```
 
-To target a single spec during TDD, pass its path to the runner:
+For focused print tests:
 
 ```bash
-bun run scripts/run-tests.ts src/modules/menu/product.spec.ts
+cargo test --manifest-path src-tauri/Cargo.toml --lib print::
 ```
 
-See [`docs/contributing/testing.md`](./docs/contributing/testing.md) for the full rationale, setup, and the locale-completeness guard.
+See [`docs/contributing/testing.md`](./docs/contributing/testing.md) for the Rust testing guide.
 
 ---
 
@@ -175,7 +160,7 @@ fix(menu): filter products by category case-insensitively
 refactor(order): extract price calculation into cart.ts
 docs: add CONTRIBUTING.md
 chore: bump tauri to 2.1.0
-test(feature-flags): cover optimistic update rollback
+test(printer): cover label encoding regression
 ```
 
 ### Scope
@@ -223,7 +208,7 @@ Include:
 - **What** — what the PR does, in one or two sentences
 - **Why** — the motivation / problem being solved
 - **How** — the approach, especially if non-obvious
-- **Testing** — how you verified it (which specs, manual steps)
+- **Testing** — how you verified it (which Rust tests, manual steps)
 - **Breaking changes** — if any, call them out explicitly
 
 ### Review & merge

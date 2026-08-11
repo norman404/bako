@@ -34,13 +34,12 @@ Every change is evaluated against:
 
 This is the canonical gate list; other documents link here instead of restating it. The two groups are not equivalent — one is enforced for you, the other is not.
 
-**CI gate** — `.github/workflows/ci.yml` runs exactly these four, in this order:
+**CI gate** — `.github/workflows/ci.yml` runs exactly these three, in this order:
 
 ```bash
 bun run lint        # oxlint
 bun run build       # tsc + vite build — there is no `typecheck` script
-bun run test        # bun:test via scripts/run-tests.ts
-bun run test:dom    # only *.dom.spec.tsx
+bun run test        # Rust cargo test suite
 ```
 
 **Local gate** — CI does **not** run this. Run it yourself whenever a change reaches `src-tauri/src/print/`:
@@ -49,7 +48,7 @@ bun run test:dom    # only *.dom.spec.tsx
 cd src-tauri && cargo test --lib print::
 ```
 
-Before a release, `.pi/skills/bako-release/SKILL.md` enforces `bun run lint`, `bun run test`, and `bun run test:dom` as a hard gate before any version file is touched.
+Before a release, `.pi/skills/bako-release/SKILL.md` enforces `bun run lint`, `bun run build`, and `bun run test` as a hard gate before any version file is touched.
 
 ## Conventions
 
@@ -91,7 +90,6 @@ src/
 ├── lib/               generic utilities, FLAT, no subfolders
 ├── modules/           the feature modules (see below)
 ├── styles/
-├── test/              setup-bun.ts, test-utils.tsx, matchers.d.ts
 ├── assets/
 └── main.tsx
 ```
@@ -111,7 +109,6 @@ src/modules/<feature>/
 ├── index.ts              thin barrel — the ONLY public API
 ├── types.ts               module types
 ├── <feature>.ts           pure functions (functional core)
-├── <feature>.spec.ts      co-located test
 ├── <feature>-store.ts     Zustand, if applicable
 ├── repository.ts          Drizzle access, if applicable
 ├── use-<feature>.ts       React Query hooks
@@ -129,12 +126,9 @@ None of these reappear under a new name. A module needing a store names the file
 
 #### The barrel is the boundary
 
-`import … from "@/modules/X/algo"` from outside `X` does not pass review. A module's only public entry point is its `index.ts` — imported as `@/modules/X`, never by a path that reaches inside. There are exactly two documented exceptions:
+`import … from "@/modules/X/algo"` from outside `X` does not pass review. A module's only public entry point is its `index.ts` — imported as `@/modules/X`, never by a path that reaches inside. The only documented exception is `manifest.ts`, importable as `@/modules/X/manifest` **only** from `app/module-registry.ts`.
 
-- `manifest.ts` — importable as `@/modules/X/manifest`, **only** from `app/module-registry.ts`.
-- `test/factories` — importable as `@/modules/X/test/factories`, **only** from a spec or from another module's `test/factories`.
-
-Nothing else reaches past a barrel, and a third exception is a decision to be documented, not a call to make at the import site. The rationale for both exceptions, and the `settings ↔ updater` import cycle they had to survive, are in [`docs/architecture/module-system.md`](docs/architecture/module-system.md).
+Nothing else reaches past a barrel, and any additional exception is a decision to be documented, not a call to make at the import site. The rationale for this exception and the `settings ↔ updater` import cycle it helped resolve are in [`docs/architecture/module-system.md`](docs/architecture/module-system.md).
 
 ### Database
 
@@ -146,17 +140,15 @@ Every operation — reads, writes, `closeDatabase()`, and everything inside `wit
 
 ## Testing
 
-Test behavior and invariants, not architecture for its own sake. Tests run on **`bun:test`** natively via a custom runner, `scripts/run-tests.ts` — not Vitest, which is not installed. The runner exists because `bun test` flattens `mock.module()` globally when multiple specs share a process, so each spec runs in its own `bun test <file>` subprocess.
+Tests are kept in the Rust backend under `src-tauri/src`, usually in `#[cfg(test)]` modules next to the implementation. The frontend has no test suite.
 
-- `bun run test` — everything.
-- `bun run test:dom` — only `*.dom.spec.tsx` (happy-dom + Testing Library).
-- `bun run test:node` — only `*.spec.ts`.
+Run the complete suite with `bun run test`, which delegates to `cargo test --manifest-path src-tauri/Cargo.toml`. Focused print tests can be run with:
 
-Prioritize tests for: business calculations, validation, payment and order invariants, persistence and migrations, permission/flag checks, native command authorization, and any bug with meaningful regression risk. `src/i18n/locale-completeness.spec.ts` is a permanent guard: every new key in `es-MX` must propagate to the other 4 locales.
+```bash
+cargo test --manifest-path src-tauri/Cargo.toml --lib print::
+```
 
-**TDD is mandatory for new behavior — Red, Green, Refactor, in that order.** The Red phase is observed, not assumed: the test is written first and run first, and it must fail for the reason it asserts before any implementation exists. A test that was never seen failing proves nothing about the code path it claims to cover. This is not a preference — `openspec/config.yaml` sets `strict_tdd: true`, and the PR checklist asks for the Red phase to have been observed. What TDD does not license: code should not gain abstractions solely to make mocking easier.
-
-Full setup and conventions in [`docs/contributing/testing.md`](docs/contributing/testing.md).
+Full conventions are in [`docs/contributing/testing.md`](docs/contributing/testing.md).
 
 ## Migration strategy
 
@@ -168,7 +160,7 @@ The migration to this structure is complete — all ten modules are flat, no lay
 4. Preserve behavior with tests during structural changes — an assertion changing means the change wasn't purely structural, and that is a different PR.
 5. Per-module `README.md` files are retired — a module's description should not live in two places that can drift apart. The exception is `src-tauri/src/print/README.md`, which stays: it documents a different language and toolchain (Rust, `cargo test`), not a TypeScript module.
 
-The step-by-step procedure for restructuring a module, plus the two traps the migration hit (name collisions when flattening, and barrel mocks in specs), is in [`docs/architecture/module-system.md`](docs/architecture/module-system.md) §7.
+The step-by-step procedure for restructuring a module, plus the name-collision trap the migration hit when flattening, is in [`docs/architecture/module-system.md`](docs/architecture/module-system.md) §7.
 
 ## Dependency rules
 
@@ -176,13 +168,13 @@ The step-by-step procedure for restructuring a module, plus the two traps the mi
 - `components/` holds reusable application UI, not feature business logic.
 - `lib/` holds small generic utilities with no feature ownership.
 - `db/` and `i18n/` are single-owner app infrastructure — no feature module reimplements a database client or an i18n loader.
-- A module never reaches into another module's files. Its public API is its `index.ts`, and that is the only entry point other modules import — if something a consumer needs isn't exported there, the fix is to export it, not to reach past it. The two documented exceptions are `manifest.ts`, importable only from `app/module-registry.ts`, and `test/factories`, importable only from specs and other modules' factories.
+- A module never reaches into another module's files. Its public API is its `index.ts`, and that is the only entry point other modules import — if something a consumer needs isn't exported there, the fix is to export it, not to reach past it. The only documented exception is `manifest.ts`, importable only from `app/module-registry.ts`.
 
 ## Further reading
 
 - [`docs/README.md`](docs/README.md) — index of contributor guides.
-- [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its two exceptions (`manifest.ts`, `test/factories`), the `settings ↔ updater` cycle, and the procedure for restructuring a module.
+- [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its `manifest.ts` exception, the `settings ↔ updater` cycle, and the procedure for restructuring a module.
 - [`docs/architecture/database.md`](docs/architecture/database.md) — the serialization queue, schema, migrations.
 - [`docs/architecture/printing.md`](docs/architecture/printing.md) — the frontend side of printing: which module owns what, the Tauri print commands, and how a job travels from a button click to a physical printer. It does **not** document the Rust engine — that is [`src-tauri/src/print/README.md`](src-tauri/src/print/README.md), kept next to the code because it covers a different language and toolchain.
-- [`docs/contributing/testing.md`](docs/contributing/testing.md) — runner internals, naming conventions, the locale guard.
+- [`docs/contributing/testing.md`](docs/contributing/testing.md) — Rust test commands and conventions.
 - [`docs/adr/README.md`](docs/adr/README.md) — accepted architectural decisions (prices in cents, error translation, TSPL bitmap rendering).

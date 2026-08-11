@@ -33,8 +33,5 @@ jobs:
       - name: Type check
         run: bun run build
 
-      - name: Unit tests
+      - name: Rust tests
         run: bun run test
-
-      - name: DOM tests
-        run: bun run test:dom

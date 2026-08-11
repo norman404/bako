@@ -19,5 +19,4 @@ export async function initI18n(options?: InitI18nOptions): Promise<void> {
     });
 }
 
-export { createTestI18n, renderWithI18n } from './test-utils';
 export { I18nProvider } from './I18nProvider';

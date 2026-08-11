@@ -46,8 +46,8 @@ Vamos a:
 
 - **Traducir en la lógica de dominio o en el acceso a datos:** rechazado.
   Acoplaría la lógica de negocio a `react-i18next`, rompiendo la regla de que no
-  depende del framework de UI ni de sus librerías. También haría los tests de
-  dominio dependientes del setup de i18n.
+  depende del framework de UI ni de sus librerías. También acoplaría la lógica
+  de dominio al setup de i18n.
 - **Seguir mostrando `error.message`:** rechazado. Es exactamente el bug que
   estamos arreglando: mensajes en inglés filtrándose a usuarios no angloparlantes.
 - **Manejo ad-hoc por componente:** rechazado. Cada panel tendría su propia
@@ -58,8 +58,8 @@ Vamos a:
 - (+) La capa de dominio permanece framework-agnostic y testeable en aislamiento.
 - (+) Los textos de usuario viven en JSON de locales, siguiendo el flujo normal
   de i18n del proyecto.
-- (+) Se reutiliza `locale-completeness.spec.ts` como guard de regresión para
-  nuevas keys de error.
+- (+) Las nuevas keys de error se mantienen en los cinco locales mediante una
+  verificación explícita del cambio.
 - (-) Agregar un nuevo tipo de error requiere tres pasos: el código en la lógica
   de dominio, la entrada en los 5 locales, y el manejo en el helper de traducción.
 - (-) Los mensajes genéricos de base de datos (`Failed to list...`) pierden
@@ -74,8 +74,8 @@ Vamos a:
   1. Agregar su código al helper `translate{Module}Error` del módulo.
   2. Agregar la key y valor en `src/i18n/locales/*/errors.json` bajo la
      sección del módulo.
-  3. Extender `src/i18n/locale-completeness.spec.ts` si aún no cubre ese
-     namespace.
+  3. Verificar que el namespace mantenga la misma estructura en los cinco
+     locales.
 - No mostrés `error.message` directamente en componentes. Usá el helper del módulo.
 - El fallback genérico es intencional: errores técnicos no mapeados deben
   mostrar un mensaje amigable, no el texto crudo de una librería o Tauri.

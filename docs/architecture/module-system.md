@@ -38,30 +38,13 @@ None of this is order or cart *data* — there is no line item, no total, no ord
 
 The shape is in [`BAKO.md` § Module system](../../BAKO.md#module-system), and the layers it replaced are listed in [`BAKO.md` § Layers that do not exist in this model](../../BAKO.md#layers-that-do-not-exist-in-this-model). The rules a structural change is checked against in review are in [`BAKO.md` § Migration strategy](../../BAKO.md#migration-strategy); the step-by-step procedure is §7 below.
 
-### `test/` is the one subfolder a small module may have
-
-`components/` and `lib/` appear only when a module's size justifies them. `test/` is the exception: **`test/factories.ts` inside a module is legal at any size**, because factories are shared test *helpers*, not tests. The specs themselves stay co-located next to the file they cover — Bako does not group tests into a separate `test/` tree. See [`docs/contributing/testing.md`](../contributing/testing.md).
-
-### `test/factories` is the second documented exception to the barrel
-
-Factories are deep-imported across module lines — `@/modules/menu/test/factories` by `checkout`, `order`, `shift-reports` and `src/app/App.dom.spec.tsx`; `@/modules/printer/test/factories` by `checkout` and `shift-reports`; `@/modules/order/test/factories` by `checkout`. Those are deep paths, so the barrel rule (§3) reaches them.
-
-**Decision: `test/factories` is a documented exception to the barrel rule, alongside `manifest.ts` — not something to re-export from `index.ts`.** The permitted form is `@/modules/<module>/test/factories`, and it may be imported **only from a spec, or from another module's `test/factories`** — the second case because a factory legitimately composes another (`order/test/factories.ts` builds a `CartItem` from `menu`'s `buildProduct`). No production file imports one. Modules that publish factories today: `menu`, `order`, `printer`.
-
-Two reasons:
-
-- **A factory is not public API.** It builds fixtures for tests. Nothing in production has any business constructing one, and putting it in `index.ts` would advertise it as part of the module's contract.
-- **The barrel is loaded by production code.** Re-exporting factories through `index.ts` would drag test-only code — and whatever it imports — into the bundle every consumer of that module pulls in. `src/i18n/index.ts` is the worked example of what that costs: it re-exports test helpers, so `@testing-library/react` reaches the bundle through `main.tsx`. The barrel is not a free indirection; whatever it names, it loads.
-
-The two exceptions and their allowed call sites are summarized in §5.
-
 ---
 
 ## 3. The barrel rule
 
-The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All ten modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to one of the two exceptions below. There is no third form, and a new one is a review failure, not a precedent.
+The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All ten modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to the manifest exception below. There is no second form, and a new one is a review failure, not a precedent.
 
-This guide adds exactly two exceptions to the rule, both documented and both bounded by call site: `manifest.ts` (§5) and `test/factories` (§2, summarized in §5).
+This guide documents the single exception to the rule, bounded by call site: `manifest.ts` (§5).
 
 ---
 
@@ -100,16 +83,15 @@ The tab still lands in the "general" group, exactly where it was. There is delib
 
 ---
 
-## 5. The two exceptions to the barrel rule
+## 5. The exception to the barrel rule
 
-There are exactly two, no more, and each is bounded by *who* may use it:
+There is exactly one exception, bounded by *who* may use it:
 
 | Exception | Permitted import | Permitted call site |
 |---|---|---|
 | `manifest.ts` | `@/modules/<module>/manifest` | `src/app/module-registry.ts` only |
-| `test/factories` | `@/modules/<module>/test/factories` | specs, and other modules' `test/factories` |
 
-Anything else that reaches past an `index.ts` is a violation. Adding a third exception is an architectural decision, not a judgment call at the call site.
+Anything else that reaches past an `index.ts` is a violation. Adding another exception is an architectural decision, not a judgment call at the call site.
 
 ### `manifest.ts`
 
@@ -118,10 +100,6 @@ The `manifest.ts` files (`menu`, `checkout`, `delivery`, `printer`, `shift-repor
 **Decision: `manifest.ts` is a documented exception to the barrel rule, not something to re-export from `index.ts`.** It may be deep-imported as `@/modules/<module>/manifest`, and exclusively from `src/app/module-registry.ts` — the one composition root responsible for wiring modules into the Settings registry. No other file gets a pass to import a module's `manifest.ts` by path.
 
 Reason: `module-registry.ts` runs at app composition time and needs only the manifest object (an id, some flags, a component reference) for every module, up front. If `manifest` were re-exported through `index.ts` instead, registering a module would force loading its entire public barrel — components, stores, repository code, everything else that module exports — just to read a handful of metadata fields. That's needless weight at boot, and it's exactly the kind of eager cross-loading that produces cycles like §4's: two modules' barrels pulling on each other transitively through registration alone, not through any real feature dependency.
-
-### `test/factories`
-
-Decided in [§2](#2-module-shape), where the reasoning lives — factories are test helpers rather than public API, and routing them through the barrel would pull test-only code into the production bundle. Not repeated here.
 
 ---
 
@@ -137,13 +115,7 @@ Bako does not follow it there. Renaming every file under `src/` would buy a styl
 
 A module migrates only when real work already touches it — never as a standalone refactor. When that moment comes, in this order:
 
-1. **Run the module's tests before touching anything.**
-
-   ```bash
-   bun run scripts/run-tests.ts 'src/modules/<feature>/**/*.spec.ts'
-   ```
-
-   Add `'src/modules/<feature>/**/*.dom.spec.tsx'` if the module has component specs. Green here is the regression net for every step below. If it isn't green before you start, that is a separate change — fix it first.
+1. **Inspect the module and run the relevant quality checks before touching anything.** If the change reaches Rust behavior, run the focused Cargo tests first. If the checks are not green before you start, that is a separate change — fix it first.
 
 2. **Flatten.** Each legacy layer has one destination:
 
@@ -155,19 +127,19 @@ A module migrates only when real work already touches it — never as a standalo
    | `hooks/use-x.ts` | `use-<feature>.ts` |
    | `adapters/x.ts` | module root, or `lib/` if the module is large enough to justify a subfolder |
 
-   Each spec moves with the file it covers and keeps its name.
+   Each implementation file keeps its name unless the flattening requires a meaningfully clearer name.
 
 3. **Curate the barrel.** `index.ts` exports only what other modules actually consume — nothing else. A symbol with no external consumer does not belong in the barrel; internal reach is what the flat layout is for.
 
 4. **Repoint the external consumers at the barrel.** This is the step that removes deep imports: every `@/modules/<feature>/<path>` written outside the module becomes `@/modules/<feature>`. If a consumer needs something the barrel doesn't export, export it (back to step 3) — never reach past it.
 
-5. **Verify.** Re-run the module's tests, then the full gate in [`BAKO.md` § Verify before claiming done](../../BAKO.md#verify-before-claiming-done). The tests must pass **without a single assertion changed**. If you had to edit an assertion, this stopped being a structural migration and became a behavior change — and that is a different PR.
+5. **Verify.** Run the relevant focused checks, then the full gate in [`BAKO.md` § Verify before claiming done](../../BAKO.md#verify-before-claiming-done). If the change alters behavior, document it as a behavior change rather than calling it purely structural.
 
-`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all ten modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or one of the two exceptions in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
+`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all ten modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or the exception in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
 
-### Two traps the migration hit
+### The trap the migration hit
 
-Both cost real debugging time and neither is obvious from the five steps. They apply to any future flattening.
+It cost real debugging time and is not obvious from the five steps. It applies to any future flattening.
 
 #### 1. Flattening collides files, and the case-only collisions are silent
 
@@ -180,30 +152,6 @@ Files from different layer folders land in the same directory, so two of them ca
 
 **Resolve it by renaming for meaning, never with an explicit extension in the import.** `domain/cart.ts` became `cart-operations.ts` because that is what the file holds — pure cart operations — next to the `Cart.tsx` component. Writing `./cart.ts` in the import to disambiguate would "work" and would leave the trap armed for the next reader.
 
-#### 2. Repointing a spec at the barrel breaks partial `mock.module` factories
-
-Step 4 turns a spec's deep import into a barrel import, and the spec's mocks have to follow. Two failure modes, both of which show up as `undefined is not a function` in code that was passing a minute earlier:
-
-- **A partial factory blanks the rest of the module.** `mock.module("@/modules/x", () => ({ useThing }))` replaces the whole namespace. If the code under test also uses `otherThing` from that barrel, it now reads `undefined`. Under a deep import each symbol had its own module to mock, so the problem could not arise.
-- **Two `mock.module` calls on the same target do not merge — the last one wins.** Specs that mocked two deep paths separately must consolidate into a *single* factory for the barrel.
-
-The pattern is to spread the real module and override only what the test controls:
-
-```ts
-import * as menuModule from "@/modules/menu";
-
-// Snapshot of the real module BEFORE mocking it: the barrel also exports
-// parseProductPriceInput, which the component needs at its real value.
-const realMenuModule = { ...menuModule };
-
-const useCategoriesMock = mock();
-mock.module("@/modules/menu", () => ({
-  ...realMenuModule,
-  useCategories: useCategoriesMock,
-}));
-```
-
-The snapshot must be taken **before** `mock.module` runs. Bun mutates the existing namespace object in place, so a spread taken afterwards copies the mock, not the real module, and every "preserved" symbol comes back `undefined`. `src/modules/shift-reports/components/ShiftControlPanel.dom.spec.tsx` is the worked example in the tree.
 
 ---
 

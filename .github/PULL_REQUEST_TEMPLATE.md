@@ -18,8 +18,7 @@
 
 <!-- Describe the tests you ran. If following TDD, mention Red-Green-Refactor cycle -->
 
-- [ ] Unit tests pass (`bun run test`)
-- [ ] DOM tests pass (`bun run test:dom`)
+- [ ] Rust tests pass (`bun run test`)
 - [ ] Build succeeds (`bun run build`)
 
 ## Checklist

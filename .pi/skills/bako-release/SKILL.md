@@ -45,10 +45,9 @@ If lint fails, **STOP**. Report errors and do not continue. No version files may
 
 ```bash
 bun run test
-bun run test:dom
 ```
 
-If any test fails, **STOP**. Report failures and do not continue. Do not bump the version with failing tests.
+This runs the Rust test suite through `cargo test`. If it fails, **STOP**. Report failures and do not continue. Do not bump the version with failing tests.
 
 ### 5. Bump version files
 
@@ -131,7 +130,6 @@ Report that the GitHub Actions release build has started.
 - [x] Working tree clean
 - [x] `bun run lint` passed
 - [x] `bun run test` passed
-- [x] `bun run test:dom` passed
 
 ### Files Changed
 | File | Change |

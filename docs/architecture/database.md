@@ -95,9 +95,7 @@ to an **already-migrated** `bako.db` file (located via the OS-specific app-data 
 in `scripts/seed.ts`) and exposes the minimal `exec` / `prepare` / `close` surface
 `scripts/seed.ts` needs to run `src-tauri/seeds/seed-menu.sql` from the CLI
 (`bun run seed`). It bypasses Drizzle and the Tauri SQL plugin entirely — it's a
-one-off seeding tool, not a second database client for the app, and not what tests
-use: `scripts/seed.spec.ts` exercises `executeSeed` against a fake in-memory
-`SqliteConnection`, never `createBunConnection`.
+one-off seeding tool, not a second database client for the app.
 
 ## Invariant
 
