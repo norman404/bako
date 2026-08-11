@@ -17,7 +17,7 @@ import { reprintCommand } from "./reprint-command";
 import { printCommand } from "@/modules/checkout";
 import { buildPrinter } from "@/modules/printer/test/factories";
 import { buildCategory } from "@/modules/menu/test/factories";
-import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
+import type { OrderDetail } from "../order-management";
 
 const mockedPrintCommand = printCommand as Mock<typeof printCommand>;
 

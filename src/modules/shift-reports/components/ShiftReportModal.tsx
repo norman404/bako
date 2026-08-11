@@ -8,8 +8,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useShiftReport } from "@/modules/shift-reports/hooks/use-shift-reports";
-import { ShiftReportView } from "@/modules/shift-reports/components/ShiftReportView";
+import { useShiftReport } from "../use-shift-reports";
+import { ShiftReportView } from "./ShiftReportView";
 
 interface ShiftReportModalProps {
   shiftId: string;

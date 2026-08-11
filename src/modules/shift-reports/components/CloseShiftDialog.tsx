@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { formatPosCurrency } from "@/lib/currency";
 import { parseProductPriceInput } from "@/modules/menu";
-import { useShiftReport, useCloseShift } from "@/modules/shift-reports/hooks/use-shift-reports";
-import { translateShiftError } from "@/modules/shift-reports/lib/translate-shift-error";
+import { useShiftReport, useCloseShift } from "../use-shift-reports";
+import { translateShiftError } from "../lib/translate-shift-error";
 import { CurrencyInput } from "./CurrencyInput";
 
 interface CloseShiftDialogProps {

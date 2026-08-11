@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
-import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
+import { useActiveShift } from "../use-shift-reports";
 import { CashMovementsDialog } from "./CashMovementsDialog";
 
 export function CashMovementsButton() {

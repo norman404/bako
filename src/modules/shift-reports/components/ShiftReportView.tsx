@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/Button";
 import { formatPosCurrency } from "@/lib/currency";
-import type { ShiftReport, ShiftReportOrder } from "@/modules/shift-reports/domain/shift";
+import type { ShiftReport, ShiftReportOrder } from "../shift";
 
 interface ShiftReportViewProps {
   report: ShiftReport;

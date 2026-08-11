@@ -23,7 +23,7 @@ import * as actualSonner from "sonner";
 import * as actualTauriCore from "@tauri-apps/api/core";
 import * as actualUseMountEffect from "@/lib/use-mount-effect";
 import * as menuModule from "@/modules/menu";
-import * as actualUseShiftReports from "@/modules/shift-reports/hooks/use-shift-reports";
+import * as shiftReportsModule from "@/modules/shift-reports";
 import * as actualUpdater from "@/modules/updater";
 import * as checkoutModule from "@/modules/checkout";
 
@@ -31,13 +31,14 @@ import * as checkoutModule from "@/modules/checkout";
 // así que sólo un spread previo conserva las implementaciones reales.
 const actualMenu = { ...menuModule };
 const actualCheckout = { ...checkoutModule };
+const actualShiftReports = { ...shiftReportsModule };
 
 const REAL_MODULES: ReadonlyArray<[specifier: string, exports: Record<string, unknown>]> = [
   ["sonner", { ...actualSonner }],
   ["@tauri-apps/api/core", { ...actualTauriCore }],
   ["@/lib/use-mount-effect", { ...actualUseMountEffect }],
   ["@/modules/menu", { ...actualMenu }],
-  ["@/modules/shift-reports/hooks/use-shift-reports", { ...actualUseShiftReports }],
+  ["@/modules/shift-reports", { ...actualShiftReports }],
   ["@/modules/updater", { ...actualUpdater }],
   ["@/modules/checkout", { ...actualCheckout }],
 ];
@@ -55,7 +56,8 @@ mock.module("@/modules/menu", () => ({
   useMenus: mock(() => ({ data: [], isLoading: false })),
 }));
 
-mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+mock.module("@/modules/shift-reports", () => ({
+  ...actualShiftReports,
   useActiveShift: mock(() => ({ data: undefined, isLoading: false })),
 }));
 

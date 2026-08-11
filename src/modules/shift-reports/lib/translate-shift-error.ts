@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 
-import { ShiftPersistenceError, type ShiftTranslatableError } from "@/modules/shift-reports/domain/errors";
+import { ShiftPersistenceError, type ShiftTranslatableError } from "../errors";
 
 function isShiftTranslatableError(error: unknown): error is ShiftTranslatableError {
   return error instanceof ShiftPersistenceError;

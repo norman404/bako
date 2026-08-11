@@ -13,7 +13,7 @@ mock.module("sonner", () => ({
   Toaster: () => null,
 }));
 
-mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+mock.module("../use-shift-reports", () => ({
   useActiveShift: mock(),
   useCashMovements: mock(),
   useAddCashMovement: mock(),
@@ -31,10 +31,10 @@ mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
 }));
 
 import { CashMovementsDialog } from "./CashMovementsDialog";
-import * as shiftHooks from "@/modules/shift-reports/hooks/use-shift-reports";
+import * as shiftHooks from "../use-shift-reports";
 import { toast } from "sonner";
 import { formatPosCurrency } from "@/lib/currency";
-import type { CashMovement } from "@/modules/shift-reports/domain/shift";
+import type { CashMovement } from "../shift";
 import { renderWithProviders, screen, waitFor, fireEvent } from "@/test/test-utils";
 
 function buildCashMovement(overrides: Partial<CashMovement> = {}): CashMovement {

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import {
   useActiveShift,
   SHIFT_QUERY_KEYS,
-} from "@/modules/shift-reports/hooks/use-shift-reports";
+} from "../use-shift-reports";
 import { ShiftReportModal } from "./ShiftReportModal";
 import { OpenShiftDialog } from "./OpenShiftDialog";
 import { CloseShiftDialog } from "./CloseShiftDialog";

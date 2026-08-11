@@ -5,22 +5,22 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/Button";
-import { useShiftHistory, useShiftReport, SHIFT_QUERY_KEYS } from "@/modules/shift-reports/hooks/use-shift-reports";
-import { useFetchOrderDetail } from "@/modules/shift-reports/hooks/use-order-management";
+import { useShiftHistory, useShiftReport, SHIFT_QUERY_KEYS } from "../use-shift-reports";
+import { useFetchOrderDetail } from "../use-order-management";
 import { usePrinters } from "@/modules/printer";
 import { PRINTER_ROLE } from "@/modules/printer";
 import { useCategories } from "@/modules/menu";
 import { useSettingsStore } from "@/modules/settings";
 import { formatPosCurrency } from "@/lib/currency";
-import { reprintOrder } from "@/modules/shift-reports/lib/reprint-order";
-import { reprintShiftReport } from "@/modules/shift-reports/lib/reprint-shift-report";
-import { reprintCommand } from "@/modules/shift-reports/lib/reprint-command";
+import { reprintOrder } from "../lib/reprint-order";
+import { reprintShiftReport } from "../lib/reprint-shift-report";
+import { reprintCommand } from "../lib/reprint-command";
 import { ShiftReportView } from "./ShiftReportView";
 import { VoidOrderConfirm } from "./VoidOrderConfirm";
 import { EditOrderModal } from "./EditOrderModal";
 import { CommandReprintDialog } from "./CommandReprintDialog";
-import type { ShiftReport, ShiftReportOrder } from "@/modules/shift-reports/domain/shift";
-import type { CommandItemSelection, OrderDetail } from "@/modules/shift-reports/domain/order-management";
+import type { ShiftReport, ShiftReportOrder } from "../shift";
+import type { CommandItemSelection, OrderDetail } from "../order-management";
 
 // ─── ShiftReportInline ──────────────────────────────────────────────────────
 

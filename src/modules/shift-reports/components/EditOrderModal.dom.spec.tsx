@@ -13,7 +13,7 @@ mock.module("sonner", () => ({
   Toaster: () => null,
 }));
 
-mock.module("@/modules/shift-reports/hooks/use-order-management", () => ({
+mock.module("../use-order-management", () => ({
   useOrderDetail: mock(() => ({ data: null, isLoading: false })),
   useUpdateOrder: mock(() => ({ mutate: mock(), isPending: false })),
   ORDER_QUERY_KEYS: {
@@ -22,10 +22,10 @@ mock.module("@/modules/shift-reports/hooks/use-order-management", () => ({
 }));
 
 import { EditOrderModal } from "./EditOrderModal";
-import * as orderHooks from "@/modules/shift-reports/hooks/use-order-management";
+import * as orderHooks from "../use-order-management";
 import { toast } from "sonner";
 import { formatPosCurrency } from "@/lib/currency";
-import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
+import type { OrderDetail } from "../order-management";
 import { renderWithProviders, screen, waitFor, fireEvent } from "@/test/test-utils";
 
 function buildOrderDetail(overrides: Partial<OrderDetail> = {}): OrderDetail {

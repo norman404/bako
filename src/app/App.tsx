@@ -31,8 +31,7 @@ import {
 import { Cart, calculateCartTotals, useOrderStore } from "@/modules/order";
 import { SettingsModal } from "@/modules/settings";
 import { useSettingsStore } from "@/modules/settings";
-import { ShiftButton, CashMovementsButton } from "@/modules/shift-reports";
-import { useActiveShift } from "@/modules/shift-reports/hooks/use-shift-reports";
+import { ShiftButton, CashMovementsButton, useActiveShift } from "@/modules/shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useUpdater, UpdateToast } from "@/modules/updater";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos";

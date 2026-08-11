@@ -21,9 +21,9 @@ import {
   useAddCashMovement,
   useUpdateCashMovement,
   useDeleteCashMovement,
-} from "@/modules/shift-reports/hooks/use-shift-reports";
-import { translateShiftError } from "@/modules/shift-reports/lib/translate-shift-error";
-import type { CashMovement, CashMovementType } from "@/modules/shift-reports/domain/shift";
+} from "../use-shift-reports";
+import { translateShiftError } from "../lib/translate-shift-error";
+import type { CashMovement, CashMovementType } from "../shift";
 import { CurrencyInput } from "./CurrencyInput";
 
 interface CashMovementsDialogProps {

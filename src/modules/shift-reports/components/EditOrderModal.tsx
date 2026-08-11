@@ -15,8 +15,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { formatPosCurrency } from "@/lib/currency";
-import { useOrderDetail, useUpdateOrder } from "@/modules/shift-reports/hooks/use-order-management";
-import type { OrderDetail, OrderDetailItem, UpdateOrderInput } from "@/modules/shift-reports/domain/order-management";
+import { useOrderDetail, useUpdateOrder } from "../use-order-management";
+import type { OrderDetail, OrderDetailItem, UpdateOrderInput } from "../order-management";
 
 type EditOrderPaymentMethod = "cash" | "card";
 

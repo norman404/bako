@@ -12,8 +12,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { parseProductPriceInput } from "@/modules/menu";
-import { useOpenShift } from "@/modules/shift-reports/hooks/use-shift-reports";
-import { translateShiftError } from "@/modules/shift-reports/lib/translate-shift-error";
+import { useOpenShift } from "../use-shift-reports";
+import { translateShiftError } from "../lib/translate-shift-error";
 import { CurrencyInput } from "./CurrencyInput";
 
 interface OpenShiftDialogProps {

@@ -4,7 +4,7 @@ import i18next from "i18next";
 import {
   NoActiveShiftError,
   ShiftAlreadyActiveError,
-} from "@/modules/shift-reports/domain/errors";
+} from "../errors";
 
 import { translateShiftError } from "./translate-shift-error";
 

@@ -2,7 +2,7 @@ import { ResultAsync, okAsync } from "neverthrow";
 import { invoke } from "@tauri-apps/api/core";
 
 import type { Printer } from "@/modules/printer";
-import type { ShiftReport } from "@/modules/shift-reports/domain/shift";
+import type { ShiftReport } from "../shift";
 import { formatPosCurrency } from "@/lib/currency";
 
 export interface ReprintShiftReportLabels {

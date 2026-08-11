@@ -9,8 +9,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useVoidOrder } from "@/modules/shift-reports/hooks/use-order-management";
-import { translateShiftError } from "@/modules/shift-reports/lib/translate-shift-error";
+import { useVoidOrder } from "../use-order-management";
+import { translateShiftError } from "../lib/translate-shift-error";
 
 interface VoidOrderConfirmProps {
   orderId: string;

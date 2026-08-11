@@ -2,7 +2,7 @@ import { describe, expect, it, mock, beforeEach } from "bun:test";
 
 
 
-mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+mock.module("../use-shift-reports", () => ({
   useShiftReport: mock(() => ({ data: null, isLoading: false })),
   SHIFT_QUERY_KEYS: {
     active: ["shift", "active"],
@@ -12,7 +12,7 @@ mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
 }));
 
 import { ShiftReportModal } from "./ShiftReportModal";
-import * as shiftHooks from "@/modules/shift-reports/hooks/use-shift-reports";
+import * as shiftHooks from "../use-shift-reports";
 import { renderWithProviders, screen, waitFor, fireEvent } from "@/test/test-utils";
 
 const mockReport = {

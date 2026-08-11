@@ -1,7 +1,7 @@
 import type { Category } from "@/modules/menu";
 import type { Printer } from "@/modules/printer";
 import { buildKitchenCommands, printCommand, type CartLine } from "@/modules/checkout";
-import type { CommandItemSelection, OrderDetail, OrderDetailItem } from "@/modules/shift-reports/domain/order-management";
+import type { CommandItemSelection, OrderDetail, OrderDetailItem } from "../order-management";
 
 export interface ReprintCommandResult {
   printedCount: number;

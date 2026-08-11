@@ -15,7 +15,7 @@ mock.module("@/modules/checkout", () => ({
 import { reprintOrder } from "./reprint-order";
 import { printOrder } from "@/modules/checkout";
 import { buildPrinter } from "@/modules/printer/test/factories";
-import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
+import type { OrderDetail } from "../order-management";
 
 const mockedPrintOrder = printOrder as Mock<typeof printOrder>;
 

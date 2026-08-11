@@ -13,7 +13,7 @@ mock.module("sonner", () => ({
   Toaster: () => null,
 }));
 
-mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+mock.module("../use-shift-reports", () => ({
   useActiveShift: mock(),
   useOpenShift: mock(),
   useCloseShift: mock(),
@@ -30,7 +30,7 @@ mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
   },
 }));
 
-mock.module("@/modules/shift-reports/persistence/shift-drizzle.repository", () => ({
+mock.module("../repository", () => ({
   shiftDrizzleRepository: {
     openShift: mock(),
     closeShift: mock(),
@@ -42,7 +42,7 @@ mock.module("@/modules/shift-reports/persistence/shift-drizzle.repository", () =
 
 import { toast } from "sonner";
 import { CloseShiftDialog } from "./CloseShiftDialog";
-import * as shiftHooks from "@/modules/shift-reports/hooks/use-shift-reports";
+import * as shiftHooks from "../use-shift-reports";
 import { renderWithProviders, screen, waitFor, fireEvent } from "@/test/test-utils";
 
 const mockReport = {

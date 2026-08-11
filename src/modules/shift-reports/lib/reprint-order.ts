@@ -2,7 +2,7 @@ import { ResultAsync } from "neverthrow";
 
 import { printOrder, type PrintOrderOptions } from "@/modules/checkout";
 import type { Printer } from "@/modules/printer";
-import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
+import type { OrderDetail } from "../order-management";
 
 function toPrintPaymentMethod(method: string): "cash" | "card" {
   const normalized = method.trim().toLowerCase();

@@ -15,8 +15,8 @@ import type {
   CommandItemSelection,
   OrderDetail,
   OrderDetailItemModifier,
-} from "@/modules/shift-reports/domain/order-management";
-import { useOrderDetail } from "@/modules/shift-reports/hooks/use-order-management";
+} from "../order-management";
+import { useOrderDetail } from "../use-order-management";
 
 interface CommandReprintDialogProps {
   orderId: string | null;

@@ -7,7 +7,7 @@ mock.module("@tauri-apps/api/core", () => ({
 import { invoke } from "@tauri-apps/api/core";
 import { reprintShiftReport, type ReprintShiftReportLabels } from "./reprint-shift-report";
 import { buildPrinter } from "@/modules/printer/test/factories";
-import type { ShiftReport } from "@/modules/shift-reports/domain/shift";
+import type { ShiftReport } from "../shift";
 
 const mockedInvoke = invoke as Mock<typeof invoke>;
 

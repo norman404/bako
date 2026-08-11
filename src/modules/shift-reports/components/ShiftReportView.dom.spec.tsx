@@ -3,7 +3,7 @@ import { describe, expect, it, mock } from "bun:test";
 import { ShiftReportView } from "./ShiftReportView";
 import { renderWithProviders, screen, fireEvent } from "@/test/test-utils";
 import { formatPosCurrency } from "@/lib/currency";
-import type { ShiftReport } from "@/modules/shift-reports/domain/shift";
+import type { ShiftReport } from "../shift";
 
 const baseReport: ShiftReport = {
   shiftId: "shift-1",

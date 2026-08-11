@@ -17,7 +17,7 @@ mock.module("sonner", () => ({
 const useShiftHistoryMock = mock();
 const useShiftReportMock = mock();
 
-mock.module("@/modules/shift-reports/hooks/use-shift-reports", () => ({
+mock.module("../use-shift-reports", () => ({
   useShiftHistory: useShiftHistoryMock,
   useShiftReport: useShiftReportMock,
   SHIFT_QUERY_KEYS: {
@@ -65,23 +65,23 @@ mock.module("@/modules/settings", () => ({
 const fetchOrderDetailMock = mock();
 const useFetchOrderDetailMock = mock(() => fetchOrderDetailMock);
 const useOrderDetailMock = mock();
-mock.module("@/modules/shift-reports/hooks/use-order-management", () => ({
+mock.module("../use-order-management", () => ({
   useFetchOrderDetail: useFetchOrderDetailMock,
   useOrderDetail: useOrderDetailMock,
 }));
 
 const reprintOrderMock = mock();
-mock.module("@/modules/shift-reports/lib/reprint-order", () => ({
+mock.module("../lib/reprint-order", () => ({
   reprintOrder: reprintOrderMock,
 }));
 
 const reprintCommandMock = mock();
-mock.module("@/modules/shift-reports/lib/reprint-command", () => ({
+mock.module("../lib/reprint-command", () => ({
   reprintCommand: reprintCommandMock,
 }));
 
 const reprintShiftReportMock = mock();
-mock.module("@/modules/shift-reports/lib/reprint-shift-report", () => ({
+mock.module("../lib/reprint-shift-report", () => ({
   reprintShiftReport: reprintShiftReportMock,
 }));
 
@@ -97,11 +97,11 @@ mock.module("./EditOrderModal", () => ({
 }));
 
 import { ShiftControlPanel } from "./ShiftControlPanel";
-import { SHIFT_QUERY_KEYS } from "@/modules/shift-reports/hooks/use-shift-reports";
+import { SHIFT_QUERY_KEYS } from "../use-shift-reports";
 import { PRINTER_ROLE } from "@/modules/printer";
 import { buildPrinter } from "@/modules/printer/test/factories";
-import type { ShiftHistoryItem, ShiftReport } from "@/modules/shift-reports/domain/shift";
-import type { OrderDetail } from "@/modules/shift-reports/domain/order-management";
+import type { ShiftHistoryItem, ShiftReport } from "../shift";
+import type { OrderDetail } from "../order-management";
 import { toast } from "sonner";
 import { QueryClient } from "@tanstack/react-query";
 import { renderWithProviders, screen, waitFor, fireEvent } from "@/test/test-utils";
