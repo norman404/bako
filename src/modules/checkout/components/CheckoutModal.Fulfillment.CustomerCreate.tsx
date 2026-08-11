@@ -2,7 +2,7 @@ import { MapPin, Phone, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { CheckoutCustomerFormState } from "../lib/builders";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { FormField } from "@/components/ui/FormField";

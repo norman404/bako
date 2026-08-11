@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp, Clock, Printer, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useShiftHistory, useShiftReport, SHIFT_QUERY_KEYS } from "../use-shift-reports";
 import { useFetchOrderDetail } from "../use-order-management";
 import { usePrinters } from "@/modules/printer";
@@ -262,9 +262,10 @@ export function ShiftControlPanel() {
                 key={shift.shiftId}
                 className="rounded-card border border-border bg-surface-raised shadow-card overflow-hidden transition-colors hover:border-border-strong"
               >
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => setExpandedShiftId(isExpanded ? null : shift.shiftId)}
-                  className="flex items-center justify-between w-full p-4 text-left"
+                  className="flex w-full items-center justify-between p-4 text-left"
                 >
                   <div className="flex items-center gap-3">
                     <div className={[
@@ -312,7 +313,7 @@ export function ShiftControlPanel() {
                       )}
                     </div>
                   </div>
-                </button>
+                </Button>
 
                 {isExpanded && (
                   <ShiftReportInline

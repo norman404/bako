@@ -7,7 +7,7 @@ import { applyFirstOptionFree } from "../modifier-group";
 import type { Product } from "../product";
 import { calculateItemUnitPrice } from "../lib/modifier-price";
 import { formatPosCurrency } from "@/lib/currency";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -182,8 +182,8 @@ function ModifierOptionChip({
   const surcharge = formatSurcharge(option.priceDelta);
 
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
       role={role}
       aria-checked={ariaChecked}
       aria-label={option.name}
@@ -191,8 +191,7 @@ function ModifierOptionChip({
       data-selected={selected ? "true" : undefined}
       onClick={onToggle}
       className={cn(
-        "group/chip flex w-full cursor-pointer items-center gap-3 rounded-card border px-3.5 py-2.5 text-left text-sm transition-[border-color,background-color,color,box-shadow] duration-200",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+        "group/chip flex w-full items-center gap-3 rounded-card border px-3.5 py-2.5 text-left text-sm transition-[border-color,background-color,color,box-shadow] duration-200",
         selected
           ? "border-primary bg-primary/15 text-text shadow-primary"
           : "border-border bg-surface-raised text-text hover:border-border-strong hover:bg-surface-sunken",
@@ -227,7 +226,7 @@ function ModifierOptionChip({
           {surcharge}
         </span>
       ) : null}
-    </button>
+    </Button>
   );
 }
 

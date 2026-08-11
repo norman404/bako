@@ -21,8 +21,9 @@ import {
 import { formatPosCurrency } from "@/lib/currency";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { translateMenuError } from "../lib/translate-menu-error";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormError } from "@/components/ui/FormError";
 import { SearchInput } from "@/components/ui/SearchInput";
@@ -345,9 +346,12 @@ function ProductSettingsPanel() {
                               }));
                             }}
                           />
-                          <label htmlFor={`menu-${menu.id}`} className="text-xs text-text cursor-pointer">
+                          <Label
+                            htmlFor={`menu-${menu.id}`}
+                            className="cursor-pointer text-xs font-normal normal-case tracking-normal text-text"
+                          >
                             {menu.name}
-                          </label>
+                          </Label>
                         </div>
                       ))}
                     </div>
@@ -473,9 +477,12 @@ function ProductSettingsPanel() {
                   setFormState((previous) => ({ ...previous, isPopular: checked === true }))
                 }
               />
-              <label htmlFor="product-popular" className="text-2xs text-text cursor-pointer">
+              <Label
+                htmlFor="product-popular"
+                className="cursor-pointer font-normal normal-case tracking-normal text-text"
+              >
                 Popular
-              </label>
+              </Label>
               {formState.isPopular ? (
                 <span className="ml-auto rounded-full bg-primary-strong px-2 py-0.5 text-2xs font-semibold text-on-primary">
                   ★ Popular

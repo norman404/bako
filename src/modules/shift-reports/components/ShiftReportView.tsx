@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Banknote, ChefHat, ChevronDown, ChevronUp, Edit3, Package, Printer, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { formatPosCurrency } from "@/lib/currency";
 import type { ShiftReport, ShiftReportOrder } from "../shift";
 
@@ -62,7 +62,8 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
                 className="bg-surface-sunken"
               >
                 <div className="flex w-full items-center justify-between px-4 py-3">
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => setExpandedOrderId(isExpanded ? null : order.orderId)}
                     className="flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-surface-raised/40"
                   >
@@ -89,7 +90,7 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
                         {order.itemCount} {t("itemCount")}
                       </span>
                     </div>
-                  </button>
+                  </Button>
 
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="font-mono-tabular text-sm font-semibold text-text">

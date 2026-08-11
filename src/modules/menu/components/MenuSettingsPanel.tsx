@@ -12,9 +12,10 @@ import {
   useDeleteMenu,
   useMenus,
 } from "../use-menus";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FormError } from "@/components/ui/FormError";
 import { FormField } from "@/components/ui/FormField";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -244,9 +245,12 @@ function MenuSettingsPanel() {
                     setFormState((previous) => ({ ...previous, isDefault: checked === true }));
                   }}
                 />
-                <label htmlFor="menu-default" className="text-xs text-text-dim cursor-pointer">
+                <Label
+                  htmlFor="menu-default"
+                  className="cursor-pointer text-xs font-normal normal-case tracking-normal text-text-dim"
+                >
                   {t('menus.defaultDescription')}
-                </label>
+                </Label>
               </div>
             </FormField>
 

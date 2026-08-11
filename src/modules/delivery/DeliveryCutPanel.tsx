@@ -5,7 +5,7 @@ import {
   DELIVERY_PERSONS_CUT_QUERY_KEY,
   useTodayDeliveryCut,
 } from "./use-delivery-persons";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatPosCurrency } from "@/lib/currency";
 

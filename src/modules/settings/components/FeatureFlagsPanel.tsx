@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useFeatureFlagsStore, useUpdateFeatureFlag, type FeatureFlagKey } from "@/modules/feature-flags";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
 interface ModuleConfig {
@@ -71,12 +72,12 @@ export function FeatureFlagsPanel() {
             <div key={flag} className="px-5">
               <div className="flex items-center justify-between py-3 border-b border-border">
                 <div className="grid gap-0.5">
-                  <label
+                  <Label
                     htmlFor={`flag-${flag}`}
-                    className="cursor-pointer text-sm font-medium text-text"
+                    className="cursor-pointer text-sm normal-case tracking-normal text-text"
                   >
                     {t(`featureFlags.flags.${flag}.label`)}
-                  </label>
+                  </Label>
                   <p className="text-xs text-text-dim">
                     {t(`featureFlags.flags.${flag}.description`)}
                   </p>

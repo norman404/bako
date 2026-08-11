@@ -1,9 +1,9 @@
 import { X, Globe, Flag, Download, type LucideIcon } from "lucide-react";
 import { useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import type { ModuleManifest } from "../module-manifest";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
@@ -81,18 +81,18 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
   const activeTab = allTabs.find((tab) => tab.id === activeSection);
 
   return (
-    <Dialog.Root open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-scrim/70 backdrop-blur-sm transition-opacity duration-200 data-[state=open]:animate-fade-in" />
-
-        <Dialog.Content aria-describedby={undefined} className="fixed left-[50%] top-[50%] z-50 w-full max-w-6xl h-[94vh] translate-x-[-50%] translate-y-[-50%] rounded-modal modal-shell-solid transition-all duration-200 focus:outline-none text-text grid grid-rows-[auto_1fr] overflow-hidden data-[state=open]:animate-modal-in">
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <DialogContent
+        aria-describedby={undefined}
+        className="h-[94vh] max-w-6xl grid grid-rows-[auto_1fr] text-text transition-all focus:outline-none"
+      >
 
           {/* Modal header */}
           <header className="flex items-center justify-between border-b border-border px-5 py-3">
-            <Dialog.Title className="text-base font-semibold text-text">
+            <DialogTitle className="text-base font-semibold text-text">
               {t('modal.title')}
-            </Dialog.Title>
-            <Dialog.Close asChild>
+            </DialogTitle>
+            <DialogClose asChild>
               <Button
                 variant="ghost"
                 size="icon"
@@ -100,7 +100,7 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
               >
                 <X className="h-4 w-4" />
               </Button>
-            </Dialog.Close>
+            </DialogClose>
           </header>
 
           {/* Two-column layout */}
@@ -160,9 +160,8 @@ function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
               </div>
             </section>
           </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+      </DialogContent>
+    </Dialog>
   );
 }
 

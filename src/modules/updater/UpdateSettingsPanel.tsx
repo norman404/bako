@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { APP_VERSION } from "@/lib/app-version";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useUpdater } from "./use-updater";
 import {

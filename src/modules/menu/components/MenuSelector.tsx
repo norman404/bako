@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { Menu } from "../menu";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface MenuSelectorProps {
@@ -22,15 +23,16 @@ function MenuSelector({ menus, selectedMenuId, onSelect }: MenuSelectorProps) {
       className="scrollbar-none flex items-center gap-3 overflow-x-auto pb-1"
     >
       {menus.map((menu) => (
-        <button
+        <Button
           key={menu.id}
+          variant="ghost"
           onClick={() => onSelect(menu.id)}
           className={cn(
-            "relative shrink-0 cursor-pointer select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
-            "hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+            "relative shrink-0 select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
+            "hover:-translate-y-0.5",
             selectedMenuId === menu.id
               ? "border-primary bg-surface-sunken font-bold text-text"
-              : "border-border bg-surface-raised font-medium text-text-muted hover:border-border-strong hover:text-text"
+              : "border-border bg-surface-raised font-medium text-text-muted hover:border-border-strong hover:text-text",
           )}
         >
           <span className="flex items-baseline gap-2">
@@ -48,7 +50,7 @@ function MenuSelector({ menus, selectedMenuId, onSelect }: MenuSelectorProps) {
               </span>
             )}
           </span>
-        </button>
+        </Button>
       ))}
     </nav>
   );

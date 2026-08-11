@@ -308,4 +308,18 @@ describe("CheckoutModal", () => {
     fireEvent.click(screen.getByLabelText(/cerrar/i));
     expect(onClose).toHaveBeenCalledTimes(2);
   });
+
+  it("should use the shared fullscreen dialog surface when checkout opens", () => {
+    // CASE: The cashier opens checkout, whose inner content owns the visual modal card.
+    // VALIDATES: Checkout uses the shared fullscreen dialog layout without centered transforms.
+    // Arrange
+    renderCheckoutModal();
+
+    // Act
+    const dialog = screen.getByRole("dialog", { name: /confirmar checkout/i });
+
+    // Assert
+    expect(dialog.getAttribute("data-slot")).toBe("dialog-content");
+    expect(dialog.getAttribute("data-layout")).toBe("fullscreen");
+  });
 });

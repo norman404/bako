@@ -5,6 +5,7 @@ import type { ModifierGroup } from "../modifier-group";
 import { filterProductsByCategory } from "../product-filters";
 import { sortProductsForMenu } from "../product-order";
 import type { Product } from "../product";
+import { Button } from "@/components/ui/button";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { formatPosCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
@@ -47,11 +48,12 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart, prod
           const hasModifiers = modifierGroupsEnabled && groups.length > 0;
 
           return (
-            <button
+            <Button
               key={product.id}
+              variant="ghost"
               onClick={() => onAddToCart(product)}
               aria-label={t('productGrid.addAriaLabel', { productName: product.name })}
-              className="group relative flex cursor-pointer flex-col items-stretch gap-2 rounded-card border border-border bg-surface-raised p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface active:translate-y-0 active:bg-surface-sunken"
+              className="group relative flex flex-col items-stretch gap-2 rounded-card border border-border bg-surface-raised p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong hover:shadow-raised active:translate-y-0 active:bg-surface-sunken"
               style={color ? { borderLeftColor: color, borderLeftWidth: '3px' } : undefined}
             >
               {hasModifiers && (
@@ -75,7 +77,7 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart, prod
               <span className="font-mono-tabular text-md font-semibold tracking-tight text-text transition-colors duration-200 group-hover:text-primary-strong">
                 {formatPosCurrency(product.price)}
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>

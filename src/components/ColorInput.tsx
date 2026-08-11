@@ -1,6 +1,8 @@
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
 interface ColorInputProps {
@@ -26,12 +28,7 @@ function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps
     <div className="grid gap-1">
       {label ? (
         <div className="flex items-center gap-2">
-          <label
-            htmlFor={id}
-            className="text-2xs font-medium uppercase tracking-[0.16em] text-text-dim leading-none"
-          >
-            {label}
-          </label>
+          <Label htmlFor={id}>{label}</Label>
           {value ? (
             <span
               className="h-4 w-4 rounded-full inline-block border border-border-strong"
@@ -44,10 +41,11 @@ function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps
       <div className="flex items-center gap-2">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Abrir selector de color"
-              className="h-9 w-9 shrink-0 cursor-pointer rounded-card border border-border bg-surface-raised flex items-center justify-center transition-colors duration-200 hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              className="h-9 w-9 shrink-0 rounded-card border border-border bg-surface-raised hover:border-border-strong"
             >
               {value ? (
                 <span
@@ -57,21 +55,21 @@ function ColorInput({ id, value, onChange, label, placeholder }: ColorInputProps
               ) : (
                 <span className="h-5 w-5 rounded-full inline-block border border-dashed border-text-dim" />
               )}
-            </button>
+            </Button>
           </PopoverTrigger>
 
           <PopoverContent className="w-64 p-3">
             <div className="grid grid-cols-5 gap-2">
               {PRESET_COLORS.map((color) => (
-                <button
+                <Button
                   key={color}
-                  type="button"
+                  variant="ghost"
                   aria-label={`Seleccionar color ${color}`}
                   onClick={() => {
                     onChange(color);
                     setOpen(false);
                   }}
-                  className="h-8 w-8 cursor-pointer rounded-full border border-border-strong transition-transform duration-200 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                  className="h-8 w-8 rounded-full border border-border-strong transition-transform duration-200 hover:scale-110"
                   style={{ backgroundColor: color }}
                 />
               ))}

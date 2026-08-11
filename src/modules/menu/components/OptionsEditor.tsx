@@ -6,8 +6,10 @@ import {
   formatProductPriceInput,
   parseProductPriceInput,
 } from "../lib/product-price";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export interface OptionsEditorOption {
@@ -147,24 +149,26 @@ function OptionsEditor({ options, onChange, groupKind, disabled = false }: Optio
                 )}
               >
                 <div className="flex flex-col items-center gap-0.5">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleMove(index, -1)}
                     disabled={disabled || isFirst}
                     aria-label={t("modifierGroups.moveUp")}
-                    className="flex h-5 w-5 items-center justify-center rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
+                    className="h-5 w-5 rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
                   >
                     <ArrowUp className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleMove(index, 1)}
                     disabled={disabled || isLast}
                     aria-label={t("modifierGroups.moveDown")}
-                    className="flex h-5 w-5 items-center justify-center rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
+                    className="h-5 w-5 rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
                   >
                     <ArrowDown className="h-3 w-3" />
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="flex-1">
@@ -192,29 +196,29 @@ function OptionsEditor({ options, onChange, groupKind, disabled = false }: Optio
                   />
                 </div>
 
-                <label className="flex h-8 items-center gap-1.5 rounded-sharp px-2 text-2xs uppercase tracking-[0.12em] text-text-muted">
-                  <input
-                    type="checkbox"
+                <Label className="flex h-8 items-center gap-1.5 rounded-sharp px-2 font-normal normal-case tracking-[0.12em] text-text-muted">
+                  <Checkbox
                     aria-label={t("modifierGroups.optionDefaultLabel")}
                     checked={option.isDefault}
-                    onChange={(e) => handleDefaultToggle(index, e.currentTarget.checked)}
+                    onCheckedChange={(checked) => handleDefaultToggle(index, checked === true)}
                     disabled={disabled}
-                    className="h-3.5 w-3.5 cursor-pointer"
+                    className="h-3.5 w-3.5"
                   />
                   <span className="hidden sm:inline">
                     {t("modifierGroups.optionDefaultLabel")}
                   </span>
-                </label>
+                </Label>
 
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => handleRemove(index)}
                   disabled={disabled}
                   aria-label={t("modifierGroups.removeOption", { defaultValue: "Eliminar opción" })}
-                  className="flex h-7 w-7 items-center justify-center rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-danger disabled:opacity-30 disabled:hover:bg-transparent"
+                  className="h-7 w-7 rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-danger disabled:opacity-30 disabled:hover:bg-transparent"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               </li>
             );
           })}

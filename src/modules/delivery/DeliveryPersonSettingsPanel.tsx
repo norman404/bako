@@ -13,7 +13,7 @@ import {
   useUpdateDeliveryPerson,
 } from "./use-delivery-persons";
 import { translateDeliveryError } from "./translate-delivery-error";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/ui/FormError";

@@ -16,7 +16,7 @@ import { useMenus } from "../use-menus";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { usePrinters } from "@/modules/printer";
 import { translateMenuError } from "../lib/translate-menu-error";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

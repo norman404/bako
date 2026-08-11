@@ -2,7 +2,7 @@ import { LoaderCircle, MapPin, Phone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import type { CheckoutCustomer } from "../use-checkout";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { FormField } from "@/components/ui/FormField";

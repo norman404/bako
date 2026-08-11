@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -59,11 +60,18 @@ export function GeneralSettingsCard() {
       {/* Locale row */}
       <div className="px-5">
         <div className="flex items-center justify-between py-3 border-b border-border">
-          <label className="text-sm font-medium text-text">
+          <Label
+            htmlFor="settings-locale"
+            className="text-sm normal-case tracking-normal text-text"
+          >
             {t("system.localeLabel")}
-          </label>
+          </Label>
           <Select value={locale} onValueChange={handleLocaleChange}>
-            <SelectTrigger data-testid="locale-select-trigger" className="w-[220px]">
+            <SelectTrigger
+              id="settings-locale"
+              data-testid="locale-select-trigger"
+              className="w-[220px]"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -80,11 +88,18 @@ export function GeneralSettingsCard() {
       {/* Currency row */}
       <div className="px-5">
         <div className="flex items-center justify-between py-3 border-b border-border">
-          <label className="text-sm font-medium text-text">
+          <Label
+            htmlFor="settings-currency"
+            className="text-sm normal-case tracking-normal text-text"
+          >
             {t("system.currencyLabel")}
-          </label>
+          </Label>
           <Select value={currency} onValueChange={handleCurrencyChange}>
-            <SelectTrigger data-testid="currency-select-trigger" className="w-[220px]">
+            <SelectTrigger
+              id="settings-currency"
+              data-testid="currency-select-trigger"
+              className="w-[220px]"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

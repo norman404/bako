@@ -235,4 +235,18 @@ describe("SettingsModal (settings feature)", () => {
     expect(screen.queryByRole("tab", { name: /actualizaciones/i })).toBeNull();
   });
 
+  it("should use the shared centered dialog surface when settings opens", () => {
+    // CASE: The operator opens Settings from the POS header.
+    // VALIDATES: Settings uses the shared dialog primitive rather than its own Radix surface.
+    // Arrange
+    renderSettingsModal();
+
+    // Act
+    const dialog = screen.getByRole("dialog", { name: /configuración/i });
+
+    // Assert
+    expect(dialog.getAttribute("data-slot")).toBe("dialog-content");
+    expect(dialog.getAttribute("data-layout")).toBe("centered");
+  });
+
 });

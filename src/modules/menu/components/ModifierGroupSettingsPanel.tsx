@@ -18,11 +18,20 @@ import {
 import { useCategories } from "../use-categories";
 import { useProducts } from "../use-products";
 import { translateMenuError } from "../lib/translate-menu-error";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormError } from "@/components/ui/FormError";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { OptionsEditor, type OptionsEditorOption } from "./OptionsEditor";
 
 type FormMode = "create" | "edit";
@@ -262,24 +271,26 @@ function ModifierGroupSettingsPanel() {
               return (
                 <div key={group.id} data-testid={`modifier-group-row-${index}`} className="flex items-stretch gap-1">
                   <div className="flex flex-col items-center justify-center gap-0.5">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleMoveGroup(index, -1)}
                       disabled={isSaving || isFirst}
                       aria-label={t("modifierGroups.moveGroupUp")}
-                      className="flex h-5 w-5 items-center justify-center rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
+                      className="h-5 w-5 rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
                     >
                       <ArrowUp className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleMoveGroup(index, 1)}
                       disabled={isSaving || isLast}
                       aria-label={t("modifierGroups.moveGroupDown")}
-                      className="flex h-5 w-5 items-center justify-center rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
+                      className="h-5 w-5 rounded-sharp text-text-dim hover:bg-surface-sunken hover:text-text disabled:opacity-30 disabled:hover:bg-transparent"
                     >
                       <ArrowDown className="h-3 w-3" />
-                    </button>
+                    </Button>
                   </div>
 
                   <Button
@@ -343,31 +354,35 @@ function ModifierGroupSettingsPanel() {
             </FormField>
 
             <FormField label={t("modifierGroups.typeLabel")} htmlFor="mod-type">
-              <select
-                id="mod-type"
+              <Select
                 value={formState.type}
-                onChange={(e) => {
-                  const value = e.currentTarget.value as ModifierGroupType;
-                  setFormState((p) => ({ ...p, type: value }));
+                onValueChange={(value) => {
+                  setFormState((previous) => ({
+                    ...previous,
+                    type: value as ModifierGroupType,
+                  }));
                 }}
-                disabled={isSaving}
-                className="h-9 w-full rounded-card border border-border bg-surface-raised px-3 text-sm text-text"
               >
-                <option value="single">{t("modifierGroups.typeSingle")}</option>
-                <option value="multiple">{t("modifierGroups.typeMultiple")}</option>
-                <option value="text">{t("modifierGroups.typeText")}</option>
-                <option value="single_text">{t("modifierGroups.typeSingleText")}</option>
-              </select>
+                <SelectTrigger id="mod-type" disabled={isSaving}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">{t("modifierGroups.typeSingle")}</SelectItem>
+                  <SelectItem value="multiple">{t("modifierGroups.typeMultiple")}</SelectItem>
+                  <SelectItem value="text">{t("modifierGroups.typeText")}</SelectItem>
+                  <SelectItem value="single_text">
+                    {t("modifierGroups.typeSingleText")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </FormField>
 
             <FormField label={t("modifierGroups.requiredLabel")} htmlFor="mod-required">
-              <input
+              <Checkbox
                 id="mod-required"
-                type="checkbox"
                 checked={formState.required}
-                onChange={(e) => {
-                  const checked = e.currentTarget.checked;
-                  setFormState((p) => ({ ...p, required: checked }));
+                onCheckedChange={(checked) => {
+                  setFormState((previous) => ({ ...previous, required: checked === true }));
                 }}
                 disabled={isSaving}
               />
@@ -375,13 +390,14 @@ function ModifierGroupSettingsPanel() {
 
             {formState.type === "multiple" ? (
               <FormField label={t("modifierGroups.firstOptionFreeLabel")} htmlFor="mod-first-free">
-                <input
+                <Checkbox
                   id="mod-first-free"
-                  type="checkbox"
                   checked={formState.firstOptionFree}
-                  onChange={(e) => {
-                    const checked = e.currentTarget.checked;
-                    setFormState((p) => ({ ...p, firstOptionFree: checked }));
+                  onCheckedChange={(checked) => {
+                    setFormState((previous) => ({
+                      ...previous,
+                      firstOptionFree: checked === true,
+                    }));
                   }}
                   disabled={isSaving}
                 />
@@ -428,18 +444,17 @@ function ModifierGroupSettingsPanel() {
                 {categories.map((cat) => {
                   const isAssigned = categoryAssignments.get(cat.id)?.has(selectedGroup.id) ?? false;
                   return (
-                    <label
+                    <Label
                       key={cat.id}
-                      className="flex items-center gap-2 text-sm text-text"
+                      className="flex items-center gap-2 text-sm font-normal normal-case tracking-normal text-text"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={isAssigned}
-                        onChange={() => handleCategoryToggle(cat.id)}
+                        onCheckedChange={() => handleCategoryToggle(cat.id)}
                         disabled={isSaving || assignMutation.isPending}
                       />
                       {cat.name}
-                    </label>
+                    </Label>
                   );
                 })}
                 {categories.length === 0 ? (
@@ -454,18 +469,17 @@ function ModifierGroupSettingsPanel() {
                 {products.map((prod) => {
                   const isAssigned = productAssignments.get(prod.id)?.has(selectedGroup.id) ?? false;
                   return (
-                    <label
+                    <Label
                       key={prod.id}
-                      className="flex items-center gap-2 text-sm text-text"
+                      className="flex items-center gap-2 text-sm font-normal normal-case tracking-normal text-text"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={isAssigned}
-                        onChange={() => handleProductToggle(prod.id)}
+                        onCheckedChange={() => handleProductToggle(prod.id)}
                         disabled={isSaving || assignMutation.isPending}
                       />
                       {prod.name}
-                    </label>
+                    </Label>
                   );
                 })}
                 {products.length === 0 ? (

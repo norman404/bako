@@ -1,6 +1,7 @@
 import { Download, RefreshCw, AlertCircle, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { Button } from "@/components/ui/button";
 import type { UseUpdaterResult } from "./use-updater";
 import {
   UpdateStatus,
@@ -28,13 +29,13 @@ function AvailableToast({
       {status.notes ? (
         <p className="mt-1 text-xs text-text-muted line-clamp-3">{status.notes}</p>
       ) : null}
-      <button
-        type="button"
+      <Button
+        variant="default"
         onClick={updater.downloadAndInstall}
-        className="mt-3 inline-flex items-center justify-center rounded-sharp bg-primary px-3 py-1.5 text-xs font-medium text-on-primary hover:bg-primary-strong"
+        className="mt-3 inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium"
       >
         {t("toast.updateButton")}
-      </button>
+      </Button>
     </>
   );
 }
@@ -74,13 +75,13 @@ function ReadyToInstallToast({
       <p className="text-sm font-medium text-text">
         {t("toast.readyTitle", { version: status.version })}
       </p>
-      <button
-        type="button"
+      <Button
+        variant="default"
         onClick={updater.relaunch}
-        className="mt-3 inline-flex items-center justify-center rounded-sharp bg-primary px-3 py-1.5 text-xs font-medium text-on-primary hover:bg-primary-strong"
+        className="mt-3 inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium"
       >
         {t("toast.restartButton")}
-      </button>
+      </Button>
     </>
   );
 }
@@ -93,13 +94,13 @@ function ErrorToast({ updater }: { updater: UseUpdaterResult; error: string }) {
     <>
       <p className="text-sm font-medium text-text">{t("toast.errorTitle")}</p>
       <p className="mt-1 text-xs text-danger">{displayError}</p>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         onClick={updater.checkForUpdates}
         className="mt-3 inline-flex items-center justify-center rounded-sharp bg-surface-sunken px-3 py-1.5 text-xs font-medium text-text hover:bg-border"
       >
         {t("toast.tryAgain")}
-      </button>
+      </Button>
     </>
   );
 }
@@ -152,14 +153,14 @@ export function UpdateToast({ updater }: UpdateToastProps) {
           })()}
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={updater.reset}
           className="shrink-0 rounded-sharp p-1 text-text-muted hover:bg-surface-sunken hover:text-text"
           aria-label={t("toast.dismiss")}
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

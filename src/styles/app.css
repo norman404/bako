@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @theme {
   /* === Paleta: Catppuccin Macchiato === */
@@ -11,7 +12,9 @@
   /* === Marca === */
   --color-primary: #C6A0F6; /* mauve */
   --color-primary-strong: #D4B8F9; /* mauve aclarado — en dark el hover ACLARA */
-  --color-secondary: #B8C0E0; /* subtext1 */
+  /* shadcn usa `bg-secondary` como FONDO de botón secundario (sutil/oscuro), no como
+     color de texto. El subtext1 que vivía aquí se movió a --color-text-secondary. */
+  --color-secondary: var(--color-surface-sunken);
   --color-cta: #C6A0F6; /* mauve — accent del tema */
   --color-cta-strong: #D4B8F9;
 
@@ -19,6 +22,7 @@
   --color-text: #F8F8FA;
   --color-text-muted: #CAD3F5; /* text Macchiato */
   --color-text-dim: #A5ADCB; /* subtext0 */
+  --color-text-secondary: #B8C0E0; /* subtext1 — antes --color-secondary */
   --color-on-primary: #24273A; /* base oscuro sobre mauve */
   --color-on-cta: #24273A;
 
@@ -56,10 +60,35 @@
   --radius-card: 6px;
   --radius-modal: 12px;
 
+  /* Escala nombrada que consume el registry de shadcn (rounded-sm|md|lg|xl) */
+  --radius-sm: 4px;
+  --radius-md: 6px; /* == --radius-card */
+  --radius-lg: 8px;
+  --radius-xl: 12px; /* == --radius-modal */
+
   /* === Sombras dark tintadas (crust Macchiato) — en dark necesitan más fuerza === */
   --shadow-card: 0 1px 3px rgba(24, 25, 38, 0.40), 0 1px 2px rgba(24, 25, 38, 0.30);
   --shadow-raised: 0 8px 24px -8px rgba(24, 25, 38, 0.50);
   --shadow-modal: 0 24px 64px -16px rgba(24, 25, 38, 0.60);
+
+  /* === Puente shadcn/ui — alias semánticos sobre la paleta Catppuccin ===
+     Permiten que los componentes del registry de shadcn funcionen sin editar
+     sus clases. NO son colores nuevos: apuntan a los tokens de arriba. */
+  --color-background: var(--color-surface);
+  --color-foreground: var(--color-text);
+  --color-card: var(--color-surface-raised);
+  --color-card-foreground: var(--color-text);
+  --color-popover: var(--color-surface-raised);
+  --color-popover-foreground: var(--color-text);
+  --color-primary-foreground: var(--color-on-primary);
+  --color-secondary-foreground: var(--color-on-primary);
+  --color-muted: var(--color-surface-sunken);
+  --color-muted-foreground: var(--color-text-dim);
+  --color-accent: var(--color-surface-sunken);
+  --color-accent-foreground: var(--color-text);
+  --color-destructive: var(--color-danger);
+  --color-destructive-foreground: var(--color-on-primary);
+  --color-input: var(--color-border-strong);
 }
 
 @layer base {

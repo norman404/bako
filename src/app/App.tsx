@@ -4,7 +4,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 import {
   CheckoutModal,
@@ -440,8 +440,8 @@ export function App() {
 
       {isMobileCartOpen ? (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             aria-label={t('cart.closeAriaLabel')}
             className="absolute inset-0 bg-scrim/70 backdrop-blur-sm animate-fade-in"
             onClick={closeMobileCart}

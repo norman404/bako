@@ -1,5 +1,6 @@
 import type { Category } from "../category";
 import { categoryAccent } from "@/lib/color";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
@@ -67,11 +68,12 @@ function CategoryItem({ id, label, count, active, onSelect, color }: CategoryIte
     : undefined;
 
   return (
-    <button
+    <Button
+      variant="ghost"
       onClick={() => onSelect(id)}
       className={cn(
-        "relative shrink-0 cursor-pointer select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
-        "hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+        "relative shrink-0 select-none rounded-card border px-5 py-3 text-left transition-all duration-200",
+        "hover:-translate-y-0.5",
         active
           ? "font-bold"
           : "font-medium",
@@ -98,7 +100,7 @@ function CategoryItem({ id, label, count, active, onSelect, color }: CategoryIte
           {String(count).padStart(2, "0")}
         </span>
       </span>
-    </button>
+    </Button>
   );
 }
 

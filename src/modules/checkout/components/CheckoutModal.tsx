@@ -1,10 +1,9 @@
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import React from "react";
+import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "@/components/ui/Button";
-import { Dialog, DialogPortal, DialogOverlay, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { CheckoutModalFooterActions } from "./CheckoutModal.Footer";
 import { CheckoutModalFulfillmentPanel } from "./CheckoutModal.Fulfillment";
 import { CheckoutModalOrderSummary } from "./CheckoutModal.OrderSummary";
@@ -22,7 +21,7 @@ interface CheckoutModalProps {
   renderDeliveryPersonSelect?: (props: {
     value: string | null;
     onChange: (id: string | null) => void;
-  }) => React.ReactNode;
+  }) => ReactNode;
 }
 
 function CheckoutModal({
@@ -83,10 +82,9 @@ function CheckoutModal({
         if (!isOpen && !isSubmitting) handleCloseRequest();
       }}
     >
-      <DialogPortal>
-        <DialogOverlay />
-        <DialogPrimitive.Content
-          className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-5 lg:p-6"
+      <DialogContent
+          layout="fullscreen"
+          className="flex items-end justify-center p-3 sm:items-center sm:p-5 lg:p-6"
           onInteractOutside={(event) => {
             if (isSubmitting) event.preventDefault();
           }}
@@ -161,8 +159,7 @@ function CheckoutModal({
               totals={totals}
             />
           </div>
-        </DialogPrimitive.Content>
-      </DialogPortal>
+      </DialogContent>
     </Dialog>
   );
 }
