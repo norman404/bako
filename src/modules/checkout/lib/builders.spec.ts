@@ -14,7 +14,7 @@ import {
 import type { CheckoutCustomer } from "@/modules/checkout/hooks/use-checkout";
 import type { SelectedModifier } from "@/modules/menu";
 import { buildProduct } from "@/modules/menu/test/factories";
-import type { CartItem } from "@/modules/order/domain/cart";
+import type { CartItem } from "@/modules/order";
 import { buildCartItem } from "@/modules/order/test/factories";
 import { formatPosCurrency } from "@/lib/currency";
 

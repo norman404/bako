@@ -9,8 +9,8 @@ import {
   incrementItemQuantity,
   removeItemFromCart,
   type CartItem,
-} from "@/modules/order/domain/cart";
-import { buildCartItem as buildCartItemFactory } from "@/modules/order/test/factories";
+} from "./cart-operations";
+import { buildCartItem as buildCartItemFactory } from "./test/factories";
 
 // Wrapper posicional local: el archivo tiene ~22 llamadas a buildCartItem, muchas
 // agrupadas dos-por-línea dentro de arrays literales. Convertir cada una a la forma

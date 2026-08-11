@@ -1,5 +1,5 @@
 import { buildProduct } from "@/modules/menu/test/factories";
-import type { CartItem } from "@/modules/order/domain/cart";
+import type { CartItem } from "../cart-operations";
 
 export function buildCartItem(overrides: Partial<CartItem> = {}): CartItem {
   return {

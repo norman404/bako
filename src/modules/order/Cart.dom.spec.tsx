@@ -3,10 +3,10 @@ import { describe, expect, it, mock, beforeEach } from "bun:test";
 
 
 import { renderWithProviders, screen, within } from "@/test/test-utils";
-import { Cart } from "@/modules/order/components/Cart";
-import type { CartItem } from "@/modules/order/domain/cart";
+import { Cart } from "./Cart";
+import type { CartItem } from "./cart-operations";
 import { buildSelectedModifier } from "@/modules/menu/test/factories";
-import { buildCartItem } from "@/modules/order/test/factories";
+import { buildCartItem } from "./test/factories";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 
 function setModifierFlag(value: boolean) {

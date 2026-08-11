@@ -9,7 +9,7 @@ import {
 } from "@/modules/checkout/domain/order";
 import { parsePaymentAmountInput } from "@/modules/checkout/lib/formatters";
 import { calculateItemUnitPrice } from "@/modules/menu";
-import type { CartItem } from "@/modules/order/domain/cart";
+import type { CartItem } from "@/modules/order";
 import { formatPosCurrency } from "@/lib/currency";
 
 export { CHECKOUT_PAYMENT_METHOD, type CheckoutPaymentMethod } from "@/modules/checkout/domain/order";

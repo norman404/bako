@@ -1,4 +1,4 @@
-import type { CartItem, CartTotals } from "@/modules/order/domain/cart";
+import type { CartItem, CartTotals } from "@/modules/order";
 import { formatPosCurrency } from "@/lib/currency";
 import { useTranslation } from "react-i18next";
 

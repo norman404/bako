@@ -2,7 +2,7 @@ import { CheckoutPaymentAmountBlock } from '@/modules/checkout/components/Checko
 import { CheckoutPaymentMethodSelector } from '@/modules/checkout/components/CheckoutModal.Payment.Selector'
 import { CheckoutPaymentSummary } from '@/modules/checkout/components/CheckoutModal.Payment.Summary'
 import type { CheckoutPaymentMethod } from '@/modules/checkout/lib/builders'
-import type { CartTotals } from '@/modules/order/domain/cart'
+import type { CartTotals } from '@/modules/order'
 import { formatPosCurrency } from '@/lib/currency'
 import { useTranslation } from 'react-i18next'
 

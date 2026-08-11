@@ -24,7 +24,7 @@ import {
   parsePaymentAmountInput,
   sanitizePaymentAmountInput,
 } from "@/modules/checkout/lib/formatters";
-import { calculateCartTotals, type CartItem } from "@/modules/order/domain/cart";
+import { calculateCartTotals, type CartItem } from "@/modules/order";
 
 const CHECKOUT_CUSTOMER_ENTRY_MODE = {
   SEARCH: "search",

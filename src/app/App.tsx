@@ -25,9 +25,7 @@ import {
   type Product,
   type SelectedModifier,
 } from "@/modules/menu";
-import { Cart } from "@/modules/order/components/Cart";
-import { calculateCartTotals } from "@/modules/order/domain/cart";
-import { useOrderStore } from "@/modules/order/store/order-store";
+import { Cart, calculateCartTotals, useOrderStore } from "@/modules/order";
 import { SettingsModal } from "@/modules/settings";
 import { useSettingsStore } from "@/modules/settings";
 import { ShiftButton, CashMovementsButton } from "@/modules/shift-reports";

@@ -7,7 +7,7 @@ import {
   incrementItemQuantity,
   removeItemFromCart,
   type CartItem,
-} from "@/modules/order/domain/cart";
+} from "./cart-operations";
 
 interface OrderStore {
   currentOrder: CartItem[];

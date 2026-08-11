@@ -1,7 +1,7 @@
 import { LoaderCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import type { CartTotals } from "@/modules/order/domain/cart";
+import type { CartTotals } from "@/modules/order";
 import { Button } from "@/components/ui/Button";
 import { formatPosCurrency } from "@/lib/currency";
 

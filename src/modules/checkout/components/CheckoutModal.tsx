@@ -11,7 +11,7 @@ import { CheckoutModalOrderSummary } from "@/modules/checkout/components/Checkou
 import { CheckoutModalPaymentPanel } from "@/modules/checkout/components/CheckoutModal.Payment";
 import type { CreateOrderInput } from "@/modules/checkout/hooks/use-checkout";
 import { useCheckoutForm } from "@/modules/checkout/hooks/use-checkout-form";
-import { calculateCartTotals, type CartItem } from "@/modules/order/domain/cart";
+import { calculateCartTotals, type CartItem } from "@/modules/order";
 
 interface CheckoutModalProps {
   open: boolean;
