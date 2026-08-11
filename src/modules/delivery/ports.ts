@@ -1,7 +1,7 @@
 import type { ResultAsync } from "neverthrow";
 
-import type { DeliveryPerson, DeliveryPersonCut } from "@/modules/delivery/domain/delivery-person";
-import type { DeliveryPersonError } from "@/modules/delivery/domain/errors";
+import type { DeliveryPerson, DeliveryPersonCut } from "./delivery-person";
+import type { DeliveryPersonError } from "./errors";
 
 export interface DeliveryPersonCreateInput {
   name: string;

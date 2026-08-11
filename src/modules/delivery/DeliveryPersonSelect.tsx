@@ -2,7 +2,7 @@ import { ColorInput } from "@/components/ColorInput";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useCreateDeliveryPerson, useDeliveryPersons } from "@/modules/delivery/hooks/use-delivery-persons";
+import { useCreateDeliveryPerson, useDeliveryPersons } from "./use-delivery-persons";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/ui/FormField";

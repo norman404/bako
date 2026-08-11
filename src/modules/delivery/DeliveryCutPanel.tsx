@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import {
   DELIVERY_PERSONS_CUT_QUERY_KEY,
   useTodayDeliveryCut,
-} from "@/modules/delivery/hooks/use-delivery-persons";
+} from "./use-delivery-persons";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatPosCurrency } from "@/lib/currency";

@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import {
   DeliveryPersonError,
   type DeliveryTranslatableError,
-} from "@/modules/delivery/domain/errors";
+} from "./errors";
 
 function isDeliveryTranslatableError(error: unknown): error is DeliveryTranslatableError {
   return error instanceof DeliveryPersonError;

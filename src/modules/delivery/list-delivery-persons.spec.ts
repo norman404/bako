@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
-import type { DeliveryPerson } from "@/modules/delivery/domain/delivery-person";
-import { DeliveryPersonError } from "@/modules/delivery/domain/errors";
-import type { DeliveryPersonRepository } from "@/modules/delivery/domain/ports";
-import { listDeliveryPersons } from "@/modules/delivery/use-cases/list-delivery-persons";
+import type { DeliveryPerson } from "./delivery-person";
+import { DeliveryPersonError } from "./errors";
+import type { DeliveryPersonRepository } from "./ports";
+import { listDeliveryPersons } from "./list-delivery-persons";
 
 function buildDeliveryPerson(overrides: Partial<DeliveryPerson> = {}): DeliveryPerson {
   return {

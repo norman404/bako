@@ -4,15 +4,15 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { DeliveryPerson } from "@/modules/delivery/domain/delivery-person";
-import type { DeliveryPersonCreateInput } from "@/modules/delivery/domain/ports";
+import type { DeliveryPerson } from "./delivery-person";
+import type { DeliveryPersonCreateInput } from "./ports";
 import {
   useArchiveDeliveryPerson,
   useCreateDeliveryPerson,
   useDeliveryPersons,
   useUpdateDeliveryPerson,
-} from "@/modules/delivery/hooks/use-delivery-persons";
-import { translateDeliveryError } from "@/modules/delivery/lib/translate-delivery-error";
+} from "./use-delivery-persons";
+import { translateDeliveryError } from "./translate-delivery-error";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";

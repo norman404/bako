@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
-import type { DeliveryPersonCut } from "@/modules/delivery/domain/delivery-person";
-import { DeliveryPersonError } from "@/modules/delivery/domain/errors";
-import type { DeliveryPersonRepository } from "@/modules/delivery/domain/ports";
-import { getTodayDeliveryCut } from "@/modules/delivery/use-cases/get-today-delivery-cut";
+import type { DeliveryPersonCut } from "./delivery-person";
+import { DeliveryPersonError } from "./errors";
+import type { DeliveryPersonRepository } from "./ports";
+import { getTodayDeliveryCut } from "./get-today-delivery-cut";
 
 function buildDeliveryPersonCut(overrides: Partial<DeliveryPersonCut> = {}): DeliveryPersonCut {
   return {

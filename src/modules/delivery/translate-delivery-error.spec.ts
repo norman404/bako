@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import i18next from "i18next";
 
-import { DeliveryPersonError, DeliveryPersonNotFoundError } from "@/modules/delivery/domain/errors";
+import { DeliveryPersonError, DeliveryPersonNotFoundError } from "./errors";
 
 import { translateDeliveryError } from "./translate-delivery-error";
 

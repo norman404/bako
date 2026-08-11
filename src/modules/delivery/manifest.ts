@@ -1,8 +1,8 @@
 import { Bike } from "lucide-react";
 
 import type { ModuleManifest } from "@/modules/settings";
-import { DeliveryCutPanel } from "./components/admin/DeliveryCutPanel";
-import { DeliveryPersonSettingsPanel } from "./components/admin/DeliveryPersonSettingsPanel";
+import { DeliveryCutPanel } from "./DeliveryCutPanel";
+import { DeliveryPersonSettingsPanel } from "./DeliveryPersonSettingsPanel";
 
 export const deliveryPersonsManifest: ModuleManifest = {
   id: "delivery",

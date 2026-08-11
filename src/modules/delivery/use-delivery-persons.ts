@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { DeliveryPersonCreateInput } from "@/modules/delivery/domain/ports";
-import { deliveryPersonDrizzleRepository } from "@/modules/delivery/persistence/delivery-person-drizzle.repository";
-import { createDeliveryPerson } from "@/modules/delivery/use-cases/create-delivery-person";
-import { getTodayDeliveryCut } from "@/modules/delivery/use-cases/get-today-delivery-cut";
-import { listDeliveryPersons } from "@/modules/delivery/use-cases/list-delivery-persons";
+import type { DeliveryPersonCreateInput } from "./ports";
+import { deliveryPersonDrizzleRepository } from "./repository";
+import { createDeliveryPerson } from "./create-delivery-person";
+import { getTodayDeliveryCut } from "./get-today-delivery-cut";
+import { listDeliveryPersons } from "./list-delivery-persons";
 
 export const DELIVERY_PERSONS_QUERY_KEY = ["delivery-persons"] as const;
 export const DELIVERY_PERSONS_CUT_QUERY_KEY = ["delivery-persons", "today-cut"] as const;

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 
-import type { DeliveryPersonCreateInput } from "@/modules/delivery/domain/ports";
+import type { DeliveryPersonCreateInput } from "./ports";
 import type { DeliveryPersonRow } from "@/db/schema";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -54,8 +54,8 @@ mock.module("@/db/client", () => ({
   },
 }));
 
-import { DeliveryPersonNotFoundError } from "@/modules/delivery/domain/errors";
-import { deliveryPersonDrizzleRepository } from "@/modules/delivery/persistence/delivery-person-drizzle.repository";
+import { DeliveryPersonNotFoundError } from "./errors";
+import { deliveryPersonDrizzleRepository } from "./repository";
 
 const validInput: DeliveryPersonCreateInput = {
   name: "Carlos Mendoza",
