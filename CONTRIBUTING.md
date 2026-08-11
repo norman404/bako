@@ -118,7 +118,7 @@ Each feature lives in `src/modules/<feature>/` as a flat module. Subfolders like
 
 [`BAKO.md`](./BAKO.md) is the **authoritative source of truth** for architecture: project structure, the module system, and the barrel-as-boundary rule. For the module system in depth — folder shape, the barrel rule, and how it's enforced in review — see [`docs/architecture/module-system.md`](./docs/architecture/module-system.md).
 
-Some existing modules still carry an older layered shape; that's legacy, not the pattern to copy for new code. Follow `BAKO.md`, not whatever a given module happens to look like today — [`docs/architecture/migration-status.md`](./docs/architecture/migration-status.md) tracks which modules have not moved yet.
+Every module is already in this shape — there is no legacy layered module left to copy by accident. Follow `BAKO.md`; if a module ever drifts from it, `BAKO.md` is the one that's right.
 
 ## Error handling pattern
 
@@ -129,10 +129,8 @@ The pure-logic core of a module is framework-agnostic and therefore cannot use
 When an error type has a user-facing meaning, give it a translatable `code` and
 `params` on the error type itself. The module emits codes; the translation
 happens at the UI boundary, so the module's core never has to import
-`react-i18next`. (`src/modules/menu/domain/errors.ts` is the closest worked
-example in the tree today, but it sits in a legacy `domain/` folder — see
-[`docs/architecture/migration-status.md`](./docs/architecture/migration-status.md).)
-Then:
+`react-i18next`. (`src/modules/menu/errors.ts` is the closest worked example in
+the tree.) Then:
 
 1. Create or update a `translate-{feature}-error.ts` helper in the module to
    map the code to an i18n key under `errors:{feature}.{code}`.

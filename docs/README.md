@@ -7,8 +7,7 @@ This is a navigation index for Bako's contributor guides. [`BAKO.md`](../BAKO.md
 | Document | Role |
 |---|---|
 | [`BAKO.md`](../BAKO.md) | **Canonical.** Defines the rules of the target architecture, stated in the present tense — "a module is flat", not "a module will be flat". Each rule is defined here exactly once. |
-| `docs/architecture/*.md`, `docs/contributing/*.md` | **Elaborate.** Edge cases, exceptions, mechanism read from the code, and how to migrate toward a rule. They never redefine a rule. |
-| [`docs/architecture/migration-status.md`](architecture/migration-status.md) | **Temporary.** A dated snapshot of where the code actually stands mid-migration, plus the order modules move in. It defines nothing, and it is deleted when the migration finishes. |
+| `docs/architecture/*.md`, `docs/contributing/*.md` | **Elaborate.** Edge cases, exceptions, mechanism read from the code, and the procedure for restructuring toward a rule. They never redefine a rule. |
 | [`docs/adr/`](adr/README.md) | **Hard-to-reverse decisions.** Once an ADR is `Accepted` it is not rewritten to change the decision — a new ADR supersedes it. |
 
 **Operating rule: if a rule is stated in full in two files, one of them is wrong.** A guide links to the canonical statement instead of restating it — the command gate lives in [`BAKO.md` § Verify before claiming done](../BAKO.md#verify-before-claiming-done), and the list of layers this architecture does not have lives in [`BAKO.md` § Layers that do not exist in this model](../BAKO.md#layers-that-do-not-exist-in-this-model).
@@ -26,10 +25,9 @@ The split is deliberate; do not translate a document into the other language whi
 
 ## Architecture
 
-- [Module system](architecture/module-system.md) — the target flat module shape, where each top-level folder's contents belong, the barrel rule and its current violations, the `settings ↔ updater` import cycle, and the `manifest.ts` exception.
+- [Module system](architecture/module-system.md) — the flat module shape, where each top-level folder's contents belong, the barrel rule and its two exceptions (`manifest.ts` and `test/factories`), the `settings ↔ updater` import cycle, and the procedure for restructuring a module.
 - [Database](architecture/database.md) — the SQLite client's serialization queue, the schema, and the Tauri-only migration flow.
 - [Printing](architecture/printing.md) — what a frontend contributor needs before touching a print call: which module owns what, which Tauri commands exist, and how a print job travels from a button click to a physical printer. The Rust engine is documented separately, in [`src-tauri/src/print/README.md`](../src-tauri/src/print/README.md).
-- [Migration status](architecture/migration-status.md) — **temporary.** Measured baseline, current module inventory, and migration order. Deleted when the migration finishes; nothing should come to depend on it.
 
 ## Contributing
 

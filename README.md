@@ -113,7 +113,7 @@ bun run tauri dev
 - **Public module APIs** — `index.ts` provides a clear boundary for code consumed by other modules.
 - **Behavior-focused testing** — protect business rules, regressions, persistence behavior, and security invariants rather than testing architecture for its own sake.
 
-[`BAKO.md`](BAKO.md) is the living architecture document and source of truth for the new direction. Existing code is expected to migrate incrementally rather than through a wholesale rewrite.
+[`BAKO.md`](BAKO.md) is the living architecture document and source of truth. The codebase matches it: every feature module is flat, with `index.ts` as its only public entry point.
 
 ---
 
@@ -121,7 +121,7 @@ bun run tauri dev
 
 ### Internal modules
 
-New and refactored features live under `src/modules/<feature>` and should use the smallest useful structure.
+Features live under `src/modules/<feature>` and use the smallest useful structure.
 
 ```txt
 src/modules/<feature>/
@@ -142,7 +142,7 @@ Larger modules can introduce `components/`, `lib/`, or other cohesive subdirecto
 
 `src/app` composes modules and global providers — composition only, no business logic.
 
-The target structure is:
+The top-level structure is:
 
 ```txt
 src/
@@ -158,7 +158,7 @@ src/
 └── main.tsx
 ```
 
-There is no `shared/` folder. It is the name that lets anything end up in it, so it does not exist: the Drizzle client and schema live in `db/`, the i18n engine and locales in `i18n/`, reusable UI in `components/`. Every folder is named after what it holds. For where the code sits today and when each folder moves, see [`docs/architecture/migration-status.md`](docs/architecture/migration-status.md).
+There is no `shared/` folder. It is the name that lets anything end up in it, so it does not exist: the Drizzle client and schema live in `db/`, the i18n engine and locales in `i18n/`, reusable UI in `components/`. Every folder is named after what it holds.
 
 ### Local database
 

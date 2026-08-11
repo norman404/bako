@@ -4,7 +4,7 @@ This guide elaborates on [`BAKO.md`](../../BAKO.md). If anything here conflicts 
 
 This is the TypeScript/frontend entry point into the print subsystem. The Rust engine has its own doc, kept where it lives: [`src-tauri/src/print/README.md`](../../src-tauri/src/print/README.md). That doc is not duplicated here — it covers a different language, a different toolchain, and its own test cycle (`cargo test --lib print::`). This page only covers what a frontend contributor needs before touching a print call: which module owns what, which Tauri commands exist, and how a print job travels from a button click to a physical printer.
 
-Frontend code is named by module and role, not by file path; where each module's files sit today is in [`migration-status.md`](migration-status.md). Paths under `src-tauri/` are exact — that side does not migrate.
+Frontend code is named by module and role rather than by file path, so a file moving inside its module does not stale this page. Paths under `src-tauri/` are exact.
 
 ---
 

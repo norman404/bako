@@ -1,6 +1,6 @@
 # BAKO.md
 
-This document is Bako's living architecture guide and the single source of truth for architectural decisions. It describes **where Bako is going** — the target, stated in the present tense, so a rule never has to be read as a prediction. Where the code stands against that target right now is a separate, temporary document: [`docs/architecture/migration-status.md`](docs/architecture/migration-status.md).
+This document is Bako's living architecture guide and the single source of truth for architectural decisions. It is stated in the present tense because the code matches it: all ten modules are in the flat shape described below, and every rule here is enforceable against the tree as it stands.
 
 ## Product
 
@@ -100,7 +100,7 @@ There is no `shared/` folder. It is the name that lets anything end up in it, so
 
 `src/lib/` is flat — `currency.ts`, `color.ts`, `utils.ts`, `platform.ts`, `app-version.ts`, `use-mount-effect.ts` — and stays that way. It holds small generic utilities, never a feature's code, and never subfolders.
 
-For where the code sits today and when each folder moves, see [`docs/architecture/migration-status.md`](docs/architecture/migration-status.md); the reasoning behind each destination is in [`docs/architecture/module-system.md`](docs/architecture/module-system.md) §1.
+The reasoning behind each destination — including what `src/shared/` held before it was retired — is in [`docs/architecture/module-system.md`](docs/architecture/module-system.md) §1.
 
 ### Module system
 
@@ -129,9 +129,12 @@ None of these reappear under a new name. A module needing a store names the file
 
 #### The barrel is the boundary
 
-`import … from "@/modules/X/algo"` from outside `X` does not pass review. A module's only public entry point is its `index.ts` — imported as `@/modules/X`, never by a path that reaches inside. There is exactly one documented exception: `manifest.ts`, importable as `@/modules/X/manifest` and **only** from `app/module-registry.ts`.
+`import … from "@/modules/X/algo"` from outside `X` does not pass review. A module's only public entry point is its `index.ts` — imported as `@/modules/X`, never by a path that reaches inside. There are exactly two documented exceptions:
 
-Where the code currently stands against this rule is measured in [`docs/architecture/migration-status.md`](docs/architecture/migration-status.md), along with the order in which modules move. The `settings ↔ updater` import cycle and the rationale for the `manifest.ts` exception are in [`docs/architecture/module-system.md`](docs/architecture/module-system.md).
+- `manifest.ts` — importable as `@/modules/X/manifest`, **only** from `app/module-registry.ts`.
+- `test/factories` — importable as `@/modules/X/test/factories`, **only** from a spec or from another module's `test/factories`.
+
+Nothing else reaches past a barrel, and a third exception is a decision to be documented, not a call to make at the import site. The rationale for both exceptions, and the `settings ↔ updater` import cycle they had to survive, are in [`docs/architecture/module-system.md`](docs/architecture/module-system.md).
 
 ### Database
 
@@ -157,15 +160,15 @@ Full setup and conventions in [`docs/contributing/testing.md`](docs/contributing
 
 ## Migration strategy
 
-Do not rewrite Bako wholesale to match this document.
+The migration to this structure is complete — all ten modules are flat, no layer folders remain under `src/modules/`, and `src/shared/` is deleted. The rules below are what keeps it that way; they govern every future change, not a one-time move.
 
-1. New features use the flat module structure from day one.
-2. Existing modules are simplified when meaningful work already touches them — not as a standalone refactor.
+1. New features use the flat module structure from day one. A module is never born with layer folders "to be flattened later".
+2. Existing modules are simplified when meaningful work already touches them — not as a standalone refactor. Restructuring without a reason is churn with a rollback risk.
 3. Remove architecture-only abstractions when they stop providing value.
-4. Preserve behavior with tests during structural changes — an assertion changing means the migration wasn't purely structural.
+4. Preserve behavior with tests during structural changes — an assertion changing means the change wasn't purely structural, and that is a different PR.
 5. Per-module `README.md` files are retired — a module's description should not live in two places that can drift apart. The exception is `src-tauri/src/print/README.md`, which stays: it documents a different language and toolchain (Rust, `cargo test`), not a TypeScript module.
 
-Which module moves next, in what order, and how far the code still is from this document are tracked in [`docs/architecture/migration-status.md`](docs/architecture/migration-status.md).
+The step-by-step procedure for restructuring a module, plus the two traps the migration hit (name collisions when flattening, and barrel mocks in specs), is in [`docs/architecture/module-system.md`](docs/architecture/module-system.md) §7.
 
 ## Dependency rules
 
@@ -173,13 +176,12 @@ Which module moves next, in what order, and how far the code still is from this 
 - `components/` holds reusable application UI, not feature business logic.
 - `lib/` holds small generic utilities with no feature ownership.
 - `db/` and `i18n/` are single-owner app infrastructure — no feature module reimplements a database client or an i18n loader.
-- A module never reaches into another module's files. Its public API is its `index.ts`, and that is the only entry point other modules import — if something a consumer needs isn't exported there, the fix is to export it, not to reach past it. The single documented exception is `manifest.ts`, importable only from `app/module-registry.ts`.
+- A module never reaches into another module's files. Its public API is its `index.ts`, and that is the only entry point other modules import — if something a consumer needs isn't exported there, the fix is to export it, not to reach past it. The two documented exceptions are `manifest.ts`, importable only from `app/module-registry.ts`, and `test/factories`, importable only from specs and other modules' factories.
 
 ## Further reading
 
 - [`docs/README.md`](docs/README.md) — index of contributor guides.
-- [`docs/architecture/migration-status.md`](docs/architecture/migration-status.md) — **temporary.** Where the code actually stands mid-migration: measured baseline, current module inventory, migration order. Deleted when the migration finishes.
-- [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its current violations, the `settings ↔ updater` cycle, the `manifest.ts` exception.
+- [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its two exceptions (`manifest.ts`, `test/factories`), the `settings ↔ updater` cycle, and the procedure for restructuring a module.
 - [`docs/architecture/database.md`](docs/architecture/database.md) — the serialization queue, schema, migrations.
 - [`docs/architecture/printing.md`](docs/architecture/printing.md) — the frontend side of printing: which module owns what, the Tauri print commands, and how a job travels from a button click to a physical printer. It does **not** document the Rust engine — that is [`src-tauri/src/print/README.md`](src-tauri/src/print/README.md), kept next to the code because it covers a different language and toolchain.
 - [`docs/contributing/testing.md`](docs/contributing/testing.md) — runner internals, naming conventions, the locale guard.

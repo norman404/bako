@@ -2,8 +2,6 @@
 
 This guide elaborates on [`BAKO.md`](../../BAKO.md). If anything here conflicts with `BAKO.md`, `BAKO.md` wins.
 
-Paths here are the target structure; where each file sits today is in [`migration-status.md`](migration-status.md).
-
 ## Client (`src/db/client.ts`)
 
 The frontend never talks to SQLite directly. It goes through

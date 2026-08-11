@@ -53,6 +53,6 @@ Los inputs de UI deben mostrar **unidades monetarias** al usuario (`15`, `15.50`
 - `src/modules/menu/lib/product-price.ts`
 - `src/modules/menu/components/admin/ProductSettingsPanel.tsx`
 - `src/modules/menu/components/admin/OptionsEditor.tsx`
-- El acceso a datos del módulo `menu` — productos y grupos de modificadores: lee y escribe
-  los precios ya en centavos, sin convertir. Dónde vive hoy ese código:
-  [`docs/architecture/migration-status.md`](../architecture/migration-status.md).
+- El acceso a datos del módulo `menu` — `src/modules/menu/product-drizzle.repository.ts` y
+  `src/modules/menu/modifier-group-drizzle.repository.ts`: leen y escriben los precios ya en
+  centavos, sin convertir.
