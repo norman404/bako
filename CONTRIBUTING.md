@@ -71,7 +71,7 @@ Want just the web dev server (no Tauri shell)? `bun run dev` boots Vite alone �
 | `bun run dev` | Vite dev server only (no Tauri/native APIs) |
 | `bun run tauri dev` | Full desktop app — **recommended for feature work** |
 | `bun run build` | Production build (`tsc` + `vite build`) |
-| `bun run test` | Rust test suite via `cargo test --manifest-path src-tauri/Cargo.toml` |
+| `cargo test --manifest-path src-tauri/Cargo.toml` | Rust test suite |
 
 Bako uses **oxlint** as its linter, and there is no formatter configured yet — follow the style of the surrounding code. The commands a change has to pass before you open a PR are the canonical gate in [`BAKO.md`](./BAKO.md#verify-before-claiming-done).
 
@@ -84,7 +84,7 @@ Tests are written in Rust and live next to the implementation under `src-tauri/s
 Run the complete suite with:
 
 ```bash
-bun run test
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
 For focused print tests:

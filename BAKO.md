@@ -39,7 +39,7 @@ This is the canonical gate list; other documents link here instead of restating 
 ```bash
 bun run lint        # oxlint
 bun run build       # tsc + vite build — there is no `typecheck` script
-bun run test        # Rust cargo test suite
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
 **Local gate** — CI does **not** run this. Run it yourself whenever a change reaches `src-tauri/src/print/`:
@@ -48,7 +48,7 @@ bun run test        # Rust cargo test suite
 cd src-tauri && cargo test --lib print::
 ```
 
-Before a release, `.pi/skills/bako-release/SKILL.md` enforces `bun run lint`, `bun run build`, and `bun run test` as a hard gate before any version file is touched.
+Before a release, `.pi/skills/bako-release/SKILL.md` enforces `bun run lint` and `cargo test --manifest-path src-tauri/Cargo.toml` as a hard gate before any version file is touched.
 
 ## Conventions
 
@@ -142,7 +142,7 @@ Every operation — reads, writes, `closeDatabase()`, and everything inside `wit
 
 Tests are kept in the Rust backend under `src-tauri/src`, usually in `#[cfg(test)]` modules next to the implementation. The frontend has no test suite.
 
-Run the complete suite with `bun run test`, which delegates to `cargo test --manifest-path src-tauri/Cargo.toml`. Focused print tests can be run with:
+Run the complete suite with `cargo test --manifest-path src-tauri/Cargo.toml`. Focused print tests can be run with:
 
 ```bash
 cargo test --manifest-path src-tauri/Cargo.toml --lib print::

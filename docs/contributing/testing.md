@@ -7,12 +7,6 @@ Bako keeps its test suite in the Rust backend. Frontend TypeScript and React tes
 The canonical command is:
 
 ```bash
-bun run test
-```
-
-It delegates to:
-
-```bash
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 

@@ -44,10 +44,10 @@ If lint fails, **STOP**. Report errors and do not continue. No version files may
 ### 4. Run tests — HARD GATE
 
 ```bash
-bun run test
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-This runs the Rust test suite through `cargo test`. If it fails, **STOP**. Report failures and do not continue. Do not bump the version with failing tests.
+If it fails, **STOP**. Report failures and do not continue. Do not bump the version with failing tests.
 
 ### 5. Bump version files
 
@@ -129,7 +129,7 @@ Report that the GitHub Actions release build has started.
 ### Checks
 - [x] Working tree clean
 - [x] `bun run lint` passed
-- [x] `bun run test` passed
+- [x] `cargo test --manifest-path src-tauri/Cargo.toml` passed
 
 ### Files Changed
 | File | Change |

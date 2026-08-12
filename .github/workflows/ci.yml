@@ -16,6 +16,9 @@ jobs:
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Cache Bun downloads
         uses: actions/cache@v4
         with:
@@ -34,4 +37,4 @@ jobs:
         run: bun run build
 
       - name: Rust tests
-        run: bun run test
+        run: cargo test --manifest-path src-tauri/Cargo.toml

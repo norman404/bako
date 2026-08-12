@@ -24,7 +24,6 @@
     "preview": "bunx --bun vite preview",
     "tauri": "tauri",
     "lint": "oxlint",
-    "test": "cargo test --manifest-path src-tauri/Cargo.toml",
     "seed": "bun run scripts/seed.ts"
   },
   "dependencies": {

@@ -101,7 +101,7 @@ bun run tauri dev
 | `bun run preview` | Preview the production build locally |
 | `bun run tauri dev` | Run as a Tauri desktop app (development) |
 | `bun run tauri build` | Build the desktop app for production |
-| `bun run test` | Run Rust tests (`cargo test --manifest-path src-tauri/Cargo.toml`) |
+| `cargo test --manifest-path src-tauri/Cargo.toml` | Run Rust tests |
 
 ### Development philosophy
 
@@ -165,10 +165,10 @@ Bako uses a local SQLite database named `bako.db`. How migrations run and the ru
 ## Testing
 
 ```bash
-bun run test
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-Rust tests are kept next to the implementation under `src-tauri/src` and run with Cargo. The frontend has no test suite.
+Rust tests are kept next to the implementation under `src-tauri/src`. The frontend has no test suite.
 
 ---
 
