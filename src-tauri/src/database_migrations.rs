@@ -138,14 +138,21 @@ mod tests {
     use sqlx::{Connection, Executor, SqliteConnection};
     use std::fs;
     use std::path::{Path, PathBuf};
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    static TEMPORARY_DATABASE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
     fn temporary_database_path() -> PathBuf {
         let suffix = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system clock")
             .as_nanos();
-        std::env::temp_dir().join(format!("bako-migration-test-{suffix}.db"))
+        let sequence = TEMPORARY_DATABASE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        let process_id = std::process::id();
+        std::env::temp_dir().join(format!(
+            "bako-migration-test-{process_id}-{suffix}-{sequence}.db"
+        ))
     }
 
     async fn seed_migration_state(path: &Path, success: bool, checksum: Vec<u8>) {

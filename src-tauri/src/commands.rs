@@ -460,15 +460,51 @@ mod database_tests {
     };
     use sqlx::sqlite::SqliteConnectOptions;
     use sqlx::{Connection, Executor, SqliteConnection};
+    use std::collections::HashSet;
     use std::fs;
+    use std::sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc, Barrier,
+    };
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    static TEMPORARY_DATABASE_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
     fn temporary_database_path() -> std::path::PathBuf {
         let suffix = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("system clock")
             .as_nanos();
-        std::env::temp_dir().join(format!("bako-database-test-{suffix}.db"))
+        let sequence = TEMPORARY_DATABASE_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+        let process_id = std::process::id();
+        std::env::temp_dir().join(format!(
+            "bako-database-test-{process_id}-{suffix}-{sequence}.db"
+        ))
+    }
+
+    #[test]
+    fn creates_unique_temporary_database_paths_for_parallel_tests() {
+        // CASE: Several database tests request temporary files in the same clock tick.
+        // VALIDATES: Every caller receives an isolated database path.
+        const CALLERS: usize = 128;
+        let barrier = Arc::new(Barrier::new(CALLERS));
+        let handles = (0..CALLERS)
+            .map(|_| {
+                let barrier = Arc::clone(&barrier);
+                std::thread::spawn(move || {
+                    barrier.wait();
+                    temporary_database_path()
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let paths = handles
+            .into_iter()
+            .map(|handle| handle.join().expect("temporary path thread"))
+            .collect::<Vec<_>>();
+        let unique_paths = paths.iter().collect::<HashSet<_>>();
+
+        assert_eq!(unique_paths.len(), paths.len());
     }
 
     #[test]
