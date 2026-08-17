@@ -1,6 +1,6 @@
 use sqlx::migrate::{Migration, MigrationType};
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{Connection, SqliteConnection};
+use sqlx::{Connection, SqlStr, SqliteConnection};
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 use tauri::{Manager, Runtime};
@@ -15,7 +15,7 @@ fn migration_checksum() -> Vec<u8> {
         LABEL_ORIENTATION_MIGRATION_VERSION,
         Cow::Borrowed(LABEL_ORIENTATION_MIGRATION_DESCRIPTION),
         MigrationType::ReversibleUp,
-        Cow::Borrowed(LABEL_ORIENTATION_MIGRATION_SQL),
+        SqlStr::from_static(LABEL_ORIENTATION_MIGRATION_SQL),
         false,
     )
     .checksum
