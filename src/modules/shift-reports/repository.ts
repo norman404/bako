@@ -1,4 +1,4 @@
-import { asc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { ResultAsync } from "neverthrow";
 
 import { db, withTransaction } from "@/db/client";
@@ -337,7 +337,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
   listHistory(): ResultAsync<ShiftHistoryItem[], ShiftPersistenceError> {
     return ResultAsync.fromPromise(
       (async () => {
-        const shiftRows = await db.select().from(shifts);
+        const shiftRows = await db.select().from(shifts).orderBy(desc(shifts.openedAt));
         const orderRows = await db.select().from(orders);
 
         const ordersByShift = new Map<string, Array<{ total: number }>>();
