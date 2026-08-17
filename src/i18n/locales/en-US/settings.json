@@ -18,7 +18,9 @@
   },
   "sidebar": {
     "general": "GENERAL",
-    "modules": "MODULES"
+    "printing": "PRINTING",
+    "features": "FEATURES",
+    "system": "SYSTEM"
   },
   "system": {
     "title": "System",

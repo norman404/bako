@@ -21,16 +21,15 @@ The tree — and why there is no `shared/` folder in it — is in [`BAKO.md` § 
 
 ### The `pos-store.ts` decision
 
-The plan left this one destination open, to be resolved by reading the file. Read in full, `pos-store.ts` holds exactly four pieces of state:
+The plan left this one destination open, to be resolved by reading the file. Read in full, `pos-store.ts` holds exactly three pieces of state:
 
 - `selectedCategory` — the active category filter for browsing the menu.
 - `isCheckoutOpen` + `checkoutSessionKey` — whether the checkout flow is open, plus a counter that forces a fresh session each time it reopens.
 - `isMobileCartOpen` — whether the mobile cart drawer is open.
-- `isSettingsOpen` — whether the Settings modal is open.
 
-None of this is order or cart *data* — there is no line item, no total, no order id in the store. It is visibility/toggle state for panels that belong to four different modules: `menu` (category filter), `checkout` (checkout modal), `settings` (settings modal), and the mobile cart drawer that lives at the app-shell level. Putting it in `src/modules/order/` would mean `settings` and `menu` components importing `@/modules/order` just to toggle a settings modal or read a category filter that has nothing to do with orders — a coupling that doesn't match what the state actually is.
+The modal and workspace selection are app-shell state because both POS and Administration can open Settings. The remaining store state is not order or cart *data* — there is no line item, no total, no order id in it. It is POS view state for `menu` (category filter), `checkout` (checkout modal), and the mobile cart drawer. Putting it in `src/modules/order/` would couple unrelated UI to order data.
 
-**Decision: `pos-store.ts` moves to a new module, `src/modules/pos/`.** Bako has a single POS screen (no routing) and this store is the view-state of that screen: which overlay is showing and which category is being browsed. It is the one case in the module map where the state is genuinely cross-cutting screen orchestration rather than a feature domain — consistent with terax not having global stores: the store still lives inside a module, just not inside `order`, `checkout`, `settings`, or `menu`, because it isn't about any one of them specifically.
+**Decision: `pos-store.ts` lives in `src/modules/pos/`.** The store owns POS-only view state. `App` owns cross-workspace state; the cart itself remains in `order-store.ts`, so changing workspaces does not discard a sale.
 
 ---
 
@@ -42,44 +41,19 @@ The shape is in [`BAKO.md` § Module system](../../BAKO.md#module-system), and t
 
 ## 3. The barrel rule
 
-The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All nine modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to the manifest exception below. There is no second form, and a new one is a review failure, not a precedent.
+The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All ten modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to the manifest exception below. There is no second form, and a new one is a review failure, not a precedent.
 
 This guide documents the single exception to the rule, bounded by call site: `manifest.ts` (§5).
 
 ---
 
-## 4. The `settings` ↔ `updater` cycle — resolved
+## 4. App-owned navigation contract
 
-**This cycle no longer exists.** It is documented here because the reasoning that removed it is the reasoning the next module migration will need, not because there is anything left to fix.
+`settingsPanel` was correct only while Settings was the sole shell. Bako now has POS, Administration, and Settings, so `src/app/module-manifest.ts` owns the neutral `ModuleManifest` contract. It declares a module's `navigation[]` entries: stable id, target surface, group, order, localized label, icon, component, and optional feature flag.
 
-### What the cycle was
+`src/app/module-registry.ts` imports every module manifest and validates navigation IDs once. `AdminWorkspace` filters entries for `admin`; `SettingsModal` filters entries for `settings` and combines them with its own General, Features, and System panels. Neither shell reaches into a module component directly.
 
-Two edges, both facts about the code as it stood:
-
-- `src/modules/settings/components/SettingsModal.tsx:12` imported `UpdateSettingsPanel` directly: `import { UpdateSettingsPanel } from "@/modules/updater/components/UpdateSettingsPanel";`
-- `src/modules/updater/manifest.ts:2` imported the type contract from settings: `import type { ModuleManifest } from "@/modules/settings/domain/module-manifest";`
-
-The old `updater/README.md` claimed "`settings` NUNCA importa este módulo." The code contradicted it.
-
-There already was a mechanism built to prevent exactly this: `src/app/module-registry.ts` builds `MODULE_REGISTRY: ModuleManifest[]` by importing every module's `manifest.ts` and handing the array to `SettingsModal` as a prop. `updaterManifest` already carried `settingsPanel: UpdateSettingsPanel` inside that array — the registry entry for `updater` already *was* the reference `SettingsModal` needed.
-
-`SettingsModal.tsx` received that full registry, then did this: it filtered `manifest.id === "updater"` **out** of the generic module-tabs loop (comment: "Updater is now in the general group"), and instead hand-built an equivalent tab in `generalTabs` by importing `UpdateSettingsPanel` again, directly, by path. The registry already held the exact component reference; the direct import duplicated data the registry already carried, and that duplication was the entire cycle.
-
-### What was decided, and why
-
-**The registry was the correct mechanism. The direct import in `SettingsModal.tsx` was the violation to remove — not the registry to replace.** This is the part worth keeping: the cycle was not evidence that registration-by-manifest is the wrong design. It was evidence that one call site had bypassed a mechanism that already solved its problem.
-
-### What it looks like now
-
-`SettingsModal.tsx` reads the panel off the matching registry entry instead of importing the component by path:
-
-```ts
-const updaterPanel = registry.find((manifest) => manifest.id === "updater")?.settingsPanel;
-```
-
-The tab still lands in the "general" group, exactly where it was. There is deliberately no fallback: if the manifest ever stops carrying a panel, the tab disappears rather than quietly rendering something else. That removed the `settings → updater` edge entirely — `rg "modules/updater" src/modules/settings/` now returns nothing.
-
-`updater/manifest.ts` keeps its edge to the `ModuleManifest` contract `settings` owns, and that is correct: it is one-directional and type-only — a module depending on a contract, not a cycle. Do not "fix" it.
+This keeps the old updater-cycle resolution intact: Settings never imports updater UI. Updater registers itself in the registry like every other module, and its System entry disappears only if its manifest is removed.
 
 ---
 
@@ -95,9 +69,9 @@ Anything else that reaches past an `index.ts` is a violation. Adding another exc
 
 ### `manifest.ts`
 
-The `manifest.ts` files (`menu`, `checkout`, `printer`, `shift-reports`, `updater`) are imported by deep path from `src/app/module-registry.ts` — e.g. `@/modules/printer/manifest` — never through a barrel. If the barrel is the only boundary (§3), this is a real exception, not an oversight to silently allow.
+The `manifest.ts` files (`menu`, `checkout`, `metrics`, `printer`, `shift-reports`, `updater`) are imported by deep path from `src/app/module-registry.ts` — e.g. `@/modules/printer/manifest` — never through a barrel. If the barrel is the only boundary (§3), this is a real exception, not an oversight to silently allow.
 
-**Decision: `manifest.ts` is a documented exception to the barrel rule, not something to re-export from `index.ts`.** It may be deep-imported as `@/modules/<module>/manifest`, and exclusively from `src/app/module-registry.ts` — the one composition root responsible for wiring modules into the Settings registry. No other file gets a pass to import a module's `manifest.ts` by path.
+**Decision: `manifest.ts` is a documented exception to the barrel rule, not something to re-export from `index.ts`.** It may be deep-imported as `@/modules/<module>/manifest`, and exclusively from `src/app/module-registry.ts` — the one composition root responsible for wiring modules into the application registry. No other file gets a pass to import a module's `manifest.ts` by path.
 
 Reason: `module-registry.ts` runs at app composition time and needs only the manifest object (an id, some flags, a component reference) for every module, up front. If `manifest` were re-exported through `index.ts` instead, registering a module would force loading its entire public barrel — components, stores, repository code, everything else that module exports — just to read a handful of metadata fields. That's needless weight at boot, and it's exactly the kind of eager cross-loading that produces cycles like §4's: two modules' barrels pulling on each other transitively through registration alone, not through any real feature dependency.
 
@@ -135,7 +109,7 @@ A module migrates only when real work already touches it — never as a standalo
 
 5. **Verify.** Run the relevant focused checks, then the full gate in [`BAKO.md` § Verify before claiming done](../../BAKO.md#verify-before-claiming-done). If the change alters behavior, document it as a behavior change rather than calling it purely structural.
 
-`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all nine modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or the exception in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
+`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all ten modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or the exception in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
 
 ### The trap the migration hit
 

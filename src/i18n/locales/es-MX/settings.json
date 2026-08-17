@@ -17,8 +17,10 @@
     "updaterDesc": "Buscar e instalar actualizaciones"
   },
   "sidebar": {
-    "general": "CONFIGURACIÓN GENERAL",
-    "modules": "MÓDULOS"
+    "general": "GENERAL",
+    "printing": "IMPRESIÓN",
+    "features": "FUNCIONALIDADES",
+    "system": "SISTEMA"
   },
   "system": {
     "title": "Sistema",

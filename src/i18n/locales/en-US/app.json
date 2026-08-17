@@ -30,6 +30,7 @@
     "clearAriaLabel": "Clear search"
   },
   "headerActions": {
+    "administration": "Administration",
     "settingsAriaLabel": "Open settings",
     "cartAriaLabel": "Open account"
   },

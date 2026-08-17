@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { METRICS_QUERY_KEYS } from "@/modules/metrics";
+
 import { shiftDrizzleRepository } from "./repository";
 import { getActiveShift } from "./get-active-shift";
 import { openShift } from "./open-shift";
@@ -43,6 +45,7 @@ export function useOpenShift() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.active });
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.history });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
     },
   });
 }
@@ -60,6 +63,7 @@ export function useCloseShift() {
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.active });
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.history });
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.report(variables.shiftId) });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
     },
   });
 }

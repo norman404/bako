@@ -1,0 +1,47 @@
+{
+  "header": {
+    "title": "Bako",
+    "pos": "POS",
+    "settingsAriaLabel": "Abrir configuración"
+  },
+  "sidebar": {
+    "ariaLabel": "Navegación de administración",
+    "operations": "OPERACIÓN",
+    "catalog": "CATÁLOGO",
+    "people": "PERSONAL"
+  },
+  "navigation": {
+    "dashboard": "Resumen",
+    "shifts": "Turnos"
+  },
+  "empty": {
+    "noEntries": "No hay secciones disponibles."
+  },
+  "dashboard": {
+    "eyebrow": "Administración",
+    "title": "Hoy",
+    "summaryAriaLabel": "Resumen de ventas del día",
+    "refresh": "Actualizar",
+    "retry": "Reintentar",
+    "error": {
+      "title": "No pudimos cargar las métricas",
+      "description": "Intentá actualizar el resumen operativo."
+    },
+    "metrics": {
+      "sales": "Ventas",
+      "orders": "Órdenes",
+      "averageTicket": "Ticket prom."
+    },
+    "payments": {
+      "title": "Métodos de pago",
+      "cash": "Efectivo",
+      "card": "Tarjeta",
+      "other": "Otros"
+    },
+    "activeShift": {
+      "title": "Turno actual",
+      "openedAt": "Abierto {{time}}",
+      "empty": "No hay un turno activo."
+    }
+  }
+}

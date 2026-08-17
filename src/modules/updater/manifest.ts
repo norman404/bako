@@ -1,14 +1,25 @@
 import { Download } from "lucide-react";
-import type { ModuleManifest } from "@/modules/settings";
+
+import {
+  NAVIGATION_GROUP,
+  NAVIGATION_SURFACE,
+  type ModuleManifest,
+} from "@/app/module-manifest";
+
 import { UpdateSettingsPanel } from "./UpdateSettingsPanel";
 
 export const updaterManifest: ModuleManifest = {
   id: "updater",
-  // No flagKey: the panel must always be visible so the operator can toggle
-  // auto_update_enabled without losing access to the tab that controls it.
-  settingsPanel: UpdateSettingsPanel,
-  // Resolved by SettingsModal via t() in the `settings` namespace — keeps the
-  // tab label translated per locale (en-US "Updates", pt-BR "Atualizações", ...).
-  settingsLabelKey: "sections.updater",
-  settingsIcon: Download,
+  navigation: [
+    {
+      id: "updater",
+      surface: NAVIGATION_SURFACE.SETTINGS,
+      group: NAVIGATION_GROUP.SYSTEM,
+      order: 20,
+      labelKey: "settings:sections.updater",
+      descriptionKey: "settings:sections.updaterDesc",
+      icon: Download,
+      Component: UpdateSettingsPanel,
+    },
+  ],
 };

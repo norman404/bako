@@ -1,4 +1,6 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { METRICS_QUERY_KEYS } from "@/modules/metrics";
 
 import { orderDrizzleRepository } from "./repository";
 import { createOrder } from "./create-order";
@@ -8,6 +10,8 @@ export { CHECKOUT_PAYMENT_METHOD, type CheckoutPaymentMethod } from "./order";
 export type { CreateOrderInput } from "./order";
 
 export function useCreateOrder() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (input: CreateOrderInput) => {
       const result = await createOrder(orderDrizzleRepository, input);
@@ -16,6 +20,9 @@ export function useCreateOrder() {
       }
 
       return result.value;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
     },
   });
 }

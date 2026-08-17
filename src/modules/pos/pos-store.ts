@@ -9,7 +9,6 @@ interface PosUiState {
   isCheckoutOpen: boolean;
   checkoutSessionKey: number;
   isMobileCartOpen: boolean;
-  isSettingsOpen: boolean;
 }
 
 interface PosUiActions {
@@ -19,9 +18,6 @@ interface PosUiActions {
   openMobileCart: () => void;
   closeMobileCart: () => void;
   toggleMobileCart: () => void;
-  openSettings: () => void;
-  closeSettings: () => void;
-  toggleSettings: () => void;
 }
 
 type PosStore = PosUiState & PosUiActions;
@@ -31,7 +27,6 @@ const initialPosUiState: PosUiState = {
   isCheckoutOpen: false,
   checkoutSessionKey: 0,
   isMobileCartOpen: false,
-  isSettingsOpen: false,
 };
 
 const usePosStore = create<PosStore>((set) => ({
@@ -50,10 +45,6 @@ const usePosStore = create<PosStore>((set) => ({
   openMobileCart: () => set({ isMobileCartOpen: true }),
   closeMobileCart: () => set({ isMobileCartOpen: false }),
   toggleMobileCart: () => set((state) => ({ isMobileCartOpen: !state.isMobileCartOpen })),
-
-  openSettings: () => set({ isSettingsOpen: true }),
-  closeSettings: () => set({ isSettingsOpen: false }),
-  toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
 }));
 
 export { POS_CATEGORY_FILTER, usePosStore };

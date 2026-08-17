@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { METRICS_QUERY_KEYS } from "@/modules/metrics";
+
 import { shiftDrizzleRepository } from "./repository";
 import { getOrderDetail } from "./get-order-detail";
 import { voidOrder } from "./void-order";
@@ -54,6 +56,7 @@ export function useVoidOrder() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["shift"] });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
     },
   });
 }
@@ -70,6 +73,7 @@ export function useUpdateOrder() {
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["shift"] });
       await queryClient.invalidateQueries({ queryKey: ORDER_QUERY_KEYS.detail(data.id) });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
     },
   });
 }

@@ -30,6 +30,7 @@
     "clearAriaLabel": "Limpiar búsqueda"
   },
   "headerActions": {
+    "administration": "Administración",
     "settingsAriaLabel": "Abrir configuración",
     "cartAriaLabel": "Abrir cuenta"
   },

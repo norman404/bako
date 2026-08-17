@@ -1,0 +1,47 @@
+{
+  "header": {
+    "title": "Bako",
+    "pos": "POS",
+    "settingsAriaLabel": "Open settings"
+  },
+  "sidebar": {
+    "ariaLabel": "Administration navigation",
+    "operations": "OPERATIONS",
+    "catalog": "CATALOG",
+    "people": "PEOPLE"
+  },
+  "navigation": {
+    "dashboard": "Overview",
+    "shifts": "Shifts"
+  },
+  "empty": {
+    "noEntries": "No sections are available."
+  },
+  "dashboard": {
+    "eyebrow": "Administration",
+    "title": "Today",
+    "summaryAriaLabel": "Today's sales summary",
+    "refresh": "Refresh",
+    "retry": "Retry",
+    "error": {
+      "title": "We could not load the metrics",
+      "description": "Try refreshing the operational summary."
+    },
+    "metrics": {
+      "sales": "Sales",
+      "orders": "Orders",
+      "averageTicket": "Avg. ticket"
+    },
+    "payments": {
+      "title": "Payment methods",
+      "cash": "Cash",
+      "card": "Card",
+      "other": "Other"
+    },
+    "activeShift": {
+      "title": "Current shift",
+      "openedAt": "Opened {{time}}",
+      "empty": "There is no active shift."
+    }
+  }
+}

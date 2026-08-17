@@ -1,14 +1,21 @@
-import { X, Globe, Flag, Download, type LucideIcon } from "lucide-react";
+import { Flag, Globe, HardDrive, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import {
+  getVisibleNavigationEntries,
+  NAVIGATION_GROUP,
+  NAVIGATION_SURFACE,
+  type ModuleManifest,
+  type ModuleNavigationEntry,
+} from "@/app/module-manifest";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
-
-import type { ModuleManifest } from "../module-manifest";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
-import { SystemSettingsPanel } from "./SystemSettingsPanel";
+
 import { FeatureFlagsPanel } from "./FeatureFlagsPanel";
+import { GeneralSettingsPanel } from "./general-settings-panel";
+import { SystemSettingsPanel } from "./SystemSettingsPanel";
 
 interface SettingsModalProps {
   open: boolean;
@@ -16,150 +23,136 @@ interface SettingsModalProps {
   registry: ModuleManifest[];
 }
 
-interface SettingsTabDefinition {
-  id: string;
-  title: string;
-  description?: string;
-  icon: LucideIcon;
-  Panel: React.ComponentType;
-}
+const STATIC_SETTINGS_ENTRIES: ModuleNavigationEntry[] = [
+  {
+    id: "general",
+    surface: NAVIGATION_SURFACE.SETTINGS,
+    group: NAVIGATION_GROUP.GENERAL,
+    order: 10,
+    labelKey: "settings:sections.general",
+    descriptionKey: "settings:sections.generalDesc",
+    icon: Globe,
+    Component: GeneralSettingsPanel,
+  },
+  {
+    id: "features",
+    surface: NAVIGATION_SURFACE.SETTINGS,
+    group: NAVIGATION_GROUP.FEATURES,
+    order: 10,
+    labelKey: "settings:sections.features",
+    descriptionKey: "settings:sections.featuresDesc",
+    icon: Flag,
+    Component: FeatureFlagsPanel,
+  },
+  {
+    id: "database",
+    surface: NAVIGATION_SURFACE.SETTINGS,
+    group: NAVIGATION_GROUP.SYSTEM,
+    order: 10,
+    labelKey: "settings:database.title",
+    descriptionKey: "settings:database.description",
+    icon: HardDrive,
+    Component: SystemSettingsPanel,
+  },
+];
 
-interface TabGroup {
-  label: string;
-  tabs: SettingsTabDefinition[];
-}
+const SETTINGS_GROUPS = [
+  { id: NAVIGATION_GROUP.GENERAL, labelKey: "sidebar.general" },
+  { id: NAVIGATION_GROUP.PRINTING, labelKey: "sidebar.printing" },
+  { id: NAVIGATION_GROUP.FEATURES, labelKey: "sidebar.features" },
+  { id: NAVIGATION_GROUP.SYSTEM, labelKey: "sidebar.system" },
+] as const;
 
 function SettingsModal({ open, onClose, registry }: SettingsModalProps) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation("settings");
   const { flags } = useFeatureFlagsStore();
-
-  // El panel del updater sale del registry, no de un import directo: es lo que
-  // rompe el ciclo settings ↔ updater. Sin fallback a propósito — si el manifest
-  // desapareciera del registry, la tab debe desaparecer con él, no fingir que existe.
-  const updaterPanel = registry.find((manifest) => manifest.id === "updater")?.settingsPanel;
-
-  const updaterTabs: SettingsTabDefinition[] = updaterPanel
-    ? [{ id: "updater", title: t('sections.updater'), description: t('sections.updaterDesc'), icon: Download, Panel: updaterPanel }]
-    : [];
-
-  const moduleTabs: SettingsTabDefinition[] = registry
-    .filter((manifest) => {
-      if (!manifest.settingsPanel) return false;
-      if (manifest.flagKey && !flags[manifest.flagKey]) return false;
-      // Updater is now in the general group
-      if (manifest.id === "updater") return false;
-      return true;
-    })
-    .map((manifest) => ({
-      id: manifest.id,
-      title: manifest.settingsLabelKey
-        ? t(manifest.settingsLabelKey)
-        : (manifest.settingsLabel ?? manifest.id),
-      description: manifest.settingsDescriptionKey
-        ? t(manifest.settingsDescriptionKey)
-        : undefined,
-      icon: manifest.settingsIcon ?? Globe,
-      Panel: manifest.settingsPanel!,
-    }));
-
-  const generalTabs: SettingsTabDefinition[] = [
-    { id: "general", title: t('sections.general'), description: t('sections.generalDesc'), icon: Globe, Panel: SystemSettingsPanel },
-    { id: "features", title: t('sections.features'), description: t('sections.featuresDesc'), icon: Flag, Panel: FeatureFlagsPanel },
-    ...updaterTabs,
-  ];
-
-  const sidebarGroups: TabGroup[] = [
-    { label: t('sidebar.general'), tabs: generalTabs },
-  ];
-
-  if (moduleTabs.length > 0) {
-    sidebarGroups.push({ label: t('sidebar.modules'), tabs: moduleTabs });
-  }
-
-  const allTabs = [...generalTabs, ...moduleTabs];
-  const [activeSection, setActiveSection] = useState<string>(allTabs[0]?.id ?? "general");
-  const activeTab = allTabs.find((tab) => tab.id === activeSection);
+  const moduleEntries = getVisibleNavigationEntries(registry, NAVIGATION_SURFACE.SETTINGS, flags);
+  const entries = [...STATIC_SETTINGS_ENTRIES, ...moduleEntries].sort(
+    (left, right) => left.order - right.order || left.id.localeCompare(right.id),
+  );
+  const [selectedEntryId, setSelectedEntryId] = useState("general");
+  const activeEntry = entries.find((entry) => entry.id === selectedEntryId) ?? entries[0];
+  const ActivePanel = activeEntry?.Component;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent
         aria-describedby={undefined}
-        className="h-[94vh] max-w-6xl grid grid-rows-[auto_1fr] text-text transition-all focus:outline-none"
+        className="grid h-[94vh] max-w-6xl grid-rows-[auto_1fr] text-text transition-all focus:outline-none"
       >
-
-          {/* Modal header */}
-          <header className="flex items-center justify-between border-b border-border px-5 py-3">
-            <DialogTitle className="text-base font-semibold text-text">
-              {t('modal.title')}
-            </DialogTitle>
-            <DialogClose asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t('modal.closeAriaLabel')}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
-          </header>
-
-          {/* Two-column layout */}
-          <div className="grid grid-cols-[240px_1fr] min-h-0 overflow-hidden">
-
-            {/* Sidebar */}
-            <nav
-              role="tablist"
-              aria-label={t('modal.sectionsAriaLabel')}
-              aria-orientation="vertical"
-              className="flex flex-col border-r border-border py-2 overflow-y-auto"
+        <header className="flex items-center justify-between border-b border-border px-5 py-3">
+          <DialogTitle className="text-base font-semibold text-text">
+            {t("modal.title")}
+          </DialogTitle>
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("modal.closeAriaLabel")}
             >
-              {sidebarGroups.map((group, groupIndex) => (
-                <div key={group.label} className={groupIndex > 0 ? "mt-3" : ""}>
-                  <h3 className="px-4 pt-2 pb-1 text-2xs font-medium uppercase tracking-wider text-text-dim">
-                    {group.label}
-                  </h3>
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogClose>
+        </header>
 
-                  {group.tabs.map((tab) => {
-                    const TabIcon = tab.icon;
-                    const isActive = activeSection === tab.id;
+        <div className="grid min-h-0 grid-cols-[240px_1fr] overflow-hidden">
+          <nav
+            role="tablist"
+            aria-label={t("modal.sectionsAriaLabel")}
+            aria-orientation="vertical"
+            className="flex flex-col overflow-y-auto border-r border-border py-2"
+          >
+            {SETTINGS_GROUPS.map((group, groupIndex) => {
+              const groupEntries = entries.filter((entry) => entry.group === group.id);
+
+              if (groupEntries.length === 0) return null;
+
+              return (
+                <div key={group.id} className={groupIndex > 0 ? "mt-3" : ""}>
+                  <h3 className="px-4 pb-1 pt-2 text-2xs font-medium uppercase tracking-wider text-text-dim">
+                    {t(group.labelKey)}
+                  </h3>
+                  {groupEntries.map((entry) => {
+                    const Icon = entry.icon;
+                    const isActive = activeEntry?.id === entry.id;
 
                     return (
                       <Button
-                        key={tab.id}
+                        key={entry.id}
                         role="tab"
                         aria-selected={isActive}
-                        aria-controls={`settings-panel-${tab.id}`}
-                        id={`settings-tab-${tab.id}`}
-                        onClick={() => setActiveSection(tab.id)}
+                        aria-controls={`settings-panel-${entry.id}`}
+                        id={`settings-tab-${entry.id}`}
+                        onClick={() => setSelectedEntryId(entry.id)}
                         variant="ghost"
                         className={[
                           "w-full justify-start gap-2.5 rounded-none px-4 py-1.5",
                           isActive
-                            ? "bg-primary/10 text-primary-strong font-medium"
+                            ? "bg-primary/10 font-medium text-primary-strong"
                             : "text-text-dim hover:bg-surface-sunken hover:text-text",
                         ].join(" ")}
                       >
-                        <TabIcon className="h-4 w-4 shrink-0 text-text-dim" />
-                        <span className="text-xs">{tab.title}</span>
+                        <Icon className="h-4 w-4 shrink-0 text-text-dim" />
+                        <span className="text-xs">{t(entry.labelKey)}</span>
                       </Button>
                     );
                   })}
                 </div>
-              ))}
-            </nav>
+              );
+            })}
+          </nav>
 
-            {/* Content area */}
-            <section
-              id={`settings-panel-${activeSection}`}
-              role="tabpanel"
-              aria-labelledby={`settings-tab-${activeSection}`}
-              className="min-h-0 overflow-hidden"
-            >
-              <div className="scrollbar-thin h-full overflow-y-auto">
-                {activeTab && <activeTab.Panel />}
-              </div>
-            </section>
-          </div>
+          <section
+            id={`settings-panel-${activeEntry?.id ?? "empty"}`}
+            role="tabpanel"
+            aria-labelledby={`settings-tab-${activeEntry?.id ?? "empty"}`}
+            className="min-h-0 overflow-hidden"
+          >
+            <div className="scrollbar-thin h-full overflow-y-auto">
+              {ActivePanel ? <ActivePanel /> : null}
+            </div>
+          </section>
+        </div>
       </DialogContent>
     </Dialog>
   );

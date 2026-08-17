@@ -1,6 +1,6 @@
 # BAKO.md
 
-This document is Bako's living architecture guide and the single source of truth for architectural decisions. It is stated in the present tense because the code matches it: all nine modules are in the flat shape described below, and every rule here is enforceable against the tree as it stands.
+This document is Bako's living architecture guide and the single source of truth for architectural decisions. It is stated in the present tense because the code matches it: all ten modules are in the flat shape described below, and every rule here is enforceable against the tree as it stands.
 
 ## Product
 
@@ -82,7 +82,7 @@ See `docs/architecture/printing.md` for how a print job reaches these commands f
 
 ```txt
 src/
-├── app/              App.tsx + module-registry.ts — composition, not logic
+├── app/              App.tsx, workspaces and module registry — composition, not feature logic
 ├── components/       reusable UI (ui/ primitives + ColorInput)
 ├── db/                Drizzle client + schema
 ├── i18n/              i18n engine + locales/
@@ -111,7 +111,7 @@ src/modules/<feature>/
 ├── <feature>-store.ts     Zustand, if applicable
 ├── repository.ts          Drizzle access, if applicable
 ├── use-<feature>.ts       React Query hooks
-├── manifest.ts            if the module registers a Settings panel
+├── manifest.ts            if the module registers application navigation
 └── <Feature>Panel.tsx     components
 ```
 
@@ -151,7 +151,7 @@ Full conventions are in [`docs/contributing/testing.md`](docs/contributing/testi
 
 ## Migration strategy
 
-The migration to this structure is complete — all nine modules are flat, no layer folders remain under `src/modules/`, and `src/shared/` is deleted. The rules below are what keeps it that way; they govern every future change, not a one-time move.
+The migration to this structure is complete — all ten modules are flat, no layer folders remain under `src/modules/`, and `src/shared/` is deleted. The rules below are what keeps it that way; they govern every future change, not a one-time move.
 
 1. New features use the flat module structure from day one. A module is never born with layer folders "to be flattened later".
 2. Existing modules are simplified when meaningful work already touches them — not as a standalone refactor. Restructuring without a reason is churn with a rollback risk.
