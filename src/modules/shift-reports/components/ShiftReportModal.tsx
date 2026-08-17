@@ -23,11 +23,11 @@ export function ShiftReportModal({ shiftId, open, onClose }: ShiftReportModalPro
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="max-w-[28rem] p-0 overflow-hidden max-h-[calc(100dvh-2rem)]">
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] max-w-[28rem] flex-col overflow-hidden p-0">
         <DialogTitle className="sr-only">{t("reportTitle")}</DialogTitle>
         <DialogDescription className="sr-only">{t("reportTitle")}</DialogDescription>
 
-        <div className="flex flex-col">
+        <div className="flex min-h-0 flex-1 flex-col">
           {/* Header */}
           <header className="flex items-center justify-between border-b border-border-strong px-5 py-3">
             <span className="font-display text-xl text-primary-strong">
