@@ -55,15 +55,17 @@ The tables, all declared with `sqliteTable(...)`:
 
 `menus`, `categories`, `products`, `productMenus`, `modifierGroups`, `modifierOptions`,
 `categoryModifierGroups`, `productModifierGroups`, `orderItemModifiers`,
-`customers`, `shifts`, `orders`, `payments`, `cashMovements`, `orderItems`,
-`printers`, `systemSettings`, `featureFlags`.
+`shifts`, `orders`, `payments`, `cashMovements`, `orderItems`, `printers`,
+`systemSettings`, `featureFlags`.
 
-The historical `delivery_persons` table and `orders.delivery_person_id` column remain in
-existing databases because migration `0010_delivery_persons.sql` is immutable; they are
-not declared in the active TypeScript schema.
+The historical `customers` table, `orders.customer_id` column, `delivery_persons` table,
+and `orders.delivery_person_id` column remain in existing databases because their
+migrations are immutable; none are declared in the active TypeScript schema.
 
-Prices and money fields (`price`, `priceDelta`, `total`, `amount`, `unitPrice`,
-`openingCash`, `countedCash`, `cashDifference`) are `integer` columns — see
+Prices and money fields (`price`, `priceDelta`, `total`, `amount`, `cash_received`,
+`unitPrice`, `openingCash`, `countedCash`, `cashDifference`) are `integer` columns. In
+`payments`, `amount` is the amount applied to the order and `cash_received` preserves
+cash handed over for change — see
 [ADR-0001](../adr/0001-prices-in-cents.md) for why cents are stored as whole
 integers rather than floats.
 

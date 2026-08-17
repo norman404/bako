@@ -1,82 +1,54 @@
 {
   "footer": {
     "cancel": "Cancelar",
-    "pay": "Pagar",
+    "pay": "Cobrar",
     "saving": "Guardando"
   },
   "modal": {
-    "ariaLabel": "Confirmar checkout",
+    "ariaLabel": "Confirmar cobro",
+    "eyebrow": "Nueva venta",
     "title": "Cobro",
     "closeAriaLabel": "Cerrar"
   },
-  "fulfillment": {
-    "title": "Entrega",
-    "local": "Local",
-    "delivery": "Delivery"
-  },
   "payment": {
-    "title": "Pago",
+    "eyebrow": "Medio de pago",
+    "title": "¿Cómo cobramos?",
     "cash": "Efectivo",
     "card": "Tarjeta",
-    "receivedLabel": "Recibido",
-    "exactPayment": "Cobro exacto",
+    "mixed": "Mixto",
+    "receivedLabel": "Efectivo recibido",
+    "appliedLabel": "Efectivo aplicado",
+    "mixedHint": "La tarjeta completa automáticamente el saldo restante.",
+    "cashHint": "Podés recibir un monto mayor y calcular el cambio.",
+    "cardApplied": "Cobro exacto con tarjeta",
+    "cardRemaining": "Tarjeta restante",
+    "complete": "El cobro está completo",
     "summary": {
       "total": "Total final",
+      "cashApplied": "Efectivo aplicado",
       "cashReceived": "Efectivo recibido",
       "cardPayment": "Cobro con tarjeta",
       "change": "Cambio",
       "dash": "—"
     }
   },
-  "delivery": {
-    "headerText": "Elegí uno guardado o cargá uno nuevo",
-    "searchButton": "Buscar cliente",
-    "newButton": "Nuevo cliente"
-  },
   "orderSummary": {
     "title": "Cuenta"
   },
-  "customerSearch": {
-    "label": "Buscar cliente",
-    "placeholder": "Nombre, teléfono o dirección",
-    "selectedBadge": "Cliente seleccionado",
-    "loading": "Buscando clientes...",
-    "error": "No pudimos cargar clientes guardados",
-    "emptySearch": "No encontramos clientes con esa búsqueda. Probá con otro dato o tocá \"Nuevo cliente\".",
-    "emptyState": "Todavía no hay clientes guardados para delivery.",
-    "newButton": "Nuevo cliente",
-    "activeLabel": "ACTIVO"
-  },
-  "customerCreate": {
-    "title": "Crear cliente nuevo",
-    "backButton": "Volver a buscar",
-    "nameLabel": "Cliente",
-    "namePlaceholder": "Valentina Suárez",
-    "phoneLabel": "Teléfono",
-    "phonePlaceholder": "11 5555 5555",
-    "addressLabel": "Dirección",
-    "addressPlaceholder": "Av. Siempre Viva 742, Timbre B"
-  },
   "errors": {
-    "customerNameRequired": "El nombre del cliente es obligatorio.",
-    "customerPhoneRequired": "El teléfono del cliente es obligatorio.",
-    "customerAddressRequired": "La dirección del cliente es obligatoria.",
     "invalidPaymentMethod": "El método de pago debe ser efectivo o tarjeta.",
     "invalidPaymentAmount": "El monto de pago debe ser un número entero no negativo.",
-    "insufficientPaymentAmount": "El monto recibido no cubre el total del pedido.",
-    "cardPaymentExactMatchRequired": "Con tarjeta, el monto debe ser exacto al total.",
+    "paymentRequired": "Seleccioná al menos un medio de pago.",
+    "paymentTotalMismatch": "Los importes de pago deben coincidir con el total del pedido.",
+    "duplicatePaymentMethod": "No podés registrar el mismo medio de pago dos veces.",
+    "cashReceivedInvalid": "El efectivo recibido debe ser válido y cubrir el monto aplicado.",
+    "mixedPaymentCashReceivedMismatch": "En un cobro mixto, el efectivo recibido debe ser igual al efectivo aplicado.",
     "orderItemsRequired": "El pedido debe incluir al menos un artículo.",
     "orderItemProductIdRequired": "Cada artículo debe tener un producto asignado.",
     "orderItemQuantityInvalid": "La cantidad debe ser un entero positivo.",
     "orderItemUnitPriceInvalid": "El precio unitario debe ser un entero no negativo.",
-    "customerIdAndCustomerConflict": "Elegí un cliente guardado o cargá uno nuevo, no ambos.",
-    "localOrderCustomerForbidden": "Los pedidos locales no pueden incluir datos de cliente de delivery.",
-    "deliveryOrderCustomerRequired": "Los pedidos de delivery requieren un cliente.",
-    "customerNotFound": "No encontramos ese cliente. Probá buscarlo de nuevo.",
     "dbError": "No pudimos procesar el cobro. Intentá de nuevo.",
     "generic": "Ocurrió un error inesperado al procesar el cobro.",
-    "formDeliveryNewCustomerRequired": "Para delivery necesitás cliente, teléfono y dirección.",
-    "formDeliverySelectOrCreate": "Elegí un cliente guardado o tocá \"Nuevo cliente\" para cargar uno.",
     "formEmptyCart": "Agregá al menos un producto antes de cobrar."
   }
 }

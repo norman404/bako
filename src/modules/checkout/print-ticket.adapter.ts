@@ -20,10 +20,11 @@ export interface PrintTicketPayload {
       textValue: string | null;
     }>;
   }>;
-  paymentMethod: string;
-  paymentAmount: number;
-  fulfillmentType: string;
-  customer: { name: string; phone: string; address: string } | null;
+  payments: Array<{
+    method: string;
+    amount: number;
+    cashReceived: number | null;
+  }>;
 }
 
 function buildPayload(input: PrintOrderOptions, printerType: string, printerAddress: string): PrintTicketPayload {
@@ -45,10 +46,11 @@ function buildPayload(input: PrintOrderOptions, printerType: string, printerAddr
       unitPrice: item.unitPrice,
       modifiers: item.modifiers,
     })),
-    paymentMethod: input.paymentMethod,
-    paymentAmount: input.paymentAmount,
-    fulfillmentType: input.fulfillmentType,
-    customer: input.customer,
+    payments: input.payments.map((payment) => ({
+      method: payment.method,
+      amount: payment.amount,
+      cashReceived: payment.cashReceived,
+    })),
   };
 }
 

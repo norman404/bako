@@ -3,13 +3,12 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { calculateCartTotals, type CartItem } from "@/modules/order";
 import { CheckoutModalFooterActions } from "./CheckoutModal.Footer";
-import { CheckoutModalFulfillmentPanel } from "./CheckoutModal.Fulfillment";
 import { CheckoutModalOrderSummary } from "./CheckoutModal.OrderSummary";
 import { CheckoutModalPaymentPanel } from "./CheckoutModal.Payment";
 import type { CreateOrderInput } from "../use-checkout";
 import { useCheckoutForm } from "../use-checkout-form";
-import { calculateCartTotals, type CartItem } from "@/modules/order";
 
 interface CheckoutModalProps {
   open: boolean;
@@ -26,37 +25,22 @@ function CheckoutModal({
   onClose,
   onConfirmCheckout,
 }: CheckoutModalProps) {
-  const { t } = useTranslation('checkout');
+  const { t } = useTranslation("checkout");
   const totals = calculateCartTotals(items);
 
   const {
-    fulfillmentType,
+    paymentMode,
     cashAmountInput,
-    customerSearch,
-    selectedCustomerId,
-    customerForm,
     formError,
-    isDelivery,
-    isSearchCustomerMode,
-    isNewCustomerMode,
-    isCashPayment,
-    paymentValidationMessage,
-    registeredPaymentAmount,
+    cashAppliedAmount,
+    cashReceivedAmount,
+    cardAmount,
     changeAmount,
+    paymentValidationMessage,
     isDisabled,
-    customerQuery,
-    customerOptions,
-    trimmedCustomerSearch,
-    customerSectionLabel,
     handleCloseRequest,
-    handleFulfillmentChange,
-    handlePaymentMethodChange,
-    handleSelectCustomer,
-    handleShowSearchCustomers,
-    handleStartNewCustomer,
-    handleCustomerFieldChange,
+    handlePaymentModeChange,
     handleCashInputChange,
-    handleCustomerSearchChange,
     handleConfirm,
   } = useCheckoutForm({
     open,
@@ -75,79 +59,67 @@ function CheckoutModal({
       }}
     >
       <DialogContent
-          layout="fullscreen"
-          className="flex items-end justify-center p-3 sm:items-center sm:p-5 lg:p-6"
-          onInteractOutside={(event) => {
-            if (isSubmitting) event.preventDefault();
-          }}
-        >
-          <DialogTitle className="sr-only">{t('modal.ariaLabel')}</DialogTitle>
-          <div className="modal-shell-solid flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[50rem] flex-col overflow-hidden rounded-modal animate-modal-in sm:max-h-[calc(100dvh-3rem)]">
-            <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-5">
-              <h2 className="font-display text-xl text-primary-strong">
-                {t('modal.title')}
+        layout="fullscreen"
+        className="flex items-end justify-center p-3 sm:items-center sm:p-5 lg:p-6"
+        onInteractOutside={(event) => {
+          if (isSubmitting) event.preventDefault();
+        }}
+      >
+        <DialogTitle className="sr-only">{t("modal.ariaLabel")}</DialogTitle>
+        <div className="modal-shell-solid flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[58rem] flex-col overflow-hidden rounded-modal animate-modal-in sm:max-h-[calc(100dvh-3rem)]">
+          <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-5">
+            <div>
+              <p className="eyebrow text-primary">{t("modal.eyebrow")}</p>
+              <h2 className="font-display mt-1 text-xl text-primary-strong">
+                {t("modal.title")}
               </h2>
+            </div>
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleCloseRequest}
-                disabled={isSubmitting}
-                className="rounded-card"
-                aria-label={t('modal.closeAriaLabel')}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </header>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCloseRequest}
+              disabled={isSubmitting}
+              className="rounded-card"
+              aria-label={t("modal.closeAriaLabel")}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </header>
 
-            <div className="scrollbar-thin min-h-0 max-h-[calc(100dvh-9.5rem)] space-y-4 overflow-y-auto px-4 py-4 sm:max-h-[calc(100dvh-11rem)] sm:px-5 sm:py-4">
-              <div className="grid gap-2.5 lg:grid-cols-[1.08fr_0.92fr]">
-                <CheckoutModalOrderSummary items={items} totals={totals} />
+          <div className="scrollbar-thin min-h-0 max-h-[calc(100dvh-9.5rem)] space-y-3 overflow-y-auto px-4 py-4 sm:max-h-[calc(100dvh-11rem)] sm:px-5 sm:py-4">
+            <div className="grid gap-3 lg:grid-cols-[0.84fr_1.16fr]">
+              <CheckoutModalOrderSummary items={items} totals={totals} />
 
-                <section className="grid gap-2.5">
-                  <CheckoutModalPaymentPanel
-                    totals={totals}
-                    isCashPayment={isCashPayment}
-                    cashAmountInput={cashAmountInput}
-                    onPaymentMethodChange={handlePaymentMethodChange}
-                    onCashInputChange={handleCashInputChange}
-                    paymentValidationMessage={paymentValidationMessage}
-                    registeredPaymentAmount={registeredPaymentAmount}
-                    changeAmount={changeAmount}
-                  />
-                </section>
-              </div>
-
-              <CheckoutModalFulfillmentPanel
-                fulfillmentType={fulfillmentType}
-                onFulfillmentChange={handleFulfillmentChange}
-                isDelivery={isDelivery}
-                isSearchCustomerMode={isSearchCustomerMode}
-                isNewCustomerMode={isNewCustomerMode}
-                onShowSearchCustomers={handleShowSearchCustomers}
-                onStartNewCustomer={handleStartNewCustomer}
-                customerSearch={customerSearch}
-                onCustomerSearchChange={handleCustomerSearchChange}
-                selectedCustomerId={selectedCustomerId}
-                customerQuery={customerQuery}
-                customerOptions={customerOptions}
-                trimmedCustomerSearch={trimmedCustomerSearch}
-                customerSectionLabel={customerSectionLabel}
-                onSelectCustomer={handleSelectCustomer}
-                customerForm={customerForm}
-                onCustomerFieldChange={handleCustomerFieldChange}
-                formError={formError}
+              <CheckoutModalPaymentPanel
+                totals={totals}
+                paymentMode={paymentMode}
+                cashAmountInput={cashAmountInput}
+                cashAppliedAmount={cashAppliedAmount}
+                cashReceivedAmount={cashReceivedAmount}
+                cardAmount={cardAmount}
+                changeAmount={changeAmount}
+                onPaymentModeChange={handlePaymentModeChange}
+                onCashInputChange={handleCashInputChange}
+                paymentValidationMessage={paymentValidationMessage}
               />
             </div>
 
-            <CheckoutModalFooterActions
-              onClose={handleCloseRequest}
-              onConfirm={handleConfirm}
-              isDisabled={isDisabled}
-              isSubmitting={isSubmitting}
-              totals={totals}
-            />
+            {formError ? (
+              <p className="rounded-card border border-danger/40 bg-danger/10 px-3 py-2.5 text-xs text-danger">
+                {formError}
+              </p>
+            ) : null}
           </div>
+
+          <CheckoutModalFooterActions
+            onClose={handleCloseRequest}
+            onConfirm={handleConfirm}
+            isDisabled={isDisabled}
+            isSubmitting={isSubmitting}
+            totals={totals}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

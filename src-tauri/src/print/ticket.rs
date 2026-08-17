@@ -23,10 +23,10 @@ pub struct TicketItem {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct TicketCustomer {
-    pub name: String,
-    pub phone: String,
-    pub address: String,
+pub struct TicketPayment {
+    pub method: String,
+    pub amount: u32,
+    pub cash_received: Option<u32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -36,10 +36,7 @@ pub struct TicketPayload {
     pub created_at: String,
     pub total: u32,
     pub items: Vec<TicketItem>,
-    pub payment_method: String,
-    pub payment_amount: u32,
-    pub fulfillment_type: String,
-    pub customer: Option<TicketCustomer>,
+    pub payments: Vec<TicketPayment>,
 }
 
 fn format_cents(cents: u32) -> String {
@@ -102,14 +99,17 @@ pub fn build_ticket<D: Driver>(
         .writeln(&payload.created_at)
         .map_err(map_err)?;
 
-    // Meta
-    printer
-        .justify(JustifyMode::LEFT)
-        .map_err(map_err)?
-        .writeln(&format!("Order: {}", payload.fulfillment_type))
-        .map_err(map_err)?
-        .writeln(&format!("Payment: {}", payload.payment_method))
-        .map_err(map_err)?;
+    // Payment metadata
+    printer.justify(JustifyMode::LEFT).map_err(map_err)?;
+    for payment in &payload.payments {
+        printer
+            .writeln(&format!(
+                "Payment: {} {}",
+                payment.method,
+                format_cents(payment.amount)
+            ))
+            .map_err(map_err)?;
+    }
 
     // Divider
     printer
@@ -152,7 +152,7 @@ pub fn build_ticket<D: Driver>(
         .writeln("--------------------------------")
         .map_err(map_err)?;
 
-    // Totals
+    // Totals and cash change
     printer
         .justify(JustifyMode::RIGHT)
         .map_err(map_err)?
@@ -161,37 +161,24 @@ pub fn build_ticket<D: Driver>(
         .writeln(&format!("Total: {}", format_cents(payload.total)))
         .map_err(map_err)?
         .bold(false)
-        .map_err(map_err)?
-        .writeln(&format!("Paid: {}", format_cents(payload.payment_amount)))
         .map_err(map_err)?;
 
-    // Change
-    if payload.payment_method == "cash" {
-        let change = payload.payment_amount.saturating_sub(payload.total);
-        printer
-            .writeln(&format!("Change: {}", format_cents(change)))
-            .map_err(map_err)?;
-    }
+    if payload.payments.len() == 1 {
+        if let Some(payment) = payload.payments.first() {
+            let paid_amount = payment.cash_received.unwrap_or(payment.amount);
+            printer
+                .writeln(&format!("Paid: {}", format_cents(paid_amount)))
+                .map_err(map_err)?;
 
-    // Customer
-    if let Some(customer) = &payload.customer {
-        printer
-            .justify(JustifyMode::LEFT)
-            .map_err(map_err)?
-            .writeln("--------------------------------")
-            .map_err(map_err)?
-            .bold(true)
-            .map_err(map_err)?
-            .writeln("Customer")
-            .map_err(map_err)?
-            .bold(false)
-            .map_err(map_err)?
-            .writeln(&customer.name)
-            .map_err(map_err)?
-            .writeln(&customer.phone)
-            .map_err(map_err)?
-            .writeln(&customer.address)
-            .map_err(map_err)?;
+            if payment.method == "cash" {
+                let change = paid_amount.saturating_sub(payload.total);
+                if change > 0 {
+                    printer
+                        .writeln(&format!("Change: {}", format_cents(change)))
+                        .map_err(map_err)?;
+                }
+            }
+        }
     }
 
     // Footer
@@ -336,10 +323,11 @@ mod tests {
                     },
                 ],
             }],
-            payment_method: "cash".to_owned(),
-            payment_amount: 600,
-            fulfillment_type: "local".to_owned(),
-            customer: None,
+            payments: vec![TicketPayment {
+                method: "cash".to_owned(),
+                amount: 550,
+                cash_received: Some(600),
+            }],
         }
     }
 
@@ -379,6 +367,69 @@ mod tests {
         let output = driver.output();
         assert!(output.contains("Té"));
         assert!(output.contains("Instrucciones: sin azúcar"));
+    }
+
+    #[test]
+    fn build_ticket_renders_mixed_payments_without_change() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+        let payload = TicketPayload {
+            total: 1000,
+            payments: vec![
+                TicketPayment {
+                    method: "cash".to_owned(),
+                    amount: 350,
+                    cash_received: Some(350),
+                },
+                TicketPayment {
+                    method: "card".to_owned(),
+                    amount: 650,
+                    cash_received: None,
+                },
+            ],
+            ..build_payload_with_modifiers()
+        };
+
+        build_ticket(&mut printer, &payload).unwrap();
+
+        let output = driver.output();
+        assert!(output.contains("Payment: cash $3.50"));
+        assert!(output.contains("Payment: card $6.50"));
+        assert!(!output.contains("Change:"));
+    }
+
+    #[test]
+    fn build_ticket_renders_cash_change() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+
+        build_ticket(&mut printer, &build_payload_with_modifiers()).unwrap();
+
+        let output = driver.output();
+        assert!(output.contains("Payment: cash $5.50"));
+        assert!(output.contains("Paid: $6.00"));
+        assert!(output.contains("Change: $0.50"));
+    }
+
+    #[test]
+    fn build_ticket_renders_card_without_change() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+        let payload = TicketPayload {
+            total: 1000,
+            payments: vec![TicketPayment {
+                method: "card".to_owned(),
+                amount: 1000,
+                cash_received: None,
+            }],
+            ..build_payload_with_modifiers()
+        };
+
+        build_ticket(&mut printer, &payload).unwrap();
+
+        let output = driver.output();
+        assert!(output.contains("Payment: card $10.00"));
+        assert!(!output.contains("Change:"));
     }
 
     #[test]
@@ -443,10 +494,11 @@ mod tests {
                 unit_price: 100,
                 modifiers: vec![],
             }],
-            payment_method: "cash".to_owned(),
-            payment_amount: 100,
-            fulfillment_type: "local".to_owned(),
-            customer: None,
+            payments: vec![TicketPayment {
+                method: "cash".to_owned(),
+                amount: 100,
+                cash_received: Some(100),
+            }],
         };
 
         build_ticket(&mut printer, &payload).unwrap();

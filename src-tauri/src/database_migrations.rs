@@ -242,6 +242,78 @@ mod tests {
     }
 
     #[test]
+    fn requires_the_mixed_payment_migration_file() {
+        let migration_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("migrations")
+            .join("0028_mixed_payments.sql");
+
+        assert!(migration_path.is_file());
+    }
+
+    #[test]
+    fn migrates_legacy_cash_and_allows_one_payment_per_method() {
+        let database = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            let options = SqliteConnectOptions::new()
+                .filename(&database)
+                .create_if_missing(true);
+            let mut connection = SqliteConnection::connect_with(&options)
+                .await
+                .expect("sqlite database");
+            connection
+                .execute("CREATE TABLE orders (id TEXT PRIMARY KEY, total INTEGER NOT NULL)")
+                .await
+                .expect("orders table");
+            connection
+                .execute("CREATE TABLE payments (id TEXT PRIMARY KEY, order_id TEXT NOT NULL, method TEXT NOT NULL, amount INTEGER NOT NULL, created_at INTEGER NOT NULL)")
+                .await
+                .expect("payments table");
+            connection
+                .execute("CREATE UNIQUE INDEX idx_payments_order_id ON payments (order_id)")
+                .await
+                .expect("legacy payment index");
+            connection
+                .execute("INSERT INTO orders (id, total) VALUES ('order-1', 1000)")
+                .await
+                .expect("order row");
+            connection
+                .execute("INSERT INTO payments (id, order_id, method, amount, created_at) VALUES ('payment-1', 'order-1', 'cash', 1200, 1)")
+                .await
+                .expect("cash row");
+
+            for statement in include_str!("../migrations/0028_mixed_payments.sql").split(';') {
+                let statement = statement.trim();
+                if !statement.is_empty() {
+                    connection
+                        .execute(statement)
+                        .await
+                        .expect("migration statement");
+                }
+            }
+
+            let (amount, cash_received): (i64, Option<i64>) =
+                sqlx::query_as("SELECT amount, cash_received FROM payments WHERE id = 'payment-1'")
+                    .fetch_one(&mut connection)
+                    .await
+                    .expect("normalized cash row");
+            assert_eq!(amount, 1000);
+            assert_eq!(cash_received, Some(1200));
+
+            connection
+                .execute("INSERT INTO payments (id, order_id, method, amount, created_at) VALUES ('payment-2', 'order-1', 'card', 0, 2)")
+                .await
+                .expect("card row for same order");
+            let duplicate_cash = connection
+                .execute("INSERT INTO payments (id, order_id, method, amount, created_at) VALUES ('payment-3', 'order-1', 'cash', 0, 3)")
+                .await;
+            assert!(duplicate_cash.is_err());
+
+            connection.close().await.expect("close sqlite database");
+        });
+        let _ = fs::remove_file(database);
+    }
+
+    #[test]
     fn rejects_failed_or_mismatched_migration_history() {
         // CASE: migration history is failed or has a checksum from another SQL body.
         // VALIDATES: compatibility repair fails closed instead of masking corruption.

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { formatPosCurrency } from "@/lib/currency";
-import type { ShiftReport, ShiftReportOrder } from "../shift";
+import type { ShiftReport, ShiftReportOrder, ShiftReportPayment } from "../shift";
 
 interface ShiftReportViewProps {
   report: ShiftReport;
@@ -19,6 +19,11 @@ function formatPaymentMethod(method: string, t: (key: string) => string): string
   if (normalized === "cash") return t("cashTotal");
   if (normalized === "card") return t("cardTotal");
   return method || t("paymentMethodOther");
+}
+
+function formatPaymentMethods(payments: ShiftReportPayment[], t: (key: string) => string): string {
+  const labels = payments.map((payment) => formatPaymentMethod(payment.method, t));
+  return [...new Set(labels)].join(" + ") || t("paymentMethodOther");
 }
 
 interface SalesListProps {
@@ -72,7 +77,7 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
                     </span>
                     <div className="grid gap-0.5">
                       <span className="flex items-center gap-2 text-sm font-medium text-text">
-                        {formatPaymentMethod(order.paymentMethod, t)}
+                        {formatPaymentMethods(order.payments, t)}
                         {order.isVoided && (
                           <span className="rounded-card border border-danger/40 bg-danger/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-danger">
                             {t("orderVoidedBadge")}
@@ -161,6 +166,21 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
                 {isExpanded && (
                   <div className="border-t border-border bg-surface-raised/30 px-4 py-3">
                     <div className="grid gap-2">
+                      {order.payments.map((payment, index) => (
+                        <div
+                          key={`${order.orderId}-payment-${index}`}
+                          className="flex items-center justify-between text-sm"
+                        >
+                          <span className="text-text-muted">
+                            {formatPaymentMethod(payment.method, t)}
+                          </span>
+                          <span className="font-mono-tabular text-text">
+                            {formatPosCurrency(payment.amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-2 border-t border-border pt-3">
                       {order.items.map((item, index) => (
                         <div
                           key={`${order.orderId}-item-${index}`}

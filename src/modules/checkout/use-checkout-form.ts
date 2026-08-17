@@ -2,37 +2,24 @@ import { useState } from "react";
 
 import { useTranslation } from "react-i18next";
 
-import {
-  CHECKOUT_FULFILLMENT_TYPE,
-  useCustomers,
-  type CheckoutCustomer,
-  type CheckoutFulfillmentType,
-  type CreateOrderInput,
-} from "./use-checkout";
+import type { CreateOrderInput } from "./order";
 import { translateCheckoutError } from "./lib/translate-checkout-error";
 import {
   buildCreateOrderInput,
-  buildCustomerFormState,
-  buildEmptyCustomerFormState,
-  CHECKOUT_PAYMENT_METHOD,
+  CHECKOUT_PAYMENT_MODE,
   getPaymentValidationMessage,
-  type CheckoutCustomerFormState,
-  type CheckoutPaymentMethod,
+  type CheckoutPaymentMode,
 } from "./lib/builders";
 import {
-  formatPaymentAmountInput,
+  calculatePaymentBreakdown,
+  defaultCashAmountInput,
+  type PaymentBreakdown,
+} from "./lib/payment";
+import {
   parsePaymentAmountInput,
   sanitizePaymentAmountInput,
 } from "./lib/formatters";
 import { calculateCartTotals, type CartItem } from "@/modules/order";
-
-const CHECKOUT_CUSTOMER_ENTRY_MODE = {
-  SEARCH: "search",
-  NEW: "new",
-} as const;
-
-type CustomerEntryMode =
-  (typeof CHECKOUT_CUSTOMER_ENTRY_MODE)[keyof typeof CHECKOUT_CUSTOMER_ENTRY_MODE];
 
 interface UseCheckoutFormOptions {
   open: boolean;
@@ -44,32 +31,19 @@ interface UseCheckoutFormOptions {
 }
 
 export function computeReceivedAmount(
-  paymentMethod: CheckoutPaymentMethod,
+  paymentMode: CheckoutPaymentMode,
   cashAmountInput: string,
   total: number,
 ): number | null {
-  if (paymentMethod === CHECKOUT_PAYMENT_METHOD.CARD) {
-    return total;
-  }
-
-  return parsePaymentAmountInput(cashAmountInput);
+  return calculatePaymentBreakdown(paymentMode, cashAmountInput, total).cashReceived;
 }
 
 export function computeChangeAmount(
-  paymentMethod: CheckoutPaymentMethod,
+  paymentMode: CheckoutPaymentMode,
   cashAmountInput: string,
   total: number,
 ): number | null {
-  if (paymentMethod === CHECKOUT_PAYMENT_METHOD.CARD) {
-    return null;
-  }
-
-  const receivedAmount = computeReceivedAmount(paymentMethod, cashAmountInput, total);
-  if (receivedAmount === null) {
-    return null;
-  }
-
-  return Math.max(receivedAmount - total, 0);
+  return calculatePaymentBreakdown(paymentMode, cashAmountInput, total).changeAmount;
 }
 
 export function computeIsDisabled(
@@ -80,8 +54,25 @@ export function computeIsDisabled(
   return items.length === 0 || isSubmitting || paymentValidationMessage !== null;
 }
 
+function getDefaultCashInput(paymentMode: CheckoutPaymentMode, total: number): string {
+  if (paymentMode === CHECKOUT_PAYMENT_MODE.MIXED) {
+    const mixedCashAmount = Math.max(1, Math.floor(total / 2));
+    return defaultCashAmountInput(mixedCashAmount);
+  }
+
+  return defaultCashAmountInput(total);
+}
+
+function getPaymentSummary(breakdown: PaymentBreakdown) {
+  return {
+    cashAppliedAmount: breakdown.cashApplied,
+    cashReceivedAmount: breakdown.cashReceived,
+    cardAmount: breakdown.cardAmount,
+    changeAmount: breakdown.changeAmount,
+  };
+}
+
 export function useCheckoutForm({
-  open,
   items,
   totals,
   isSubmitting = false,
@@ -91,45 +82,28 @@ export function useCheckoutForm({
   const { t } = useTranslation("checkout");
   const normalizedTotals = totals ?? calculateCartTotals(items);
 
-  const [fulfillmentType, setFulfillmentType] = useState<CheckoutFulfillmentType>(
-    CHECKOUT_FULFILLMENT_TYPE.LOCAL,
-  );
-  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>(
-    CHECKOUT_PAYMENT_METHOD.CASH,
+  const [paymentMode, setPaymentMode] = useState<CheckoutPaymentMode>(
+    CHECKOUT_PAYMENT_MODE.CASH,
   );
   const [cashAmountInput, setCashAmountInput] = useState(() =>
-    formatPaymentAmountInput(normalizedTotals.total),
-  );
-  const [customerSearch, setCustomerSearch] = useState("");
-  const [customerMode, setCustomerMode] = useState<CustomerEntryMode>(
-    CHECKOUT_CUSTOMER_ENTRY_MODE.SEARCH,
-  );
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [customerForm, setCustomerForm] = useState<CheckoutCustomerFormState>(() =>
-    buildEmptyCustomerFormState(),
+    getDefaultCashInput(CHECKOUT_PAYMENT_MODE.CASH, normalizedTotals.total),
   );
   const [formError, setFormError] = useState<string | null>(null);
 
-  const isDelivery = fulfillmentType === CHECKOUT_FULFILLMENT_TYPE.DELIVERY;
-  const isSearchCustomerMode = customerMode === CHECKOUT_CUSTOMER_ENTRY_MODE.SEARCH;
-  const isNewCustomerMode = customerMode === CHECKOUT_CUSTOMER_ENTRY_MODE.NEW;
-  const isCashPayment = paymentMethod === CHECKOUT_PAYMENT_METHOD.CASH;
+  const isCashPayment = paymentMode !== CHECKOUT_PAYMENT_MODE.CARD;
+  const isMixedPayment = paymentMode === CHECKOUT_PAYMENT_MODE.MIXED;
   const paymentValidationMessage = getPaymentValidationMessage(
-    paymentMethod,
+    paymentMode,
     cashAmountInput,
     normalizedTotals.total,
   );
-  const receivedAmount = computeReceivedAmount(paymentMethod, cashAmountInput, normalizedTotals.total);
-  const registeredPaymentAmount = isCashPayment ? receivedAmount : normalizedTotals.total;
-  const changeAmount = computeChangeAmount(paymentMethod, cashAmountInput, normalizedTotals.total);
+  const breakdown = calculatePaymentBreakdown(
+    paymentMode,
+    cashAmountInput,
+    normalizedTotals.total,
+  );
+  const paymentSummary = getPaymentSummary(breakdown);
   const isDisabled = computeIsDisabled(items, isSubmitting, paymentValidationMessage);
-  const customerQuery = useCustomers({
-    search: customerSearch,
-    enabled: open && isDelivery && isSearchCustomerMode,
-  });
-  const customerOptions = customerQuery.data ?? [];
-  const trimmedCustomerSearch = customerSearch.trim();
-  const customerSectionLabel = trimmedCustomerSearch.length > 0 ? "Resultados" : "Clientes guardados";
 
   const handleCloseRequest = () => {
     if (isSubmitting) {
@@ -140,62 +114,23 @@ export function useCheckoutForm({
     onClose();
   };
 
-  const handleFulfillmentChange = (nextType: CheckoutFulfillmentType) => {
-    setFulfillmentType(nextType);
-    setFormError(null);
-  };
-
-  const handlePaymentMethodChange = (nextMethod: CheckoutPaymentMethod) => {
-    setPaymentMethod(nextMethod);
+  const handlePaymentModeChange = (nextMode: CheckoutPaymentMode) => {
+    setPaymentMode(nextMode);
     setFormError(null);
 
-    if (nextMethod === CHECKOUT_PAYMENT_METHOD.CASH && cashAmountInput.trim().length === 0) {
-      setCashAmountInput(formatPaymentAmountInput(normalizedTotals.total));
+    const currentCashAmount = parsePaymentAmountInput(cashAmountInput);
+    if (
+      nextMode !== CHECKOUT_PAYMENT_MODE.CARD &&
+      (currentCashAmount === null ||
+        (nextMode === CHECKOUT_PAYMENT_MODE.MIXED && currentCashAmount >= normalizedTotals.total))
+    ) {
+      setCashAmountInput(getDefaultCashInput(nextMode, normalizedTotals.total));
     }
-  };
-
-  const handleSelectCustomer = (customer: CheckoutCustomer) => {
-    setCustomerMode(CHECKOUT_CUSTOMER_ENTRY_MODE.SEARCH);
-    setSelectedCustomerId(customer.id);
-    setCustomerSearch(customer.name);
-    setFormError(null);
-    setCustomerForm(buildCustomerFormState(customer));
-  };
-
-  const handleShowSearchCustomers = () => {
-    setCustomerMode(CHECKOUT_CUSTOMER_ENTRY_MODE.SEARCH);
-    setFormError(null);
-  };
-
-  const handleStartNewCustomer = () => {
-    setCustomerMode(CHECKOUT_CUSTOMER_ENTRY_MODE.NEW);
-    setSelectedCustomerId(null);
-    setCustomerSearch("");
-    setFormError(null);
-    setCustomerForm(buildEmptyCustomerFormState());
-  };
-
-  const handleCustomerFieldChange = (
-    field: keyof CheckoutCustomerFormState,
-    value: string,
-  ) => {
-    setSelectedCustomerId(null);
-    setFormError(null);
-    setCustomerForm((previous) => ({
-      ...previous,
-      [field]: value,
-    }));
   };
 
   const handleCashInputChange = (value: string) => {
     setFormError(null);
     setCashAmountInput(sanitizePaymentAmountInput(value));
-  };
-
-  const handleCustomerSearchChange = (value: string) => {
-    setFormError(null);
-    setSelectedCustomerId(null);
-    setCustomerSearch(value);
   };
 
   const handleConfirm = async () => {
@@ -205,22 +140,12 @@ export function useCheckoutForm({
 
     const payload = buildCreateOrderInput(
       items,
-      fulfillmentType,
-      selectedCustomerId,
-      customerForm,
-      paymentMethod,
+      paymentMode,
       cashAmountInput,
       normalizedTotals.total,
     );
     if (!payload) {
-      setFormError(
-        paymentValidationMessage ??
-          (isDelivery
-            ? isNewCustomerMode
-              ? t("errors.formDeliveryNewCustomerRequired")
-              : t("errors.formDeliverySelectOrCreate")
-            : t("errors.formEmptyCart")),
-      );
+      setFormError(paymentValidationMessage ?? t("errors.formEmptyCart"));
       return;
     }
 
@@ -233,36 +158,17 @@ export function useCheckoutForm({
   };
 
   return {
-    fulfillmentType,
-    paymentMethod,
+    paymentMode,
     cashAmountInput,
-    customerSearch,
-    customerMode,
-    selectedCustomerId,
-    customerForm,
     formError,
-    isDelivery,
-    isSearchCustomerMode,
-    isNewCustomerMode,
     isCashPayment,
+    isMixedPayment,
     paymentValidationMessage,
-    receivedAmount,
-    registeredPaymentAmount,
-    changeAmount,
+    ...paymentSummary,
     isDisabled,
-    customerQuery,
-    customerOptions,
-    trimmedCustomerSearch,
-    customerSectionLabel,
     handleCloseRequest,
-    handleFulfillmentChange,
-    handlePaymentMethodChange,
-    handleSelectCustomer,
-    handleShowSearchCustomers,
-    handleStartNewCustomer,
-    handleCustomerFieldChange,
+    handlePaymentModeChange,
     handleCashInputChange,
-    handleCustomerSearchChange,
     handleConfirm,
   };
 }

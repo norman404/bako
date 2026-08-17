@@ -6,10 +6,7 @@ import type { OrderDetail } from "../order-management";
 
 function toPrintPaymentMethod(method: string): "cash" | "card" {
   const normalized = method.trim().toLowerCase();
-  if (normalized === "cash" || normalized === "card") {
-    return normalized;
-  }
-  return "cash";
+  return normalized === "card" ? "card" : "cash";
 }
 
 export function reprintOrder(
@@ -30,16 +27,11 @@ export function reprintOrder(
         textValue: mod.textValue,
       })),
     })),
-    paymentMethod: toPrintPaymentMethod(orderDetail.paymentMethod),
-    paymentAmount: orderDetail.paymentAmount,
-    fulfillmentType: orderDetail.fulfillmentType === "delivery" ? "delivery" : "local",
-    customer: orderDetail.customer
-      ? {
-          name: orderDetail.customer.name,
-          phone: orderDetail.customer.phone,
-          address: orderDetail.customer.address,
-        }
-      : null,
+    payments: orderDetail.payments.map((payment) => ({
+      method: toPrintPaymentMethod(payment.method),
+      amount: payment.amount,
+      cashReceived: payment.cashReceived,
+    })),
   };
 
   return printOrder(options, defaultReceiptPrinter);

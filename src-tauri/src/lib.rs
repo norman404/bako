@@ -8,7 +8,7 @@ use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 pub const DATABASE_FILENAME: &str = "bako.db";
 pub const DATABASE_URL: &str = "sqlite:bako.db";
-pub const CURRENT_MIGRATION_VERSION: i64 = database_migrations::LABEL_ORIENTATION_MIGRATION_VERSION;
+pub const CURRENT_MIGRATION_VERSION: i64 = 28;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -170,9 +170,15 @@ pub fn run() {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: CURRENT_MIGRATION_VERSION,
+            version: 27,
             description: "printer_label_orientation",
             sql: include_str!("../migrations/0027_printer_label_orientation.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: CURRENT_MIGRATION_VERSION,
+            description: "mixed_payments",
+            sql: include_str!("../migrations/0028_mixed_payments.sql"),
             kind: MigrationKind::Up,
         },
     ];

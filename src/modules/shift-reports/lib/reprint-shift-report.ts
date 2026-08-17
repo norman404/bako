@@ -34,10 +34,11 @@ interface ReprintShiftReportPayload {
       textValue: string | null;
     }>;
   }>;
-  paymentMethod: string;
-  paymentAmount: number;
-  fulfillmentType: string;
-  customer: null;
+  payments: Array<{
+    method: string;
+    amount: number;
+    cashReceived: number | null;
+  }>;
 }
 
 export function reprintShiftReport(
@@ -135,10 +136,13 @@ export function reprintShiftReport(
         modifiers: [] as Array<{ groupName: string; optionName: string | null; textValue: string | null }>,
       })),
     ],
-    paymentMethod: "cash",
-    paymentAmount: report.totalSales,
-    fulfillmentType: "local",
-    customer: null,
+    payments: [
+      {
+        method: "cash",
+        amount: report.totalSales,
+        cashReceived: report.totalSales,
+      },
+    ],
   };
 
   const invokeAsync = async (): Promise<void> => {

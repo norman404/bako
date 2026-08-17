@@ -21,8 +21,7 @@ The project is moving toward a flat, feature-oriented module architecture intern
 - **Menu category navigation** — browse products grouped by category.
 - **Product grid** — visual cards with product details and pricing.
 - **Cart** — increase or decrease item quantities.
-- **Checkout** — cash or card payment selection.
-- **Customer management** — track delivery customers.
+- **Checkout** — cash, card, or mixed payment selection.
 - **Configuration** — manage products and categories from the settings panel.
 - **Shift summary** — end-of-shift overview.
 - **Local persistence** — SQLite database initialized automatically on app startup.

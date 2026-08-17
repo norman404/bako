@@ -1,10 +1,3 @@
-export interface OrderDetailCustomer {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-}
-
 export interface OrderDetailItemModifier {
   groupId: string | null;
   groupName: string;
@@ -24,6 +17,14 @@ export interface OrderDetailItem {
   modifiers: OrderDetailItemModifier[];
 }
 
+export interface OrderDetailPayment {
+  id: string;
+  method: string;
+  amount: number;
+  cashReceived: number | null;
+  createdAt: Date;
+}
+
 export interface CommandItemSelection {
   orderItemId: string;
   quantity: number;
@@ -34,10 +35,7 @@ export interface OrderDetail {
   ticketNumber: number;
   createdAt: Date;
   total: number;
-  paymentMethod: string;
-  paymentAmount: number;
-  fulfillmentType: string | null;
-  customer: OrderDetailCustomer | null;
+  payments: OrderDetailPayment[];
   items: OrderDetailItem[];
   isVoided: boolean;
   voidedAt: Date | null;
@@ -62,9 +60,10 @@ export interface UpdateOrderItemInput {
 export interface UpdateOrderPaymentInput {
   method: string;
   amount: number;
+  cashReceived: number | null;
 }
 
 export interface UpdateOrderInput {
   items: UpdateOrderItemInput[];
-  payment: UpdateOrderPaymentInput;
+  payments: UpdateOrderPaymentInput[];
 }

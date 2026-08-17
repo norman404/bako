@@ -1,33 +1,37 @@
-import { CreditCard, Wallet } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { CreditCard, Wallet } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
-  CHECKOUT_PAYMENT_METHOD,
-  type CheckoutPaymentMethod
-} from '../lib/builders';
+  CHECKOUT_PAYMENT_MODE,
+  type CheckoutPaymentMode,
+} from "../lib/payment";
 
 interface CheckoutPaymentMethodSelectorProps {
-  isCashPayment: boolean;
-  onPaymentMethodChange: (method: CheckoutPaymentMethod) => void;
+  paymentMode: CheckoutPaymentMode;
+  onPaymentModeChange: (mode: CheckoutPaymentMode) => void;
 }
 
-function CheckoutPaymentMethodSelector({ isCashPayment, onPaymentMethodChange }: CheckoutPaymentMethodSelectorProps) {
-  const { t } = useTranslation('checkout');
-  
-  const PAYMENT_OPTIONS = [
-    { value: CHECKOUT_PAYMENT_METHOD.CASH, label: t('payment.cash'), icon: Wallet },
-    { value: CHECKOUT_PAYMENT_METHOD.CARD, label: t('payment.card'), icon: CreditCard },
+function CheckoutPaymentMethodSelector({
+  paymentMode,
+  onPaymentModeChange,
+}: CheckoutPaymentMethodSelectorProps) {
+  const { t } = useTranslation("checkout");
+
+  const paymentOptions = [
+    { value: CHECKOUT_PAYMENT_MODE.CASH, label: t("payment.cash"), icon: Wallet },
+    { value: CHECKOUT_PAYMENT_MODE.CARD, label: t("payment.card"), icon: CreditCard },
+    { value: CHECKOUT_PAYMENT_MODE.MIXED, label: t("payment.mixed"), icon: Wallet },
   ];
-  
+
   return (
     <SegmentedControl
-      options={PAYMENT_OPTIONS}
-      activeValue={isCashPayment ? CHECKOUT_PAYMENT_METHOD.CASH : CHECKOUT_PAYMENT_METHOD.CARD}
-      onSelect={(value) => onPaymentMethodChange(value as CheckoutPaymentMethod)}
-      className="mt-3"
+      options={paymentOptions}
+      activeValue={paymentMode}
+      onSelect={(value) => onPaymentModeChange(value as CheckoutPaymentMode)}
+      className="mt-4 sm:grid-cols-3"
     />
   );
 }
 
-export { CheckoutPaymentMethodSelector }
+export { CheckoutPaymentMethodSelector };

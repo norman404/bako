@@ -4,7 +4,6 @@ import { ResultAsync } from "neverthrow";
 import { db, withTransaction } from "@/db/client";
 import {
   cashMovements,
-  customers,
   orderItems,
   orderItemModifiers,
   orders,
@@ -12,6 +11,7 @@ import {
   products,
   shifts,
   type CashMovementRow,
+  type PaymentRow,
   type ShiftRow,
 } from "@/db/schema";
 import { ShiftPersistenceError } from "./errors";
@@ -24,9 +24,17 @@ import type {
   ShiftHistoryItem,
   ShiftReport,
   ShiftReportOrder,
+  ShiftReportPayment,
   UpdateCashMovementInput,
 } from "./shift";
-import type { OrderDetail, OrderDetailItem, OrderDetailItemModifier, UpdateOrderInput } from "./order-management";
+import type {
+  OrderDetail,
+  OrderDetailItem,
+  OrderDetailItemModifier,
+  OrderDetailPayment,
+  UpdateOrderInput,
+  UpdateOrderPaymentInput,
+} from "./order-management";
 
 function wrapDbError(context: string) {
   return (cause: unknown) => {
@@ -60,6 +68,85 @@ function rowToCashMovement(row: CashMovementRow): CashMovement {
   };
 }
 
+function rowToOrderPayment(row: PaymentRow): OrderDetailPayment {
+  return {
+    id: row.id,
+    method: row.method,
+    amount: row.amount,
+    cashReceived: row.cashReceived ?? null,
+    createdAt: row.createdAt,
+  };
+}
+
+function rowToReportPayment(row: PaymentRow): ShiftReportPayment {
+  return {
+    method: row.method,
+    amount: row.amount,
+    cashReceived: row.cashReceived ?? null,
+  };
+}
+
+function groupPaymentsByOrder(rows: PaymentRow[]): Map<string, PaymentRow[]> {
+  return rows.reduce((grouped, row) => {
+    const orderPayments = grouped.get(row.orderId) ?? [];
+    orderPayments.push(row);
+    grouped.set(row.orderId, orderPayments);
+    return grouped;
+  }, new Map<string, PaymentRow[]>());
+}
+
+function validateUpdatePayments(
+  paymentInputs: UpdateOrderPaymentInput[],
+  total: number,
+): ShiftPersistenceError | null {
+  if (paymentInputs.length === 0) {
+    return new ShiftPersistenceError("invalidOrderPayment");
+  }
+
+  const methods = new Set<string>();
+  let appliedTotal = 0;
+
+  for (const payment of paymentInputs) {
+    const method = payment.method.trim().toLowerCase();
+    if (method !== "cash" && method !== "card") {
+      return new ShiftPersistenceError("invalidOrderPayment");
+    }
+
+    if (methods.has(method)) {
+      return new ShiftPersistenceError("invalidOrderPayment");
+    }
+    methods.add(method);
+
+    if (!Number.isInteger(payment.amount) || payment.amount < 0) {
+      return new ShiftPersistenceError("invalidOrderPayment");
+    }
+
+    if (paymentInputs.length > 1 && payment.amount === 0) {
+      return new ShiftPersistenceError("invalidOrderPayment");
+    }
+
+    if (method === "cash") {
+      if (
+        payment.cashReceived === null ||
+        !Number.isInteger(payment.cashReceived) ||
+        payment.cashReceived < payment.amount
+      ) {
+        return new ShiftPersistenceError("invalidOrderPayment");
+      }
+
+      if (paymentInputs.length > 1 && payment.cashReceived !== payment.amount) {
+        return new ShiftPersistenceError("invalidOrderPayment");
+      }
+    } else if (payment.cashReceived !== null) {
+      return new ShiftPersistenceError("invalidOrderPayment");
+    }
+
+    appliedTotal += payment.amount;
+  }
+
+  return appliedTotal === total ? null : new ShiftPersistenceError("invalidOrderPayment");
+}
+
 async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
   const orderRows = await db
     .select({
@@ -68,16 +155,8 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
       createdAt: orders.createdAt,
       total: orders.total,
       voidedAt: orders.voidedAt,
-      customerId: customers.id,
-      customerName: customers.name,
-      customerPhone: customers.phone,
-      customerAddress: customers.address,
-      paymentMethod: payments.method,
-      paymentAmount: payments.amount,
     })
     .from(orders)
-    .leftJoin(payments, eq(payments.orderId, orders.id))
-    .leftJoin(customers, eq(customers.id, orders.customerId))
     .where(eq(orders.id, orderId))
     .limit(1);
 
@@ -86,7 +165,12 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     throw new ShiftPersistenceError("orderNotFound", { orderId });
   }
 
-  // Load items with modifiers
+  const paymentRows = await db
+    .select()
+    .from(payments)
+    .where(eq(payments.orderId, orderId))
+    .orderBy(asc(payments.createdAt));
+
   const itemRows = await db
     .select({
       id: orderItems.id,
@@ -146,18 +230,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     ticketNumber: orderRow.ticketNumber,
     createdAt: orderRow.createdAt,
     total: orderRow.total,
-    paymentMethod: orderRow.paymentMethod ?? "",
-    paymentAmount: orderRow.paymentAmount ?? 0,
-    fulfillmentType: orderRow.customerId ? "delivery" : "local",
-    customer:
-      orderRow.customerId && orderRow.customerName
-        ? {
-            id: orderRow.customerId,
-            name: orderRow.customerName,
-            phone: orderRow.customerPhone ?? "",
-            address: orderRow.customerAddress ?? "",
-          }
-        : null,
+    payments: paymentRows.map(rowToOrderPayment),
     items,
     isVoided: orderRow.voidedAt !== null,
     voidedAt: orderRow.voidedAt ?? null,
@@ -199,25 +272,25 @@ export const shiftDrizzleRepository: ShiftRepository = {
           throw new ShiftPersistenceError("shiftNotFound", { shiftId });
         }
 
-        const openingCash = shift.openingCash ?? 0;
-
         const orderRows = await db
-          .select({
-            orderTotal: orders.total,
-            voidedAt: orders.voidedAt,
-            method: payments.method,
-          })
+          .select({ orderId: orders.id, voidedAt: orders.voidedAt })
           .from(orders)
-          .leftJoin(payments, eq(payments.orderId, orders.id))
           .where(eq(orders.shiftId, shiftId))
           .orderBy(asc(orders.createdAt));
+        const orderIds = orderRows.map((row) => row.orderId);
+        const paymentRows =
+          orderIds.length === 0
+            ? []
+            : await db.select().from(payments).where(inArray(payments.orderId, orderIds));
+        const paymentsByOrder = groupPaymentsByOrder(paymentRows);
 
         let cashSales = 0;
         for (const row of orderRows) {
           if (row.voidedAt !== null) continue;
-          const method = row.method?.trim().toLowerCase() ?? "";
-          if (method === "cash") {
-            cashSales += row.orderTotal;
+          for (const payment of paymentsByOrder.get(row.orderId) ?? []) {
+            if (payment.method.trim().toLowerCase() === "cash") {
+              cashSales += payment.amount;
+            }
           }
         }
 
@@ -229,6 +302,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
           .filter((m) => m.type === "expense")
           .reduce((sum, m) => sum + m.amount, 0);
 
+        const openingCash = shift.openingCash ?? 0;
         const expectedCash = openingCash + cashSales + totalIncome - totalExpense;
         const cashDifference = countedCash - expectedCash;
 
@@ -301,7 +375,6 @@ export const shiftDrizzleRepository: ShiftRepository = {
           throw new ShiftPersistenceError("shiftNotFound", { shiftId });
         }
 
-        // Load all orders for the shift with their payment method.
         const orderRows = await db
           .select({
             orderId: orders.id,
@@ -309,15 +382,18 @@ export const shiftDrizzleRepository: ShiftRepository = {
             orderTotal: orders.total,
             createdAt: orders.createdAt,
             voidedAt: orders.voidedAt,
-            method: payments.method,
           })
           .from(orders)
-          .leftJoin(payments, eq(payments.orderId, orders.id))
           .where(eq(orders.shiftId, shiftId))
           .orderBy(asc(orders.createdAt));
 
-        // Load items for those orders joined with product names.
         const orderIds = orderRows.map((row) => row.orderId);
+        const paymentRows =
+          orderIds.length === 0
+            ? []
+            : await db.select().from(payments).where(inArray(payments.orderId, orderIds));
+        const paymentsByOrder = groupPaymentsByOrder(paymentRows);
+
         const itemRows =
           orderIds.length === 0
             ? []
@@ -350,6 +426,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
         for (const orderRow of orderRows) {
           const isVoided = orderRow.voidedAt !== null;
           const orderItemsList = itemsByOrder.get(orderRow.orderId) ?? [];
+          const orderPayments = paymentsByOrder.get(orderRow.orderId) ?? [];
           const itemCount = orderItemsList.reduce((sum, item) => sum + item.quantity, 0);
 
           if (!isVoided) {
@@ -357,11 +434,10 @@ export const shiftDrizzleRepository: ShiftRepository = {
             totalSales += orderRow.orderTotal;
             totalItems += itemCount;
 
-            const method = orderRow.method?.trim().toLowerCase() ?? "";
-            if (method === "cash") {
-              cashTotal += orderRow.orderTotal;
-            } else if (method === "card") {
-              cardTotal += orderRow.orderTotal;
+            for (const payment of orderPayments) {
+              const method = payment.method.trim().toLowerCase();
+              if (method === "cash") cashTotal += payment.amount;
+              if (method === "card") cardTotal += payment.amount;
             }
           }
 
@@ -370,7 +446,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
             ticketNumber: orderRow.ticketNumber,
             createdAt: orderRow.createdAt,
             total: orderRow.orderTotal,
-            paymentMethod: orderRow.method ?? "",
+            payments: orderPayments.map(rowToReportPayment),
             itemCount,
             items: orderItemsList.map((item) => ({
               productId: item.productId,
@@ -443,10 +519,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
         }
 
         const now = new Date();
-        await db
-          .update(orders)
-          .set({ voidedAt: now })
-          .where(eq(orders.id, orderId));
+        await db.update(orders).set({ voidedAt: now }).where(eq(orders.id, orderId));
       })(),
       wrapDbError("Failed to void order"),
     );
@@ -458,7 +531,6 @@ export const shiftDrizzleRepository: ShiftRepository = {
   ): ResultAsync<OrderDetail, ShiftPersistenceError> {
     return ResultAsync.fromPromise(
       (async () => {
-        // Verify order exists and is not voided
         const existing = await db
           .select({ id: orders.id, voidedAt: orders.voidedAt })
           .from(orders)
@@ -478,9 +550,21 @@ export const shiftDrizzleRepository: ShiftRepository = {
           (sum, item) => sum + item.unitPrice * item.quantity,
           0,
         );
+        const paymentError = validateUpdatePayments(input.payments, newTotal);
+        if (paymentError) {
+          throw paymentError;
+        }
+
+        const normalizedPayments = input.payments.map((payment) => ({
+          id: crypto.randomUUID(),
+          orderId,
+          method: payment.method.trim().toLowerCase(),
+          amount: payment.amount,
+          cashReceived: payment.cashReceived,
+          createdAt: new Date(),
+        }));
 
         await withTransaction(async (tx) => {
-          // Delete old items and modifiers
           const oldItems = await tx
             .select({ id: orderItems.id })
             .from(orderItems)
@@ -491,21 +575,13 @@ export const shiftDrizzleRepository: ShiftRepository = {
             await tx
               .delete(orderItemModifiers)
               .where(inArray(orderItemModifiers.orderItemId, oldItemIds));
-            await tx
-              .delete(orderItems)
-              .where(inArray(orderItems.id, oldItemIds));
+            await tx.delete(orderItems).where(inArray(orderItems.id, oldItemIds));
           }
 
-          // Insert new items sequentially. `tx` (unlike `db`) does not go through
-          // `runExclusive` per-query — it relies on the caller awaiting one query
-          // at a time. The sqlite-proxy driver over @tauri-apps/plugin-sql has a
-          // single connection and cannot run concurrent writes inside the same
-          // transaction: firing these with Promise.all hangs the transaction
-          // (COMMIT never happens) instead of throwing, so it must stay a loop.
           const now = new Date();
           for (const itemInput of input.items) {
             const itemId = crypto.randomUUID();
-            // eslint-disable-next-line no-await-in-loop -- see comment above
+            // eslint-disable-next-line no-await-in-loop -- sqlite proxy transaction is sequential
             await tx.insert(orderItems).values({
               id: itemId,
               orderId,
@@ -516,7 +592,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
             });
 
             for (const mod of itemInput.modifiers) {
-              // eslint-disable-next-line no-await-in-loop -- see comment above
+              // eslint-disable-next-line no-await-in-loop -- sqlite proxy transaction is sequential
               await tx.insert(orderItemModifiers).values({
                 id: crypto.randomUUID(),
                 orderItemId: itemId,
@@ -531,24 +607,12 @@ export const shiftDrizzleRepository: ShiftRepository = {
             }
           }
 
-          // Update payment
-          await tx
-            .update(payments)
-            .set({
-              method: input.payment.method,
-              amount: input.payment.amount,
-            })
-            .where(eq(payments.orderId, orderId));
-
-          // Update order total
-          await tx
-            .update(orders)
-            .set({ total: newTotal })
-            .where(eq(orders.id, orderId));
+          await tx.delete(payments).where(eq(payments.orderId, orderId));
+          await tx.insert(payments).values(normalizedPayments);
+          await tx.update(orders).set({ total: newTotal }).where(eq(orders.id, orderId));
         });
 
-        // Return updated order detail
-        return await queryOrderDetail(orderId);
+        return queryOrderDetail(orderId);
       })(),
       wrapDbError("Failed to update order"),
     );

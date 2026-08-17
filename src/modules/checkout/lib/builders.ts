@@ -1,24 +1,18 @@
+import type { CreateOrderInput } from "../order";
 import {
-  CHECKOUT_FULFILLMENT_TYPE,
-  CHECKOUT_PAYMENT_METHOD,
-  type CheckoutCustomer,
-  type CheckoutCustomerInput,
-  type CheckoutFulfillmentType,
-  type CheckoutPaymentMethod,
-  type CreateOrderInput,
-} from "../order";
-import { parsePaymentAmountInput } from "./formatters";
+  buildPaymentInputs,
+  type CheckoutPaymentMode,
+} from "./payment";
 import { calculateItemUnitPrice } from "@/modules/menu";
 import type { CartItem } from "@/modules/order";
-import { formatPosCurrency } from "@/lib/currency";
 
 export { CHECKOUT_PAYMENT_METHOD, type CheckoutPaymentMethod } from "../order";
-
-export interface CheckoutCustomerFormState {
-  name: string;
-  phone: string;
-  address: string;
-}
+export {
+  CHECKOUT_PAYMENT_MODE,
+  getPaymentValidationMessage,
+  type CheckoutPaymentMode,
+} from "./payment";
+export { buildPaymentInputs } from "./payment";
 
 export function buildOrderItemsInput(items: CartItem[]): CreateOrderInput["items"] {
   return items.map((item) => ({
@@ -36,94 +30,17 @@ export function buildOrderItemsInput(items: CartItem[]): CreateOrderInput["items
   }));
 }
 
-export function buildEmptyCustomerFormState(): CheckoutCustomerFormState {
-  return {
-    name: "",
-    phone: "",
-    address: "",
-  };
-}
-
-export function buildCustomerFormState(customer: CheckoutCustomer): CheckoutCustomerFormState {
-  return {
-    name: customer.name,
-    phone: customer.phone,
-    address: customer.address,
-  };
-}
-
-export function buildCustomerInput(
-  formState: CheckoutCustomerFormState,
-): CheckoutCustomerInput | null {
-  const name = formState.name.trim();
-  const phone = formState.phone.trim();
-  const address = formState.address.trim();
-
-  if (name.length === 0 || phone.length === 0 || address.length === 0) {
-    return null;
-  }
-
-  return {
-    name,
-    phone,
-    address,
-  };
-}
-
-export function getPaymentValidationMessage(
-  paymentMethod: CheckoutPaymentMethod,
-  cashAmountInput: string,
-  total: number,
-): string | null {
-  if (paymentMethod === CHECKOUT_PAYMENT_METHOD.CARD) {
-    return null;
-  }
-
-  if (cashAmountInput.trim().length === 0) {
-    return "Ingresá el monto recibido en efectivo.";
-  }
-
-  const receivedAmount = parsePaymentAmountInput(cashAmountInput);
-  if (receivedAmount === null) {
-    return "Ingresá un monto válido en efectivo.";
-  }
-
-  if (receivedAmount < total) {
-    return `El efectivo recibido debe cubrir ${formatPosCurrency(total)}.`;
-  }
-
-  return null;
-}
-
 export function buildPaymentInput(
-  paymentMethod: CheckoutPaymentMethod,
+  mode: CheckoutPaymentMode,
   cashAmountInput: string,
   total: number,
-): CreateOrderInput["payment"] | null {
-  if (paymentMethod === CHECKOUT_PAYMENT_METHOD.CARD) {
-    return {
-      method: CHECKOUT_PAYMENT_METHOD.CARD,
-      amount: total,
-    };
-  }
-
-  const receivedAmount = parsePaymentAmountInput(cashAmountInput);
-  if (receivedAmount === null || receivedAmount < total) {
-    return null;
-  }
-
-  return {
-    method: CHECKOUT_PAYMENT_METHOD.CASH,
-    amount: receivedAmount,
-  };
+): CreateOrderInput["payments"] | null {
+  return buildPaymentInputs(mode, cashAmountInput, total);
 }
 
 export function buildCreateOrderInput(
   items: CartItem[],
-  fulfillmentType: CheckoutFulfillmentType,
-  selectedCustomerId: string | null,
-  customerForm: CheckoutCustomerFormState,
-  paymentMethod: CheckoutPaymentMethod,
+  paymentMode: CheckoutPaymentMode,
   cashAmountInput: string,
   total: number,
 ): CreateOrderInput | null {
@@ -131,39 +48,13 @@ export function buildCreateOrderInput(
     return null;
   }
 
-  const payment = buildPaymentInput(paymentMethod, cashAmountInput, total);
-  if (!payment) {
-    return null;
-  }
-
-  const normalizedItems = buildOrderItemsInput(items);
-
-  if (fulfillmentType === CHECKOUT_FULFILLMENT_TYPE.LOCAL) {
-    return {
-      items: normalizedItems,
-      fulfillmentType,
-      payment,
-    };
-  }
-
-  if (selectedCustomerId) {
-    return {
-      items: normalizedItems,
-      fulfillmentType,
-      customerId: selectedCustomerId,
-      payment,
-    };
-  }
-
-  const customer = buildCustomerInput(customerForm);
-  if (!customer) {
+  const payments = buildPaymentInput(paymentMode, cashAmountInput, total);
+  if (!payments) {
     return null;
   }
 
   return {
-    items: normalizedItems,
-    fulfillmentType,
-    customer,
-    payment,
+    items: buildOrderItemsInput(items),
+    payments,
   };
 }

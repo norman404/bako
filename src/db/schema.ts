@@ -148,19 +148,6 @@ export const orderItemModifiers = sqliteTable(
   (table) => [index("idx_order_item_modifiers_order_item_id").on(table.orderItemId)],
 );
 
-export const customers = sqliteTable(
-  "customers",
-  {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    phone: text("phone").notNull(),
-    address: text("address").notNull(),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
-  },
-  (table) => [index("idx_customers_phone").on(table.phone)],
-);
-
 export const shifts = sqliteTable(
   "shifts",
   {
@@ -183,7 +170,6 @@ export const orders = sqliteTable(
   {
     id: text("id").primaryKey(),
     ticketNumber: integer("ticket_number").notNull(),
-    customerId: text("customer_id").references(() => customers.id),
     shiftId: text("shift_id"),
     total: integer("total").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
@@ -191,7 +177,6 @@ export const orders = sqliteTable(
   },
   (table) => [
     uniqueIndex("idx_orders_ticket_number").on(table.ticketNumber),
-    index("idx_orders_customer_id").on(table.customerId),
     index("idx_orders_shift_id").on(table.shiftId),
     index("idx_orders_created_at").on(table.createdAt),
   ],
@@ -206,10 +191,11 @@ export const payments = sqliteTable(
       .references(() => orders.id),
     method: text("method").notNull(),
     amount: integer("amount").notNull(),
+    cashReceived: integer("cash_received"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
-    uniqueIndex("idx_payments_order_id").on(table.orderId),
+    uniqueIndex("idx_payments_order_method").on(table.orderId, table.method),
     index("idx_payments_method").on(table.method),
     index("idx_payments_created_at").on(table.createdAt),
   ],
@@ -288,7 +274,6 @@ export const featureFlags = sqliteTable("feature_flags", {
 export type MenuRow = typeof menus.$inferSelect;
 export type CategoryRow = typeof categories.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
-export type CustomerRow = typeof customers.$inferSelect;
 export type OrderRow = typeof orders.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
@@ -298,7 +283,6 @@ export type ModifierGroupRow = typeof modifierGroups.$inferSelect;
 export type ModifierOptionRow = typeof modifierOptions.$inferSelect;
 export type OrderItemModifierRow = typeof orderItemModifiers.$inferSelect;
 
-export type CustomerInsert = typeof customers.$inferInsert;
 export type OrderInsert = typeof orders.$inferInsert;
 export type PaymentInsert = typeof payments.$inferInsert;
 export type OrderItemInsert = typeof orderItems.$inferInsert;

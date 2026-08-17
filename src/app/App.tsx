@@ -242,16 +242,11 @@ export function App() {
             })),
           };
         }),
-        paymentMethod: createdOrder.payment.method,
-        paymentAmount: createdOrder.payment.amount,
-        fulfillmentType: input.fulfillmentType ?? (createdOrder.customer ? "delivery" : "local"),
-        customer: createdOrder.customer
-          ? {
-              name: createdOrder.customer.name,
-              phone: createdOrder.customer.phone,
-              address: createdOrder.customer.address,
-            }
-          : null,
+        payments: createdOrder.payments.map((payment) => ({
+          method: payment.method,
+          amount: payment.amount,
+          cashReceived: payment.cashReceived,
+        })),
       }, defaultReceiptPrinter);
 
       printResult.mapErr((printError) => {
@@ -266,9 +261,7 @@ export function App() {
     closeMobileCart();
 
     toast.success(t('toast.orderSaved', { ticketNumber: createdOrder.ticketNumber }), {
-      description: createdOrder.customer
-        ? t('toast.orderCustomerInfo', { customerName: createdOrder.customer.name, customerPhone: createdOrder.customer.phone })
-        : t('toast.orderItemsCount', { itemsCount: cartTotals.itemsCount }),
+      description: t('toast.orderItemsCount', { itemsCount: cartTotals.itemsCount }),
     });
 
     if (comandasEnabled) {

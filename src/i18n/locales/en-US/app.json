@@ -17,7 +17,6 @@
     "quantityUpdated": "Quantity: {{quantity}}",
     "readyToPay": "Ready to pay",
     "orderSaved": "Order #{{ticketNumber}} saved",
-    "orderCustomerInfo": "{{customerName}} · {{customerPhone}}",
     "orderItemsCount": "{{itemsCount}} products charged at register",
     "printError": "Sale was saved, but we could not print the ticket",
     "comandaPrintError": "Could not print a command ticket"

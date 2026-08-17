@@ -1,15 +1,12 @@
-import { desc, eq, inArray, like, or } from "drizzle-orm";
+import { desc, inArray } from "drizzle-orm";
 import { errAsync, ResultAsync } from "neverthrow";
 
-import { db, withTransaction, type DatabaseClient } from "@/db/client";
+import { withTransaction, type DatabaseClient } from "@/db/client";
 import {
-  customers,
   orderItems,
   orderItemModifiers,
   orders,
   payments,
-  type CustomerInsert,
-  type CustomerRow,
   type OrderInsert,
   type OrderItemInsert,
   type OrderItemModifierInsert,
@@ -20,39 +17,26 @@ import {
   type PaymentRow,
 } from "@/db/schema";
 import {
-  CHECKOUT_FULFILLMENT_TYPE,
   CHECKOUT_PAYMENT_METHOD,
   calculateOrderTotal,
-  type CheckoutCustomer,
-  type CheckoutCustomerInput,
-  type CheckoutFulfillmentType,
   type CheckoutOrder,
   type CheckoutOrderItem,
   type CheckoutOrderItemInput,
   type CheckoutOrderItemModifier,
   type CheckoutPayment,
-  type CheckoutPaymentInput,
   type CheckoutPaymentMethod,
   type CreateOrderInput,
 } from "./order";
 import { CheckoutPersistenceError } from "./errors";
 
 export {
-  CHECKOUT_FULFILLMENT_TYPE,
   CHECKOUT_PAYMENT_METHOD,
-  type CheckoutFulfillmentType,
   type CheckoutPaymentMethod,
-  type CheckoutCustomerInput,
+  type CheckoutPaymentInput,
   type CreateOrderInput,
-  type CheckoutCustomer,
   type CheckoutOrder,
 } from "./order";
 export { CheckoutPersistenceError } from "./errors";
-
-const CUSTOMER_LIST_LIMIT = {
-  RECENT: 6,
-  SEARCH: 8,
-} as const;
 
 const CHECKOUT_PAYMENT_METHOD_VALUES = new Set<CheckoutPaymentMethod>(
   Object.values(CHECKOUT_PAYMENT_METHOD),
@@ -61,15 +45,13 @@ const CHECKOUT_PAYMENT_METHOD_VALUES = new Set<CheckoutPaymentMethod>(
 interface NormalizedCheckoutPaymentInput {
   method: string;
   amount: number;
+  cashReceived: number | null;
 }
 
 interface NormalizedCreateOrderInput {
   items: CheckoutOrderItemInput[];
-  fulfillmentType: CheckoutFulfillmentType;
-  customerId: string | null;
-  customer: CheckoutCustomerInput | null;
   shiftId: string | null;
-  payment: NormalizedCheckoutPaymentInput;
+  payments: NormalizedCheckoutPaymentInput[];
 }
 
 function formatUnknownError(cause: unknown): string {
@@ -90,22 +72,6 @@ function wrapPersistenceError(context: string) {
   };
 }
 
-function validateCustomerInput(customer: CheckoutCustomerInput): CheckoutPersistenceError | null {
-  if (customer.name.trim().length === 0) {
-    return new CheckoutPersistenceError("customerNameRequired");
-  }
-
-  if (customer.phone.trim().length === 0) {
-    return new CheckoutPersistenceError("customerPhoneRequired");
-  }
-
-  if (customer.address.trim().length === 0) {
-    return new CheckoutPersistenceError("customerAddressRequired");
-  }
-
-  return null;
-}
-
 function isCheckoutPaymentMethod(value: string): value is CheckoutPaymentMethod {
   return CHECKOUT_PAYMENT_METHOD_VALUES.has(value as CheckoutPaymentMethod);
 }
@@ -119,23 +85,61 @@ function toCheckoutPaymentMethod(value: string): CheckoutPaymentMethod {
 }
 
 function validatePaymentInput(
-  payment: NormalizedCheckoutPaymentInput,
+  paymentsInput: NormalizedCheckoutPaymentInput[],
   total: number,
 ): CheckoutPersistenceError | null {
-  if (!isCheckoutPaymentMethod(payment.method)) {
-    return new CheckoutPersistenceError("invalidPaymentMethod", { method: payment.method });
+  if (paymentsInput.length === 0) {
+    return new CheckoutPersistenceError("paymentRequired");
   }
 
-  if (!Number.isInteger(payment.amount) || payment.amount < 0) {
-    return new CheckoutPersistenceError("invalidPaymentAmount", { amount: payment.amount });
+  const methods = new Set<string>();
+  let appliedTotal = 0;
+
+  for (const payment of paymentsInput) {
+    if (!isCheckoutPaymentMethod(payment.method)) {
+      return new CheckoutPersistenceError("invalidPaymentMethod", { method: payment.method });
+    }
+
+    if (!Number.isInteger(payment.amount) || payment.amount < 0) {
+      return new CheckoutPersistenceError("invalidPaymentAmount", { amount: payment.amount });
+    }
+
+    if (paymentsInput.length > 1 && payment.amount === 0) {
+      return new CheckoutPersistenceError("invalidPaymentAmount", { amount: payment.amount });
+    }
+
+    if (methods.has(payment.method)) {
+      return new CheckoutPersistenceError("duplicatePaymentMethod", { method: payment.method });
+    }
+    methods.add(payment.method);
+
+    if (payment.method === CHECKOUT_PAYMENT_METHOD.CASH) {
+      if (
+        payment.cashReceived === null ||
+        !Number.isInteger(payment.cashReceived) ||
+        payment.cashReceived < payment.amount
+      ) {
+        return new CheckoutPersistenceError("cashReceivedInvalid", {
+          amount: payment.amount,
+          cashReceived: payment.cashReceived,
+        });
+      }
+
+      if (paymentsInput.length > 1 && payment.cashReceived !== payment.amount) {
+        return new CheckoutPersistenceError("mixedPaymentCashReceivedMismatch");
+      }
+    } else if (payment.cashReceived !== null) {
+      return new CheckoutPersistenceError("cashReceivedInvalid");
+    }
+
+    appliedTotal += payment.amount;
   }
 
-  if (payment.amount < total) {
-    return new CheckoutPersistenceError("insufficientPaymentAmount", { amount: payment.amount, total });
-  }
-
-  if (payment.method === CHECKOUT_PAYMENT_METHOD.CARD && payment.amount !== total) {
-    return new CheckoutPersistenceError("cardPaymentExactMatchRequired", { amount: payment.amount, total });
+  if (appliedTotal !== total) {
+    return new CheckoutPersistenceError("paymentTotalMismatch", {
+      appliedTotal,
+      total,
+    });
   }
 
   return null;
@@ -161,85 +165,43 @@ function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPe
   }
 
   const total = calculateOrderTotal(input.items);
-  const paymentError = validatePaymentInput(input.payment, total);
-  if (paymentError) {
-    return paymentError;
-  }
-
-  if (input.customerId && input.customer) {
-    return new CheckoutPersistenceError("customerIdAndCustomerConflict");
-  }
-
-  if (input.fulfillmentType === CHECKOUT_FULFILLMENT_TYPE.LOCAL) {
-    if (input.customerId || input.customer) {
-      return new CheckoutPersistenceError("localOrderCustomerForbidden");
-    }
-
-    return null;
-  }
-
-  if (!input.customerId && !input.customer) {
-    return new CheckoutPersistenceError("deliveryOrderCustomerRequired");
-  }
-
-  if (!input.customer) {
-    return null;
-  }
-
-  return validateCustomerInput(input.customer);
+  return validatePaymentInput(input.payments, total);
 }
 
 function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrderInput {
-  const normalizedCustomerId = input.customerId?.trim() ?? "";
-  const normalizedCustomer = input.customer
-    ? {
-        name: input.customer.name.trim(),
-        phone: input.customer.phone.trim(),
-        address: input.customer.address.trim(),
-      }
-    : null;
-
-  const fulfillmentType =
-    input.fulfillmentType ??
-    (normalizedCustomerId.length > 0 || normalizedCustomer
-      ? CHECKOUT_FULFILLMENT_TYPE.DELIVERY
-      : CHECKOUT_FULFILLMENT_TYPE.LOCAL);
-
-    return {
-      items: input.items.map((item) => ({
-        productId: item.productId.trim(),
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        modifiers: (item.modifiers ?? []).map((modifier) => ({
-          groupId: modifier.groupId,
-          groupName: modifier.groupName,
-          optionId: modifier.optionId,
-          optionName: modifier.optionName ?? "",
-          priceDelta: modifier.priceDelta,
-          textValue: modifier.textValue,
-        })),
+  return {
+    items: input.items.map((item) => ({
+      productId: item.productId.trim(),
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      modifiers: (item.modifiers ?? []).map((modifier) => ({
+        groupId: modifier.groupId,
+        groupName: modifier.groupName,
+        optionId: modifier.optionId,
+        optionName: modifier.optionName ?? "",
+        priceDelta: modifier.priceDelta,
+        textValue: modifier.textValue,
       })),
-      fulfillmentType,
-      customerId: normalizedCustomerId.length > 0 ? normalizedCustomerId : null,
-      customer: normalizedCustomer,
-      shiftId: input.shiftId?.trim() || null,
-      payment: {
-        method: String(input.payment?.method ?? "")
-          .trim()
-          .toLowerCase(),
-        amount: input.payment?.amount ?? Number.NaN,
-      },
-    };
+    })),
+    shiftId: input.shiftId?.trim() || null,
+    payments: (input.payments ?? []).map((payment) => ({
+      method: String(payment.method ?? "")
+        .trim()
+        .toLowerCase(),
+      amount: payment.amount,
+      cashReceived: payment.cashReceived ?? null,
+    })),
+  };
 }
 
-function rowToCheckoutCustomer(row: CustomerRow): CheckoutCustomer {
+function rowToCheckoutPayment(row: PaymentRow): CheckoutPayment {
   return {
     id: row.id,
-    name: row.name,
-    phone: row.phone,
-    address: row.address,
+    orderId: row.orderId,
+    method: toCheckoutPaymentMethod(row.method),
+    amount: row.amount,
+    cashReceived: row.cashReceived ?? null,
     createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
   };
 }
 
@@ -251,16 +213,6 @@ function rowToCheckoutOrderItem(row: OrderItemRow, modifiers: CheckoutOrderItemM
     quantity: row.quantity,
     unitPrice: row.unitPrice,
     modifiers,
-    createdAt: row.createdAt,
-  };
-}
-
-function rowToCheckoutPayment(row: PaymentRow): CheckoutPayment {
-  return {
-    id: row.id,
-    orderId: row.orderId,
-    method: toCheckoutPaymentMethod(row.method),
-    amount: row.amount,
     createdAt: row.createdAt,
   };
 }
@@ -283,25 +235,22 @@ function rowToCheckoutOrder(
   row: OrderRow,
   itemRows: OrderItemRow[],
   modifierRowsByItem: Map<string, OrderItemModifierRow[]>,
-  customerRow: CustomerRow | null,
-  paymentRow: PaymentRow,
+  paymentRows: PaymentRow[],
 ): CheckoutOrder {
-    return {
-      id: row.id,
-      ticketNumber: row.ticketNumber,
-      customerId: row.customerId,
-      shiftId: row.shiftId ?? null,
-      total: row.total,
-      createdAt: row.createdAt,
-      customer: customerRow ? rowToCheckoutCustomer(customerRow) : null,
-      items: itemRows.map((itemRow) =>
-        rowToCheckoutOrderItem(
-          itemRow,
-          (modifierRowsByItem.get(itemRow.id) ?? []).map(rowToCheckoutOrderItemModifier),
-        ),
+  return {
+    id: row.id,
+    ticketNumber: row.ticketNumber,
+    shiftId: row.shiftId ?? null,
+    total: row.total,
+    createdAt: row.createdAt,
+    items: itemRows.map((itemRow) =>
+      rowToCheckoutOrderItem(
+        itemRow,
+        (modifierRowsByItem.get(itemRow.id) ?? []).map(rowToCheckoutOrderItemModifier),
       ),
-      payment: rowToCheckoutPayment(paymentRow),
-    };
+    ),
+    payments: paymentRows.map(rowToCheckoutPayment),
+  };
 }
 
 async function loadNextTicketNumber(tx: DatabaseClient): Promise<number> {
@@ -314,74 +263,9 @@ async function loadNextTicketNumber(tx: DatabaseClient): Promise<number> {
   return (rows[0]?.ticketNumber ?? 0) + 1;
 }
 
-async function listCustomerRows(search: string): Promise<CustomerRow[]> {
-  if (search.length === 0) {
-    return db
-      .select()
-      .from(customers)
-      .orderBy(desc(customers.updatedAt), desc(customers.createdAt))
-      .limit(CUSTOMER_LIST_LIMIT.RECENT);
-  }
-
-  const pattern = `%${search}%`;
-
-  return db
-    .select()
-    .from(customers)
-    .where(or(like(customers.name, pattern), like(customers.phone, pattern), like(customers.address, pattern)))
-    .orderBy(desc(customers.updatedAt), desc(customers.createdAt))
-    .limit(CUSTOMER_LIST_LIMIT.SEARCH);
-}
-
-async function createCustomerRow(
-  tx: DatabaseClient,
-  customer: CheckoutCustomerInput,
-  now: Date,
-): Promise<CustomerRow> {
-  const customerValues: CustomerInsert = {
-    id: crypto.randomUUID(),
-    name: customer.name,
-    phone: customer.phone,
-    address: customer.address,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  const [createdCustomer] = await tx.insert(customers).values(customerValues).returning();
-
-  if (!createdCustomer) {
-    throw new CheckoutPersistenceError(
-      "dbError",
-      { context: "Failed to load created customer" },
-      "Failed to load created customer",
-    );
-  }
-
-  return createdCustomer;
-}
-
-async function touchCustomerRow(tx: DatabaseClient, customerId: string, now: Date): Promise<CustomerRow> {
-  const [updatedCustomer] = await tx
-    .update(customers)
-    .set({ updatedAt: now })
-    .where(eq(customers.id, customerId))
-    .returning();
-
-  if (!updatedCustomer) {
-    throw new CheckoutPersistenceError(
-      "customerNotFound",
-      { customerId },
-      "Selected customer was not found",
-    );
-  }
-
-  return updatedCustomer;
-}
-
 async function createOrderRow(
   tx: DatabaseClient,
   ticketNumber: number,
-  customerId: string | null,
   shiftId: string | null,
   total: number,
   now: Date,
@@ -389,7 +273,6 @@ async function createOrderRow(
   const orderValues: OrderInsert = {
     id: crypto.randomUUID(),
     ticketNumber,
-    customerId,
     shiftId,
     total,
     createdAt: now,
@@ -408,31 +291,32 @@ async function createOrderRow(
   return createdOrder;
 }
 
-async function createPaymentRow(
+async function createPaymentRows(
   tx: DatabaseClient,
   orderId: string,
-  payment: CheckoutPaymentInput,
+  paymentInputs: NormalizedCheckoutPaymentInput[],
   now: Date,
-): Promise<PaymentRow> {
-  const paymentValues: PaymentInsert = {
+): Promise<PaymentRow[]> {
+  const paymentValues: PaymentInsert[] = paymentInputs.map((payment) => ({
     id: crypto.randomUUID(),
     orderId,
     method: payment.method,
     amount: payment.amount,
+    cashReceived: payment.cashReceived,
     createdAt: now,
-  };
+  }));
 
-  const [createdPayment] = await tx.insert(payments).values(paymentValues).returning();
+  const createdPayments = await tx.insert(payments).values(paymentValues).returning();
 
-  if (!createdPayment) {
+  if (createdPayments.length !== paymentValues.length) {
     throw new CheckoutPersistenceError(
       "dbError",
-      { context: "Failed to load created payment" },
-      "Failed to load created payment",
+      { context: "Failed to load created payments" },
+      "Failed to load created payments",
     );
   }
 
-  return createdPayment;
+  return createdPayments;
 }
 
 async function createOrderItemRows(
@@ -521,15 +405,6 @@ async function loadOrderItemModifierRows(
 }
 
 export const orderDrizzleRepository = {
-  listCustomers(search?: string): ResultAsync<CheckoutCustomer[], CheckoutPersistenceError> {
-    const normalizedSearch = search?.trim() ?? "";
-
-    return ResultAsync.fromPromise(
-      listCustomerRows(normalizedSearch),
-      wrapPersistenceError("Failed to list customers"),
-    ).map((rows) => rows.map(rowToCheckoutCustomer));
-  },
-
   createOrder(input: CreateOrderInput): ResultAsync<CheckoutOrder, CheckoutPersistenceError> {
     const normalizedInput = normalizeCreateOrderInput(input);
     const validationError = validateCreateOrderInput(normalizedInput);
@@ -538,28 +413,19 @@ export const orderDrizzleRepository = {
     }
 
     const total = calculateOrderTotal(normalizedInput.items);
-    const payment: CheckoutPaymentInput = {
-      method: toCheckoutPaymentMethod(normalizedInput.payment.method),
-      amount: normalizedInput.payment.amount,
-    };
 
     return ResultAsync.fromPromise(
       withTransaction(async (tx) => {
         const now = new Date();
         const ticketNumber = await loadNextTicketNumber(tx);
-        const customerRow = normalizedInput.customerId
-          ? await touchCustomerRow(tx, normalizedInput.customerId, now)
-          : normalizedInput.customer
-            ? await createCustomerRow(tx, normalizedInput.customer, now)
-            : null;
-        const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, normalizedInput.shiftId, total, now);
-        const paymentRow = await createPaymentRow(tx, orderRow.id, payment, now);
+        const orderRow = await createOrderRow(tx, ticketNumber, normalizedInput.shiftId, total, now);
+        const paymentRows = await createPaymentRows(tx, orderRow.id, normalizedInput.payments, now);
         const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
         await createOrderItemModifiers(tx, orderItemRows, normalizedInput.items, now);
 
         const orderItemModifierRows = await loadOrderItemModifierRows(tx, orderItemRows);
 
-        return rowToCheckoutOrder(orderRow, orderItemRows, orderItemModifierRows, customerRow, paymentRow);
+        return rowToCheckoutOrder(orderRow, orderItemRows, orderItemModifierRows, paymentRows);
       }),
       wrapPersistenceError("Failed to create order"),
     );

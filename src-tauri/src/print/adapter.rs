@@ -291,7 +291,7 @@ pub fn test_printer_with_driver(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::print::{CommandItem, CommandPayload, TicketItem, TicketPayload};
+    use crate::print::{CommandItem, CommandPayload, TicketItem, TicketPayload, TicketPayment};
     use escpos::driver::Driver;
     use std::sync::{Arc, Mutex};
 
@@ -387,10 +387,11 @@ mod tests {
                 unit_price: 100,
                 modifiers: vec![],
             }],
-            payment_method: "cash".to_owned(),
-            payment_amount: 100,
-            fulfillment_type: "local".to_owned(),
-            customer: None,
+            payments: vec![TicketPayment {
+                method: "cash".to_owned(),
+                amount: 100,
+                cash_received: Some(100),
+            }],
         };
 
         print_ticket_inner(driver.clone(), &payload).unwrap();

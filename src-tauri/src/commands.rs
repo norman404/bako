@@ -10,8 +10,8 @@ use tauri::{AppHandle, Manager, Runtime};
 use crate::print::usb_detection::detect_usb_printers;
 use crate::print::{
     create_printer_driver, print_command_with_driver, print_ticket_with_driver,
-    test_printer_with_driver, CommandItem, CommandPayload, LabelConfig, TicketCustomer, TicketItem,
-    TicketPayload,
+    test_printer_with_driver, CommandItem, CommandPayload, LabelConfig, TicketItem, TicketPayload,
+    TicketPayment,
 };
 
 const DATABASE_BACKUP_DIRECTORY: &str = "backups";
@@ -27,10 +27,7 @@ pub struct PrintTicketInput {
     pub created_at: String,
     pub total: u32,
     pub items: Vec<TicketItem>,
-    pub payment_method: String,
-    pub payment_amount: u32,
-    pub fulfillment_type: String,
-    pub customer: Option<TicketCustomer>,
+    pub payments: Vec<TicketPayment>,
 }
 
 #[tauri::command]
@@ -53,10 +50,7 @@ pub fn print_ticket(input: PrintTicketInput) -> Result<(), String> {
         created_at: input.created_at,
         total: input.total,
         items: input.items,
-        payment_method: input.payment_method,
-        payment_amount: input.payment_amount,
-        fulfillment_type: input.fulfillment_type,
-        customer: input.customer,
+        payments: input.payments,
     };
 
     print_ticket_with_driver(driver, &payload).map_err(|e| {
@@ -580,7 +574,7 @@ mod database_tests {
                 .await
                 .expect("migration table");
             connection
-                .execute("INSERT INTO _sqlx_migrations (version, success) VALUES (28, 1)")
+                .execute("INSERT INTO _sqlx_migrations (version, success) VALUES (29, 1)")
                 .await
                 .expect("future migration");
             connection.close().await.expect("close sqlite database");

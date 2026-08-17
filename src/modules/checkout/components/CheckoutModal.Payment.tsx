@@ -1,64 +1,76 @@
-import { CheckoutPaymentAmountBlock } from './CheckoutModal.Payment.Amount'
-import { CheckoutPaymentMethodSelector } from './CheckoutModal.Payment.Selector'
-import { CheckoutPaymentSummary } from './CheckoutModal.Payment.Summary'
-import type { CheckoutPaymentMethod } from '../lib/builders'
-import type { CartTotals } from '@/modules/order'
-import { formatPosCurrency } from '@/lib/currency'
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from "react-i18next";
+
+import { formatPosCurrency } from "@/lib/currency";
+import type { CartTotals } from "@/modules/order";
+import { CheckoutPaymentAmountBlock } from "./CheckoutModal.Payment.Amount";
+import { CheckoutPaymentMethodSelector } from "./CheckoutModal.Payment.Selector";
+import { CheckoutPaymentSummary } from "./CheckoutModal.Payment.Summary";
+import type { CheckoutPaymentMode } from "../lib/payment";
 
 interface CheckoutModalPaymentPanelProps {
-  totals: CartTotals
-  isCashPayment: boolean
-  cashAmountInput: string
-  onPaymentMethodChange: (method: CheckoutPaymentMethod) => void
-  onCashInputChange: (value: string) => void
-  paymentValidationMessage: string | null
-  registeredPaymentAmount: number | null
-  changeAmount: number | null
+  totals: CartTotals;
+  paymentMode: CheckoutPaymentMode;
+  cashAmountInput: string;
+  cashAppliedAmount: number | null;
+  cashReceivedAmount: number | null;
+  cardAmount: number | null;
+  changeAmount: number | null;
+  onPaymentModeChange: (mode: CheckoutPaymentMode) => void;
+  onCashInputChange: (value: string) => void;
+  paymentValidationMessage: string | null;
 }
 
 function CheckoutModalPaymentPanel({
   totals,
-  isCashPayment,
+  paymentMode,
   cashAmountInput,
-  onPaymentMethodChange,
+  cashAppliedAmount,
+  cashReceivedAmount,
+  cardAmount,
+  changeAmount,
+  onPaymentModeChange,
   onCashInputChange,
   paymentValidationMessage,
-  registeredPaymentAmount,
-  changeAmount
 }: CheckoutModalPaymentPanelProps) {
-  const { t } = useTranslation('checkout');
-  
+  const { t } = useTranslation("checkout");
+
   return (
-    <div className="rounded-card border border-border bg-surface-sunken px-3 py-3 sm:px-4 sm:py-4">
-      <div className="flex items-center justify-between gap-3 border-b border-border-strong pb-2.5">
-        <h3 className="text-md font-semibold text-text">{t('payment.title')}</h3>
-        <span className="font-mono-tabular text-xl font-semibold text-primary-strong">
+    <section className="rounded-card border border-primary/40 bg-surface-sunken px-3 py-3 shadow-card sm:px-4 sm:py-4">
+      <div className="flex items-start justify-between gap-3 border-b border-border-strong pb-3">
+        <div>
+          <p className="eyebrow text-primary">{t("payment.eyebrow")}</p>
+          <h3 className="mt-1 text-lg font-semibold text-text">{t("payment.title")}</h3>
+        </div>
+        <span className="font-mono-tabular text-2xl font-bold tracking-tight text-primary-strong">
           {formatPosCurrency(totals.total)}
         </span>
       </div>
 
       <CheckoutPaymentMethodSelector
-        isCashPayment={isCashPayment}
-        onPaymentMethodChange={onPaymentMethodChange}
+        paymentMode={paymentMode}
+        onPaymentModeChange={onPaymentModeChange}
       />
 
       <CheckoutPaymentAmountBlock
-        isCashPayment={isCashPayment}
+        paymentMode={paymentMode}
         cashAmountInput={cashAmountInput}
+        cashAppliedAmount={cashAppliedAmount}
+        cardAmount={cardAmount}
         onCashInputChange={onCashInputChange}
         total={totals.total}
       />
 
       <CheckoutPaymentSummary
         total={totals.total}
-        isCashPayment={isCashPayment}
-        registeredPaymentAmount={registeredPaymentAmount}
+        paymentMode={paymentMode}
+        cashAppliedAmount={cashAppliedAmount}
+        cashReceivedAmount={cashReceivedAmount}
+        cardAmount={cardAmount}
         changeAmount={changeAmount}
         paymentValidationMessage={paymentValidationMessage}
       />
-    </div>
-  )
+    </section>
+  );
 }
 
-export { CheckoutModalPaymentPanel }
+export { CheckoutModalPaymentPanel };

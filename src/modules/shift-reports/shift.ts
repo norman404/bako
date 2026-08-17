@@ -39,12 +39,18 @@ export interface ShiftReportOrderItem {
   unitPrice: number;
 }
 
+export interface ShiftReportPayment {
+  method: string;
+  amount: number;
+  cashReceived: number | null;
+}
+
 export interface ShiftReportOrder {
   orderId: string;
   ticketNumber: number;
   createdAt: Date;
   total: number;
-  paymentMethod: string;
+  payments: ShiftReportPayment[];
   itemCount: number;
   items: ShiftReportOrderItem[];
   isVoided: boolean;

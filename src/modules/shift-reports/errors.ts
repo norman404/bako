@@ -4,6 +4,7 @@ export type ShiftErrorCode =
   | "shiftNotFound"
   | "orderNotFound"
   | "orderAlreadyVoided"
+  | "invalidOrderPayment"
   | "invalidOpeningCash"
   | "invalidCountedCash"
   | "invalidCashMovement"

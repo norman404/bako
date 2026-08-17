@@ -1,24 +1,10 @@
-export const CHECKOUT_FULFILLMENT_TYPE = {
-  LOCAL: "local",
-  DELIVERY: "delivery",
-} as const;
-
-export type CheckoutFulfillmentType =
-  (typeof CHECKOUT_FULFILLMENT_TYPE)[keyof typeof CHECKOUT_FULFILLMENT_TYPE];
-
 export const CHECKOUT_PAYMENT_METHOD = {
   CASH: "cash",
   CARD: "card",
 } as const;
 
-export type CheckoutPaymentMethod =
+type CheckoutPaymentMethod =
   (typeof CHECKOUT_PAYMENT_METHOD)[keyof typeof CHECKOUT_PAYMENT_METHOD];
-
-export interface CheckoutCustomerInput {
-  name: string;
-  phone: string;
-  address: string;
-}
 
 export interface CheckoutOrderItemModifierInput {
   groupId: string;
@@ -39,24 +25,13 @@ export interface CheckoutOrderItemInput {
 export interface CheckoutPaymentInput {
   method: CheckoutPaymentMethod;
   amount: number;
+  cashReceived?: number | null;
 }
 
 export interface CreateOrderInput {
   items: CheckoutOrderItemInput[];
-  fulfillmentType?: CheckoutFulfillmentType;
-  customerId?: string | null;
-  customer?: CheckoutCustomerInput | null;
+  payments: CheckoutPaymentInput[];
   shiftId?: string | null;
-  payment: CheckoutPaymentInput;
-}
-
-export interface CheckoutCustomer {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 export interface CheckoutOrderItemModifier {
@@ -86,21 +61,22 @@ export interface CheckoutPayment {
   orderId: string;
   method: CheckoutPaymentMethod;
   amount: number;
+  cashReceived: number | null;
   createdAt: Date;
 }
 
 export interface CheckoutOrder {
   id: string;
   ticketNumber: number;
-  customerId: string | null;
   shiftId: string | null;
   total: number;
   createdAt: Date;
-  customer: CheckoutCustomer | null;
   items: CheckoutOrderItem[];
-  payment: CheckoutPayment;
+  payments: CheckoutPayment[];
 }
 
 export function calculateOrderTotal(items: Array<{ unitPrice: number; quantity: number }>): number {
   return items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
 }
+
+export type { CheckoutPaymentMethod };

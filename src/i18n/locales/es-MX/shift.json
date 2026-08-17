@@ -55,6 +55,11 @@
   "editOrderTitle": "Editar pedido #{{ticketNumber}}",
   "quantity": "Cantidad",
   "paymentMethodLabel": "Método de pago",
+  "mixedTotal": "Mixto",
+  "cashAppliedLabel": "Efectivo aplicado",
+  "cashReceivedLabel": "Efectivo recibido",
+  "cardRemainingLabel": "Tarjeta restante",
+  "changeLabel": "Cambio",
   "removeItem": "Quitar",
   "saveChanges": "Guardar cambios",
   "orderUpdated": "Pedido #{{ticketNumber}} actualizado",
@@ -109,6 +114,7 @@
     "shiftNotFound": "No encontramos el turno.",
     "orderNotFound": "No encontramos el pedido.",
     "orderAlreadyVoided": "El pedido ya fue anulado.",
+    "invalidOrderPayment": "Los importes de pago no coinciden con el total del pedido.",
     "dbError": "No pudimos cargar los turnos. Intentá de nuevo.",
     "generic": "Ocurrió un error con los turnos."
   }

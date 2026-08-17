@@ -1,82 +1,54 @@
 {
   "footer": {
     "cancel": "Cancel",
-    "pay": "Pay",
+    "pay": "Charge",
     "saving": "Saving"
   },
   "modal": {
-    "ariaLabel": "Confirm checkout",
+    "ariaLabel": "Confirm charge",
+    "eyebrow": "New sale",
     "title": "Charge",
     "closeAriaLabel": "Close"
   },
-  "fulfillment": {
-    "title": "Delivery",
-    "local": "In-store",
-    "delivery": "Delivery"
-  },
   "payment": {
-    "title": "Payment",
+    "eyebrow": "Payment method",
+    "title": "How are we charging?",
     "cash": "Cash",
     "card": "Card",
-    "receivedLabel": "Received",
-    "exactPayment": "Exact payment",
+    "mixed": "Mixed",
+    "receivedLabel": "Cash received",
+    "appliedLabel": "Cash applied",
+    "mixedHint": "The card amount completes the remaining balance automatically.",
+    "cashHint": "You can receive more and calculate change.",
+    "cardApplied": "Exact card charge",
+    "cardRemaining": "Card remaining",
+    "complete": "Payment is complete",
     "summary": {
       "total": "Final total",
+      "cashApplied": "Cash applied",
       "cashReceived": "Cash received",
       "cardPayment": "Card payment",
       "change": "Change",
       "dash": "—"
     }
   },
-  "delivery": {
-    "headerText": "Choose a saved one or add a new one",
-    "searchButton": "Search customer",
-    "newButton": "New customer"
-  },
   "orderSummary": {
     "title": "Account"
   },
-  "customerSearch": {
-    "label": "Search customer",
-    "placeholder": "Name, phone or address",
-    "selectedBadge": "Selected customer",
-    "loading": "Searching customers...",
-    "error": "Could not load saved customers",
-    "emptySearch": "We didn't find customers with that search. Try another detail or tap \"New customer\".",
-    "emptyState": "No saved customers for delivery yet.",
-    "newButton": "New customer",
-    "activeLabel": "ACTIVE"
-  },
-  "customerCreate": {
-    "title": "Create new customer",
-    "backButton": "Back to search",
-    "nameLabel": "Customer",
-    "namePlaceholder": "Valentina Suárez",
-    "phoneLabel": "Phone",
-    "phonePlaceholder": "11 5555 5555",
-    "addressLabel": "Address",
-    "addressPlaceholder": "Av. Siempre Viva 742, Door B"
-  },
   "errors": {
-    "customerNameRequired": "Customer name is required.",
-    "customerPhoneRequired": "Customer phone is required.",
-    "customerAddressRequired": "Customer address is required.",
     "invalidPaymentMethod": "Payment method must be cash or card.",
     "invalidPaymentAmount": "Payment amount must be a non-negative integer.",
-    "insufficientPaymentAmount": "Payment amount must cover the order total.",
-    "cardPaymentExactMatchRequired": "Card payment must match the order total exactly.",
+    "paymentRequired": "Select at least one payment method.",
+    "paymentTotalMismatch": "Payment amounts must match the order total.",
+    "duplicatePaymentMethod": "The same payment method cannot be entered twice.",
+    "cashReceivedInvalid": "Cash received must be valid and cover the applied amount.",
+    "mixedPaymentCashReceivedMismatch": "For a mixed payment, cash received must equal cash applied.",
     "orderItemsRequired": "Order must include at least one item.",
     "orderItemProductIdRequired": "Each order item must have a product assigned.",
     "orderItemQuantityInvalid": "Quantity must be a positive integer.",
     "orderItemUnitPriceInvalid": "Unit price must be a non-negative integer.",
-    "customerIdAndCustomerConflict": "Select a saved customer or enter a new one, not both.",
-    "localOrderCustomerForbidden": "In-store orders cannot include delivery customer data.",
-    "deliveryOrderCustomerRequired": "Delivery orders require a customer.",
-    "customerNotFound": "We couldn't find that customer. Try searching again.",
-    "dbError": "We couldn't process the checkout. Please try again.",
-    "generic": "An unexpected error occurred while processing the checkout.",
-    "formDeliveryNewCustomerRequired": "For delivery, you need a customer, phone, and address.",
-    "formDeliverySelectOrCreate": "Select a saved customer or tap \"New customer\" to add one.",
-    "formEmptyCart": "Add at least one product before checking out."
+    "dbError": "We couldn't process the charge. Please try again.",
+    "generic": "An unexpected error occurred while processing the charge.",
+    "formEmptyCart": "Add at least one product before charging."
   }
 }

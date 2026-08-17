@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { CreditCard, Trash2, Wallet, X } from "lucide-react";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import {
+  buildPaymentInputs,
+  CHECKOUT_PAYMENT_MODE,
+  calculatePaymentBreakdown,
+  formatPaymentAmountInput,
+  getPaymentValidationMessage,
+  sanitizePaymentAmountInput,
+  type CheckoutPaymentMode,
+} from "@/modules/checkout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,14 +19,12 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   Dialog,
   DialogContent,
-  DialogTitle,
   DialogDescription,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { formatPosCurrency } from "@/lib/currency";
 import { useOrderDetail, useUpdateOrder } from "../use-order-management";
 import type { OrderDetail, OrderDetailItem, UpdateOrderInput } from "../order-management";
-
-type EditOrderPaymentMethod = "cash" | "card";
 
 interface EditOrderModalProps {
   orderId: string | null;
@@ -26,17 +32,30 @@ interface EditOrderModalProps {
   onClose: () => void;
 }
 
-function normalizePaymentMethod(method: string): EditOrderPaymentMethod {
-  // eslint-disable-next-line no-console -- debug temporal, ver instrucciones en el mensaje del PR/chat
-  console.log("[DEBUG normalizePaymentMethod] method =", method, "| typeof =", typeof method);
-  return String(method ?? "").trim().toLowerCase() === "card" ? "card" : "cash";
+interface ModalHeaderProps {
+  title: string;
+  onClose: () => void;
+}
+
+function getPaymentMode(orderDetail: OrderDetail): CheckoutPaymentMode {
+  const hasCash = orderDetail.payments.some((payment) => payment.method === "cash");
+  const hasCard = orderDetail.payments.some((payment) => payment.method === "card");
+
+  if (hasCash && hasCard) return CHECKOUT_PAYMENT_MODE.MIXED;
+  if (hasCard) return CHECKOUT_PAYMENT_MODE.CARD;
+  return CHECKOUT_PAYMENT_MODE.CASH;
+}
+
+function getCashInput(orderDetail: OrderDetail): string {
+  const cashPayment = orderDetail.payments.find((payment) => payment.method === "cash");
+  return formatPaymentAmountInput(cashPayment?.cashReceived ?? cashPayment?.amount ?? orderDetail.total);
 }
 
 function calculateTotal(items: OrderDetailItem[]): number {
   return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 }
 
-function ModalHeader({ title, onClose }: { title: string; onClose: () => void }) {
+function ModalHeader({ title, onClose }: ModalHeaderProps) {
   return (
     <header className="flex items-center justify-between border-b border-border-strong px-5 py-3">
       <span className="font-display text-xl text-primary-strong">{title}</span>
@@ -53,24 +72,25 @@ function ModalHeader({ title, onClose }: { title: string; onClose: () => void })
   );
 }
 
+interface VoidedOrderNoticeProps {
+  orderDetail: OrderDetail;
+  onClose: () => void;
+  title: string;
+  voidedLabel: string;
+}
+
 function VoidedOrderNotice({
   orderDetail,
   onClose,
-  t,
-}: {
-  orderDetail: OrderDetail;
-  onClose: () => void;
-  t: TFunction;
-}) {
+  title,
+  voidedLabel,
+}: VoidedOrderNoticeProps) {
   return (
     <>
-      <ModalHeader
-        title={t("editOrderTitle", { ticketNumber: orderDetail.ticketNumber })}
-        onClose={onClose}
-      />
+      <ModalHeader title={title} onClose={onClose} />
       <div className="p-5">
         <p className="mb-3 inline-flex items-center rounded-card border border-danger/40 bg-danger/10 px-2 py-1 text-2xs font-semibold uppercase tracking-wider text-danger">
-          {t("orderVoidedBadge")}
+          {voidedLabel}
         </p>
         <div className="grid gap-2">
           {orderDetail.items.map((item) => (
@@ -95,26 +115,32 @@ function VoidedOrderNotice({
   );
 }
 
-function EditOrderForm({
-  orderDetail,
-  onClose,
-  t,
-}: {
+interface EditOrderFormProps {
   orderDetail: OrderDetail;
   onClose: () => void;
-  t: TFunction;
-}) {
+  title: string;
+}
+
+function EditOrderForm({ orderDetail, onClose, title }: EditOrderFormProps) {
+  const { t } = useTranslation("shift");
   const [items, setItems] = useState<OrderDetailItem[]>(() =>
     orderDetail.items.map((item) => ({ ...item })),
   );
-  const [paymentMethod, setPaymentMethod] = useState<EditOrderPaymentMethod>(() =>
-    normalizePaymentMethod(orderDetail.paymentMethod),
+  const [paymentMode, setPaymentMode] = useState<CheckoutPaymentMode>(() =>
+    getPaymentMode(orderDetail),
   );
+  const [cashAmountInput, setCashAmountInput] = useState(() => getCashInput(orderDetail));
   const [removeError, setRemoveError] = useState(false);
 
   const updateOrderMutation = useUpdateOrder();
   const isSaving = updateOrderMutation.isPending;
   const total = calculateTotal(items);
+  const paymentValidationMessage = getPaymentValidationMessage(
+    paymentMode,
+    cashAmountInput,
+    total,
+  );
+  const breakdown = calculatePaymentBreakdown(paymentMode, cashAmountInput, total);
 
   function handleQuantityChange(itemId: string, rawValue: string) {
     const parsed = Number.parseInt(rawValue, 10);
@@ -133,7 +159,24 @@ function EditOrderForm({
     setItems((current) => current.filter((item) => item.id !== itemId));
   }
 
+  function handlePaymentModeChange(nextMode: CheckoutPaymentMode) {
+    setPaymentMode(nextMode);
+    if (nextMode === CHECKOUT_PAYMENT_MODE.MIXED) {
+      const currentCash = Number.parseFloat(cashAmountInput.replace(",", "."));
+      if (!Number.isFinite(currentCash) || currentCash * 100 >= total) {
+        setCashAmountInput(formatPaymentAmountInput(Math.max(1, Math.floor(total / 2))));
+      }
+    } else if (nextMode === CHECKOUT_PAYMENT_MODE.CASH && cashAmountInput.length === 0) {
+      setCashAmountInput(formatPaymentAmountInput(total));
+    }
+  }
+
   function handleSave() {
+    if (paymentValidationMessage !== null) return;
+
+    const payments = buildPaymentInputs(paymentMode, cashAmountInput, total);
+    if (!payments) return;
+
     const input: UpdateOrderInput = {
       items: items.map((item) => ({
         productId: item.productId,
@@ -148,10 +191,11 @@ function EditOrderForm({
           textValue: mod.textValue,
         })),
       })),
-      payment: {
-        method: paymentMethod,
-        amount: total,
-      },
+      payments: payments.map((payment) => ({
+        method: payment.method,
+        amount: payment.amount,
+        cashReceived: payment.cashReceived ?? null,
+      })),
     };
 
     updateOrderMutation.mutate(
@@ -170,12 +214,9 @@ function EditOrderForm({
 
   return (
     <>
-      <ModalHeader
-        title={t("editOrderTitle", { ticketNumber: orderDetail.ticketNumber })}
-        onClose={onClose}
-      />
+      <ModalHeader title={title} onClose={onClose} />
 
-      <div className="scrollbar-thin max-h-[26rem] overflow-y-auto p-5">
+      <div className="scrollbar-thin max-h-[32rem] overflow-y-auto p-5">
         <div className="grid gap-3">
           {items.map((item) => (
             <div
@@ -209,37 +250,91 @@ function EditOrderForm({
           ))}
         </div>
 
-        {removeError && (
+        {removeError ? (
           <p role="alert" className="mt-2 text-sm text-danger">
             {t("itemsEmptyError")}
           </p>
-        )}
+        ) : null}
 
-        <div className="mt-4">
+        <div className="mt-5 rounded-card border border-primary/30 bg-surface-sunken p-3">
           <Label className="mb-2 block">{t("paymentMethodLabel")}</Label>
           <SegmentedControl
             options={[
-              { value: "cash", label: t("cashTotal"), icon: Wallet },
-              { value: "card", label: t("cardTotal"), icon: CreditCard },
+              { value: CHECKOUT_PAYMENT_MODE.CASH, label: t("cashTotal"), icon: Wallet },
+              { value: CHECKOUT_PAYMENT_MODE.CARD, label: t("cardTotal"), icon: CreditCard },
+              { value: CHECKOUT_PAYMENT_MODE.MIXED, label: t("mixedTotal"), icon: Wallet },
             ]}
-            activeValue={paymentMethod}
-            onSelect={(value) => setPaymentMethod(value as EditOrderPaymentMethod)}
+            activeValue={paymentMode}
+            onSelect={(value) => handlePaymentModeChange(value as CheckoutPaymentMode)}
+            className="sm:grid-cols-3"
           />
+
+          {paymentMode !== CHECKOUT_PAYMENT_MODE.CARD ? (
+            <div className="mt-3 grid gap-1.5">
+              <Label htmlFor="edit-cash-amount">
+                {paymentMode === CHECKOUT_PAYMENT_MODE.MIXED
+                  ? t("cashAppliedLabel")
+                  : t("cashReceivedLabel")}
+              </Label>
+              <Input
+                id="edit-cash-amount"
+                value={cashAmountInput}
+                onInput={(event) =>
+                  setCashAmountInput(sanitizePaymentAmountInput(event.currentTarget.value))
+                }
+                inputMode="decimal"
+                className="h-11 font-mono-tabular text-lg"
+              />
+              {paymentMode === CHECKOUT_PAYMENT_MODE.MIXED ? (
+                <p className="flex items-center justify-between text-xs text-text-muted">
+                  <span>{t("cardRemainingLabel")}</span>
+                  <span className="font-mono-tabular font-semibold text-primary-strong">
+                    {breakdown.cardAmount === null
+                      ? "—"
+                      : formatPosCurrency(breakdown.cardAmount)}
+                  </span>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {paymentMode === CHECKOUT_PAYMENT_MODE.CARD ? (
+            <p className="mt-3 flex items-center justify-between text-xs text-text-muted">
+              <span>{t("cardTotal")}</span>
+              <span className="font-mono-tabular font-semibold text-text">
+                {formatPosCurrency(total)}
+              </span>
+            </p>
+          ) : null}
+
+          {paymentMode === CHECKOUT_PAYMENT_MODE.CASH ? (
+            <p className="mt-3 flex items-center justify-between text-xs text-text-muted">
+              <span>{t("changeLabel")}</span>
+              <span className="font-mono-tabular font-semibold text-primary-strong">
+                {breakdown.changeAmount === null
+                  ? "—"
+                  : formatPosCurrency(breakdown.changeAmount)}
+              </span>
+            </p>
+          ) : null}
+
+          {paymentValidationMessage ? (
+            <p role="alert" className="mt-3 text-xs text-danger">
+              {paymentValidationMessage}
+            </p>
+          ) : null}
         </div>
       </div>
 
       <footer className="flex items-center justify-between border-t border-border-strong px-5 py-3">
-        <span
-          data-testid="edit-order-total"
-          className="font-mono-tabular text-lg font-semibold text-text"
-        >
+        <span data-testid="edit-order-total" className="font-mono-tabular text-lg font-semibold text-text">
           {formatPosCurrency(total)}
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" onClick={onClose} disabled={isSaving}>
             {t("cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving || paymentValidationMessage !== null}>
             {t("saveChanges")}
           </Button>
         </div>
@@ -258,26 +353,31 @@ export function EditOrderModal({ orderId, open, onClose }: EditOrderModalProps) 
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden max-h-[calc(100dvh-2rem)]">
+      <DialogContent className="max-w-lg overflow-hidden p-0 max-h-[calc(100dvh-2rem)]">
         <DialogTitle className="sr-only">{title}</DialogTitle>
         <DialogDescription className="sr-only">{title}</DialogDescription>
 
         {orderDetail ? (
           orderDetail.isVoided ? (
-            <VoidedOrderNotice orderDetail={orderDetail} onClose={onClose} t={t} />
+            <VoidedOrderNotice
+              orderDetail={orderDetail}
+              onClose={onClose}
+              title={title}
+              voidedLabel={t("orderVoidedBadge")}
+            />
           ) : (
-            <EditOrderForm key={orderDetail.id} orderDetail={orderDetail} onClose={onClose} t={t} />
+            <EditOrderForm key={orderDetail.id} orderDetail={orderDetail} onClose={onClose} title={title} />
           )
         ) : (
           <>
             <ModalHeader title={title} onClose={onClose} />
-            {isLoading && (
+            {isLoading ? (
               <div className="p-5">
                 <div className="animate-pulse rounded-card border border-border bg-surface-sunken p-4">
                   <div className="h-6 w-1/3 rounded bg-surface-raised" />
                 </div>
               </div>
-            )}
+            ) : null}
           </>
         )}
       </DialogContent>

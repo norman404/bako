@@ -55,6 +55,11 @@
   "editOrderTitle": "Edit order #{{ticketNumber}}",
   "quantity": "Quantity",
   "paymentMethodLabel": "Payment method",
+  "mixedTotal": "Mixed",
+  "cashAppliedLabel": "Cash applied",
+  "cashReceivedLabel": "Cash received",
+  "cardRemainingLabel": "Card remaining",
+  "changeLabel": "Change",
   "removeItem": "Remove",
   "saveChanges": "Save changes",
   "orderUpdated": "Order #{{ticketNumber}} updated",
@@ -109,6 +114,7 @@
     "shiftNotFound": "We couldn't find that shift.",
     "orderNotFound": "We couldn't find that order.",
     "orderAlreadyVoided": "This order has already been voided.",
+    "invalidOrderPayment": "Payment amounts do not match the order total.",
     "dbError": "We couldn't load shifts. Please try again.",
     "generic": "An error occurred with shifts."
   }

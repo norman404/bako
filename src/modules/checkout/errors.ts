@@ -1,19 +1,15 @@
 export type CheckoutErrorCode =
-  | "customerNameRequired"
-  | "customerPhoneRequired"
-  | "customerAddressRequired"
   | "invalidPaymentMethod"
   | "invalidPaymentAmount"
-  | "insufficientPaymentAmount"
-  | "cardPaymentExactMatchRequired"
+  | "paymentRequired"
+  | "paymentTotalMismatch"
+  | "duplicatePaymentMethod"
+  | "cashReceivedInvalid"
+  | "mixedPaymentCashReceivedMismatch"
   | "orderItemsRequired"
   | "orderItemProductIdRequired"
   | "orderItemQuantityInvalid"
   | "orderItemUnitPriceInvalid"
-  | "customerIdAndCustomerConflict"
-  | "localOrderCustomerForbidden"
-  | "deliveryOrderCustomerRequired"
-  | "customerNotFound"
   | "dbError";
 
 export interface CheckoutTranslatableError {
