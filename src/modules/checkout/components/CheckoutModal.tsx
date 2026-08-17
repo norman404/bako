@@ -67,7 +67,7 @@ function CheckoutModal({
       >
         <DialogTitle className="sr-only">{t("modal.ariaLabel")}</DialogTitle>
         <div className="modal-shell-solid flex max-h-[calc(100dvh-1.5rem)] w-full max-w-[58rem] flex-col overflow-hidden rounded-modal animate-modal-in sm:max-h-[calc(100dvh-3rem)]">
-          <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-5">
+          <header className="shrink-0 flex items-center justify-between border-b border-border px-4 py-3 sm:px-5">
             <div>
               <p className="eyebrow text-primary">{t("modal.eyebrow")}</p>
               <h2 className="font-display mt-1 text-xl text-primary-strong">
@@ -87,8 +87,8 @@ function CheckoutModal({
             </Button>
           </header>
 
-          <div className="scrollbar-thin min-h-0 max-h-[calc(100dvh-9.5rem)] space-y-3 overflow-y-auto px-4 py-4 sm:max-h-[calc(100dvh-11rem)] sm:px-5 sm:py-4">
-            <div className="grid gap-3 lg:grid-cols-[0.84fr_1.16fr]">
+          <div className="scrollbar-thin min-h-0 max-h-[calc(100dvh-9.5rem)] space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-[calc(100dvh-11rem)] sm:px-5 sm:py-4">
+            <div className="grid items-start gap-4 lg:grid-cols-[0.84fr_1.16fr]">
               <CheckoutModalOrderSummary items={items} totals={totals} />
 
               <CheckoutModalPaymentPanel

@@ -14,19 +14,24 @@ function CheckoutModalOrderSummary({
   const { t } = useTranslation('checkout');
   
   return (
-    <section className="rounded-card border border-border bg-surface-sunken px-3 py-3 sm:px-4 sm:py-4">
+    <section
+      aria-labelledby="checkout-order-summary-title"
+      className="self-start rounded-card border border-border bg-surface-sunken px-3 py-3 sm:px-4 sm:py-4"
+    >
       <div className="flex items-center justify-between gap-3 border-b border-border-strong pb-2.5">
-        <h3 className="text-md font-semibold text-text">{t('orderSummary.title')}</h3>
+        <h3 id="checkout-order-summary-title" className="text-md font-semibold text-text">
+          {t('orderSummary.title')}
+        </h3>
         <span className="font-mono-tabular text-xl font-semibold text-primary-strong">
           {formatPosCurrency(totals.total)}
         </span>
       </div>
 
-      <div className="scrollbar-thin mt-3 max-h-44 space-y-2 overflow-y-auto pr-1 sm:max-h-48">
+      <ul aria-labelledby="checkout-order-summary-title" className="mt-3 divide-y divide-border">
         {items.map((item) => (
-          <div
-            key={item.product.id}
-            className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 border-t border-border pt-2.5 first:border-t-0 first:pt-0"
+          <li
+            key={item.lineId}
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-3 first:pt-0 last:pb-0"
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium leading-tight text-text">
@@ -39,9 +44,9 @@ function CheckoutModalOrderSummary({
             <p className="font-mono-tabular text-xs tracking-tight text-text">
               {formatPosCurrency(item.product.price * item.quantity)}
             </p>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }
