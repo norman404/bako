@@ -2,22 +2,9 @@ import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { PrinterDomainError } from "@/modules/printer/domain/errors";
-import type { Printer, PrinterType, PrinterRole } from "@/modules/printer/domain/printer";
 import type { PrinterRepository } from "@/modules/printer/domain/ports";
+import { buildPrinter } from "@/modules/printer/test/factories";
 import { listPrinters } from "./list-printers";
-
-function buildPrinter(overrides: Partial<Printer> = {}): Printer {
-  return {
-    id: overrides.id ?? "printer-1",
-    name: overrides.name ?? "Cocina",
-    type: (overrides.type ?? "network") as PrinterType,
-    address: overrides.address ?? "192.168.1.50:9100",
-    role: (overrides.role ?? "kitchen") as PrinterRole,
-    createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    deletedAt: overrides.deletedAt ?? null,
-  };
-}
 
 function buildMockRepository(
   overrides: Partial<PrinterRepository> = {},

@@ -66,6 +66,7 @@ function buildOrderRow(overrides: Partial<OrderRow> = {}): OrderRow {
     shiftId: overrides.shiftId ?? null,
     total: overrides.total ?? 5500,
     createdAt: overrides.createdAt ?? now,
+    voidedAt: overrides.voidedAt ?? null,
   };
 }
 

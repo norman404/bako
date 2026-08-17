@@ -50,6 +50,13 @@ const mockReport = {
       ],
     },
   ],
+  openingCash: 10000,
+  cashMovementsIn: 0,
+  cashMovementsOut: 0,
+  expectedCash: 18000,
+  countedCash: 18000,
+  cashDifference: 0,
+  cashMovements: [],
 };
 
 describe("ShiftReportModal", () => {

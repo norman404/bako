@@ -2,22 +2,11 @@ import { describe, expect, it } from "bun:test";
 import { errAsync, okAsync } from "neverthrow";
 
 import { PrinterDomainError, PrinterValidationError } from "@/modules/printer/domain/errors";
-import type { Printer, PrinterCreateInput, PrinterType, PrinterRole } from "@/modules/printer/domain/printer";
+import type { PrinterCreateInput } from "@/modules/printer/domain/printer";
+import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
 import type { PrinterRepository } from "@/modules/printer/domain/ports";
+import { buildPrinter } from "@/modules/printer/test/factories";
 import { createPrinter } from "./create-printer";
-
-function buildPrinter(overrides: Partial<Printer> = {}): Printer {
-  return {
-    id: overrides.id ?? "printer-1",
-    name: overrides.name ?? "Cocina",
-    type: (overrides.type ?? "network") as PrinterType,
-    address: overrides.address ?? "192.168.1.50:9100",
-    role: (overrides.role ?? "kitchen") as PrinterRole,
-    createdAt: overrides.createdAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    updatedAt: overrides.updatedAt ?? new Date("2026-01-01T10:00:00.000Z"),
-    deletedAt: overrides.deletedAt ?? null,
-  };
-}
 
 function buildMockRepository(
   overrides: Partial<PrinterRepository> = {},
@@ -34,17 +23,28 @@ function buildMockRepository(
 }
 
 describe("createPrinter", () => {
-  it("delegates to repository.create() when input is valid", async () => {
+  it("delegates to repository.create() with normalized input (isDefault defaults to false)", async () => {
     const input: PrinterCreateInput = {
       name: "Cocina",
       type: "network",
       address: "192.168.1.50:9100",
-      role: "kitchen",
+      role: "comanda",
+    };
+    const expectedNormalized: PrinterCreateInput = {
+      name: "Cocina",
+      type: "network",
+      address: "192.168.1.50:9100",
+      role: "comanda",
+      isDefault: false,
+      labelWidthMm: undefined,
+      labelHeightMm: undefined,
+      labelGapMm: undefined,
+      labelLanguage: undefined,
     };
     const createdPrinter = buildPrinter({ id: "printer-created" });
     const mockRepository = buildMockRepository({
       create: (receivedInput) => {
-        expect(receivedInput).toEqual(input);
+        expect(receivedInput).toEqual(expectedNormalized);
         return okAsync(createdPrinter);
       },
     });
@@ -64,7 +64,7 @@ describe("createPrinter", () => {
       name: "   ",
       type: "network",
       address: "192.168.1.50:9100",
-      role: "kitchen",
+      role: "comanda",
     };
     const mockRepository = buildMockRepository();
 
@@ -84,7 +84,7 @@ describe("createPrinter", () => {
       name: "Cocina",
       type: "network",
       address: "",
-      role: "kitchen",
+      role: "comanda",
     };
     const mockRepository = buildMockRepository();
 
@@ -104,7 +104,7 @@ describe("createPrinter", () => {
       name: "Cocina",
       type: "network",
       address: "192.168.1.50:9100",
-      role: "kitchen",
+      role: "comanda",
     };
     const mockError = new PrinterDomainError("dbError", { context: "Database connection failed" });
     const mockRepository = buildMockRepository({ create: () => errAsync(mockError) });
@@ -117,5 +117,116 @@ describe("createPrinter", () => {
     }
 
     expect(result.error).toBe(mockError);
+  });
+
+  describe("isDefault + role validation", () => {
+    it("rejects isDefault=true with role=comanda", async () => {
+      const input: PrinterCreateInput = {
+        name: "Cocina",
+        type: "network",
+        address: "192.168.1.50:9100",
+        role: "comanda",
+        isDefault: true,
+      };
+      const mockRepository = buildMockRepository();
+
+      const result = await createPrinter(mockRepository, input);
+
+      expect(result.isErr()).toBe(true);
+      if (result.isOk()) {
+        throw new Error("Expected createPrinter to fail");
+      }
+
+      expect(result.error).toBeInstanceOf(PrinterValidationError);
+      expect(result.error.code).toBe("printerDefaultRoleInvalid");
+    });
+
+    it("rejects isDefault=true with role=comanda (usb printer)", async () => {
+      const input: PrinterCreateInput = {
+        name: "Barra",
+        type: "usb",
+        address: "04b8:0e15",
+        role: "comanda",
+        isDefault: true,
+      };
+      const mockRepository = buildMockRepository();
+
+      const result = await createPrinter(mockRepository, input);
+
+      expect(result.isErr()).toBe(true);
+      if (result.isOk()) {
+        throw new Error("Expected createPrinter to fail");
+      }
+
+      expect(result.error.code).toBe("printerDefaultRoleInvalid");
+    });
+
+    it("accepts isDefault=true with role=receipt and delegates to repository", async () => {
+      const input: PrinterCreateInput = {
+        name: "Caja 1",
+        type: "network",
+        address: "192.168.1.50:9100",
+        role: PRINTER_ROLE.RECEIPT,
+        isDefault: true,
+      };
+      const createdPrinter = buildPrinter({ id: "printer-created", role: PRINTER_ROLE.RECEIPT, isDefault: true });
+      const mockRepository = buildMockRepository({
+        create: (receivedInput) => {
+          expect(receivedInput.isDefault).toBe(true);
+          expect(receivedInput.role).toBe(PRINTER_ROLE.RECEIPT);
+          return okAsync(createdPrinter);
+        },
+      });
+
+      const result = await createPrinter(mockRepository, input);
+
+      expect(result.isOk()).toBe(true);
+      if (result.isErr()) {
+        throw result.error;
+      }
+      expect(result.value).toEqual(createdPrinter);
+    });
+
+    it("accepts isDefault=false with role=comanda", async () => {
+      const input: PrinterCreateInput = {
+        name: "Cocina",
+        type: "network",
+        address: "192.168.1.50:9100",
+        role: "comanda",
+        isDefault: false,
+      };
+      const mockRepository = buildMockRepository({
+        create: () => okAsync(buildPrinter({ role: "comanda", isDefault: false })),
+      });
+
+      const result = await createPrinter(mockRepository, input);
+
+      expect(result.isOk()).toBe(true);
+      if (result.isErr()) {
+        throw result.error;
+      }
+    });
+
+    it("accepts isDefault omitted (defaults to false) with any role", async () => {
+      const input: PrinterCreateInput = {
+        name: "Cocina",
+        type: "network",
+        address: "192.168.1.50:9100",
+        role: "comanda",
+      };
+      const mockRepository = buildMockRepository({
+        create: (receivedInput) => {
+          expect(receivedInput.isDefault).toBe(false);
+          return okAsync(buildPrinter());
+        },
+      });
+
+      const result = await createPrinter(mockRepository, input);
+
+      expect(result.isOk()).toBe(true);
+      if (result.isErr()) {
+        throw result.error;
+      }
+    });
   });
 });

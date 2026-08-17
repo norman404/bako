@@ -16,6 +16,10 @@ export interface PrintCommandPayload {
       textValue: string | null;
     }>;
   }>;
+  labelWidthMm?: number;
+  labelHeightMm?: number;
+  labelGapMm?: number;
+  labelLanguage?: string;
 }
 
 function buildPayload(input: PrintCommandOptions): PrintCommandPayload {
@@ -28,6 +32,10 @@ function buildPayload(input: PrintCommandOptions): PrintCommandPayload {
       quantity: item.quantity,
       modifiers: item.modifiers,
     })),
+    labelWidthMm: input.destination.labelWidthMm,
+    labelHeightMm: input.destination.labelHeightMm,
+    labelGapMm: input.destination.labelGapMm,
+    labelLanguage: input.destination.labelLanguage,
   };
 }
 

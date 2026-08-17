@@ -1,9 +1,14 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 mod commands;
+mod database_migrations;
 mod print;
 
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
+
+pub const DATABASE_FILENAME: &str = "bako.db";
+pub const DATABASE_URL: &str = "sqlite:bako.db";
+pub const CURRENT_MIGRATION_VERSION: i64 = database_migrations::LABEL_ORIENTATION_MIGRATION_VERSION;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -128,22 +133,78 @@ pub fn run() {
             sql: include_str!("../migrations/0020_first_option_free.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 21,
+            description: "label_printer_columns",
+            sql: include_str!("../migrations/0021_label_printer_columns.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 22,
+            description: "label_printer_language",
+            sql: include_str!("../migrations/0022_label_printer_language.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 23,
+            description: "printer_is_default",
+            sql: include_str!("../migrations/0023_printer_is_default.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 24,
+            description: "printer_role_comanda",
+            sql: include_str!("../migrations/0024_printer_role_comanda.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 25,
+            description: "voided_at_orders",
+            sql: include_str!("../migrations/0025_voided_at_orders.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 26,
+            description: "cash_management",
+            sql: include_str!("../migrations/0026_cash_management.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: CURRENT_MIGRATION_VERSION,
+            description: "printer_label_orientation",
+            sql: include_str!("../migrations/0027_printer_label_orientation.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
+        .plugin(database_migrations::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(
             SqlBuilder::default()
-                .add_migrations("sqlite:bako.db", migrations)
+                .add_migrations(DATABASE_URL, migrations)
                 .build(),
         )
         .setup(|app| {
             #[cfg(desktop)]
-            app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::print_ticket, commands::print_command, commands::test_printer, commands::list_usb_printers])
+        .invoke_handler(tauri::generate_handler![
+            commands::print_ticket,
+            commands::print_command,
+            commands::test_printer,
+            commands::list_usb_printers,
+            commands::debug_tspl,
+            commands::validate_database,
+            commands::get_database_info,
+            commands::export_database,
+            commands::prepare_database_restore,
+            commands::restore_database,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

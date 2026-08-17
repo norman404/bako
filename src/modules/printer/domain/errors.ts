@@ -4,6 +4,8 @@ export type PrinterErrorCode =
   | "printerAddressRequired"
   | "printerTypeInvalid"
   | "printerRoleInvalid"
+  | "printerLabelLanguageInvalid"
+  | "printerDefaultRoleInvalid"
   | "dbError";
 
 export interface PrinterTranslatableError {

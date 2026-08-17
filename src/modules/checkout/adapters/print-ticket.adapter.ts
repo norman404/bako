@@ -1,7 +1,7 @@
 import { ResultAsync, okAsync } from "neverthrow";
 import { invoke } from "@tauri-apps/api/core";
 
-import { useSettingsStore } from "@/modules/settings/store/settings-store";
+import type { Printer } from "@/modules/printer/domain/printer";
 import type { PrintOrderOptions } from "@/modules/checkout/domain/print-ticket";
 
 export interface PrintTicketPayload {
@@ -52,14 +52,15 @@ function buildPayload(input: PrintOrderOptions, printerType: string, printerAddr
   };
 }
 
-export function printOrder(input: PrintOrderOptions): ResultAsync<void, Error> {
-  const { printerType, printerAddress } = useSettingsStore.getState();
-
-  if (printerType === "none" || !printerType) {
+export function printOrder(
+  input: PrintOrderOptions,
+  defaultReceiptPrinter: Printer | null,
+): ResultAsync<void, Error> {
+  if (defaultReceiptPrinter === null) {
     return okAsync(undefined);
   }
 
-  const payload = buildPayload(input, printerType, printerAddress ?? "");
+  const payload = buildPayload(input, defaultReceiptPrinter.type, defaultReceiptPrinter.address);
 
   const invokeAsync = async (): Promise<void> => {
     await invoke("print_ticket", { input: payload });
@@ -72,16 +73,5 @@ export function printOrder(input: PrintOrderOptions): ResultAsync<void, Error> {
 }
 
 export async function testPrinter(): Promise<void> {
-  const { printerType, printerAddress } = useSettingsStore.getState();
-
-  if (printerType === "none" || !printerType) {
-    throw new Error("No hay impresora configurada.");
-  }
-
-  await invoke("test_printer", {
-    input: {
-      printerType,
-      printerAddress: printerAddress ?? "",
-    },
-  });
+  throw new Error("testPrinter is deprecated. Use testPrinter from @/modules/printer/adapters/test-printer.adapter instead.");
 }

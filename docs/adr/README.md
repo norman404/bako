@@ -10,6 +10,7 @@ Ver también: sección [Decisiones técnicas](../../AGENTS.md#decisiones-técnic
 | --- | --- | --- |
 | 0001 | [Precios en centavos enteros](./0001-prices-in-cents.md) | Accepted |
 | 0002 | [Traducir errores de dominio en el boundary de UI](./0002-domain-error-translation.md) | Accepted |
+| 0003 | [Renderizado bitmap para impresoras XPrinter](./0003-tspl-bitmap-raster-xprinter.md) | Accepted |
 
 ## Convenciones de formato
 

@@ -1,5 +1,5 @@
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug)]
 pub enum PrintError {
@@ -9,6 +9,7 @@ pub enum PrintError {
     UsbError(String),
     NetworkError(String),
     TicketGeneration(String),
+    LabelGeneration(String),
 }
 
 impl fmt::Display for PrintError {
@@ -19,6 +20,7 @@ impl fmt::Display for PrintError {
             PrintError::UsbError(msg) => write!(f, "USB printer error: {}", msg),
             PrintError::NetworkError(msg) => write!(f, "Network printer error: {}", msg),
             PrintError::TicketGeneration(msg) => write!(f, "Ticket generation error: {}", msg),
+            PrintError::LabelGeneration(msg) => write!(f, "Label generation error: {}", msg),
         }
     }
 }
