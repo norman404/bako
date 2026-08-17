@@ -23,7 +23,7 @@ function CheckoutModalFooterActions({
   const { t } = useTranslation('checkout');
   
   return (
-    <footer className="grid grid-cols-[1fr_1.45fr] gap-2.5 border-t border-border px-4 py-3 sm:px-5">
+    <footer className="shrink-0 grid grid-cols-[1fr_1.45fr] gap-2.5 border-t border-border px-4 py-3 sm:px-5">
       <Button
         type="button"
         variant="secondary"
