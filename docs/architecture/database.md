@@ -47,7 +47,6 @@ makes `withTransaction` safe to use at all.
 - `withTransaction(operation)` — runs `operation` inside `BEGIN`/`COMMIT`/`ROLLBACK`,
   itself wrapped in `runExclusive`. Used today by the data access in `checkout` and in
   `shift-reports`.
-- `schema` — re-exported from `src/db/schema.ts`.
 - `DatabaseClient` — the type of `db`, used to type transaction callbacks.
 
 ## Schema (`src/db/schema.ts`)
@@ -56,8 +55,12 @@ The tables, all declared with `sqliteTable(...)`:
 
 `menus`, `categories`, `products`, `productMenus`, `modifierGroups`, `modifierOptions`,
 `categoryModifierGroups`, `productModifierGroups`, `orderItemModifiers`,
-`deliveryPersons`, `customers`, `shifts`, `orders`, `payments`, `cashMovements`,
-`orderItems`, `printers`, `systemSettings`, `featureFlags`.
+`customers`, `shifts`, `orders`, `payments`, `cashMovements`, `orderItems`,
+`printers`, `systemSettings`, `featureFlags`.
+
+The historical `delivery_persons` table and `orders.delivery_person_id` column remain in
+existing databases because migration `0010_delivery_persons.sql` is immutable; they are
+not declared in the active TypeScript schema.
 
 Prices and money fields (`price`, `priceDelta`, `total`, `amount`, `unitPrice`,
 `openingCash`, `countedCash`, `cashDifference`) are `integer` columns — see

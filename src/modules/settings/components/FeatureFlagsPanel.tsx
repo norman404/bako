@@ -15,10 +15,6 @@ const MODULES: ModuleConfig[] = [
     flags: ["categories_enabled", "multiple_menus_enabled", "modifier_groups_enabled"],
   },
   {
-    id: "delivery",
-    flags: ["delivery_enabled"],
-  },
-  {
     id: "shift",
     flags: ["shift_management_enabled"],
   },

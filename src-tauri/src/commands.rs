@@ -117,46 +117,6 @@ pub fn print_command(input: PrintCommandInput) -> Result<(), String> {
     })
 }
 
-#[tauri::command]
-pub fn debug_tspl(input: PrintCommandInput) -> Result<String, String> {
-    let config = LabelConfig {
-        width_mm: input
-            .label_width_mm
-            .unwrap_or(crate::print::DEFAULT_LABEL_WIDTH_MM),
-        height_mm: input
-            .label_height_mm
-            .unwrap_or(crate::print::DEFAULT_LABEL_HEIGHT_MM),
-        gap_mm: input
-            .label_gap_mm
-            .unwrap_or(crate::print::DEFAULT_LABEL_GAP_MM),
-        label_language: input.label_language.clone(),
-    };
-
-    let debug_payload = crate::print::label::LabelPayload {
-        header_text: input.header_text,
-        items: input.items,
-        width_mm: Some(config.width_mm),
-        height_mm: Some(config.height_mm),
-        gap_mm: Some(config.gap_mm),
-    };
-
-    let lang = crate::print::label::LabelLanguage::from_str(
-        config.label_language.as_deref().unwrap_or("tspl"),
-    )
-    .unwrap_or(crate::print::label::LabelLanguage::Tspl);
-
-    let bytes =
-        crate::print::label::build_label_bytes(&debug_payload, lang).map_err(|e| e.to_string())?;
-
-    let tspl_text = String::from_utf8_lossy(&bytes).to_string();
-    log::debug!(
-        "[debug_tspl] generated label payload (lang={:?}):\n{}",
-        lang,
-        tspl_text
-    );
-    Ok(tspl_text)
-}
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TestPrinterInput {

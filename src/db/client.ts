@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/sqlite-proxy";
 
 import * as schema from "@/db/schema";
 
-export const DATABASE_URL = "sqlite:bako.db";
+const DATABASE_URL = "sqlite:bako.db";
 
 type SqlClient = Awaited<ReturnType<typeof Database.load>>;
 type SqliteMethod = "run" | "all" | "values" | "get";
@@ -98,5 +98,3 @@ export async function withTransaction<T>(operation: (tx: DatabaseClient) => Prom
     }
   });
 }
-
-export { schema };

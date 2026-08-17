@@ -179,7 +179,6 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(database_migrations::init())
-        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(
@@ -198,7 +197,6 @@ pub fn run() {
             commands::print_command,
             commands::test_printer,
             commands::list_usb_printers,
-            commands::debug_tspl,
             commands::validate_database,
             commands::get_database_info,
             commands::export_database,

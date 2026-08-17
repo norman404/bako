@@ -68,7 +68,6 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
       createdAt: orders.createdAt,
       total: orders.total,
       voidedAt: orders.voidedAt,
-      deliveryPersonId: orders.deliveryPersonId,
       customerId: customers.id,
       customerName: customers.name,
       customerPhone: customers.phone,
@@ -149,7 +148,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     total: orderRow.total,
     paymentMethod: orderRow.paymentMethod ?? "",
     paymentAmount: orderRow.paymentAmount ?? 0,
-    fulfillmentType: orderRow.deliveryPersonId ? "delivery" : "local",
+    fulfillmentType: orderRow.customerId ? "delivery" : "local",
     customer:
       orderRow.customerId && orderRow.customerName
         ? {

@@ -38,7 +38,6 @@ Verified against `src-tauri/src/commands.rs` (the shared Tauri command file — 
 | `print_command` | `print_command` | `checkout` — kitchen-command printing | Print a kitchen/bar command (ESC/POS receipt printer or TSPL label printer, dispatched by `printerType`) |
 | `test_printer` | `test_printer` | `printer` — test page for a printer being configured | Send a test page to a configured printer |
 | `list_usb_printers` | `list_usb_printers` | `printer` — USB discovery | Detect connected USB printers for the "add printer" flow |
-| `debug_tspl` | `debug_tspl` | none currently | Return the generated TSPL text for a payload without sending it to hardware — debug-only |
 
 They all take/return plain serializable structs (`Result<T, String>` on the Rust side); errors cross the IPC boundary as strings and are wrapped back into `Error`/`ResultAsync` on the TypeScript side (per ADR-0002, never surfaced to the UI as raw `error.message`).
 

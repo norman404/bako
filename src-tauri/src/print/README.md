@@ -93,7 +93,6 @@ Detecta impresoras USB conectadas filtrando por:
 | `print_command` | `print_command` | Imprime comanda de cocina (ESC/POS o TSPL) |
 | `test_printer` | `test_printer` | Envía página de prueba |
 | `list_usb_printers` | `list_usb_printers` | Lista impresoras USB detectadas |
-| `debug_tspl` | `debug_tspl` | Devuelve los bytes TSPL generados sin enviar a la impresora |
 
 ## Tests
 

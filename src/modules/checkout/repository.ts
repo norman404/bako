@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, like, lt, or } from "drizzle-orm";
+import { desc, eq, inArray, like, or } from "drizzle-orm";
 import { errAsync, ResultAsync } from "neverthrow";
 
 import { db, withTransaction, type DatabaseClient } from "@/db/client";
@@ -8,7 +8,6 @@ import {
   orderItemModifiers,
   orders,
   payments,
-  products,
   type CustomerInsert,
   type CustomerRow,
   type OrderInsert,
@@ -36,10 +35,6 @@ import {
   type CheckoutPaymentMethod,
   type CreateOrderInput,
 } from "./order";
-import {
-  type PosMetrics,
-  type PosMetricsTopProduct,
-} from "./metrics";
 import { CheckoutPersistenceError } from "./errors";
 
 export {
@@ -52,7 +47,6 @@ export {
   type CheckoutCustomer,
   type CheckoutOrder,
 } from "./order";
-export type { PosMetrics } from "./metrics";
 export { CheckoutPersistenceError } from "./errors";
 
 const CUSTOMER_LIST_LIMIT = {
@@ -74,26 +68,8 @@ interface NormalizedCreateOrderInput {
   fulfillmentType: CheckoutFulfillmentType;
   customerId: string | null;
   customer: CheckoutCustomerInput | null;
-  deliveryPersonId: string | null;
   shiftId: string | null;
   payment: NormalizedCheckoutPaymentInput;
-}
-
-interface TodayDateRange {
-  start: Date;
-  end: Date;
-}
-
-interface PosMetricOrderRow {
-  total: number;
-  paymentMethod: string | null;
-}
-
-interface PosMetricItemRow {
-  productId: string;
-  productName: string | null;
-  quantity: number;
-  unitPrice: number;
 }
 
 function formatUnknownError(cause: unknown): string {
@@ -199,10 +175,6 @@ function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPe
       return new CheckoutPersistenceError("localOrderCustomerForbidden");
     }
 
-    if (input.deliveryPersonId !== null) {
-      return new CheckoutPersistenceError("localOrderDeliveryPersonForbidden");
-    }
-
     return null;
   }
 
@@ -250,7 +222,6 @@ function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrd
       fulfillmentType,
       customerId: normalizedCustomerId.length > 0 ? normalizedCustomerId : null,
       customer: normalizedCustomer,
-      deliveryPersonId: input.deliveryPersonId?.trim() || null,
       shiftId: input.shiftId?.trim() || null,
       payment: {
         method: String(input.payment?.method ?? "")
@@ -319,7 +290,6 @@ function rowToCheckoutOrder(
       id: row.id,
       ticketNumber: row.ticketNumber,
       customerId: row.customerId,
-      deliveryPersonId: row.deliveryPersonId ?? null,
       shiftId: row.shiftId ?? null,
       total: row.total,
       createdAt: row.createdAt,
@@ -412,7 +382,6 @@ async function createOrderRow(
   tx: DatabaseClient,
   ticketNumber: number,
   customerId: string | null,
-  deliveryPersonId: string | null,
   shiftId: string | null,
   total: number,
   now: Date,
@@ -421,7 +390,6 @@ async function createOrderRow(
     id: crypto.randomUUID(),
     ticketNumber,
     customerId,
-    deliveryPersonId,
     shiftId,
     total,
     createdAt: now,
@@ -527,111 +495,6 @@ async function createOrderItemModifiers(
   await tx.insert(orderItemModifiers).values(modifierValues);
 }
 
-function getTodayDateRange(referenceDate: Date = new Date()): TodayDateRange {
-  const start = new Date(referenceDate);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(start);
-  end.setDate(end.getDate() + 1);
-
-  return { start, end };
-}
-
-async function listPosMetricOrderRows(start: Date, end: Date): Promise<PosMetricOrderRow[]> {
-  return db
-    .select({
-      total: orders.total,
-      paymentMethod: payments.method,
-    })
-    .from(orders)
-    .leftJoin(payments, eq(payments.orderId, orders.id))
-    .where(and(gte(orders.createdAt, start), lt(orders.createdAt, end)));
-}
-
-async function listPosMetricItemRows(start: Date, end: Date): Promise<PosMetricItemRow[]> {
-  return db
-    .select({
-      productId: orderItems.productId,
-      productName: products.name,
-      quantity: orderItems.quantity,
-      unitPrice: orderItems.unitPrice,
-    })
-    .from(orderItems)
-    .innerJoin(orders, eq(orderItems.orderId, orders.id))
-    .leftJoin(products, eq(orderItems.productId, products.id))
-    .where(and(gte(orders.createdAt, start), lt(orders.createdAt, end)));
-}
-
-function buildPosMetrics(orderRows: PosMetricOrderRow[], itemRows: PosMetricItemRow[]): PosMetrics {
-  const sales = orderRows.reduce((total, row) => total + row.total, 0);
-  const tickets = orderRows.length;
-  const averageTicket = tickets === 0 ? 0 : Math.round(sales / tickets);
-
-  let cashSales = 0;
-  let cardSales = 0;
-
-  for (const row of orderRows) {
-    const paymentMethod = row.paymentMethod?.trim().toLowerCase() ?? "";
-    if (!isCheckoutPaymentMethod(paymentMethod)) {
-      continue;
-    }
-
-    if (paymentMethod === CHECKOUT_PAYMENT_METHOD.CASH) {
-      cashSales += row.total;
-      continue;
-    }
-
-    if (paymentMethod === CHECKOUT_PAYMENT_METHOD.CARD) {
-      cardSales += row.total;
-    }
-  }
-
-  let itemsSold = 0;
-  const topProductById = new Map<string, PosMetricsTopProduct>();
-
-  for (const row of itemRows) {
-    itemsSold += row.quantity;
-
-    const currentProduct = topProductById.get(row.productId);
-    const productSales = row.quantity * row.unitPrice;
-
-    if (currentProduct) {
-      currentProduct.quantitySold += row.quantity;
-      currentProduct.sales += productSales;
-      continue;
-    }
-
-    topProductById.set(row.productId, {
-      productId: row.productId,
-      productName: row.productName ?? "Producto",
-      quantitySold: row.quantity,
-      sales: productSales,
-    });
-  }
-
-  const topProducts = [...topProductById.values()]
-    .sort(
-      (left, right) =>
-        right.quantitySold - left.quantitySold ||
-        right.sales - left.sales ||
-        left.productName.localeCompare(right.productName, "es-MX"),
-    )
-    .slice(0, 3);
-
-  return {
-    sales,
-    tickets,
-    averageTicket,
-    itemsSold,
-    paymentBreakdown: {
-      cashSales,
-      cardSales,
-    },
-    topProducts,
-    updatedAt: new Date(),
-  };
-}
-
 async function loadOrderItemModifierRows(
   tx: DatabaseClient,
   orderItemRows: OrderItemRow[],
@@ -658,21 +521,6 @@ async function loadOrderItemModifierRows(
 }
 
 export const orderDrizzleRepository = {
-  getTodayMetrics(): ResultAsync<PosMetrics, CheckoutPersistenceError> {
-    return ResultAsync.fromPromise(
-      (async () => {
-        const todayDateRange = getTodayDateRange();
-        const [orderRows, itemRows] = await Promise.all([
-          listPosMetricOrderRows(todayDateRange.start, todayDateRange.end),
-          listPosMetricItemRows(todayDateRange.start, todayDateRange.end),
-        ]);
-
-        return buildPosMetrics(orderRows, itemRows);
-      })(),
-      wrapPersistenceError("Failed to load POS metrics"),
-    );
-  },
-
   listCustomers(search?: string): ResultAsync<CheckoutCustomer[], CheckoutPersistenceError> {
     const normalizedSearch = search?.trim() ?? "";
 
@@ -704,7 +552,7 @@ export const orderDrizzleRepository = {
           : normalizedInput.customer
             ? await createCustomerRow(tx, normalizedInput.customer, now)
             : null;
-        const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, normalizedInput.deliveryPersonId, normalizedInput.shiftId, total, now);
+        const orderRow = await createOrderRow(tx, ticketNumber, customerRow?.id ?? null, normalizedInput.shiftId, total, now);
         const paymentRow = await createPaymentRow(tx, orderRow.id, payment, now);
         const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
         await createOrderItemModifiers(tx, orderItemRows, normalizedInput.items, now);

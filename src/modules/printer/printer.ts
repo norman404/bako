@@ -63,11 +63,3 @@ export interface PrinterCreateInput {
 }
 
 export type PrinterUpdateInput = PrinterCreateInput;
-
-export function isLabelLanguage(value: string): value is LabelLanguage {
-  return Object.values(PRINTER_LABEL_LANGUAGE).includes(value as LabelLanguage);
-}
-
-export function isPrinterOrientation(value: string): value is PrinterOrientation {
-  return Object.values(PRINTER_ORIENTATION).includes(value as PrinterOrientation);
-}

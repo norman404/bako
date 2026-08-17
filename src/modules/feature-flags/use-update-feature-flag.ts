@@ -1,9 +1,8 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { FeatureFlagKey } from "./feature-flag";
 import { updateFeatureFlag } from "./update-feature-flag";
 import { featureFlagDrizzleRepository } from "./repository";
 import { useFeatureFlagsStore } from "./feature-flags-store";
-import { FEATURE_FLAGS_QUERY_KEY } from "./use-feature-flags";
 
 interface UpdateFeatureFlagInput {
   key: FeatureFlagKey;
@@ -11,8 +10,6 @@ interface UpdateFeatureFlagInput {
 }
 
 export function useUpdateFeatureFlag() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ key, value }: UpdateFeatureFlagInput) => {
       // Optimistic update in Zustand store for immediate UI reaction
@@ -26,9 +23,6 @@ export function useUpdateFeatureFlag() {
         throw result.error;
       }
       return result.value;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: FEATURE_FLAGS_QUERY_KEY });
     },
   });
 }

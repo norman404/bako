@@ -42,7 +42,7 @@ The shape is in [`BAKO.md` § Module system](../../BAKO.md#module-system), and t
 
 ## 3. The barrel rule
 
-The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All ten modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to the manifest exception below. There is no second form, and a new one is a review failure, not a precedent.
+The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All nine modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to the manifest exception below. There is no second form, and a new one is a review failure, not a precedent.
 
 This guide documents the single exception to the rule, bounded by call site: `manifest.ts` (§5).
 
@@ -95,7 +95,7 @@ Anything else that reaches past an `index.ts` is a violation. Adding another exc
 
 ### `manifest.ts`
 
-The `manifest.ts` files (`menu`, `checkout`, `delivery`, `printer`, `shift-reports`, `updater`) are imported by deep path from `src/app/module-registry.ts` — e.g. `@/modules/delivery/manifest` — never through a barrel. If the barrel is the only boundary (§3), this is a real exception, not an oversight to silently allow.
+The `manifest.ts` files (`menu`, `checkout`, `printer`, `shift-reports`, `updater`) are imported by deep path from `src/app/module-registry.ts` — e.g. `@/modules/printer/manifest` — never through a barrel. If the barrel is the only boundary (§3), this is a real exception, not an oversight to silently allow.
 
 **Decision: `manifest.ts` is a documented exception to the barrel rule, not something to re-export from `index.ts`.** It may be deep-imported as `@/modules/<module>/manifest`, and exclusively from `src/app/module-registry.ts` — the one composition root responsible for wiring modules into the Settings registry. No other file gets a pass to import a module's `manifest.ts` by path.
 
@@ -135,7 +135,7 @@ A module migrates only when real work already touches it — never as a standalo
 
 5. **Verify.** Run the relevant focused checks, then the full gate in [`BAKO.md` § Verify before claiming done](../../BAKO.md#verify-before-claiming-done). If the change alters behavior, document it as a behavior change rather than calling it purely structural.
 
-`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all ten modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or the exception in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
+`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all nine modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or the exception in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
 
 ### The trap the migration hit
 

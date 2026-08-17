@@ -148,20 +148,6 @@ export const orderItemModifiers = sqliteTable(
   (table) => [index("idx_order_item_modifiers_order_item_id").on(table.orderItemId)],
 );
 
-export const deliveryPersons = sqliteTable(
-  "delivery_persons",
-  {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    color: text("color").notNull(),
-    phone: text("phone"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
-    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
-  },
-  (table) => [index("idx_delivery_persons_deleted_at").on(table.deletedAt)],
-);
-
 export const customers = sqliteTable(
   "customers",
   {
@@ -198,7 +184,6 @@ export const orders = sqliteTable(
     id: text("id").primaryKey(),
     ticketNumber: integer("ticket_number").notNull(),
     customerId: text("customer_id").references(() => customers.id),
-    deliveryPersonId: text("delivery_person_id").references(() => deliveryPersons.id),
     shiftId: text("shift_id"),
     total: integer("total").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
@@ -207,7 +192,6 @@ export const orders = sqliteTable(
   (table) => [
     uniqueIndex("idx_orders_ticket_number").on(table.ticketNumber),
     index("idx_orders_customer_id").on(table.customerId),
-    index("idx_orders_delivery_person_id").on(table.deliveryPersonId),
     index("idx_orders_shift_id").on(table.shiftId),
     index("idx_orders_created_at").on(table.createdAt),
   ],
@@ -303,42 +287,23 @@ export const featureFlags = sqliteTable("feature_flags", {
 
 export type MenuRow = typeof menus.$inferSelect;
 export type CategoryRow = typeof categories.$inferSelect;
-export type DeliveryPersonRow = typeof deliveryPersons.$inferSelect;
 export type ProductRow = typeof products.$inferSelect;
-export type ProductMenuRow = typeof productMenus.$inferSelect;
 export type CustomerRow = typeof customers.$inferSelect;
 export type OrderRow = typeof orders.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
 export type OrderItemRow = typeof orderItems.$inferSelect;
 export type PrinterRow = typeof printers.$inferSelect;
-export type SystemSettingsRow = typeof systemSettings.$inferSelect;
 export type FeatureFlagRow = typeof featureFlags.$inferSelect;
 export type ModifierGroupRow = typeof modifierGroups.$inferSelect;
 export type ModifierOptionRow = typeof modifierOptions.$inferSelect;
-export type CategoryModifierGroupRow = typeof categoryModifierGroups.$inferSelect;
-export type ProductModifierGroupRow = typeof productModifierGroups.$inferSelect;
 export type OrderItemModifierRow = typeof orderItemModifiers.$inferSelect;
 
-export type MenuInsert = typeof menus.$inferInsert;
-export type CategoryInsert = typeof categories.$inferInsert;
-export type DeliveryPersonInsert = typeof deliveryPersons.$inferInsert;
-export type ProductInsert = typeof products.$inferInsert;
-export type ProductMenuInsert = typeof productMenus.$inferInsert;
 export type CustomerInsert = typeof customers.$inferInsert;
 export type OrderInsert = typeof orders.$inferInsert;
 export type PaymentInsert = typeof payments.$inferInsert;
 export type OrderItemInsert = typeof orderItems.$inferInsert;
-export type PrinterInsert = typeof printers.$inferInsert;
-export type SystemSettingsInsert = typeof systemSettings.$inferInsert;
-export type FeatureFlagInsert = typeof featureFlags.$inferInsert;
-export type ShiftRow = typeof shifts.$inferSelect;
-export type ShiftInsert = typeof shifts.$inferInsert;
-export type CashMovementRow = typeof cashMovements.$inferSelect;
-export type CashMovementInsert = typeof cashMovements.$inferInsert;
-export type ModifierGroupInsert = typeof modifierGroups.$inferInsert;
-export type ModifierOptionInsert = typeof modifierOptions.$inferInsert;
-export type CategoryModifierGroupInsert = typeof categoryModifierGroups.$inferInsert;
-export type ProductModifierGroupInsert = typeof productModifierGroups.$inferInsert;
 export type OrderItemModifierInsert = typeof orderItemModifiers.$inferInsert;
+export type ShiftRow = typeof shifts.$inferSelect;
+export type CashMovementRow = typeof cashMovements.$inferSelect;
 
 

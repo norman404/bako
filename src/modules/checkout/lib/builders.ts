@@ -126,7 +126,6 @@ export function buildCreateOrderInput(
   paymentMethod: CheckoutPaymentMethod,
   cashAmountInput: string,
   total: number,
-  deliveryPersonId: string | null = null,
 ): CreateOrderInput | null {
   if (items.length === 0) {
     return null;
@@ -152,7 +151,6 @@ export function buildCreateOrderInput(
       items: normalizedItems,
       fulfillmentType,
       customerId: selectedCustomerId,
-      deliveryPersonId: deliveryPersonId ?? null,
       payment,
     };
   }
@@ -166,7 +164,6 @@ export function buildCreateOrderInput(
     items: normalizedItems,
     fulfillmentType,
     customer,
-    deliveryPersonId: deliveryPersonId ?? null,
     payment,
   };
 }

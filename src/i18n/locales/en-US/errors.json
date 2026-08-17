@@ -2,9 +2,7 @@
   "menu": {
     "productNotFound": "Product not found: {{productId}}",
     "categoryNotFound": "Category not found: {{categoryId}}",
-    "menuNotFound": "Menu not found: {{menuId}}",
     "modifierGroupNotFound": "Modifier group not found: {{groupId}}",
-    "modifierOptionNotFound": "Modifier option not found: {{optionId}}",
     "generic": "An unexpected error occurred"
   },
   "printer": {

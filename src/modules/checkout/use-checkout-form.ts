@@ -109,7 +109,6 @@ export function useCheckoutForm({
     buildEmptyCustomerFormState(),
   );
   const [formError, setFormError] = useState<string | null>(null);
-  const [deliveryPersonId, setDeliveryPersonId] = useState<string | null>(null);
 
   const isDelivery = fulfillmentType === CHECKOUT_FULFILLMENT_TYPE.DELIVERY;
   const isSearchCustomerMode = customerMode === CHECKOUT_CUSTOMER_ENTRY_MODE.SEARCH;
@@ -141,17 +140,9 @@ export function useCheckoutForm({
     onClose();
   };
 
-  const handleDeliveryPersonChange = (id: string | null) => {
-    setDeliveryPersonId(id);
-    setFormError(null);
-  };
-
   const handleFulfillmentChange = (nextType: CheckoutFulfillmentType) => {
     setFulfillmentType(nextType);
     setFormError(null);
-    if (nextType === CHECKOUT_FULFILLMENT_TYPE.LOCAL) {
-      setDeliveryPersonId(null);
-    }
   };
 
   const handlePaymentMethodChange = (nextMethod: CheckoutPaymentMethod) => {
@@ -220,7 +211,6 @@ export function useCheckoutForm({
       paymentMethod,
       cashAmountInput,
       normalizedTotals.total,
-      deliveryPersonId,
     );
     if (!payload) {
       setFormError(
@@ -251,7 +241,6 @@ export function useCheckoutForm({
     selectedCustomerId,
     customerForm,
     formError,
-    deliveryPersonId,
     isDelivery,
     isSearchCustomerMode,
     isNewCustomerMode,
@@ -267,7 +256,6 @@ export function useCheckoutForm({
     customerSectionLabel,
     handleCloseRequest,
     handleFulfillmentChange,
-    handleDeliveryPersonChange,
     handlePaymentMethodChange,
     handleSelectCustomer,
     handleShowSearchCustomers,

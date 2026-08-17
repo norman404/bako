@@ -1,1 +1,0 @@
-export { DeliveryPersonSelect } from "./DeliveryPersonSelect";

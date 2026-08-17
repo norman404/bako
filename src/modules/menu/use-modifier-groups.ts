@@ -14,7 +14,6 @@ import { listCategoryAssignments } from "./list-category-assignments";
 import { listModifierGroups } from "./list-modifier-groups";
 import { listProductAssignments } from "./list-product-assignments";
 import { listProductModifierGroupsBatch } from "./list-product-modifier-groups-batch";
-import { listProductModifiers } from "./list-product-modifiers";
 import { unassignModifierGroup } from "./unassign-modifier-group";
 import { updateModifierGroup } from "./update-modifier-group";
 
@@ -32,32 +31,6 @@ export function useModifierGroups() {
       return result.value;
     },
   });
-}
-
-export function useProductModifierGroups(productId: string | undefined, categoryId: string | undefined) {
-  return useQuery({
-    queryKey: [...MENU_MODIFIER_GROUPS_QUERY_KEY, "product", productId ?? "unknown"],
-    queryFn: async () => {
-      if (!productId || !categoryId) {
-        return [];
-      }
-      const result = await listProductModifiers(
-        modifierGroupDrizzleRepository,
-        categoryId,
-        productId,
-      );
-      if (result.isErr()) {
-        throw result.error;
-      }
-      return result.value;
-    },
-    enabled: Boolean(productId && categoryId),
-  });
-}
-
-export interface ProductModifierGroupsMapResult {
-  map: Record<string, ModifierGroup[]>;
-  isLoading: boolean;
 }
 
 /**

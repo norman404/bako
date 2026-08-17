@@ -12,7 +12,6 @@ export type CheckoutErrorCode =
   | "orderItemUnitPriceInvalid"
   | "customerIdAndCustomerConflict"
   | "localOrderCustomerForbidden"
-  | "localOrderDeliveryPersonForbidden"
   | "deliveryOrderCustomerRequired"
   | "customerNotFound"
   | "dbError";

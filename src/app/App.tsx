@@ -13,7 +13,6 @@ import {
   usePrintCommands,
   type CreateOrderInput,
 } from "@/modules/checkout";
-import { DeliveryPersonSelect } from "@/modules/delivery";
 import { usePrinters } from "@/modules/printer";
 import { PRINTER_ROLE } from "@/modules/printer";
 import {
@@ -50,7 +49,6 @@ export function App() {
   const { flags } = useFeatureFlagsStore();
   const categoriesEnabled = flags.categories_enabled ?? false;
   const multipleMenusEnabled = flags.multiple_menus_enabled ?? false;
-  const deliveryEnabled = flags.delivery_enabled ?? false;
   const shiftManagementEnabled = flags.shift_management_enabled ?? false;
   const comandasEnabled = flags.comandas_enabled ?? false;
   const receiptPrintingEnabled = flags.receipt_printing_enabled ?? true;
@@ -478,13 +476,6 @@ export function App() {
         isSubmitting={createOrderMutation.isPending}
         onClose={closeCheckoutModal}
         onConfirmCheckout={handleConfirmCheckout}
-        renderDeliveryPersonSelect={
-          deliveryEnabled
-            ? ({ value, onChange }) => (
-                <DeliveryPersonSelect value={value} onChange={onChange} />
-              )
-            : undefined
-        }
       />
 
       {isSettingsOpen ? (

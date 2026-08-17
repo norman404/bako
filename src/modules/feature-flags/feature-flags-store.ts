@@ -7,7 +7,6 @@ import { featureFlagDrizzleRepository } from "./repository";
 const DEFAULT_FLAGS: Record<string, boolean> = {
   categories_enabled: false,
   multiple_menus_enabled: false,
-  delivery_enabled: false,
   shift_management_enabled: false,
   auto_update_enabled: true,
   modifier_groups_enabled: false,

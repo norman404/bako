@@ -71,7 +71,3 @@ export function printOrder(
     return new Error(String(error));
   });
 }
-
-export async function testPrinter(): Promise<void> {
-  throw new Error("testPrinter is deprecated. Use testPrinter from the printer module (src/modules/printer/test-printer.adapter) instead.");
-}

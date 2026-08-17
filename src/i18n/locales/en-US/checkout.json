@@ -71,7 +71,6 @@
     "orderItemUnitPriceInvalid": "Unit price must be a non-negative integer.",
     "customerIdAndCustomerConflict": "Select a saved customer or enter a new one, not both.",
     "localOrderCustomerForbidden": "In-store orders cannot include delivery customer data.",
-    "localOrderDeliveryPersonForbidden": "In-store orders cannot have a delivery person.",
     "deliveryOrderCustomerRequired": "Delivery orders require a customer.",
     "customerNotFound": "We couldn't find that customer. Try searching again.",
     "dbError": "We couldn't process the checkout. Please try again.",

@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -18,10 +17,6 @@ interface CheckoutModalProps {
   isSubmitting?: boolean;
   onClose: () => void;
   onConfirmCheckout: (input: CreateOrderInput) => Promise<void>;
-  renderDeliveryPersonSelect?: (props: {
-    value: string | null;
-    onChange: (id: string | null) => void;
-  }) => ReactNode;
 }
 
 function CheckoutModal({
@@ -30,7 +25,6 @@ function CheckoutModal({
   isSubmitting = false,
   onClose,
   onConfirmCheckout,
-  renderDeliveryPersonSelect,
 }: CheckoutModalProps) {
   const { t } = useTranslation('checkout');
   const totals = calculateCartTotals(items);
@@ -42,7 +36,6 @@ function CheckoutModal({
     selectedCustomerId,
     customerForm,
     formError,
-    deliveryPersonId,
     isDelivery,
     isSearchCustomerMode,
     isNewCustomerMode,
@@ -57,7 +50,6 @@ function CheckoutModal({
     customerSectionLabel,
     handleCloseRequest,
     handleFulfillmentChange,
-    handleDeliveryPersonChange,
     handlePaymentMethodChange,
     handleSelectCustomer,
     handleShowSearchCustomers,
@@ -145,9 +137,6 @@ function CheckoutModal({
                 customerForm={customerForm}
                 onCustomerFieldChange={handleCustomerFieldChange}
                 formError={formError}
-                renderDeliveryPersonSelect={renderDeliveryPersonSelect}
-                deliveryPersonId={deliveryPersonId}
-                onDeliveryPersonChange={handleDeliveryPersonChange}
               />
             </div>
 

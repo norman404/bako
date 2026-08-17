@@ -1,6 +1,6 @@
 # BAKO.md
 
-This document is Bako's living architecture guide and the single source of truth for architectural decisions. It is stated in the present tense because the code matches it: all ten modules are in the flat shape described below, and every rule here is enforceable against the tree as it stands.
+This document is Bako's living architecture guide and the single source of truth for architectural decisions. It is stated in the present tense because the code matches it: all nine modules are in the flat shape described below, and every rule here is enforceable against the tree as it stands.
 
 ## Product
 
@@ -68,7 +68,6 @@ The webview never touches SQLite, the filesystem, or printer hardware directly �
 | -------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `print_ticket`             | Print a sale receipt (ESC/POS).                                                                         |
 | `print_command`            | Print a kitchen ticket — ESC/POS or a TSPL label, depending on the target printer.                      |
-| `debug_tspl`               | Return the generated TSPL bytes without sending them to hardware.                                       |
 | `test_printer`             | Send a test page to a configured printer.                                                               |
 | `list_usb_printers`        | Enumerate connected USB printers by device class/VID.                                                   |
 | `validate_database`        | Check a candidate backup file's integrity and migration compatibility before restore.                   |
@@ -152,7 +151,7 @@ Full conventions are in [`docs/contributing/testing.md`](docs/contributing/testi
 
 ## Migration strategy
 
-The migration to this structure is complete — all ten modules are flat, no layer folders remain under `src/modules/`, and `src/shared/` is deleted. The rules below are what keeps it that way; they govern every future change, not a one-time move.
+The migration to this structure is complete — all nine modules are flat, no layer folders remain under `src/modules/`, and `src/shared/` is deleted. The rules below are what keeps it that way; they govern every future change, not a one-time move.
 
 1. New features use the flat module structure from day one. A module is never born with layer folders "to be flattened later".
 2. Existing modules are simplified when meaningful work already touches them — not as a standalone refactor. Restructuring without a reason is churn with a rollback risk.

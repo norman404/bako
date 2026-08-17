@@ -36,7 +36,7 @@ The project is moving toward a flat, feature-oriented module architecture intern
 | Frontend | React 19, TypeScript, Vite 7 |
 | UI | Tailwind CSS 4, Radix UI, local components |
 | State & data | TanStack Query, Zustand, neverthrow |
-| Time & utilities | dayjs, lucide-react, clsx, tailwind-merge |
+| Time & utilities | lucide-react, clsx, tailwind-merge |
 | Desktop | Tauri 2 |
 | Local database | SQLite via `@tauri-apps/plugin-sql` |
 | ORM | Drizzle ORM + drizzle-kit |

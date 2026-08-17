@@ -7,9 +7,7 @@ import esMxSettings from './locales/es-MX/settings.json';
 import esMxMenu from './locales/es-MX/menu.json';
 import esMxCheckout from './locales/es-MX/checkout.json';
 import esMxOrder from './locales/es-MX/order.json';
-import esMxTurno from './locales/es-MX/turno.json';
 import esMxShift from './locales/es-MX/shift.json';
-import esMxDelivery from './locales/es-MX/delivery.json';
 import esMxUpdater from './locales/es-MX/updater.json';
 import esMxErrors from './locales/es-MX/errors.json';
 
@@ -20,9 +18,7 @@ import enUsSettings from './locales/en-US/settings.json';
 import enUsMenu from './locales/en-US/menu.json';
 import enUsCheckout from './locales/en-US/checkout.json';
 import enUsOrder from './locales/en-US/order.json';
-import enUsTurno from './locales/en-US/turno.json';
 import enUsShift from './locales/en-US/shift.json';
-import enUsDelivery from './locales/en-US/delivery.json';
 import enUsUpdater from './locales/en-US/updater.json';
 import enUsErrors from './locales/en-US/errors.json';
 
@@ -34,9 +30,7 @@ export const resources: Resource = {
     menu: esMxMenu,
     checkout: esMxCheckout,
     order: esMxOrder,
-    turno: esMxTurno,
     shift: esMxShift,
-    delivery: esMxDelivery,
     updater: esMxUpdater,
     errors: esMxErrors,
   },
@@ -47,9 +41,7 @@ export const resources: Resource = {
     menu: enUsMenu,
     checkout: enUsCheckout,
     order: enUsOrder,
-    turno: enUsTurno,
     shift: enUsShift,
-    delivery: enUsDelivery,
     updater: enUsUpdater,
     errors: enUsErrors,
   }

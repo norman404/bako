@@ -71,7 +71,6 @@
     "orderItemUnitPriceInvalid": "El precio unitario debe ser un entero no negativo.",
     "customerIdAndCustomerConflict": "Elegí un cliente guardado o cargá uno nuevo, no ambos.",
     "localOrderCustomerForbidden": "Los pedidos locales no pueden incluir datos de cliente de delivery.",
-    "localOrderDeliveryPersonForbidden": "Los pedidos locales no pueden tener repartidor.",
     "deliveryOrderCustomerRequired": "Los pedidos de delivery requieren un cliente.",
     "customerNotFound": "No encontramos ese cliente. Probá buscarlo de nuevo.",
     "dbError": "No pudimos procesar el cobro. Intentá de nuevo.",

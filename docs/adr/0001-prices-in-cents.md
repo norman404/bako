@@ -21,7 +21,7 @@ Esto aplica a:
 
 - `Product.price`
 - `ModifierOption.priceDelta`
-- `SelectedModifier.priceDelta` / `CartItemModifier.priceDelta`
+- `SelectedModifier.priceDelta`
 - Cualquier otro campo de precio que aparezca en el dominio
 
 Los inputs de UI deben mostrar **unidades monetarias** al usuario (`15`, `15.50`, `15,50`) y **parsear a centavos** antes de persistir. Al mostrar un valor guardado, se debe formatear de centavos a unidades monetarias.

@@ -34,15 +34,6 @@ export interface SelectedModifier {
   textValue: string | null;
 }
 
-export interface CartItemModifier {
-  groupId: string;
-  groupName: string;
-  optionId: string | null;
-  optionName: string | null;
-  priceDelta: number;
-  textValue: string | null;
-}
-
 export function resolveProductModifierGroups(
   categoryGroups: ModifierGroup[],
   productGroups: ModifierGroup[],
