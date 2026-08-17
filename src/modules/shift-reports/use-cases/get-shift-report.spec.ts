@@ -3,6 +3,7 @@ import { okAsync, errAsync } from "neverthrow";
 import { getShiftReport } from "./get-shift-report";
 import type { ShiftRepository } from "../domain/ports";
 import type { Shift, ShiftReport, ShiftReportOrder } from "../domain/shift";
+import type { OrderDetail } from "../domain/order-management";
 import { ShiftPersistenceError } from "../domain/errors";
 
 function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
@@ -12,6 +13,13 @@ function buildRepo(overrides: Partial<ShiftRepository> = {}): ShiftRepository {
     getActive: mock(() => okAsync(null)),
     listHistory: mock(() => okAsync([])),
     getReport: mock(() => okAsync({} as any)),
+    getOrderDetail: mock(() => okAsync({} as OrderDetail)),
+    voidOrder: mock(() => okAsync(undefined)),
+    updateOrder: mock(() => okAsync({} as OrderDetail)),
+    addCashMovement: mock(() => okAsync({} as any)),
+    updateCashMovement: mock(() => okAsync({} as any)),
+    deleteCashMovement: mock(() => okAsync(undefined)),
+    listCashMovements: mock(() => okAsync([])),
     ...overrides,
   };
 }
@@ -33,6 +41,7 @@ describe("getShiftReport use-case", () => {
           unitPrice: 2500,
         },
       ],
+      isVoided: false,
     };
     const report: ShiftReport = {
       shiftId: "shift-1",
@@ -44,6 +53,13 @@ describe("getShiftReport use-case", () => {
       cashTotal: 3000,
       cardTotal: 2000,
       orders: [order],
+      openingCash: 10000,
+      cashMovementsIn: 0,
+      cashMovementsOut: 0,
+      expectedCash: 13000,
+      countedCash: null,
+      cashDifference: null,
+      cashMovements: [],
     };
     const repo = buildRepo({
       getReport: mock(() => okAsync(report)),

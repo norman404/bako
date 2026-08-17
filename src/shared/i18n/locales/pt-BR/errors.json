@@ -13,6 +13,8 @@
     "printerAddressRequired": "O endereço da impressora é obrigatório.",
     "printerTypeInvalid": "Tipo de impressora inválido: {{type}}.",
     "printerRoleInvalid": "Função de impressora inválida: {{role}}.",
+    "printerLabelLanguageInvalid": "Linguagem de etiqueta inválida: {{labelLanguage}}.",
+    "printerDefaultRoleInvalid": "Apenas impressoras com função 'Caixa (recibo)' podem ser definidas como padrão.",
     "dbError": "Não foi possível carregar as impressoras. Tente novamente.",
     "generic": "Ocorreu um erro com as impressoras."
   }

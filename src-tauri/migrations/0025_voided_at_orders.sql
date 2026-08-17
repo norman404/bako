@@ -1,0 +1,1 @@
+ALTER TABLE orders ADD COLUMN voided_at INTEGER;

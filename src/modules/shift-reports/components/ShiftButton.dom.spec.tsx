@@ -63,7 +63,7 @@ describe("ShiftButton", () => {
 
   it("renders close shift button when active shift exists", async () => {
     (shiftHooks.useActiveShift as any).mockReturnValue({
-      data: { id: "shift-1", openedAt: new Date(), closedAt: null, status: "active" },
+      data: { id: "shift-1", openedAt: new Date(), closedAt: null, status: "active", openingCash: 0, countedCash: null, cashDifference: null },
       isLoading: false,
     });
     (shiftHooks.useOpenShift as any).mockReturnValue({ mutate: mockOpenShift, isPending: false });
@@ -76,7 +76,7 @@ describe("ShiftButton", () => {
     });
   });
 
-  it("opens shift when clicked", async () => {
+  it("opens OpenShiftDialog when clicked with no active shift", async () => {
     (shiftHooks.useActiveShift as any).mockReturnValue({ data: null, isLoading: false });
     (shiftHooks.useOpenShift as any).mockReturnValue({ mutate: mockOpenShift, isPending: false });
     (shiftHooks.useCloseShift as any).mockReturnValue({ mutate: mockCloseShift, isPending: false });
@@ -87,13 +87,13 @@ describe("ShiftButton", () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(mockOpenShift).toHaveBeenCalledTimes(1);
+      expect(screen.getByLabelText(/efectivo inicial/i)).toBeInTheDocument();
     });
   });
 
-  it("shows confirm dialog when closing", async () => {
+  it("opens CloseShiftDialog when clicked with active shift", async () => {
     (shiftHooks.useActiveShift as any).mockReturnValue({
-      data: { id: "shift-1", openedAt: new Date(), closedAt: null, status: "active" },
+      data: { id: "shift-1", openedAt: new Date(), closedAt: null, status: "active", openingCash: 0, countedCash: null, cashDifference: null },
       isLoading: false,
     });
     (shiftHooks.useOpenShift as any).mockReturnValue({ mutate: mockOpenShift, isPending: false });
@@ -104,10 +104,8 @@ describe("ShiftButton", () => {
     const button = await screen.findByRole("button", { name: /cerrar turno/i });
     fireEvent.click(button);
 
-    // Dialog opens — verify by checking for action buttons in the dialog
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /cancelar/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /cerrar turno/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/efectivo contado/i)).toBeInTheDocument();
     });
   });
 });

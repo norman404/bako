@@ -13,6 +13,11 @@ export interface PrintCommandItem {
 export interface PrintCommandDestination {
   printerType: string;
   printerAddress: string;
+  labelWidthMm?: number;
+  labelHeightMm?: number;
+  labelGapMm?: number;
+  labelLanguage?: string;
+  labelOrientation?: string;
 }
 
 export interface PrintCommandOptions {

@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/sqlite-proxy";
 
 import * as schema from "@/shared/db/schema";
 
-const DB_URL = "sqlite:bako.db";
+export const DATABASE_URL = "sqlite:bako.db";
 
 type SqlClient = Awaited<ReturnType<typeof Database.load>>;
 type SqliteMethod = "run" | "all" | "values" | "get";
@@ -17,7 +17,7 @@ let databaseQueue: Promise<void> = Promise.resolve();
 
 async function getSqlClient(): Promise<SqlClient> {
   if (!sqlClient) {
-    sqlClient = await Database.load(DB_URL);
+    sqlClient = await Database.load(DATABASE_URL);
   }
 
   return sqlClient;
@@ -61,6 +61,15 @@ function createDatabase(execute: SqlExecutor) {
 
 export async function initDatabase(): Promise<void> {
   await getSqlClient();
+}
+
+export async function closeDatabase(): Promise<void> {
+  await runExclusive(async () => {
+    if (!sqlClient) return;
+
+    await sqlClient.close(DATABASE_URL);
+    sqlClient = null;
+  });
 }
 
 export const db = createDatabase(async (sql, params, method) =>

@@ -1,6 +1,8 @@
-use serde::Serialize;
+#[cfg(not(target_os = "windows"))]
 use nusb::list_devices;
+#[cfg(not(target_os = "windows"))]
 use nusb::MaybeFuture;
+use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct UsbPrinterInfo {
@@ -104,6 +106,7 @@ fn is_likely_printer(dev: &nusb::DeviceInfo) -> bool {
         0x0416, // Winchiphead
         0x0483, // STMicroelectronics
         0x1A86, // QinHeng (CH340/CH341)
+        0x09C6, // BEEPRT (BY-480/BY-480BT label printers)
     ];
 
     KNOWN_POS_VIDS.contains(&dev.vendor_id())

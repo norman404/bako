@@ -108,7 +108,6 @@ describe("SettingsModal (settings feature)", () => {
 
     // General tabs in sidebar
     expect(screen.getByRole("tab", { name: /general/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /impresora/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /características/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /actualizaciones/i })).toBeInTheDocument();
 
@@ -193,20 +192,4 @@ describe("SettingsModal (settings feature)", () => {
     expect(screen.getByRole("tab", { name: /actualizaciones/i })).toBeInTheDocument();
   });
 
-  it("should render the printer tab as a separate tab", () => {
-    // CASE: operator opens settings — printer should be its own tab.
-    // VALIDATES: the printer tab exists and is separate from general.
-
-    renderSettingsModal();
-
-    const printerTab = screen.getByRole("tab", { name: /impresora/i });
-    expect(printerTab).toBeInTheDocument();
-
-    // Switch to printer tab
-    fireEvent.click(printerTab);
-
-    // Printer tab is now selected
-    expect(printerTab).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: /general/i })).toHaveAttribute("aria-selected", "false");
-  });
 });

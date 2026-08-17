@@ -1,15 +1,17 @@
 import { usePrinters } from "@/modules/printer/hooks/use-printers";
 import type { CartItem } from "@/modules/order/domain/cart";
+import type { Category } from "@/modules/menu/domain/category";
 import { buildKitchenCommands } from "@/modules/checkout/lib/build-kitchen-commands";
 import { printCommand } from "@/modules/checkout/adapters/print-command.adapter";
 import { useSettingsStore } from "@/modules/settings/store/settings-store";
 
 export interface UsePrintCommandsOptions {
   enabled?: boolean;
+  categories: Category[];
 }
 
-export function usePrintCommands(options: UsePrintCommandsOptions = {}) {
-  const { enabled = true } = options;
+export function usePrintCommands(options: UsePrintCommandsOptions) {
+  const { enabled = true, categories } = options;
   const { data: printers = [] } = usePrinters({ enabled });
   const comandaHeaderText = useSettingsStore((state) => state.comandaHeaderText);
   const headerText = comandaHeaderText?.trim() || "COMANDA";
@@ -21,11 +23,13 @@ export function usePrintCommands(options: UsePrintCommandsOptions = {}) {
           product: {
             id: item.product.id,
             name: item.product.name,
+            categoryId: item.product.categoryId,
           },
           quantity: item.quantity,
           selectedModifiers: item.selectedModifiers,
         })),
         printers,
+        categories,
         headerText,
       );
 

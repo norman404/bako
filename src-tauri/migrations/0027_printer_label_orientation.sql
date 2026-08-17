@@ -1,0 +1,1 @@
+ALTER TABLE printers ADD COLUMN label_orientation TEXT DEFAULT 'landscape';

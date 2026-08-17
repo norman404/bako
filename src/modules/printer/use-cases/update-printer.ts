@@ -2,6 +2,7 @@ import { errAsync, type ResultAsync } from "neverthrow";
 
 import { PrinterValidationError, type PrinterDomainError } from "@/modules/printer/domain/errors";
 import type { Printer, PrinterUpdateInput } from "@/modules/printer/domain/printer";
+import { PRINTER_ROLE } from "@/modules/printer/domain/printer";
 import type { PrinterRepository } from "@/modules/printer/domain/ports";
 
 function validatePrinterInput(input: PrinterUpdateInput): PrinterDomainError | null {
@@ -13,6 +14,10 @@ function validatePrinterInput(input: PrinterUpdateInput): PrinterDomainError | n
     return new PrinterValidationError("printerAddressRequired");
   }
 
+  if (input.isDefault === true && input.role !== PRINTER_ROLE.RECEIPT) {
+    return new PrinterValidationError("printerDefaultRoleInvalid");
+  }
+
   return null;
 }
 
@@ -22,6 +27,11 @@ function normalizePrinterInput(input: PrinterUpdateInput): PrinterUpdateInput {
     type: input.type,
     address: input.address.trim(),
     role: input.role,
+    isDefault: input.isDefault ?? false,
+    labelWidthMm: input.labelWidthMm,
+    labelHeightMm: input.labelHeightMm,
+    labelGapMm: input.labelGapMm,
+    labelLanguage: input.labelLanguage,
   };
 }
 
