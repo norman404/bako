@@ -21,18 +21,12 @@ export function GeneralSettingsCard() {
 
   const SUPPORTED_LOCALES = [
     { value: "es-MX", label: t("locales.esMX") },
-    { value: "es-AR", label: t("locales.esAR") },
     { value: "en-US", label: t("locales.enUS") },
-    { value: "es-ES", label: t("locales.esES") },
-    { value: "pt-BR", label: t("locales.ptBR") },
   ];
 
   const SUPPORTED_CURRENCIES = [
     { value: "MXN", label: t("currencies.mxn") },
-    { value: "ARS", label: t("currencies.ars") },
     { value: "USD", label: t("currencies.usd") },
-    { value: "EUR", label: t("currencies.eur") },
-    { value: "BRL", label: t("currencies.brl") },
   ];
 
   async function handleLocaleChange(newLocale: string) {

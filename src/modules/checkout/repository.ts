@@ -614,7 +614,7 @@ function buildPosMetrics(orderRows: PosMetricOrderRow[], itemRows: PosMetricItem
       (left, right) =>
         right.quantitySold - left.quantitySold ||
         right.sales - left.sales ||
-        left.productName.localeCompare(right.productName, "es-AR"),
+        left.productName.localeCompare(right.productName, "es-MX"),
     )
     .slice(0, 3);
 

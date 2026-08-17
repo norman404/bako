@@ -14,7 +14,7 @@ Accepted
 
 ## Context
 
-Bako soporta cinco locales (`es-MX`, `es-AR`, `es-ES`, `en-US`, `pt-BR`) y la UI
+Bako soporta DOS locales (`es-MX`, `en-US`) y la UI
 está casi completamente traducida con `react-i18next`. Sin embargo, varios
 mensajes de error llegaban al usuario en inglés incluso cuando la app estaba
 configurada en español.
