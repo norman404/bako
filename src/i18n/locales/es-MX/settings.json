@@ -1,8 +1,11 @@
 {
-  "modal": {
+  "window": {
     "title": "Configuración",
     "closeAriaLabel": "Cerrar configuración",
-    "sectionsAriaLabel": "Secciones de configuración"
+    "sectionsAriaLabel": "Secciones de configuración",
+    "openError": "No se pudo abrir la configuración",
+    "bootstrapError": "No se pudo iniciar la configuración. Cerrá esta ventana e intentá nuevamente.",
+    "closeButton": "Cerrar"
   },
   "sections": {
     "products": "Productos",

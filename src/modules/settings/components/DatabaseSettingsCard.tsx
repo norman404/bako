@@ -5,22 +5,15 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import type { DatabaseBackupService } from "../ports";
-import { tauriDatabaseBackupService } from "../tauri-database-backup.adapter";
-import { useDatabaseBackup } from "../use-database-backup";
 
-interface DatabaseSettingsCardProps {
-  service?: DatabaseBackupService;
-}
+import { useSettingsWindowDatabaseBackup } from "../use-settings-window-database-backup";
 
 function notifyOperationError(error: unknown, message: string): void {
   console.error("Database backup operation failed", error);
   toast.error(message);
 }
 
-export function DatabaseSettingsCard({
-  service = tauriDatabaseBackupService,
-}: DatabaseSettingsCardProps) {
+export function DatabaseSettingsCard() {
   const { t } = useTranslation("settings");
   const [restoreSource, setRestoreSource] = useState<string | null>(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -28,9 +21,10 @@ export function DatabaseSettingsCard({
     info,
     isInfoLoading,
     isBusy,
+    chooseRestoreSource,
     requestExport,
     requestRestore,
-  } = useDatabaseBackup(service);
+  } = useSettingsWindowDatabaseBackup();
 
   async function handleExport() {
     try {
@@ -47,7 +41,7 @@ export function DatabaseSettingsCard({
     if (isBusy) return;
 
     try {
-      const source = await service.chooseRestoreSource();
+      const source = await chooseRestoreSource();
       if (source) {
         setRestoreSource(source);
         setIsConfirmOpen(true);
@@ -108,7 +102,10 @@ export function DatabaseSettingsCard({
                 {t("database.locationLabel")}
               </p>
               {isInfoLoading ? (
-                <LoaderCircle className="mt-2 h-4 w-4 animate-spin text-text-muted" aria-label={t("database.loading")} />
+                <LoaderCircle
+                  className="mt-2 h-4 w-4 animate-spin text-text-muted"
+                  aria-label={t("database.loading")}
+                />
               ) : (
                 <code className="mt-2 block break-all text-2xs text-text-muted" title={info?.path}>
                   {info?.path ?? t("database.locationUnavailable")}
@@ -131,7 +128,7 @@ export function DatabaseSettingsCard({
           <Button
             variant="secondary"
             size="small"
-            onClick={handleExport}
+            onClick={() => void handleExport()}
             disabled={isBusy || isInfoLoading}
             data-testid="database-export-button"
           >
@@ -141,7 +138,7 @@ export function DatabaseSettingsCard({
           <Button
             variant="danger"
             size="small"
-            onClick={handleChooseRestoreSource}
+            onClick={() => void handleChooseRestoreSource()}
             disabled={isBusy}
             data-testid="database-restore-button"
           >
@@ -159,7 +156,7 @@ export function DatabaseSettingsCard({
         confirmLabel={t("database.restoreConfirmButton")}
         confirmVariant="danger"
         isLoading={isBusy}
-        onConfirm={handleRestore}
+        onConfirm={() => void handleRestore()}
       />
     </div>
   );

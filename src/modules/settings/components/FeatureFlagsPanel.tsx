@@ -1,12 +1,19 @@
-import { toast } from "sonner";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useFeatureFlagsStore, useUpdateFeatureFlag, type FeatureFlagKey } from "@/modules/feature-flags";
+import { toast } from "sonner";
+
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
+import { requestSettingsOperation } from "../settings-window-client";
+import { SETTINGS_RPC_OPERATION } from "../settings-window-protocol";
+import { useSettingsWindowStore } from "../settings-window-store";
+
+type SettingsFeatureFlagKey = string;
+
 interface ModuleConfig {
   id: string;
-  flags: FeatureFlagKey[];
+  flags: SettingsFeatureFlagKey[];
 }
 
 const MODULES: ModuleConfig[] = [
@@ -26,70 +33,74 @@ const MODULES: ModuleConfig[] = [
 
 export function FeatureFlagsPanel() {
   const { t } = useTranslation("settings");
-  const { flags } = useFeatureFlagsStore();
-  const updateMutation = useUpdateFeatureFlag();
+  const flags = useSettingsWindowStore((state) => state.snapshot?.flags);
+  const [pendingKey, setPendingKey] = useState<SettingsFeatureFlagKey | null>(null);
 
-  function handleToggle(key: FeatureFlagKey, currentValue: boolean) {
-    const newValue = !currentValue;
-    updateMutation.mutate(
-      { key, value: newValue },
-      {
-        onSuccess: () => {
-          toast.success(t("featureFlags.updateSuccess"), {
-            description: t(`featureFlags.flags.${key}.updated`, { value: newValue }),
-          });
-        },
-        onError: () => {
-          toast.error(t("featureFlags.updateError"));
-        },
-      },
-    );
+  if (!flags) return null;
+
+  async function handleToggle(key: SettingsFeatureFlagKey) {
+    if (pendingKey) return;
+
+    const value = !flags[key];
+    setPendingKey(key);
+    try {
+      const updated = await requestSettingsOperation(SETTINGS_RPC_OPERATION.UPDATE_FEATURE_FLAG, {
+        key,
+        value,
+      });
+      useSettingsWindowStore.getState().applySnapshot(updated);
+      toast.success(t("featureFlags.updateSuccess"), {
+        description: t(`featureFlags.flags.${key}.updated`, { value }),
+      });
+    } catch {
+      toast.error(t("featureFlags.updateError"));
+    } finally {
+      setPendingKey(null);
+    }
   }
 
   return (
     <div className="flex justify-center px-6 py-6">
-      <div className="w-full max-w-xl rounded-lg border border-border bg-surface-sunken/30 overflow-hidden">
-      {MODULES.map((module, moduleIndex) => (
-        <div key={module.id}>
-          {/* Module section title */}
-          <div className={moduleIndex > 0 ? "border-t border-border" : ""}>
-            <div className="px-5 pt-4 pb-1">
-              <h3 className="text-sm font-semibold text-text">
-                {t(`featureFlags.modules.${module.id}.name`)}
-              </h3>
-              <p className="text-xs text-text-dim mt-0.5">
-                {t(`featureFlags.modules.${module.id}.description`)}
-              </p>
-            </div>
-          </div>
-
-          {/* Flag rows */}
-          {module.flags.map((flag) => (
-            <div key={flag} className="px-5">
-              <div className="flex items-center justify-between py-3 border-b border-border">
-                <div className="grid gap-0.5">
-                  <Label
-                    htmlFor={`flag-${flag}`}
-                    className="cursor-pointer text-sm normal-case tracking-normal text-text"
-                  >
-                    {t(`featureFlags.flags.${flag}.label`)}
-                  </Label>
-                  <p className="text-xs text-text-dim">
-                    {t(`featureFlags.flags.${flag}.description`)}
-                  </p>
-                </div>
-                <Switch
-                  id={`flag-${flag}`}
-                  aria-label={t(`featureFlags.flags.${flag}.label`)}
-                  checked={flags[flag]}
-                  onCheckedChange={() => handleToggle(flag, flags[flag])}
-                  disabled={updateMutation.isPending}
-                />
+      <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-surface-sunken/30">
+        {MODULES.map((module, moduleIndex) => (
+          <div key={module.id}>
+            <div className={moduleIndex > 0 ? "border-t border-border" : ""}>
+              <div className="px-5 pb-1 pt-4">
+                <h3 className="text-sm font-semibold text-text">
+                  {t(`featureFlags.modules.${module.id}.name`)}
+                </h3>
+                <p className="mt-0.5 text-xs text-text-dim">
+                  {t(`featureFlags.modules.${module.id}.description`)}
+                </p>
               </div>
             </div>
-          ))}
-        </div>
-      ))}
+
+            {module.flags.map((flag) => (
+              <div key={flag} className="px-5">
+                <div className="flex items-center justify-between border-b border-border py-3">
+                  <div className="grid gap-0.5">
+                    <Label
+                      htmlFor={`flag-${flag}`}
+                      className="cursor-pointer text-sm normal-case tracking-normal text-text"
+                    >
+                      {t(`featureFlags.flags.${flag}.label`)}
+                    </Label>
+                    <p className="text-xs text-text-dim">
+                      {t(`featureFlags.flags.${flag}.description`)}
+                    </p>
+                  </div>
+                  <Switch
+                    id={`flag-${flag}`}
+                    aria-label={t(`featureFlags.flags.${flag}.label`)}
+                    checked={flags[flag]}
+                    onCheckedChange={() => void handleToggle(flag)}
+                    disabled={pendingKey !== null}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );

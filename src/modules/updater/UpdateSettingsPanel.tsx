@@ -1,42 +1,41 @@
-import type { TFunction } from "i18next";
-import { Download, RefreshCw, RotateCw, Search } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { Download, RefreshCw, RotateCw, Search } from "lucide-react";
 
-import { APP_VERSION } from "@/lib/app-version";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useFeatureFlagsStore } from "@/modules/feature-flags";
-import { useUpdater } from "./use-updater";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { APP_VERSION } from "@/lib/app-version";
 import {
-  UpdateStatus,
-  type UpdateInfo,
-} from "./update-status";
+  requestSettingsOperation,
+  SETTINGS_RPC_OPERATION,
+  SETTINGS_UPDATE_STATUS,
+  useSettingsWindowStore,
+  useSettingsWindowUpdater,
+  type SettingsUpdateInfoDto,
+} from "@/modules/settings/settings-window-entry";
 
-function translateUpdaterMessage(_message: string, t: TFunction): string {
-  return t("panel.genericError");
-}
-
-function StatusMessage({ status }: { status: UpdateInfo }) {
+function StatusMessage({ status }: { status: SettingsUpdateInfoDto }) {
   const { t } = useTranslation("updater");
 
   switch (status.kind) {
-    case UpdateStatus.Idle:
+    case SETTINGS_UPDATE_STATUS.IDLE:
       return <span className="text-sm text-text-muted">{t("panel.upToDate")}</span>;
-    case UpdateStatus.Checking:
+    case SETTINGS_UPDATE_STATUS.CHECKING:
       return (
         <span className="flex items-center gap-2 text-sm text-text-muted">
           <RotateCw className="h-3.5 w-3.5 animate-spin" />
           {t("panel.checking")}
         </span>
       );
-    case UpdateStatus.Available:
+    case SETTINGS_UPDATE_STATUS.AVAILABLE:
       return (
         <span className="text-sm font-medium text-primary-strong">
           {t("panel.updateAvailable", { version: status.version })}
         </span>
       );
-    case UpdateStatus.Downloading:
+    case SETTINGS_UPDATE_STATUS.DOWNLOADING:
       return (
         <div className="w-full max-w-xs">
           <div className="mb-1 flex items-center justify-between text-xs">
@@ -51,33 +50,56 @@ function StatusMessage({ status }: { status: UpdateInfo }) {
           </div>
         </div>
       );
-    case UpdateStatus.ReadyToInstall:
+    case SETTINGS_UPDATE_STATUS.READY_TO_INSTALL:
       return (
         <span className="text-sm font-medium text-success">
           {t("panel.readyToRestart")}
         </span>
       );
-    case UpdateStatus.Error:
-      return <span className="text-sm text-danger">{translateUpdaterMessage(status.message, t)}</span>;
-    default:
-      return null;
+    case SETTINGS_UPDATE_STATUS.ERROR:
+      return <span className="text-sm text-danger">{t("panel.genericError")}</span>;
   }
 }
 
 export function UpdateSettingsPanel() {
   const { t } = useTranslation(["updater", "settings"]);
-  const updater = useUpdater();
-  const { flags, setFlag } = useFeatureFlagsStore();
+  const updater = useSettingsWindowUpdater();
+  const flags = useSettingsWindowStore((state) => state.snapshot?.flags);
+  const [isUpdatingAutoUpdate, setIsUpdatingAutoUpdate] = useState(false);
+
+  if (!flags) return null;
 
   const autoUpdateEnabled = flags.auto_update_enabled ?? true;
+  const status = updater.status;
+
+  async function runUpdaterAction(action: () => Promise<void>) {
+    try {
+      await action();
+    } catch {
+      toast.error(t("updater:panel.genericError"));
+    }
+  }
+
+  async function updateAutoUpdate(checked: boolean) {
+    setIsUpdatingAutoUpdate(true);
+    try {
+      const updated = await requestSettingsOperation(SETTINGS_RPC_OPERATION.UPDATE_FEATURE_FLAG, {
+        key: "auto_update_enabled",
+        value: checked,
+      });
+      useSettingsWindowStore.getState().applySnapshot(updated);
+    } catch {
+      toast.error(t("settings:featureFlags.updateError"));
+    } finally {
+      setIsUpdatingAutoUpdate(false);
+    }
+  }
 
   return (
     <div className="flex justify-center px-6 py-6">
-      <div className="w-full max-w-xl rounded-lg border border-border bg-surface-sunken/30 overflow-hidden">
-
-        {/* Version info row */}
+      <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-surface-sunken/30">
         <div className="px-5">
-          <div className="flex items-center justify-between py-3 border-b border-border">
+          <div className="flex items-center justify-between border-b border-border py-3">
             <div className="grid gap-0.5">
               <span className="text-sm font-medium text-text">
                 {t("updater:panel.title")}
@@ -89,9 +111,8 @@ export function UpdateSettingsPanel() {
           </div>
         </div>
 
-        {/* Auto-update toggle row */}
         <div className="px-5">
-          <div className="flex items-center justify-between py-3 border-b border-border">
+          <div className="flex items-center justify-between border-b border-border py-3">
             <div className="grid gap-0.5">
               <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
                 {t("updater:panel.autoUpdateLabel")}
@@ -102,69 +123,66 @@ export function UpdateSettingsPanel() {
               id="auto-update-enabled"
               aria-label={t("updater:panel.autoUpdateLabel")}
               checked={autoUpdateEnabled}
-              onCheckedChange={(checked) => {
-                setFlag("auto_update_enabled", checked);
-              }}
+              onCheckedChange={(checked) => void updateAutoUpdate(checked)}
+              disabled={isUpdatingAutoUpdate}
             />
           </div>
         </div>
 
-        {/* Status + actions row */}
         <div className="px-5">
           <div className="flex items-center justify-between py-3">
-          <StatusMessage status={updater.status} />
+            <StatusMessage status={status} />
 
-          <div className="flex items-center gap-2">
-            {updater.status.kind === UpdateStatus.Idle ||
-            updater.status.kind === UpdateStatus.Error ? (
-              <Button
-                variant="outline"
-                size="small"
-                onClick={() => updater.checkForUpdates()}
-                disabled={updater.isChecking}
-              >
-                <Search className="h-3.5 w-3.5" />
-                {t("updater:panel.checkButton")}
-              </Button>
-            ) : null}
+            <div className="flex items-center gap-2">
+              {status.kind === SETTINGS_UPDATE_STATUS.IDLE ||
+              status.kind === SETTINGS_UPDATE_STATUS.ERROR ? (
+                <Button
+                  variant="outline"
+                  size="small"
+                  onClick={() => void runUpdaterAction(updater.checkForUpdates)}
+                  disabled={updater.isChecking}
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  {t("updater:panel.checkButton")}
+                </Button>
+              ) : null}
 
-            {updater.status.kind === UpdateStatus.Available ? (
-              <Button
-                variant="default"
-                size="small"
-                onClick={() => updater.downloadAndInstall()}
-                disabled={updater.isDownloading}
-              >
-                <Download className="h-3.5 w-3.5" />
-                {t("updater:panel.downloadAndInstall")}
-              </Button>
-            ) : null}
+              {status.kind === SETTINGS_UPDATE_STATUS.AVAILABLE ? (
+                <Button
+                  variant="default"
+                  size="small"
+                  onClick={() => void runUpdaterAction(updater.downloadAndInstall)}
+                  disabled={updater.isDownloading}
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {t("updater:panel.downloadAndInstall")}
+                </Button>
+              ) : null}
 
-            {updater.status.kind === UpdateStatus.ReadyToInstall ? (
-              <Button
-                variant="default"
-                size="small"
-                onClick={() => updater.relaunch()}
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-                {t("updater:panel.restart")}
-              </Button>
-            ) : null}
+              {status.kind === SETTINGS_UPDATE_STATUS.READY_TO_INSTALL ? (
+                <Button
+                  variant="default"
+                  size="small"
+                  onClick={() => void runUpdaterAction(updater.relaunch)}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  {t("updater:panel.restart")}
+                </Button>
+              ) : null}
 
-            {updater.status.kind === UpdateStatus.Error ? (
-              <Button
-                variant="outline"
-                size="small"
-                onClick={() => updater.checkForUpdates()}
-              >
-                <RotateCw className="h-3.5 w-3.5" />
-                {t("updater:panel.tryAgain")}
-              </Button>
-            ) : null}
+              {status.kind === SETTINGS_UPDATE_STATUS.ERROR ? (
+                <Button
+                  variant="outline"
+                  size="small"
+                  onClick={() => void runUpdaterAction(updater.checkForUpdates)}
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  {t("updater:panel.tryAgain")}
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
-
       </div>
     </div>
   );

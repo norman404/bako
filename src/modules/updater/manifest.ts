@@ -1,25 +1,8 @@
-import { Download } from "lucide-react";
+import type { ModuleManifest } from "@/app/module-manifest";
 
-import {
-  NAVIGATION_GROUP,
-  NAVIGATION_SURFACE,
-  type ModuleManifest,
-} from "@/app/module-manifest";
-
-import { UpdateSettingsPanel } from "./UpdateSettingsPanel";
+import { UPDATER_SETTINGS_WINDOW_ENTRY } from "./settings-window-entry";
 
 export const updaterManifest: ModuleManifest = {
   id: "updater",
-  navigation: [
-    {
-      id: "updater",
-      surface: NAVIGATION_SURFACE.SETTINGS,
-      group: NAVIGATION_GROUP.SYSTEM,
-      order: 20,
-      labelKey: "settings:sections.updater",
-      descriptionKey: "settings:sections.updaterDesc",
-      icon: Download,
-      Component: UpdateSettingsPanel,
-    },
-  ],
+  navigation: [UPDATER_SETTINGS_WINDOW_ENTRY],
 };

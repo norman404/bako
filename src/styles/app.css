@@ -111,7 +111,8 @@
     overflow: hidden;
   }
 
-  #root {
+  #root,
+  #settings-root {
     min-height: 100vh;
     position: relative;
     z-index: 1;

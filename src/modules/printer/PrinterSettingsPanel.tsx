@@ -19,17 +19,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PRINTER_LABEL_LANGUAGE, PRINTER_ROLE, PRINTER_TYPE, type LabelLanguage, type Printer, type PrinterCreateInput, type PrinterRole, type PrinterType } from "./printer";
 import {
-  useArchivePrinter,
-  useCreatePrinter,
-  usePrinters,
-  useUpdatePrinter,
-} from "./use-printers";
+  listSettingsWindowUsbPrinters,
+  requestSettingsOperation,
+  SETTINGS_RPC_OPERATION,
+  testSettingsWindowPrinter,
+  useArchiveSettingsWindowPrinter,
+  useCreateSettingsWindowPrinter,
+  useSettingsWindowPrinters,
+  useSettingsWindowStore,
+  useUpdateSettingsWindowPrinter,
+  type SettingsPrinterDto,
+  type SettingsPrinterInput,
+  type SettingsUsbPrinterDto,
+} from "@/modules/settings/settings-window-entry";
+
+import {
+  PRINTER_LABEL_LANGUAGE,
+  PRINTER_ROLE,
+  PRINTER_TYPE,
+  type LabelLanguage,
+  type PrinterRole,
+  type PrinterType,
+} from "./printer";
 import { translatePrinterError } from "./translate-printer-error";
-import { testPrinter } from "./test-printer.adapter";
-import { listUsbPrinters, type UsbPrinterInfo } from "./list-usb-printers.adapter";
-import { useSettingsStore } from "@/modules/settings";
 
 const LABEL_LANGUAGE_OPTIONS = [
   { value: PRINTER_LABEL_LANGUAGE.TSPL, label: "TSPL" },
@@ -76,7 +89,7 @@ function buildEmptyFormState(): PrinterFormState {
   };
 }
 
-function buildFormStateFromPrinter(printer: Printer): PrinterFormState {
+function buildFormStateFromPrinter(printer: SettingsPrinterDto): PrinterFormState {
   return {
     name: printer.name,
     type: printer.type,
@@ -90,7 +103,7 @@ function buildFormStateFromPrinter(printer: Printer): PrinterFormState {
   };
 }
 
-function toPrinterPayload(formState: PrinterFormState): PrinterCreateInput | null {
+function toPrinterPayload(formState: PrinterFormState): SettingsPrinterInput | null {
   const name = formState.name.trim();
   const address = formState.address.trim();
 
@@ -136,20 +149,28 @@ function getStatusConfig(address: string, t: (key: string) => string): {
 
 function ComandaHeaderTextCard() {
   const { t } = useTranslation(["settings", "errors"]);
-  const { comandaHeaderText, updateComandaHeaderText, isLoading } = useSettingsStore();
-
+  const comandaHeaderText = useSettingsWindowStore(
+    (state) => state.snapshot?.comandaHeaderText,
+  );
   const [text, setText] = useState(comandaHeaderText ?? "");
+  const [isSaving, setIsSaving] = useState(false);
 
   const hasChanges = text !== (comandaHeaderText ?? "");
 
   const handleSave = async () => {
-    const result = await updateComandaHeaderText(text.trim() || null);
-    result.match(
-      () => {
-        toast.success(t("settings:printer.comandaHeaderSaved"));
-      },
-      () => toast.error(t("settings:printer.comandaHeaderError")),
-    );
+    setIsSaving(true);
+    try {
+      const updated = await requestSettingsOperation(
+        SETTINGS_RPC_OPERATION.UPDATE_COMANDA_HEADER,
+        { text: text.trim() || null },
+      );
+      useSettingsWindowStore.getState().applySnapshot(updated);
+      toast.success(t("settings:printer.comandaHeaderSaved"));
+    } catch {
+      toast.error(t("settings:printer.comandaHeaderError"));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -172,7 +193,7 @@ function ComandaHeaderTextCard() {
           variant="default"
           size="small"
           onClick={() => void handleSave()}
-          disabled={isLoading || !hasChanges}
+          disabled={isSaving || !hasChanges}
           className="gap-1.5"
         >
           <Save className="h-3.5 w-3.5" />
@@ -194,10 +215,10 @@ function getListButtonClass(isActive: boolean): string {
 
 export function PrinterSettingsPanel() {
   const { t } = useTranslation(["settings", "errors"]);
-  const { data: printers = [] } = usePrinters();
-  const createPrinterMutation = useCreatePrinter();
-  const updatePrinterMutation = useUpdatePrinter();
-  const archivePrinterMutation = useArchivePrinter();
+  const { data: printers = [] } = useSettingsWindowPrinters();
+  const createPrinterMutation = useCreateSettingsWindowPrinter();
+  const updatePrinterMutation = useUpdateSettingsWindowPrinter();
+  const archivePrinterMutation = useArchiveSettingsWindowPrinter();
 
   const printerTypeOptions = [
     { value: PRINTER_TYPE.NETWORK, label: t("settings:printer.typeNetwork"), icon: Wifi },
@@ -219,9 +240,9 @@ export function PrinterSettingsPanel() {
     initialPrinter ? buildFormStateFromPrinter(initialPrinter) : buildEmptyFormState(),
   );
   const [formError, setFormError] = useState<string | null>(null);
-  const [archiveTarget, setArchiveTarget] = useState<Printer | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<SettingsPrinterDto | null>(null);
   const [isScanningUsb, setIsScanningUsb] = useState(false);
-  const [detectedUsbPrinters, setDetectedUsbPrinters] = useState<UsbPrinterInfo[]>([]);
+  const [detectedUsbPrinters, setDetectedUsbPrinters] = useState<SettingsUsbPrinterDto[]>([]);
 
   const isSaving = createPrinterMutation.isPending || updatePrinterMutation.isPending;
   const isArchivePending = archivePrinterMutation.isPending;
@@ -234,7 +255,7 @@ export function PrinterSettingsPanel() {
     setDetectedUsbPrinters([]);
   };
 
-  const beginEdit = (printer: Printer) => {
+  const beginEdit = (printer: SettingsPrinterDto) => {
     setMode(PRINTER_FORM_MODE.EDIT);
     setSelectedPrinterId(printer.id);
     setFormError(null);
@@ -242,7 +263,7 @@ export function PrinterSettingsPanel() {
     setDetectedUsbPrinters([]);
   };
 
-  const handleArchive = (printer: Printer) => {
+  const handleArchive = (printer: SettingsPrinterDto) => {
     setArchiveTarget(printer);
   };
 
@@ -289,13 +310,15 @@ export function PrinterSettingsPanel() {
 
   const handleTest = async () => {
     try {
-      await testPrinter({
-        printerType: formState.type,
-        printerAddress: formState.address,
-        labelWidthMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelWidthMm : undefined,
-        labelHeightMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelHeightMm : undefined,
-        labelGapMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelGapMm : undefined,
-        labelLanguage: formState.type === PRINTER_TYPE.LABEL ? formState.labelLanguage : undefined,
+      await testSettingsWindowPrinter({
+        input: {
+          printerType: formState.type,
+          printerAddress: formState.address,
+          labelWidthMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelWidthMm : undefined,
+          labelHeightMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelHeightMm : undefined,
+          labelGapMm: formState.type === PRINTER_TYPE.LABEL ? formState.labelGapMm : undefined,
+          labelLanguage: formState.type === PRINTER_TYPE.LABEL ? formState.labelLanguage : undefined,
+        },
       });
       toast.success(t("settings:printer.testSuccess"), {
         description: t("settings:printer.testSuccessDesc"),
@@ -313,7 +336,7 @@ export function PrinterSettingsPanel() {
     setIsScanningUsb(true);
     setDetectedUsbPrinters([]);
     try {
-      const detected = await listUsbPrinters();
+      const detected = await listSettingsWindowUsbPrinters();
 
       if (detected.length === 0) {
         toast.info(t("settings:printer.scanUsbNoneFound"));

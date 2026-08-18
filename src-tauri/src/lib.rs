@@ -4,11 +4,44 @@ mod commands;
 mod database_migrations;
 mod print;
 
+use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 pub const DATABASE_FILENAME: &str = "bako.db";
 pub const DATABASE_URL: &str = "sqlite:bako.db";
 pub const CURRENT_MIGRATION_VERSION: i64 = 28;
+
+#[tauri::command]
+async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("settings") {
+        let _ = window.show();
+        let _ = window.set_focus();
+        return Ok(());
+    }
+
+    let builder =
+        WebviewWindowBuilder::new(&app, "settings", WebviewUrl::App("settings.html".into()))
+            .title("Bako")
+            .inner_size(900.0, 700.0)
+            .min_inner_size(820.0, 620.0)
+            .resizable(true);
+
+    #[cfg(not(target_os = "macos"))]
+    let builder = if let Some(main) = app.get_webview_window("main") {
+        builder.parent(&main).map_err(|error| error.to_string())?
+    } else {
+        builder
+    };
+
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true);
+
+    builder.build().map_err(|error| error.to_string())?;
+
+    Ok(())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -208,6 +241,7 @@ pub fn run() {
             commands::export_database,
             commands::prepare_database_restore,
             commands::restore_database,
+            open_settings_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

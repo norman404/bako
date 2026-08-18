@@ -112,6 +112,7 @@ src/modules/<feature>/
 ├── repository.ts          Drizzle access, if applicable
 ├── use-<feature>.ts       React Query hooks
 ├── manifest.ts            if the module registers application navigation
+├── settings-window-entry.ts  child-safe native Settings entry, if relevant
 └── <Feature>Panel.tsx     components
 ```
 
@@ -125,9 +126,12 @@ None of these reappear under a new name. A module needing a store names the file
 
 #### The barrel is the boundary
 
-`import … from "@/modules/X/algo"` from outside `X` does not pass review. A module's only public entry point is its `index.ts` — imported as `@/modules/X`, never by a path that reaches inside. The only documented exception is `manifest.ts`, importable as `@/modules/X/manifest` **only** from `app/module-registry.ts`.
+`import … from "@/modules/X/algo"` from outside `X` does not pass review. A module's public entry point is its `index.ts` — imported as `@/modules/X`, never by a path that reaches inside — except for these documented capability-bound entries:
 
-Nothing else reaches past a barrel, and any additional exception is a decision to be documented, not a call to make at the import site. The rationale for this exception and the `settings ↔ updater` import cycle it helped resolve are in [`docs/architecture/module-system.md`](docs/architecture/module-system.md).
+- `manifest.ts`, importable as `@/modules/X/manifest` **only** from `app/module-registry.ts`.
+- `settings-window-entry.ts`, only for a module surfaced in native Settings and only within the Settings child composition graph (`src/app/settings-window-*` and other child-safe Settings entries). It may contain only child-safe UI, types, and RPC client code: never `db`, SQL, process, updater, or other Main-owned services. The child graph must not import a module's broad `index.ts`.
+
+Nothing else reaches past a barrel, and any additional exception is a decision to be documented, not a call to make at the import site. The rationale for these exceptions and the `settings ↔ updater` import cycle they avoid are in [`docs/architecture/module-system.md`](docs/architecture/module-system.md).
 
 ### Database
 
@@ -167,12 +171,12 @@ The step-by-step procedure for restructuring a module, plus the name-collision t
 - `components/` holds reusable application UI, not feature business logic.
 - `lib/` holds small generic utilities with no feature ownership.
 - `db/` and `i18n/` are single-owner app infrastructure — no feature module reimplements a database client or an i18n loader.
-- A module never reaches into another module's files. Its public API is its `index.ts`, and that is the only entry point other modules import — if something a consumer needs isn't exported there, the fix is to export it, not to reach past it. The only documented exception is `manifest.ts`, importable only from `app/module-registry.ts`.
+- A module never reaches into another module's files. Its public API is its `index.ts`, and that is the only entry point other modules import — if something a consumer needs isn't exported there, the fix is to export it, not to reach past it. The documented exceptions are `manifest.ts`, importable only from `app/module-registry.ts`, and child-safe `settings-window-entry.ts`, importable only inside the native Settings child graph.
 
 ## Further reading
 
 - [`docs/README.md`](docs/README.md) — index of contributor guides.
-- [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its `manifest.ts` exception, the `settings ↔ updater` cycle, and the procedure for restructuring a module.
+- [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its documented exceptions, the `settings ↔ updater` cycle, and the procedure for restructuring a module.
 - [`docs/architecture/database.md`](docs/architecture/database.md) — the serialization queue, schema, migrations.
 - [`docs/architecture/printing.md`](docs/architecture/printing.md) — the frontend side of printing: which module owns what, the Tauri print commands, and how a job travels from a button click to a physical printer. It does **not** document the Rust engine — that is [`src-tauri/src/print/README.md`](src-tauri/src/print/README.md), kept next to the code because it covers a different language and toolchain.
 - [`docs/contributing/testing.md`](docs/contributing/testing.md) — Rust test commands and conventions.

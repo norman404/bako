@@ -15,6 +15,15 @@ export default defineConfig(async () => ({
     },
   },
 
+  build: {
+    rolldownOptions: {
+      input: {
+        main: fileURLToPath(new URL("./index.html", import.meta.url)),
+        settings: fileURLToPath(new URL("./settings.html", import.meta.url)),
+      },
+    },
+  },
+
   clearScreen: false,
   server: {
     port: 1420,

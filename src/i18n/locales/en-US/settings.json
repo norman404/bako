@@ -1,8 +1,11 @@
 {
-  "modal": {
+  "window": {
     "title": "Settings",
     "closeAriaLabel": "Close settings",
-    "sectionsAriaLabel": "Settings sections"
+    "sectionsAriaLabel": "Settings sections",
+    "openError": "Could not open Settings",
+    "bootstrapError": "Could not start Settings. Close this window and try again.",
+    "closeButton": "Close"
   },
   "sections": {
     "products": "Products",

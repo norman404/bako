@@ -21,7 +21,7 @@ interface FeatureFlagsState {
   setFlag: (key: FeatureFlagKey, value: boolean) => ResultAsync<void, FeatureFlagPersistenceError>;
 }
 
-export const useFeatureFlagsStore = create<FeatureFlagsState>((set, get) => ({
+export const useFeatureFlagsStore = create<FeatureFlagsState>((set) => ({
   flags: DEFAULT_FLAGS,
   isLoading: true,
 
@@ -67,15 +67,14 @@ export const useFeatureFlagsStore = create<FeatureFlagsState>((set, get) => ({
   },
 
   setFlag: (key: FeatureFlagKey, value: boolean): ResultAsync<void, FeatureFlagPersistenceError> => {
-    // Optimistic update
-    const currentFlags = get().flags;
-    set({ flags: { ...currentFlags, [key]: value } });
-
     const isTauri = typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__ !== undefined;
     if (!isTauri) {
+      set((state) => ({ flags: { ...state.flags, [key]: value } }));
       return okAsync(undefined);
     }
 
-    return featureFlagDrizzleRepository.update(key, value);
+    return featureFlagDrizzleRepository.update(key, value).map(() => {
+      set((state) => ({ flags: { ...state.flags, [key]: value } }));
+    });
   },
 }));

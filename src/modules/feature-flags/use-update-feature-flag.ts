@@ -1,7 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import type { FeatureFlagKey } from "./feature-flag";
-import { updateFeatureFlag } from "./update-feature-flag";
-import { featureFlagDrizzleRepository } from "./repository";
 import { useFeatureFlagsStore } from "./feature-flags-store";
 
 interface UpdateFeatureFlagInput {
@@ -12,14 +10,8 @@ interface UpdateFeatureFlagInput {
 export function useUpdateFeatureFlag() {
   return useMutation({
     mutationFn: async ({ key, value }: UpdateFeatureFlagInput) => {
-      // Optimistic update in Zustand store for immediate UI reaction
-      const previousValue = useFeatureFlagsStore.getState().flags[key];
-      useFeatureFlagsStore.getState().setFlag(key, value);
-
-      const result = await updateFeatureFlag(featureFlagDrizzleRepository, key, value);
+      const result = await useFeatureFlagsStore.getState().setFlag(key, value);
       if (result.isErr()) {
-        // Rollback on error
-        useFeatureFlagsStore.getState().setFlag(key, previousValue);
         throw result.error;
       }
       return result.value;

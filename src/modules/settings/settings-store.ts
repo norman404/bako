@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { eq } from "drizzle-orm";
-import { ResultAsync, okAsync } from "neverthrow";
+import { errAsync, ResultAsync, okAsync } from "neverthrow";
 import { db } from "@/db/client";
 import { systemSettings } from "@/db/schema";
 import { DEFAULT_CURRENCY_CONFIG } from "@/lib/currency-config";
@@ -96,7 +96,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     return ResultAsync.fromPromise(
       dbOperation,
       (error) => (error instanceof Error ? error : new Error("Failed to persist settings")),
-    );
+    ).orElse((error) => {
+      set({ isLoading: false });
+      return errAsync(error);
+    });
   },
 
   updatePrinterSettings: (printerType: PrinterType, printerAddress: string | null): ResultAsync<void, Error> => {
@@ -123,7 +126,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     return ResultAsync.fromPromise(
       dbOperation,
       (error) => (error instanceof Error ? error : new Error("Failed to persist printer settings")),
-    );
+    ).orElse((error) => {
+      set({ isLoading: false });
+      return errAsync(error);
+    });
   },
 
   updateComandaHeaderText: (text: string | null): ResultAsync<void, Error> => {
@@ -150,6 +156,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     return ResultAsync.fromPromise(
       dbOperation,
       (error) => (error instanceof Error ? error : new Error("Failed to persist comanda header text")),
-    );
+    ).orElse((error) => {
+      set({ isLoading: false });
+      return errAsync(error);
+    });
   },
 }));

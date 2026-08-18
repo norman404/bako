@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 import { AdminWorkspace } from "@/app/admin-workspace";
 import { MODULE_REGISTRY } from "@/app/module-registry";
 import { PosWorkspace } from "@/app/pos-workspace";
+import { useSettingsWindowBridge } from "@/app/use-settings-window-bridge";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
-import { SettingsModal, useSettingsStore } from "@/modules/settings";
+import { openSettingsWindow, useSettingsStore } from "@/modules/settings";
 import { UpdateToast, useUpdater } from "@/modules/updater";
 import { useMountEffect } from "@/lib/use-mount-effect";
 
@@ -19,9 +22,10 @@ export function App() {
   useSettingsStore();
 
   const [workspace, setWorkspace] = useState<AppWorkspace>(APP_WORKSPACE.POS);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { t } = useTranslation("settings");
   const { flags } = useFeatureFlagsStore();
   const updater = useUpdater();
+  const waitForSettingsWindowBridge = useSettingsWindowBridge();
 
   useMountEffect(() => {
     if (flags.auto_update_enabled) {
@@ -29,28 +33,30 @@ export function App() {
     }
   });
 
+  async function handleOpenSettings() {
+    try {
+      await waitForSettingsWindowBridge();
+      await openSettingsWindow();
+    } catch (error) {
+      console.error("Could not open Settings window", error);
+      toast.error(t("window.openError"));
+    }
+  }
+
   return (
     <>
       {workspace === APP_WORKSPACE.POS ? (
         <PosWorkspace
           onOpenAdmin={() => setWorkspace(APP_WORKSPACE.ADMIN)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={handleOpenSettings}
         />
       ) : (
         <AdminWorkspace
           registry={MODULE_REGISTRY}
           onOpenPos={() => setWorkspace(APP_WORKSPACE.POS)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenSettings={handleOpenSettings}
         />
       )}
-
-      {isSettingsOpen ? (
-        <SettingsModal
-          open={isSettingsOpen}
-          onClose={() => setIsSettingsOpen(false)}
-          registry={MODULE_REGISTRY}
-        />
-      ) : null}
 
       <UpdateToast updater={updater} />
     </>

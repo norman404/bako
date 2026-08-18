@@ -9,15 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSettingsStore } from "../settings-store";
+
+import { requestSettingsOperation } from "../settings-window-client";
+import { SETTINGS_RPC_OPERATION } from "../settings-window-protocol";
+import { useSettingsWindowStore } from "../settings-window-store";
 
 export function GeneralSettingsCard() {
   const { t } = useTranslation("settings");
-  const {
-    locale,
-    currency,
-    updateSettings,
-  } = useSettingsStore();
+  const snapshot = useSettingsWindowStore((state) => state.snapshot);
+
+  if (!snapshot) return null;
 
   const SUPPORTED_LOCALES = [
     { value: "es-MX", label: t("locales.esMX") },
@@ -29,38 +30,35 @@ export function GeneralSettingsCard() {
     { value: "USD", label: t("currencies.usd") },
   ];
 
-  async function handleLocaleChange(newLocale: string) {
-    const result = await updateSettings(newLocale, currency);
-    result.match(
-      () => toast.success(t("system.saveSuccess"), {
-        description: t("system.saveSuccessDesc", { locale: newLocale, currency }),
-      }),
-      () => toast.error(t("system.saveError")),
-    );
-  }
-
-  async function handleCurrencyChange(newCurrency: string) {
-    const result = await updateSettings(locale, newCurrency);
-    result.match(
-      () => toast.success(t("system.saveSuccess"), {
-        description: t("system.saveSuccessDesc", { locale, currency: newCurrency }),
-      }),
-      () => toast.error(t("system.saveError")),
-    );
+  async function updateRegionalSettings(locale: string, currency: string) {
+    try {
+      const updated = await requestSettingsOperation(SETTINGS_RPC_OPERATION.UPDATE_REGIONAL, {
+        locale,
+        currency,
+      });
+      useSettingsWindowStore.getState().applySnapshot(updated);
+      toast.success(t("system.saveSuccess"), {
+        description: t("system.saveSuccessDesc", { locale, currency }),
+      });
+    } catch {
+      toast.error(t("system.saveError"));
+    }
   }
 
   return (
     <div>
-      {/* Locale row */}
       <div className="px-5">
-        <div className="flex items-center justify-between py-3 border-b border-border">
+        <div className="flex items-center justify-between border-b border-border py-3">
           <Label
             htmlFor="settings-locale"
             className="text-sm normal-case tracking-normal text-text"
           >
             {t("system.localeLabel")}
           </Label>
-          <Select value={locale} onValueChange={handleLocaleChange}>
+          <Select
+            value={snapshot.locale}
+            onValueChange={(locale) => void updateRegionalSettings(locale, snapshot.currency)}
+          >
             <SelectTrigger
               id="settings-locale"
               data-testid="locale-select-trigger"
@@ -79,16 +77,18 @@ export function GeneralSettingsCard() {
         </div>
       </div>
 
-      {/* Currency row */}
       <div className="px-5">
-        <div className="flex items-center justify-between py-3 border-b border-border">
+        <div className="flex items-center justify-between border-b border-border py-3">
           <Label
             htmlFor="settings-currency"
             className="text-sm normal-case tracking-normal text-text"
           >
             {t("system.currencyLabel")}
           </Label>
-          <Select value={currency} onValueChange={handleCurrencyChange}>
+          <Select
+            value={snapshot.currency}
+            onValueChange={(currency) => void updateRegionalSettings(snapshot.locale, currency)}
+          >
             <SelectTrigger
               id="settings-currency"
               data-testid="currency-select-trigger"
