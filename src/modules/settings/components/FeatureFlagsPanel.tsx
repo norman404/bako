@@ -39,9 +39,10 @@ export function FeatureFlagsPanel() {
   if (!flags) return null;
 
   async function handleToggle(key: SettingsFeatureFlagKey) {
-    if (pendingKey) return;
+    const currentFlags = useSettingsWindowStore.getState().snapshot?.flags;
+    if (pendingKey || !currentFlags) return;
 
-    const value = !flags[key];
+    const value = !currentFlags[key];
     setPendingKey(key);
     try {
       const updated = await requestSettingsOperation(SETTINGS_RPC_OPERATION.UPDATE_FEATURE_FLAG, {

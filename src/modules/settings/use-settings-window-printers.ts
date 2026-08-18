@@ -70,7 +70,7 @@ export function listSettingsWindowUsbPrinters(): Promise<SettingsUsbPrinterDto[]
 }
 
 export function testSettingsWindowPrinter(input: SettingsWindowPrinterTestInput): Promise<void> {
-  return requestSettingsOperation(SETTINGS_RPC_OPERATION.TEST_PRINTER, input);
+  return requestSettingsOperation(SETTINGS_RPC_OPERATION.TEST_PRINTER, input).then(() => undefined);
 }
 
 export { SETTINGS_WINDOW_PRINTERS_QUERY_KEY };
