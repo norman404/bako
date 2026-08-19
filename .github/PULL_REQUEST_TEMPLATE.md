@@ -18,6 +18,7 @@
 
 <!-- Describe the tests you ran. If following TDD, mention Red-Green-Refactor cycle -->
 
+- [ ] Frontend tests pass (`bun run test`)
 - [ ] Rust tests pass (`cargo test --manifest-path src-tauri/Cargo.toml`)
 - [ ] Build succeeds (`bun run build`)
 

@@ -31,7 +31,7 @@ The split is deliberate; do not translate a document into the other language whi
 
 ## Contributing
 
-- [Testing](contributing/testing.md) — Rust test commands and conventions.
+- [Testing](contributing/testing.md) — focused frontend and Rust test commands and conventions.
 
 ## Architecture decisions
 

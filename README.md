@@ -39,7 +39,7 @@ The project is moving toward a flat, feature-oriented module architecture intern
 | Desktop | Tauri 2 |
 | Local database | SQLite via `@tauri-apps/plugin-sql` |
 | ORM | Drizzle ORM + drizzle-kit |
-| Testing | Rust `cargo test` |
+| Testing | Vitest + Rust `cargo test` |
 
 ---
 
@@ -100,6 +100,8 @@ bun run tauri dev
 | `bun run preview` | Preview the production build locally |
 | `bun run tauri dev` | Run as a Tauri desktop app (development) |
 | `bun run tauri build` | Build the desktop app for production |
+| `bun run test` | Run focused TypeScript contract tests |
+| `bun run test:watch` | Watch focused TypeScript contract tests |
 | `cargo test --manifest-path src-tauri/Cargo.toml` | Run Rust tests |
 
 ### Development philosophy
@@ -164,10 +166,11 @@ Bako uses a local SQLite database named `bako.db`. How migrations run and the ru
 ## Testing
 
 ```bash
+bun run test
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-Rust tests are kept next to the implementation under `src-tauri/src`. The frontend has no test suite.
+TypeScript contract tests are co-located under `src/`; Rust tests remain next to native implementation under `src-tauri/src`. See [`docs/contributing/testing.md`](docs/contributing/testing.md) for the policy and focused commands.
 
 ---
 

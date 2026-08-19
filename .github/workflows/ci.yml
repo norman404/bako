@@ -41,5 +41,8 @@ jobs:
       - name: Type check
         run: bun run build
 
+      - name: Frontend tests
+        run: bun run test
+
       - name: Rust tests
         run: cargo test --manifest-path src-tauri/Cargo.toml

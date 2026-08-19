@@ -71,6 +71,8 @@ Want just the web dev server (no Tauri shell)? `bun run dev` boots Vite alone �
 | `bun run dev` | Vite dev server only (no Tauri/native APIs) |
 | `bun run tauri dev` | Full desktop app — **recommended for feature work** |
 | `bun run build` | Production build (`tsc` + `vite build`) |
+| `bun run test` | Focused TypeScript contract tests |
+| `bun run test:watch` | Focused TypeScript contract tests in watch mode |
 | `cargo test --manifest-path src-tauri/Cargo.toml` | Rust test suite |
 
 Bako uses **oxlint** as its linter, and there is no formatter configured yet — follow the style of the surrounding code. The commands a change has to pass before you open a PR are the canonical gate in [`BAKO.md`](./BAKO.md#verify-before-claiming-done).
@@ -79,11 +81,10 @@ Bako uses **oxlint** as its linter, and there is no formatter configured yet —
 
 ## Testing
 
-Tests are written in Rust and live next to the implementation under `src-tauri/src`, usually in `#[cfg(test)]` modules.
-
-Run the complete suite with:
+Bako has focused TypeScript contract tests under `src/` and Rust tests next to native implementation under `src-tauri/src`.
 
 ```bash
+bun run test
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
@@ -93,7 +94,7 @@ For focused print tests:
 cargo test --manifest-path src-tauri/Cargo.toml --lib print::
 ```
 
-See [`docs/contributing/testing.md`](./docs/contributing/testing.md) for the Rust testing guide.
+See [`docs/contributing/testing.md`](./docs/contributing/testing.md) for commands, layer selection, and the canonical policy in [`BAKO.md`](./BAKO.md#testing).
 
 ---
 
@@ -208,7 +209,7 @@ Include:
 - **What** — what the PR does, in one or two sentences
 - **Why** — the motivation / problem being solved
 - **How** — the approach, especially if non-obvious
-- **Testing** — how you verified it (which Rust tests, manual steps)
+- **Testing** — how you verified it (which frontend/Rust tests and manual steps)
 - **Breaking changes** — if any, call them out explicitly
 
 ### Review & merge

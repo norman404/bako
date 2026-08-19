@@ -34,11 +34,12 @@ Every change is evaluated against:
 
 This is the canonical gate list; other documents link here instead of restating it. The two groups are not equivalent — one is enforced for you, the other is not.
 
-**CI gate** — `.github/workflows/ci.yml` runs exactly these three, in this order:
+**CI gate** — `.github/workflows/ci.yml` runs exactly these four, in this order:
 
 ```bash
 bun run lint        # oxlint
 bun run build       # tsc + vite build — there is no `typecheck` script
+bun run test        # Vitest frontend contract tests under src/
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
@@ -48,7 +49,7 @@ cargo test --manifest-path src-tauri/Cargo.toml
 cd src-tauri && cargo test --lib print::
 ```
 
-Before a release, `.pi/skills/bako-release/SKILL.md` enforces `bun run lint` and `cargo test --manifest-path src-tauri/Cargo.toml` as a hard gate before any version file is touched.
+Before a release, `.pi/skills/bako-release/SKILL.md` enforces `bun run lint`, `bun run test`, and `cargo test --manifest-path src-tauri/Cargo.toml` as hard gates before any version file is touched.
 
 ## Conventions
 
@@ -143,15 +144,29 @@ Every operation — reads, writes, `closeDatabase()`, and everything inside `wit
 
 ## Testing
 
-Tests are kept in the Rust backend under `src-tauri/src`, usually in `#[cfg(test)]` modules next to the implementation. The frontend has no test suite.
+Bako tests each executable boundary in its native runtime: frontend business rules use Vitest and backend/native behavior uses Rust tests next to the implementation.
 
-Run the complete suite with `cargo test --manifest-path src-tauri/Cargo.toml`. Focused print tests can be run with:
+```bash
+bun run test
+cargo test --manifest-path src-tauri/Cargo.toml
+```
+
+Focused print tests remain available with:
 
 ```bash
 cargo test --manifest-path src-tauri/Cargo.toml --lib print::
 ```
 
-Full conventions are in [`docs/contributing/testing.md`](docs/contributing/testing.md).
+A change **must** add or extend an executable regression test when it affects:
+
+- money calculations, validation, or business state transitions;
+- data integrity or recovery, including database transactions, backups, restores, and migrations;
+- Tauri/native command inputs, printers, or other trust boundaries; or
+- a production bug with broad regression risk.
+
+Tests assert observable results plus a relevant boundary, failure, or rejection path at the lowest suitable layer. Layout, styles, themes, static copy, and guarantees already provided by type-checking do not require tests. Do not add DOM, browser, or snapshot infrastructure merely to increase coverage.
+
+Frontend tests are co-located as `*.test.ts` under `src/`; Rust tests normally live in `#[cfg(test)]` modules under `src-tauri/src`. Full conventions are in [`docs/contributing/testing.md`](docs/contributing/testing.md).
 
 ## Migration strategy
 
@@ -179,5 +194,5 @@ The step-by-step procedure for restructuring a module, plus the name-collision t
 - [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its documented exceptions, the `settings ↔ updater` cycle, and the procedure for restructuring a module.
 - [`docs/architecture/database.md`](docs/architecture/database.md) — the serialization queue, schema, migrations.
 - [`docs/architecture/printing.md`](docs/architecture/printing.md) — the frontend side of printing: which module owns what, the Tauri print commands, and how a job travels from a button click to a physical printer. It does **not** document the Rust engine — that is [`src-tauri/src/print/README.md`](src-tauri/src/print/README.md), kept next to the code because it covers a different language and toolchain.
-- [`docs/contributing/testing.md`](docs/contributing/testing.md) — Rust test commands and conventions.
+- [`docs/contributing/testing.md`](docs/contributing/testing.md) — frontend and Rust test commands and conventions.
 - [`docs/adr/README.md`](docs/adr/README.md) — accepted architectural decisions (prices in cents, error translation, TSPL bitmap rendering).
