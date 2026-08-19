@@ -46,66 +46,54 @@ export function GeneralSettingsCard() {
   }
 
   return (
-    <div>
-      <div className="px-5">
-        <div className="flex items-center justify-between border-b border-border py-3">
-          <Label
-            htmlFor="settings-locale"
-            className="text-sm normal-case tracking-normal text-text"
+    <>
+      <div className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
+        <Label htmlFor="settings-locale">{t("system.localeLabel")}</Label>
+        <Select
+          value={snapshot.locale}
+          onValueChange={(locale) => void updateRegionalSettings(locale, snapshot.currency)}
+        >
+          <SelectTrigger
+            id="settings-locale"
+            data-testid="locale-select-trigger"
+            className="mt-2.5 w-full"
           >
-            {t("system.localeLabel")}
-          </Label>
-          <Select
-            value={snapshot.locale}
-            onValueChange={(locale) => void updateRegionalSettings(locale, snapshot.currency)}
-          >
-            <SelectTrigger
-              id="settings-locale"
-              data-testid="locale-select-trigger"
-              className="w-[220px]"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SUPPORTED_LOCALES.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SUPPORTED_LOCALES.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-2.5 text-xs leading-relaxed text-text-dim">{t("system.localeHelp")}</p>
       </div>
 
-      <div className="px-5">
-        <div className="flex items-center justify-between border-b border-border py-3">
-          <Label
-            htmlFor="settings-currency"
-            className="text-sm normal-case tracking-normal text-text"
+      <div className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
+        <Label htmlFor="settings-currency">{t("system.currencyLabel")}</Label>
+        <Select
+          value={snapshot.currency}
+          onValueChange={(currency) => void updateRegionalSettings(snapshot.locale, currency)}
+        >
+          <SelectTrigger
+            id="settings-currency"
+            data-testid="currency-select-trigger"
+            className="mt-2.5 w-full"
           >
-            {t("system.currencyLabel")}
-          </Label>
-          <Select
-            value={snapshot.currency}
-            onValueChange={(currency) => void updateRegionalSettings(snapshot.locale, currency)}
-          >
-            <SelectTrigger
-              id="settings-currency"
-              data-testid="currency-select-trigger"
-              className="w-[220px]"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SUPPORTED_CURRENCIES.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SUPPORTED_CURRENCIES.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="mt-2.5 text-xs leading-relaxed text-text-dim">{t("system.currencyHelp")}</p>
       </div>
-    </div>
+    </>
   );
 }

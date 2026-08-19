@@ -369,8 +369,8 @@ export function PrinterSettingsPanel() {
         </Button>
       </header>
 
-      <div className="grid min-h-0 gap-3 xl:grid-cols-[minmax(0,0.86fr)_minmax(300px,1.14fr)]">
-        <section className="min-h-0 overflow-hidden xl:border-r xl:border-border xl:pr-3">
+      <div className="grid min-h-0 gap-3 md:grid-cols-[minmax(0,0.86fr)_minmax(300px,1.14fr)]">
+        <section className="min-h-0 overflow-hidden md:border-r md:border-border md:pr-3">
           <div className="scrollbar-thin h-full space-y-1 overflow-y-auto pr-1">
             {printers.map((printer) => {
               const isActive = selectedPrinterId === printer.id && mode === PRINTER_FORM_MODE.EDIT;
@@ -422,7 +422,7 @@ export function PrinterSettingsPanel() {
           </div>
         </section>
 
-        <section className="min-h-0 xl:pl-1">
+        <section className="min-h-0 md:pl-1">
           <div className="border-b border-border pb-2.5">
             <h3 className="text-md font-semibold text-text">
               {mode === PRINTER_FORM_MODE.CREATE ? t("settings:printer.createTitle") : t("settings:printer.editTitle")}

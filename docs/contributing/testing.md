@@ -16,7 +16,7 @@ Run focused printer tests when changing `src-tauri/src/print/`:
 cargo test --manifest-path src-tauri/Cargo.toml --lib print::
 ```
 
-Use `bun run <script>` rather than invoking Vitest directly.
+Use `bun run <script>` rather than invoking Vitest directly. The scripts explicitly run Vitest under Bun rather than delegating its Node shebang.
 
 ## Frontend tests
 

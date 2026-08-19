@@ -1,6 +1,6 @@
+export { DatabaseSettingsCard } from "./components/DatabaseSettingsCard";
 export { FeatureFlagsPanel } from "./components/FeatureFlagsPanel";
 export { GeneralSettingsPanel } from "./components/general-settings-panel";
-export { SystemSettingsPanel } from "./components/SystemSettingsPanel";
 export {
   disposeSettingsWindowClient,
   initializeSettingsWindowClient,

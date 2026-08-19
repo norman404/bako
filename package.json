@@ -24,8 +24,8 @@
     "preview": "bunx --bun vite preview",
     "tauri": "tauri",
     "lint": "oxlint",
-    "test": "vitest run --dir src",
-    "test:watch": "vitest --dir src",
+    "test": "bunx --bun vitest run --dir src",
+    "test:watch": "bunx --bun vitest --dir src",
     "seed": "bun run scripts/seed.ts"
   },
   "dependencies": {

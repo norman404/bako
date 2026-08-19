@@ -83,8 +83,8 @@ export function DatabaseSettingsCard() {
     : t("database.description");
 
   return (
-    <div className="border-t border-border">
-      <div className="flex items-start gap-3 px-5 py-4">
+    <div className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
+      <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-primary/20 bg-primary/10 text-primary">
           <Database className="h-4 w-4" aria-hidden="true" />
         </div>
@@ -94,58 +94,56 @@ export function DatabaseSettingsCard() {
         </div>
       </div>
 
-      <div className="px-5 pb-4">
-        <div className="rounded-card border border-border bg-surface-sunken/50 p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-2xs font-medium uppercase tracking-[0.12em] text-text-dim">
-                {t("database.locationLabel")}
-              </p>
-              {isInfoLoading ? (
-                <LoaderCircle
-                  className="mt-2 h-4 w-4 animate-spin text-text-muted"
-                  aria-label={t("database.loading")}
-                />
-              ) : (
-                <code className="mt-2 block break-all text-2xs text-text-muted" title={info?.path}>
-                  {info?.path ?? t("database.locationUnavailable")}
-                </code>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("database.copyPathAriaLabel")}
-              onClick={handleCopyPath}
-              disabled={isBusy || !info?.path}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
+      <div className="mt-3 rounded-card border border-border bg-surface-sunken/50 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-2xs font-medium uppercase tracking-[0.12em] text-text-dim">
+              {t("database.locationLabel")}
+            </p>
+            {isInfoLoading ? (
+              <LoaderCircle
+                className="mt-2 h-4 w-4 animate-spin text-text-muted"
+                aria-label={t("database.loading")}
+              />
+            ) : (
+              <code className="mt-2 block break-all text-2xs text-text-muted" title={info?.path}>
+                {info?.path ?? t("database.locationUnavailable")}
+              </code>
+            )}
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("database.copyPathAriaLabel")}
+            onClick={handleCopyPath}
+            disabled={isBusy || !info?.path}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
         </div>
+      </div>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            size="small"
-            onClick={() => void handleExport()}
-            disabled={isBusy || isInfoLoading}
-            data-testid="database-export-button"
-          >
-            <Download className="h-3.5 w-3.5" />
-            {t("database.exportButton")}
-          </Button>
-          <Button
-            variant="danger"
-            size="small"
-            onClick={() => void handleChooseRestoreSource()}
-            disabled={isBusy}
-            data-testid="database-restore-button"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {t("database.restoreButton")}
-          </Button>
-        </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          variant="secondary"
+          size="small"
+          onClick={() => void handleExport()}
+          disabled={isBusy || isInfoLoading}
+          data-testid="database-export-button"
+        >
+          <Download className="h-3.5 w-3.5" />
+          {t("database.exportButton")}
+        </Button>
+        <Button
+          variant="danger"
+          size="small"
+          onClick={() => void handleChooseRestoreSource()}
+          disabled={isBusy}
+          data-testid="database-restore-button"
+        >
+          <Upload className="h-3.5 w-3.5" />
+          {t("database.restoreButton")}
+        </Button>
       </div>
 
       <ConfirmDialog

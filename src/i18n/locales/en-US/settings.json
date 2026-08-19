@@ -16,6 +16,8 @@
     "turno": "Shift",
     "features": "Features",
     "featuresDesc": "Enable or disable features",
+    "system": "System",
+    "systemDesc": "Backups and updates",
     "updater": "Updates",
     "updaterDesc": "Check for and install updates"
   },
@@ -29,6 +31,8 @@
     "title": "System",
     "localeLabel": "Language / Region (Locale)",
     "currencyLabel": "Currency",
+    "localeHelp": "Changes app text and date formatting.",
+    "currencyHelp": "Applies to prices across the point of sale.",
     "saveButton": "Save changes",
     "saveSuccess": "Regional settings updated",
     "saveSuccessDesc": "Region: {{locale}} · Currency: {{currency}}",
@@ -72,6 +76,7 @@
     "description": "Enable or disable features for each module",
     "updateSuccess": "Settings updated",
     "updateError": "Could not save settings",
+    "activeCount": "{{count}} of {{total}} active",
     "modules": {
       "menu": {
         "name": "Menu",

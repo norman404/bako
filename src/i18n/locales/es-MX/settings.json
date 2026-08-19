@@ -16,6 +16,8 @@
     "turno": "Turno",
     "features": "Características",
     "featuresDesc": "Activa o desactiva funcionalidades",
+    "system": "Sistema",
+    "systemDesc": "Respaldos y actualizaciones de Bako",
     "updater": "Actualizaciones",
     "updaterDesc": "Buscar e instalar actualizaciones"
   },
@@ -29,6 +31,8 @@
     "title": "Sistema",
     "localeLabel": "Idioma / Región (Locale)",
     "currencyLabel": "Moneda",
+    "localeHelp": "Cambia los textos de la app y el formato de las fechas.",
+    "currencyHelp": "Se aplica a los precios en todo el punto de venta.",
     "saveButton": "Guardar cambios",
     "saveSuccess": "Configuración regional actualizada",
     "saveSuccessDesc": "Región: {{locale}} · Moneda: {{currency}}",
@@ -72,6 +76,7 @@
     "description": "Activa o desactiva funcionalidades de cada módulo",
     "updateSuccess": "Configuración actualizada",
     "updateError": "No se pudo guardar la configuración",
+    "activeCount": "{{count}} de {{total}} activas",
     "modules": {
       "menu": {
         "name": "Menú",

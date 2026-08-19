@@ -2,10 +2,8 @@ import { GeneralSettingsCard } from "./GeneralSettingsCard";
 
 export function GeneralSettingsPanel() {
   return (
-    <div className="flex justify-center px-6 py-6">
-      <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-surface-sunken/30">
-        <GeneralSettingsCard />
-      </div>
+    <div className="grid items-start gap-4 md:grid-cols-2">
+      <GeneralSettingsCard />
     </div>
   );
 }

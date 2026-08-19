@@ -96,92 +96,89 @@ export function UpdateSettingsPanel() {
   }
 
   return (
-    <div className="flex justify-center px-6 py-6">
-      <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-surface-sunken/30">
-        <div className="px-5">
-          <div className="flex items-center justify-between border-b border-border py-3">
-            <div className="grid gap-0.5">
-              <span className="text-sm font-medium text-text">
-                {t("updater:panel.title")}
-              </span>
-              <span className="text-xs text-text-dim">
-                {t("updater:panel.currentVersionLabel")}: {APP_VERSION}
-              </span>
-            </div>
-          </div>
+    <div className="rounded-card border border-border bg-surface-raised p-4 shadow-card">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-primary/20 bg-primary/10 text-primary">
+          <Download className="h-4 w-4" aria-hidden="true" />
         </div>
-
-        <div className="px-5">
-          <div className="flex items-center justify-between border-b border-border py-3">
-            <div className="grid gap-0.5">
-              <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
-                {t("updater:panel.autoUpdateLabel")}
-              </Label>
-              <p className="text-xs text-text-dim">{t("updater:panel.autoUpdateDescription")}</p>
-            </div>
-            <Switch
-              id="auto-update-enabled"
-              aria-label={t("updater:panel.autoUpdateLabel")}
-              checked={autoUpdateEnabled}
-              onCheckedChange={(checked) => void updateAutoUpdate(checked)}
-              disabled={isUpdatingAutoUpdate}
-            />
-          </div>
+        <div className="min-w-0">
+          <h3 className="text-sm font-medium text-text">{t("updater:panel.title")}</h3>
         </div>
+      </div>
 
-        <div className="px-5">
-          <div className="flex items-center justify-between py-3">
-            <StatusMessage status={status} />
+      <div className="mt-3 flex items-center justify-between gap-4 border-t border-border py-3">
+        <span className="text-sm font-medium text-text">
+          {t("updater:panel.currentVersionLabel")}
+        </span>
+        <span className="font-mono-tabular text-xs text-text-muted">{APP_VERSION}</span>
+      </div>
 
-            <div className="flex items-center gap-2">
-              {status.kind === SETTINGS_UPDATE_STATUS.IDLE ||
-              status.kind === SETTINGS_UPDATE_STATUS.ERROR ? (
-                <Button
-                  variant="outline"
-                  size="small"
-                  onClick={() => void runUpdaterAction(updater.checkForUpdates)}
-                  disabled={updater.isChecking}
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  {t("updater:panel.checkButton")}
-                </Button>
-              ) : null}
+      <div className="flex items-center justify-between gap-4 border-t border-border py-3">
+        <div className="grid gap-0.5">
+          <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
+            {t("updater:panel.autoUpdateLabel")}
+          </Label>
+          <p className="text-xs text-text-dim">{t("updater:panel.autoUpdateDescription")}</p>
+        </div>
+        <Switch
+          id="auto-update-enabled"
+          aria-label={t("updater:panel.autoUpdateLabel")}
+          checked={autoUpdateEnabled}
+          onCheckedChange={(checked) => void updateAutoUpdate(checked)}
+          disabled={isUpdatingAutoUpdate}
+        />
+      </div>
 
-              {status.kind === SETTINGS_UPDATE_STATUS.AVAILABLE ? (
-                <Button
-                  variant="default"
-                  size="small"
-                  onClick={() => void runUpdaterAction(updater.downloadAndInstall)}
-                  disabled={updater.isDownloading}
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  {t("updater:panel.downloadAndInstall")}
-                </Button>
-              ) : null}
+      <div className="flex items-center justify-between gap-4 border-t border-border py-3">
+        <StatusMessage status={status} />
 
-              {status.kind === SETTINGS_UPDATE_STATUS.READY_TO_INSTALL ? (
-                <Button
-                  variant="default"
-                  size="small"
-                  onClick={() => void runUpdaterAction(updater.relaunch)}
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  {t("updater:panel.restart")}
-                </Button>
-              ) : null}
+        <div className="flex items-center gap-2">
+          {status.kind === SETTINGS_UPDATE_STATUS.IDLE ||
+          status.kind === SETTINGS_UPDATE_STATUS.ERROR ? (
+            <Button
+              variant="outline"
+              size="small"
+              onClick={() => void runUpdaterAction(updater.checkForUpdates)}
+              disabled={updater.isChecking}
+            >
+              <Search className="h-3.5 w-3.5" />
+              {t("updater:panel.checkButton")}
+            </Button>
+          ) : null}
 
-              {status.kind === SETTINGS_UPDATE_STATUS.ERROR ? (
-                <Button
-                  variant="outline"
-                  size="small"
-                  onClick={() => void runUpdaterAction(updater.checkForUpdates)}
-                >
-                  <RotateCw className="h-3.5 w-3.5" />
-                  {t("updater:panel.tryAgain")}
-                </Button>
-              ) : null}
-            </div>
-          </div>
+          {status.kind === SETTINGS_UPDATE_STATUS.AVAILABLE ? (
+            <Button
+              variant="default"
+              size="small"
+              onClick={() => void runUpdaterAction(updater.downloadAndInstall)}
+              disabled={updater.isDownloading}
+            >
+              <Download className="h-3.5 w-3.5" />
+              {t("updater:panel.downloadAndInstall")}
+            </Button>
+          ) : null}
+
+          {status.kind === SETTINGS_UPDATE_STATUS.READY_TO_INSTALL ? (
+            <Button
+              variant="default"
+              size="small"
+              onClick={() => void runUpdaterAction(updater.relaunch)}
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              {t("updater:panel.restart")}
+            </Button>
+          ) : null}
+
+          {status.kind === SETTINGS_UPDATE_STATUS.ERROR ? (
+            <Button
+              variant="outline"
+              size="small"
+              onClick={() => void runUpdaterAction(updater.checkForUpdates)}
+            >
+              <RotateCw className="h-3.5 w-3.5" />
+              {t("updater:panel.tryAgain")}
+            </Button>
+          ) : null}
         </div>
       </div>
     </div>

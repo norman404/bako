@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
+import { summarizeFeatureFlags } from "../lib/feature-flag-summary";
+import { splitModulesIntoColumns } from "../lib/module-columns";
 import { requestSettingsOperation } from "../settings-window-client";
 import { SETTINGS_RPC_OPERATION } from "../settings-window-protocol";
 import { useSettingsWindowStore } from "../settings-window-store";
@@ -31,12 +33,20 @@ const MODULES: ModuleConfig[] = [
   },
 ];
 
+const FLAG_KEYS = MODULES.flatMap((module) => module.flags);
+
+const MODULE_COLUMNS = splitModulesIntoColumns(MODULES).filter(
+  (column) => column.modules.length > 0,
+);
+
 export function FeatureFlagsPanel() {
   const { t } = useTranslation("settings");
   const flags = useSettingsWindowStore((state) => state.snapshot?.flags);
   const [pendingKey, setPendingKey] = useState<SettingsFeatureFlagKey | null>(null);
 
   if (!flags) return null;
+
+  const summary = summarizeFeatureFlags(FLAG_KEYS, flags);
 
   async function handleToggle(key: SettingsFeatureFlagKey) {
     const currentFlags = useSettingsWindowStore.getState().snapshot?.flags;
@@ -61,44 +71,56 @@ export function FeatureFlagsPanel() {
   }
 
   return (
-    <div className="flex justify-center px-6 py-6">
-      <div className="w-full max-w-xl overflow-hidden rounded-lg border border-border bg-surface-sunken/30">
-        {MODULES.map((module, moduleIndex) => (
-          <div key={module.id}>
-            <div className={moduleIndex > 0 ? "border-t border-border" : ""}>
-              <div className="px-5 pb-1 pt-4">
-                <h3 className="text-sm font-semibold text-text">
-                  {t(`featureFlags.modules.${module.id}.name`)}
-                </h3>
-                <p className="mt-0.5 text-xs text-text-dim">
-                  {t(`featureFlags.modules.${module.id}.description`)}
-                </p>
-              </div>
-            </div>
+    <div>
+      <div className="mb-4 flex items-end justify-end gap-6">
+        <span className="shrink-0 rounded-card border border-border-strong px-2.5 py-0.5 text-2xs font-semibold uppercase tracking-[0.16em] text-text">
+          {t("featureFlags.activeCount", { count: summary.enabled, total: summary.total })}
+        </span>
+      </div>
 
-            {module.flags.map((flag) => (
-              <div key={flag} className="px-5">
-                <div className="flex items-center justify-between border-b border-border py-3">
-                  <div className="grid gap-0.5">
-                    <Label
-                      htmlFor={`flag-${flag}`}
-                      className="cursor-pointer text-sm normal-case tracking-normal text-text"
-                    >
-                      {t(`featureFlags.flags.${flag}.label`)}
-                    </Label>
-                    <p className="text-xs text-text-dim">
-                      {t(`featureFlags.flags.${flag}.description`)}
-                    </p>
-                  </div>
-                  <Switch
-                    id={`flag-${flag}`}
-                    aria-label={t(`featureFlags.flags.${flag}.label`)}
-                    checked={flags[flag]}
-                    onCheckedChange={() => void handleToggle(flag)}
-                    disabled={pendingKey !== null}
-                  />
+      <div className="grid items-start gap-4 md:grid-cols-2">
+        {MODULE_COLUMNS.map((column) => (
+          <div key={column.id} className="flex flex-col gap-4">
+            {column.modules.map((module) => (
+              <article
+                key={module.id}
+                className="rounded-card border border-border bg-surface-raised p-4 shadow-card"
+              >
+                <div className="grid gap-0.5 pb-3">
+                  <h3 className="text-sm font-semibold text-text">
+                    {t(`featureFlags.modules.${module.id}.name`)}
+                  </h3>
+                  <p className="text-xs text-text-dim">
+                    {t(`featureFlags.modules.${module.id}.description`)}
+                  </p>
                 </div>
-              </div>
+
+                {module.flags.map((flag) => (
+                  <div
+                    key={flag}
+                    className="flex items-center justify-between gap-4 border-t border-border py-3"
+                  >
+                    <div className="grid gap-0.5">
+                      <Label
+                        htmlFor={`flag-${flag}`}
+                        className="cursor-pointer text-sm normal-case tracking-normal text-text"
+                      >
+                        {t(`featureFlags.flags.${flag}.label`)}
+                      </Label>
+                      <p className="text-xs text-text-dim">
+                        {t(`featureFlags.flags.${flag}.description`)}
+                      </p>
+                    </div>
+                    <Switch
+                      id={`flag-${flag}`}
+                      aria-label={t(`featureFlags.flags.${flag}.label`)}
+                      checked={flags[flag]}
+                      onCheckedChange={() => void handleToggle(flag)}
+                      disabled={pendingKey !== null}
+                    />
+                  </div>
+                ))}
+              </article>
             ))}
           </div>
         ))}

@@ -5,13 +5,12 @@ import {
   NAVIGATION_SURFACE,
   type ModuleNavigationEntry,
 } from "@/app/module-manifest";
+import { SystemSettingsPanel } from "@/app/system-settings-panel";
 import { PRINTER_SETTINGS_WINDOW_ENTRY } from "@/modules/printer/settings-window-entry";
 import {
   FeatureFlagsPanel,
   GeneralSettingsPanel,
-  SystemSettingsPanel,
 } from "@/modules/settings/settings-window-entry";
-import { UPDATER_SETTINGS_WINDOW_ENTRY } from "@/modules/updater/settings-window-entry";
 
 const STATIC_SETTINGS_WINDOW_ENTRIES: ModuleNavigationEntry[] = [
   {
@@ -35,12 +34,12 @@ const STATIC_SETTINGS_WINDOW_ENTRIES: ModuleNavigationEntry[] = [
     Component: FeatureFlagsPanel,
   },
   {
-    id: "database",
+    id: "system",
     surface: NAVIGATION_SURFACE.SETTINGS,
     group: NAVIGATION_GROUP.SYSTEM,
     order: 10,
-    labelKey: "settings:database.title",
-    descriptionKey: "settings:database.description",
+    labelKey: "settings:sections.system",
+    descriptionKey: "settings:sections.systemDesc",
     icon: HardDrive,
     Component: SystemSettingsPanel,
   },
@@ -49,5 +48,4 @@ const STATIC_SETTINGS_WINDOW_ENTRIES: ModuleNavigationEntry[] = [
 export const SETTINGS_WINDOW_ENTRIES: ModuleNavigationEntry[] = [
   ...STATIC_SETTINGS_WINDOW_ENTRIES,
   PRINTER_SETTINGS_WINDOW_ENTRY,
-  UPDATER_SETTINGS_WINDOW_ENTRY,
 ];

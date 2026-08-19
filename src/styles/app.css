@@ -6,7 +6,7 @@
 
   /* === Superficies === */
   --color-surface: #24273A;
-  --color-surface-raised: #24273A; /* cards = mismo bg; la elevación la dan borde + sombra */
+  --color-surface-raised: #282B3E; /* base + 20% surface0: en oscuro la elevación se lee por luminosidad, no por sombra */
   --color-surface-sunken: #181926; /* crust */
 
   /* === Marca === */
@@ -27,7 +27,7 @@
   --color-on-cta: #24273A;
 
   /* === Bordes === */
-  --color-border: #363A4F; /* surface0 — con card=bg, el borde ES la elevación */
+  --color-border: #363A4F; /* surface0 */
   --color-border-strong: #494D64; /* surface1 */
   --color-ring: #C6A0F6;
   --color-danger: #EE99A0; /* maroon */
@@ -192,7 +192,7 @@
 
   .modal-shell-solid {
     /* Un pelo más claro que surface para despegar el modal del fondo oscuro */
-    background: color-mix(in srgb, var(--color-surface) 80%, #363A4F);
+    background: var(--color-surface-raised);
     box-shadow: var(--shadow-modal);
     border: 1px solid var(--color-border-strong);
   }
