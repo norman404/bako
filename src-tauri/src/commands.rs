@@ -609,8 +609,9 @@ mod database_tests {
                 .execute("CREATE TABLE _sqlx_migrations (version INTEGER, success BOOLEAN)")
                 .await
                 .expect("migration table");
-            connection
-                .execute("INSERT INTO _sqlx_migrations (version, success) VALUES (29, 1)")
+            sqlx::query("INSERT INTO _sqlx_migrations (version, success) VALUES (?, 1)")
+                .bind(crate::CURRENT_MIGRATION_VERSION + 1)
+                .execute(&mut connection)
                 .await
                 .expect("future migration");
             connection.close().await.expect("close sqlite database");

@@ -78,6 +78,7 @@ function createSnapshot(): SettingsSnapshot {
   return {
     locale: settings.locale,
     currency: settings.currency,
+    shiftListOrder: settings.shiftListOrder,
     comandaHeaderText: settings.comandaHeaderText,
     flags: { ...flags },
     updater: toUpdaterDto(updater),
@@ -160,6 +161,13 @@ async function executeRequest(
       const result = await useSettingsStore
         .getState()
         .updateSettings(request.payload.locale, request.payload.currency);
+      if (result.isErr()) throw result.error;
+      return createSnapshot();
+    }
+    case SETTINGS_RPC_OPERATION.UPDATE_SHIFT_LIST_ORDER: {
+      const result = await useSettingsStore
+        .getState()
+        .updateShiftListOrder(request.payload.shiftListOrder);
       if (result.isErr()) throw result.error;
       return createSnapshot();
     }
@@ -278,6 +286,7 @@ export function useSettingsWindowBridge(): () => Promise<void> {
       if (
         state.locale !== previousState.locale ||
         state.currency !== previousState.currency ||
+        state.shiftListOrder !== previousState.shiftListOrder ||
         state.comandaHeaderText !== previousState.comandaHeaderText
       ) {
         void emitChange({ kind: SETTINGS_CHANGE_KIND.SETTINGS, value: createSnapshot() });

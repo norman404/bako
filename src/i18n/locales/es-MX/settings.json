@@ -12,7 +12,7 @@
     "categories": "Categorías",
     "menus": "Menús",
     "general": "General",
-    "generalDesc": "Idioma y moneda del sistema",
+    "generalDesc": "Idioma, moneda y orden de los listados",
     "turno": "Turno",
     "features": "Características",
     "featuresDesc": "Activa o desactiva funcionalidades",
@@ -36,7 +36,13 @@
     "saveButton": "Guardar cambios",
     "saveSuccess": "Configuración regional actualizada",
     "saveSuccessDesc": "Región: {{locale}} · Moneda: {{currency}}",
-    "saveError": "No se pudo guardar la configuración"
+    "saveError": "No se pudo guardar la configuración",
+    "listOrderLabel": "Orden de turnos y ventas",
+    "listOrderHelp": "Define cómo se muestran por fecha y hora el historial de turnos y sus ventas internas.",
+    "listOrderDescending": "Descendente (más reciente primero)",
+    "listOrderAscending": "Ascendente (más antiguo primero)",
+    "listOrderSaveSuccess": "Orden de listados actualizado",
+    "listOrderSaveError": "No se pudo guardar el orden de los listados"
   },
   "database": {
     "title": "Base de datos",

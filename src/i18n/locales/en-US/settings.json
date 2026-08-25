@@ -12,7 +12,7 @@
     "categories": "Categories",
     "menus": "Menus",
     "general": "General",
-    "generalDesc": "System language and currency",
+    "generalDesc": "System language, currency, and list order",
     "turno": "Shift",
     "features": "Features",
     "featuresDesc": "Enable or disable features",
@@ -36,7 +36,13 @@
     "saveButton": "Save changes",
     "saveSuccess": "Regional settings updated",
     "saveSuccessDesc": "Region: {{locale}} · Currency: {{currency}}",
-    "saveError": "Could not save settings"
+    "saveError": "Could not save settings",
+    "listOrderLabel": "Shift and sales order",
+    "listOrderHelp": "Choose how shift history and internal sales are shown by date and time.",
+    "listOrderDescending": "Descending (newest first)",
+    "listOrderAscending": "Ascending (oldest first)",
+    "listOrderSaveSuccess": "List order updated",
+    "listOrderSaveError": "Could not save the list order"
   },
   "database": {
     "title": "Database",

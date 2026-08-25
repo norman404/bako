@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { formatPosCurrency } from "@/lib/currency";
+import { useSettingsStore } from "@/modules/settings";
+import { sortShiftList } from "../list-order";
 import type { ShiftReport, ShiftReportOrder, ShiftReportPayment } from "../shift";
 
 interface ShiftReportViewProps {
@@ -209,6 +211,8 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
 
 export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrder, onReprintCommand }: ShiftReportViewProps) {
   const { t } = useTranslation("shift");
+  const shiftListOrder = useSettingsStore((state) => state.shiftListOrder);
+  const orderedOrders = sortShiftList(report.orders, (order) => order.createdAt, shiftListOrder);
 
   return (
     <div className="grid gap-4">
@@ -378,7 +382,7 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
 
       {/* Listado de ventas */}
       <SalesList
-        orders={report.orders}
+        orders={orderedOrders}
         t={t}
         onReprintOrder={onReprintOrder}
         onEditOrder={onEditOrder}

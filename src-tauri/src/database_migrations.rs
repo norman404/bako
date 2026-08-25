@@ -249,6 +249,51 @@ mod tests {
     }
 
     #[test]
+    fn applies_shift_list_order_migration_to_an_existing_settings_row() {
+        // CASE: An existing database has system settings before migration 29 runs.
+        // VALIDATES: The migration adds descending as the default without losing the row.
+        let migration_sql = include_str!("../migrations/0029_shift_list_order.sql");
+        let database = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            let options = SqliteConnectOptions::new()
+                .filename(&database)
+                .create_if_missing(true);
+            let mut connection = SqliteConnection::connect_with(&options)
+                .await
+                .expect("sqlite database");
+            connection
+                .execute("CREATE TABLE system_settings (id TEXT PRIMARY KEY NOT NULL, locale TEXT NOT NULL, currency TEXT NOT NULL, updated_at INTEGER NOT NULL)")
+                .await
+                .expect("legacy settings table");
+            connection
+                .execute("INSERT INTO system_settings (id, locale, currency, updated_at) VALUES ('current', 'es-MX', 'MXN', 1)")
+                .await
+                .expect("existing settings row");
+
+            for statement in migration_sql.split(';') {
+                let statement = statement.trim();
+                if !statement.is_empty() {
+                    sqlx::query(statement)
+                        .execute(&mut connection)
+                        .await
+                        .expect("migration statement");
+                }
+            }
+
+            let (locale, order): (String, String) = sqlx::query_as(
+                "SELECT locale, shift_list_order FROM system_settings WHERE id = 'current'",
+            )
+            .fetch_one(&mut connection)
+            .await
+            .expect("migrated settings row");
+            assert_eq!(locale, "es-MX");
+            assert_eq!(order, "descending");
+            connection.close().await.expect("close sqlite database");
+        });
+        let _ = fs::remove_file(database);
+    }
+
+    #[test]
     fn requires_the_mixed_payment_migration_file() {
         let migration_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("migrations")

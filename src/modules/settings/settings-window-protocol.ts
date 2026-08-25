@@ -12,9 +12,17 @@ const SETTINGS_RPC_EVENT = {
   CHANGE: "bako:settings-rpc-change",
 } as const;
 
+const SHIFT_LIST_ORDER = {
+  ASCENDING: "ascending",
+  DESCENDING: "descending",
+} as const;
+
+type ShiftListOrder = (typeof SHIFT_LIST_ORDER)[keyof typeof SHIFT_LIST_ORDER];
+
 const SETTINGS_RPC_OPERATION = {
   BOOTSTRAP: "bootstrap",
   UPDATE_REGIONAL: "update-regional",
+  UPDATE_SHIFT_LIST_ORDER: "update-shift-list-order",
   UPDATE_COMANDA_HEADER: "update-comanda-header",
   UPDATE_FEATURE_FLAG: "update-feature-flag",
   LIST_PRINTERS: "list-printers",
@@ -111,6 +119,10 @@ interface SettingsUpdateRegionalPayload {
   currency: string;
 }
 
+interface SettingsUpdateShiftListOrderPayload {
+  shiftListOrder: ShiftListOrder;
+}
+
 interface SettingsUpdateComandaHeaderPayload {
   text: string | null;
 }
@@ -170,6 +182,7 @@ interface SettingsRestoreDatabasePayload {
 interface SettingsRpcPayloadByOperation {
   [SETTINGS_RPC_OPERATION.BOOTSTRAP]: SettingsEmptyPayload;
   [SETTINGS_RPC_OPERATION.UPDATE_REGIONAL]: SettingsUpdateRegionalPayload;
+  [SETTINGS_RPC_OPERATION.UPDATE_SHIFT_LIST_ORDER]: SettingsUpdateShiftListOrderPayload;
   [SETTINGS_RPC_OPERATION.UPDATE_COMANDA_HEADER]: SettingsUpdateComandaHeaderPayload;
   [SETTINGS_RPC_OPERATION.UPDATE_FEATURE_FLAG]: SettingsUpdateFeatureFlagPayload;
   [SETTINGS_RPC_OPERATION.LIST_PRINTERS]: SettingsEmptyPayload;
@@ -272,6 +285,7 @@ type SettingsUpdateInfoDto =
 interface SettingsSnapshot {
   locale: string;
   currency: string;
+  shiftListOrder: ShiftListOrder;
   comandaHeaderText: string | null;
   flags: Record<string, boolean>;
   updater: SettingsUpdateInfoDto;
@@ -280,6 +294,7 @@ interface SettingsSnapshot {
 interface SettingsRpcDataByOperation {
   [SETTINGS_RPC_OPERATION.BOOTSTRAP]: SettingsSnapshot;
   [SETTINGS_RPC_OPERATION.UPDATE_REGIONAL]: SettingsSnapshot;
+  [SETTINGS_RPC_OPERATION.UPDATE_SHIFT_LIST_ORDER]: SettingsSnapshot;
   [SETTINGS_RPC_OPERATION.UPDATE_COMANDA_HEADER]: SettingsSnapshot;
   [SETTINGS_RPC_OPERATION.UPDATE_FEATURE_FLAG]: SettingsSnapshot;
   [SETTINGS_RPC_OPERATION.LIST_PRINTERS]: SettingsPrinterDto[];
@@ -428,6 +443,8 @@ function isSettingsRpcPayload(
       return true;
     case SETTINGS_RPC_OPERATION.UPDATE_REGIONAL:
       return isString(payload.locale) && isString(payload.currency);
+    case SETTINGS_RPC_OPERATION.UPDATE_SHIFT_LIST_ORDER:
+      return isOneOf(payload.shiftListOrder, SHIFT_LIST_ORDER);
     case SETTINGS_RPC_OPERATION.UPDATE_COMANDA_HEADER:
       return payload.text === null || isString(payload.text);
     case SETTINGS_RPC_OPERATION.UPDATE_FEATURE_FLAG:
@@ -511,6 +528,7 @@ export {
   SETTINGS_CHANGE_KIND,
   SETTINGS_LABEL_LANGUAGE,
   SETTINGS_MAIN_WINDOW,
+  SHIFT_LIST_ORDER,
   SETTINGS_PRINTER_ORIENTATION,
   SETTINGS_PRINTER_ROLE,
   SETTINGS_PRINTER_TYPE,
@@ -550,6 +568,8 @@ export type {
   SettingsTestPrinterPayload,
   SettingsUpdateComandaHeaderPayload,
   SettingsUpdateFeatureFlagPayload,
+  SettingsUpdateShiftListOrderPayload,
+  ShiftListOrder,
   SettingsUpdateInfoDto,
   SettingsUpdateRegionalPayload,
   SettingsUpdateStatus,

@@ -15,6 +15,7 @@ import { formatPosCurrency } from "@/lib/currency";
 import { reprintOrder } from "../lib/reprint-order";
 import { reprintShiftReport } from "../lib/reprint-shift-report";
 import { reprintCommand } from "../lib/reprint-command";
+import { sortShiftList } from "../list-order";
 import { ShiftReportView } from "./ShiftReportView";
 import { VoidOrderConfirm } from "./VoidOrderConfirm";
 import { EditOrderModal } from "./EditOrderModal";
@@ -94,7 +95,9 @@ export function ShiftControlPanel() {
   const { data: printers = [] } = usePrinters();
   const { data: categories = [] } = useCategories();
   const comandaHeaderText = useSettingsStore((state) => state.comandaHeaderText);
+  const shiftListOrder = useSettingsStore((state) => state.shiftListOrder);
   const headerText = comandaHeaderText?.trim() || "COMANDA";
+  const orderedHistory = sortShiftList(history, (shift) => shift.openedAt, shiftListOrder);
   const queryClient = useQueryClient();
   const fetchOrderDetail = useFetchOrderDetail();
   const [expandedShiftId, setExpandedShiftId] = useState<string | null>(null);
@@ -253,7 +256,7 @@ export function ShiftControlPanel() {
 
       <div className="mt-2.5">
         <div className="grid gap-2">
-          {history.map((shift) => {
+          {orderedHistory.map((shift) => {
             const isExpanded = expandedShiftId === shift.shiftId;
             const isActive = !shift.closedAt;
 

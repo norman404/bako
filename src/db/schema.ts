@@ -262,6 +262,7 @@ export const systemSettings = sqliteTable("system_settings", {
   printerType: text("printer_type"),
   printerAddress: text("printer_address"),
   comandaHeaderText: text("comanda_header_text"),
+  shiftListOrder: text("shift_list_order").notNull().default("descending"),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
