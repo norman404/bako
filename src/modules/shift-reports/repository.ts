@@ -1,4 +1,4 @@
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { ResultAsync } from "neverthrow";
 
 import { db, withTransaction } from "@/db/client";
@@ -403,9 +403,9 @@ export const shiftDrizzleRepository: ShiftRepository = {
                 .select({
                   orderId: orderItems.orderId,
                   productId: orderItems.productId,
-                  productName: products.name,
+                  productName: sql<string | null>`${products.name}`.as("product_name"),
                   categoryId: products.categoryId,
-                  categoryName: categories.name,
+                  categoryName: sql<string | null>`${categories.name}`.as("category_name"),
                   quantity: orderItems.quantity,
                   unitPrice: orderItems.unitPrice,
                 })
