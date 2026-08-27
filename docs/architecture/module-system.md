@@ -51,9 +51,9 @@ This guide documents the two exceptions to the rule, each bounded by call site a
 
 `settingsPanel` was correct only while Settings was the sole shell. Bako now has POS, Administration, and Settings, so `src/app/module-manifest.ts` owns the neutral `ModuleManifest` contract. It declares a module's `navigation[]` entries: stable id, target surface, group, order, localized label, icon, component, and optional feature flag.
 
-`src/app/module-registry.ts` imports every module manifest and validates navigation IDs once. `AdminWorkspace` filters entries for `admin`; the native `SettingsWindowApp` composes its technical entries with General, Features, and System panels. Neither shell reaches into a module component directly.
+`src/app/module-registry.ts` imports every module manifest and validates navigation IDs once. `AdminWorkspace` filters entries for `admin`; the native `SettingsApp` composes its technical entries with General, Features, and System panels. Neither shell reaches into a module component directly.
 
-This keeps the updater-cycle resolution intact without loading Main-only updater services in the child: `src/app/settings-window-registry.ts` composes dedicated child-safe entries. The updater entry disappears only if its manifest is removed.
+This keeps the updater-cycle resolution intact without loading Main-only updater services in the child: `src/settings/sections/sections.ts` composes the individual page sections, while `src/settings/sections/select-sections.ts` applies visibility and ordering. The Settings child composition and its views live together under `src/settings/`; the co-located `use-settings-bridge.ts` remains a Main-side bridge and is not loaded by the child. The updater entry disappears only if its manifest is removed.
 
 ---
 
@@ -80,9 +80,9 @@ Reason: `module-registry.ts` runs at app composition time and needs only the man
 
 The native Settings webview has a distinct Tauri capability set: it may use directed events and the file dialog, but never SQLite, process, or updater APIs. In development, importing a single symbol from a broad barrel can still evaluate its other re-exports. Production tree-shaking is therefore not a security or architecture boundary.
 
-**Decision: `settings-window-entry.ts` is a documented child-safe entry, not a second general-purpose barrel.** It may be deep-imported only from the Settings child composition graph: `src/app/settings-window-main.tsx`, `src/app/settings-window-app.tsx`, `src/app/settings-window-registry.ts`, and other child-safe Settings entries or panels. It exports only child-safe UI, serializable types, and Settings RPC client code. It never imports `src/db`, SQL, process, updater, or a module's broad `index.ts`.
+**Decision: `settings-window-entry.ts` is a documented child-safe entry, not a second general-purpose barrel.** It may be deep-imported only from the Settings child composition graph under `src/settings/`: `main.tsx`, `settings-app.tsx`, `sections/*.tsx`, and `sections/sections.ts`, plus other child-safe Settings entries or panels. The co-located `use-settings-bridge.ts` is Main-side and is not part of that graph. The entry exports only child-safe UI, serializable types, and Settings RPC client code. It never imports `src/db`, SQL, process, updater, or a module's broad `index.ts`.
 
-Reason: this keeps Main as the sole SQLite/plugin owner in both development and production. `src/app/settings-window-registry.ts` composes the dedicated printer and updater entries without loading their repositories or Main stores; Main itself continues to use ordinary module barrels and services.
+Reason: this keeps Main as the sole SQLite/plugin owner in both development and production. The page files under `src/settings/sections/` compose the dedicated printer and updater entries without loading their repositories or Main stores; Main itself continues to use ordinary module barrels and services.
 
 ---
 

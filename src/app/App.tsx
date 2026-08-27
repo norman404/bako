@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AdminWorkspace } from "@/app/admin-workspace";
 import { MODULE_REGISTRY } from "@/app/module-registry";
 import { PosWorkspace } from "@/app/pos-workspace";
-import { useSettingsWindowBridge } from "@/app/use-settings-window-bridge";
+import { useSettingsWindowBridge } from "@/settings/use-settings-bridge";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { openSettingsWindow, useSettingsStore } from "@/modules/settings";
 import { UpdateToast, useUpdater } from "@/modules/updater";

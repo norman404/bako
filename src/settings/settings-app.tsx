@@ -1,18 +1,18 @@
 import { type KeyboardEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { SETTINGS_WINDOW_ENTRIES } from "@/app/settings-window-registry";
-import { selectSettingsWindowSections } from "@/app/settings-window-sections";
+import { SETTINGS_SECTIONS } from "@/settings/sections/sections";
+import { selectSettingsSections } from "@/settings/sections/select-sections";
 import { Button } from "@/components/ui/button";
 import { APP_VERSION } from "@/lib/app-version";
 import { IS_MAC } from "@/lib/platform";
 import { useSettingsWindowStore } from "@/modules/settings/settings-window-entry";
 
-export function SettingsWindowApp() {
+export function SettingsApp() {
   const { t } = useTranslation("settings");
   const flags = useSettingsWindowStore((state) => state.snapshot?.flags);
   const [selectedEntryId, setSelectedEntryId] = useState("general");
-  const entries = selectSettingsWindowSections(SETTINGS_WINDOW_ENTRIES, flags);
+  const entries = selectSettingsSections(SETTINGS_SECTIONS, flags);
   const activeEntry = entries.find((entry) => entry.id === selectedEntryId) ?? entries[0];
   const ActivePanel = activeEntry?.Component;
 

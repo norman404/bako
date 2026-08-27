@@ -17,7 +17,7 @@ function groupRank(group: ModuleNavigationEntry["group"]): number {
  * group first, then the module-declared order, then the identifier as a stable tiebreaker.
  * A section gated behind a feature flag only survives while that flag is on.
  */
-export function selectSettingsWindowSections(
+export function selectSettingsSections(
   entries: readonly ModuleNavigationEntry[],
   flags: Readonly<Record<string, boolean>> | undefined,
 ): ModuleNavigationEntry[] {

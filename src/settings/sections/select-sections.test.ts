@@ -7,7 +7,7 @@ import {
   NAVIGATION_SURFACE,
   type ModuleNavigationEntry,
 } from "@/app/module-manifest";
-import { selectSettingsWindowSections } from "./settings-window-sections";
+import { selectSettingsSections } from "./select-sections";
 
 const GENERAL_ENTRY: ModuleNavigationEntry = {
   id: "general",
@@ -80,7 +80,7 @@ const TIED_ALPHA_ENTRY: ModuleNavigationEntry = {
   Component: () => null,
 };
 
-describe("selectSettingsWindowSections", () => {
+describe("selectSettingsSections", () => {
   // CASE: The settings window renders before any feature flag snapshot arrives.
   // VALIDATES: Flagged sections stay hidden while unflagged sections remain reachable.
   it("should keep only unflagged sections when flags are undefined", () => {
@@ -88,7 +88,7 @@ describe("selectSettingsWindowSections", () => {
     const entries = [GENERAL_ENTRY, FLAGGED_FEATURES_ENTRY];
 
     // Act
-    const result = selectSettingsWindowSections(entries, undefined);
+    const result = selectSettingsSections(entries, undefined);
 
     // Assert
     expect(result).toEqual([GENERAL_ENTRY]);
@@ -101,7 +101,7 @@ describe("selectSettingsWindowSections", () => {
     const entries = [GENERAL_ENTRY, FLAGGED_FEATURES_ENTRY];
 
     // Act
-    const result = selectSettingsWindowSections(entries, { autoUpdate: false });
+    const result = selectSettingsSections(entries, { autoUpdate: false });
 
     // Assert
     expect(result).toEqual([GENERAL_ENTRY]);
@@ -114,7 +114,7 @@ describe("selectSettingsWindowSections", () => {
     const entries = [GENERAL_ENTRY, FLAGGED_FEATURES_ENTRY];
 
     // Act
-    const result = selectSettingsWindowSections(entries, { autoUpdate: true });
+    const result = selectSettingsSections(entries, { autoUpdate: true });
 
     // Assert
     expect(result).toEqual([GENERAL_ENTRY, FLAGGED_FEATURES_ENTRY]);
@@ -127,7 +127,7 @@ describe("selectSettingsWindowSections", () => {
     const entries = [SYSTEM_ENTRY, FLAGGED_FEATURES_ENTRY, PRINTING_ENTRY, GENERAL_ENTRY];
 
     // Act
-    const result = selectSettingsWindowSections(entries, { autoUpdate: true });
+    const result = selectSettingsSections(entries, { autoUpdate: true });
 
     // Assert
     expect(result).toEqual([GENERAL_ENTRY, PRINTING_ENTRY, FLAGGED_FEATURES_ENTRY, SYSTEM_ENTRY]);
@@ -140,7 +140,7 @@ describe("selectSettingsWindowSections", () => {
     const entries = [UNKNOWN_GROUP_ENTRY, SYSTEM_ENTRY, GENERAL_ENTRY];
 
     // Act
-    const result = selectSettingsWindowSections(entries, undefined);
+    const result = selectSettingsSections(entries, undefined);
 
     // Assert
     expect(result).toEqual([GENERAL_ENTRY, SYSTEM_ENTRY, UNKNOWN_GROUP_ENTRY]);
@@ -153,7 +153,7 @@ describe("selectSettingsWindowSections", () => {
     const entries = [TIED_ZULU_ENTRY, TIED_ALPHA_ENTRY];
 
     // Act
-    const result = selectSettingsWindowSections(entries, undefined);
+    const result = selectSettingsSections(entries, undefined);
 
     // Assert
     expect(result).toEqual([TIED_ALPHA_ENTRY, TIED_ZULU_ENTRY]);
@@ -166,7 +166,7 @@ describe("selectSettingsWindowSections", () => {
     const entries = [SYSTEM_ENTRY, GENERAL_ENTRY, FLAGGED_FEATURES_ENTRY];
 
     // Act
-    selectSettingsWindowSections(entries, { autoUpdate: true });
+    selectSettingsSections(entries, { autoUpdate: true });
 
     // Assert
     expect(entries).toEqual([SYSTEM_ENTRY, GENERAL_ENTRY, FLAGGED_FEATURES_ENTRY]);

@@ -10,7 +10,7 @@ import {
   wireSettingsWindowI18n,
 } from "@/modules/settings/settings-window-entry";
 
-import { SettingsWindowApp } from "./settings-window-app";
+import { SettingsApp } from "./settings-app";
 
 import "@/styles/app.css";
 
@@ -43,7 +43,7 @@ async function bootstrap() {
   root.render(
     <I18nProvider>
       <QueryClientProvider client={queryClient}>
-        <SettingsWindowApp />
+        <SettingsApp />
         <Toaster theme="dark" richColors closeButton position="bottom-left" />
       </QueryClientProvider>
     </I18nProvider>,

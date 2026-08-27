@@ -89,6 +89,7 @@ src/
 ├── i18n/              i18n engine + locales/
 ├── lib/               generic utilities, FLAT, no subfolders
 ├── modules/           the feature modules (see below)
+├── settings/          native Settings window composition and views
 ├── styles/
 ├── assets/
 └── main.tsx
@@ -130,7 +131,7 @@ None of these reappear under a new name. A module needing a store names the file
 `import … from "@/modules/X/algo"` from outside `X` does not pass review. A module's public entry point is its `index.ts` — imported as `@/modules/X`, never by a path that reaches inside — except for these documented capability-bound entries:
 
 - `manifest.ts`, importable as `@/modules/X/manifest` **only** from `app/module-registry.ts`.
-- `settings-window-entry.ts`, only for a module surfaced in native Settings and only within the Settings child composition graph (`src/app/settings-window-*` and other child-safe Settings entries). It may contain only child-safe UI, types, and RPC client code: never `db`, SQL, process, updater, or other Main-owned services. The child graph must not import a module's broad `index.ts`.
+- `settings-window-entry.ts`, only for a module surfaced in native Settings and only within the Settings child composition graph (`src/settings/main.tsx`, `settings-app.tsx`, `sections/*.tsx`, `sections/sections.ts`, and other child-safe Settings entries). The co-located `use-settings-bridge.ts` belongs to Main and is not part of the child graph. It may contain only child-safe UI, types, and RPC client code: never `db`, SQL, process, updater, or other Main-owned services. The child graph must not import a module's broad `index.ts`.
 
 Nothing else reaches past a barrel, and any additional exception is a decision to be documented, not a call to make at the import site. The rationale for these exceptions and the `settings ↔ updater` import cycle they avoid are in [`docs/architecture/module-system.md`](docs/architecture/module-system.md).
 
