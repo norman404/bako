@@ -16,9 +16,12 @@ export interface ReprintShiftReportLabels {
   expectedCashLabel: string;
   countedCashLabel: string;
   differenceLabel: string;
+  categorySalesLabel: string;
+  uncategorizedCategoryLabel: string;
+  itemCountLabel: string;
 }
 
-interface ReprintShiftReportPayload {
+export interface ReprintShiftReportPayload {
   printerType: string;
   printerAddress: string;
   ticketNumber: number;
@@ -41,20 +44,54 @@ interface ReprintShiftReportPayload {
   }>;
 }
 
-export function reprintShiftReport(
-  report: ShiftReport,
-  printer: Printer | null,
-  labels: ReprintShiftReportLabels,
-): ResultAsync<void, Error> {
-  if (!printer) {
-    return okAsync(undefined);
-  }
+type ReprintShiftReportItem = ReprintShiftReportPayload["items"][number];
 
+function createSummaryItem(name: string, totalSales = 0): ReprintShiftReportItem {
+  return {
+    name,
+    quantity: 1,
+    unitPrice: totalSales,
+    modifiers: [],
+  };
+}
+
+function buildCategorySummaryItems(
+  report: ShiftReport,
+  labels: ReprintShiftReportLabels,
+): ReprintShiftReportItem[] {
+  if (report.salesByCategory.length === 0) return [];
+
+  return [
+    createSummaryItem(labels.categorySalesLabel),
+    ...report.salesByCategory.flatMap((category) => {
+      const categoryName = category.categoryName ?? labels.uncategorizedCategoryLabel;
+      return [
+        createSummaryItem(
+          `${categoryName} — ${category.totalItems} ${labels.itemCountLabel}`,
+          category.totalSales,
+        ),
+        ...category.products.map((product) =>
+          createSummaryItem(
+            `  ${product.productName} — ${product.quantity} ${labels.itemCountLabel}`,
+            product.totalSales,
+          ),
+        ),
+      ];
+    }),
+  ];
+}
+
+export function buildReprintShiftReportPayload(
+  report: ShiftReport,
+  printer: Pick<Printer, "type" | "address">,
+  labels: ReprintShiftReportLabels,
+  categoriesEnabled: boolean,
+): ReprintShiftReportPayload {
   const dateStr = report.closedAt
     ? `${new Date(report.openedAt).toLocaleString()} — ${new Date(report.closedAt).toLocaleString()}`
     : new Date(report.openedAt).toLocaleString();
 
-  const payload: ReprintShiftReportPayload = {
+  return {
     printerType: printer.type,
     printerAddress: printer.address,
     ticketNumber: 0,
@@ -129,6 +166,7 @@ export function reprintShiftReport(
             },
           ]
         : []),
+      ...(categoriesEnabled ? buildCategorySummaryItems(report, labels) : []),
       ...report.orders.map((order) => ({
         name: `#${order.ticketNumber} — ${formatPosCurrency(order.total)}`,
         quantity: 1,
@@ -144,6 +182,19 @@ export function reprintShiftReport(
       },
     ],
   };
+}
+
+export function reprintShiftReport(
+  report: ShiftReport,
+  printer: Printer | null,
+  labels: ReprintShiftReportLabels,
+  categoriesEnabled = false,
+): ResultAsync<void, Error> {
+  if (!printer) {
+    return okAsync(undefined);
+  }
+
+  const payload = buildReprintShiftReportPayload(report, printer, labels, categoriesEnabled);
 
   const invokeAsync = async (): Promise<void> => {
     await invoke("print_ticket", { input: payload });

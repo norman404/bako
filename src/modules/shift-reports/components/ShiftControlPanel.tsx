@@ -10,6 +10,7 @@ import { useFetchOrderDetail } from "../use-order-management";
 import { usePrinters } from "@/modules/printer";
 import { PRINTER_ROLE } from "@/modules/printer";
 import { useCategories } from "@/modules/menu";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useSettingsStore } from "@/modules/settings";
 import { formatPosCurrency } from "@/lib/currency";
 import { reprintOrder } from "../lib/reprint-order";
@@ -94,6 +95,7 @@ export function ShiftControlPanel() {
   const { data: history = [], isLoading } = useShiftHistory();
   const { data: printers = [] } = usePrinters();
   const { data: categories = [] } = useCategories();
+  const categoriesEnabled = useFeatureFlagsStore((state) => state.flags.categories_enabled ?? false);
   const comandaHeaderText = useSettingsStore((state) => state.comandaHeaderText);
   const shiftListOrder = useSettingsStore((state) => state.shiftListOrder);
   const headerText = comandaHeaderText?.trim() || "COMANDA";
@@ -200,7 +202,10 @@ export function ShiftControlPanel() {
       expectedCashLabel: t("expectedCash"),
       countedCashLabel: t("countedCashLabel"),
       differenceLabel: t("cashDifference"),
-    });
+      categorySalesLabel: t("salesByCategory"),
+      uncategorizedCategoryLabel: t("uncategorizedCategory"),
+      itemCountLabel: t("itemCount"),
+    }, categoriesEnabled);
     if (result.isErr()) {
       toast.error(t("reprintFailed"));
     } else {

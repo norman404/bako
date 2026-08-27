@@ -3,6 +3,7 @@ import { ResultAsync } from "neverthrow";
 
 import { db, withTransaction } from "@/db/client";
 import {
+  categories,
   cashMovements,
   orderItems,
   orderItemModifiers,
@@ -15,6 +16,7 @@ import {
   type ShiftRow,
 } from "@/db/schema";
 import { ShiftPersistenceError } from "./errors";
+import { aggregateCategorySales } from "./lib/category-sales";
 import type { ShiftRepository } from "./ports";
 import type {
   CashMovement,
@@ -402,11 +404,14 @@ export const shiftDrizzleRepository: ShiftRepository = {
                   orderId: orderItems.orderId,
                   productId: orderItems.productId,
                   productName: products.name,
+                  categoryId: products.categoryId,
+                  categoryName: categories.name,
                   quantity: orderItems.quantity,
                   unitPrice: orderItems.unitPrice,
                 })
                 .from(orderItems)
                 .leftJoin(products, eq(products.id, orderItems.productId))
+                .leftJoin(categories, eq(categories.id, products.categoryId))
                 .where(inArray(orderItems.orderId, orderIds));
 
         const itemsByOrder = new Map<string, typeof itemRows>();
@@ -451,6 +456,8 @@ export const shiftDrizzleRepository: ShiftRepository = {
             items: orderItemsList.map((item) => ({
               productId: item.productId,
               productName: item.productName ?? "",
+              categoryId: item.categoryId ?? null,
+              categoryName: item.categoryName ?? null,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
             })),
@@ -480,6 +487,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
           cashTotal,
           cardTotal,
           orders: reportOrders,
+          salesByCategory: aggregateCategorySales(reportOrders),
           openingCash,
           cashMovementsIn,
           cashMovementsOut,

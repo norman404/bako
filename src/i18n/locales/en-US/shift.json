@@ -12,6 +12,8 @@
   "cardTotal": "Card",
   "totalItems": "Items sold",
   "salesList": "Sales list",
+  "salesByCategory": "Sales by category",
+  "uncategorizedCategory": "Uncategorized",
   "itemCount": "Items",
   "emptySalesList": "No sales recorded",
   "paymentMethodOther": "Other",

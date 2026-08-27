@@ -35,8 +35,25 @@ export interface Shift {
 export interface ShiftReportOrderItem {
   productId: string;
   productName: string;
+  categoryId: string | null;
+  categoryName: string | null;
   quantity: number;
   unitPrice: number;
+}
+
+export interface ShiftReportCategoryProduct {
+  productId: string;
+  productName: string;
+  quantity: number;
+  totalSales: number;
+}
+
+export interface ShiftReportCategory {
+  categoryId: string | null;
+  categoryName: string | null;
+  totalItems: number;
+  totalSales: number;
+  products: ShiftReportCategoryProduct[];
 }
 
 export interface ShiftReportPayment {
@@ -66,6 +83,7 @@ export interface ShiftReport {
   cashTotal: number;
   cardTotal: number;
   orders: ShiftReportOrder[];
+  salesByCategory: ShiftReportCategory[];
   openingCash: number;
   cashMovementsIn: number;
   cashMovementsOut: number;

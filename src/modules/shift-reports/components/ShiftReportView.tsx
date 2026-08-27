@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Banknote, ChefHat, ChevronDown, ChevronUp, Edit3, Package, Printer, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Banknote, ChefHat, ChevronDown, ChevronUp, Edit3, LayoutGrid, Package, Printer, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { formatPosCurrency } from "@/lib/currency";
+import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useSettingsStore } from "@/modules/settings";
 import { sortShiftList } from "../list-order";
-import type { ShiftReport, ShiftReportOrder, ShiftReportPayment } from "../shift";
+import type { ShiftReport, ShiftReportCategory, ShiftReportOrder, ShiftReportPayment } from "../shift";
 
 interface ShiftReportViewProps {
   report: ShiftReport;
@@ -26,6 +27,64 @@ function formatPaymentMethod(method: string, t: (key: string) => string): string
 function formatPaymentMethods(payments: ShiftReportPayment[], t: (key: string) => string): string {
   const labels = payments.map((payment) => formatPaymentMethod(payment.method, t));
   return [...new Set(labels)].join(" + ") || t("paymentMethodOther");
+}
+
+interface CategorySalesBlockProps {
+  categories: ShiftReportCategory[];
+  t: (key: string) => string;
+}
+
+function CategorySalesBlock({ categories, t }: CategorySalesBlockProps) {
+  return (
+    <div
+      className="rounded-card border border-border bg-surface-sunken p-4"
+      data-testid="shift-report-category-summary"
+    >
+      <h3 className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wider text-text-muted">
+        <LayoutGrid className="h-3.5 w-3.5 text-primary" />
+        {t("salesByCategory")}
+      </h3>
+      <div className="mt-3 grid gap-2">
+        {categories.map((category) => (
+          <section
+            key={category.categoryId ?? "uncategorized"}
+            className="rounded-card border border-border bg-surface-raised p-3"
+            data-testid={`shift-report-category-${category.categoryId ?? "uncategorized"}`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-text">
+                  {category.categoryName ?? t("uncategorizedCategory")}
+                </p>
+                <p className="mt-0.5 text-2xs text-text-muted">
+                  {category.totalItems} {t("itemCount")}
+                </p>
+              </div>
+              <span className="font-mono-tabular shrink-0 text-sm font-semibold text-primary-strong">
+                {formatPosCurrency(category.totalSales)}
+              </span>
+            </div>
+            <div className="mt-2 grid gap-1.5 border-t border-border pt-2">
+              {category.products.map((product) => (
+                <div
+                  key={product.productId}
+                  className="flex items-center justify-between gap-3 text-sm"
+                >
+                  <span className="min-w-0 truncate text-text">
+                    {product.productName}
+                    <span className="ml-1 text-text-muted">× {product.quantity}</span>
+                  </span>
+                  <span className="font-mono-tabular shrink-0 text-text-muted">
+                    {formatPosCurrency(product.totalSales)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 interface SalesListProps {
@@ -212,6 +271,7 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
 export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrder, onReprintCommand }: ShiftReportViewProps) {
   const { t } = useTranslation("shift");
   const shiftListOrder = useSettingsStore((state) => state.shiftListOrder);
+  const categoriesEnabled = useFeatureFlagsStore((state) => state.flags.categories_enabled ?? false);
   const orderedOrders = sortShiftList(report.orders, (order) => order.createdAt, shiftListOrder);
 
   return (
@@ -292,6 +352,10 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
           </p>
         </div>
       </div>
+
+      {categoriesEnabled && report.salesByCategory.length > 0 ? (
+        <CategorySalesBlock categories={report.salesByCategory} t={t} />
+      ) : null}
 
       {/* Resumen de efectivo */}
       <div className="rounded-card border border-border bg-surface-sunken p-4">

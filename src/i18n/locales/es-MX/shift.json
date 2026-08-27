@@ -12,6 +12,8 @@
   "cardTotal": "Tarjeta",
   "totalItems": "Productos vendidos",
   "salesList": "Listado de ventas",
+  "salesByCategory": "Ventas por categoría",
+  "uncategorizedCategory": "Sin categoría",
   "itemCount": "Productos",
   "emptySalesList": "No hay ventas registradas",
   "paymentMethodOther": "Otro",
