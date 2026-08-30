@@ -154,6 +154,7 @@ fn print_tspl_command(
     config: LabelConfig,
 ) -> Result<(), PrintError> {
     let label_payload = LabelPayload {
+        order_name: payload.order_name.clone(),
         header_text: payload.header_text.clone(),
         items: payload.items.clone(),
         width_mm: Some(config.width_mm),
@@ -378,6 +379,7 @@ mod tests {
     fn print_ticket_flushes_driver_after_building_ticket() {
         let driver = FlushTrackingDriver::new();
         let payload = TicketPayload {
+            order_name: None,
             ticket_number: 1,
             created_at: "2026-07-26".to_owned(),
             total: 100,
@@ -410,6 +412,7 @@ mod tests {
     fn print_command_flushes_driver_after_building_command() {
         let driver = FlushTrackingDriver::new();
         let payload = CommandPayload {
+            order_name: None,
             header_text: "COCINA".to_owned(),
             items: vec![CommandItem {
                 name: "Taco".to_owned(),
@@ -438,6 +441,7 @@ mod tests {
     fn print_tspl_command_routes_label_printer_to_tspl() {
         let driver = FlushTrackingDriver::new();
         let payload = CommandPayload {
+            order_name: None,
             header_text: "COCINA".to_owned(),
             items: vec![CommandItem {
                 name: "Taco".to_owned(),

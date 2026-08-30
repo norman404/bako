@@ -303,6 +303,49 @@ mod tests {
     }
 
     #[test]
+    fn adds_nullable_order_name_to_existing_orders() {
+        let database = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            let options = SqliteConnectOptions::new()
+                .filename(&database)
+                .create_if_missing(true);
+            let mut connection = SqliteConnection::connect_with(&options)
+                .await
+                .expect("sqlite database");
+            connection
+                .execute("CREATE TABLE orders (id TEXT PRIMARY KEY, ticket_number INTEGER NOT NULL, total INTEGER NOT NULL, created_at INTEGER NOT NULL)")
+                .await
+                .expect("orders table");
+            connection
+                .execute(include_str!("../migrations/0030_order_name.sql"))
+                .await
+                .expect("order name migration");
+
+            let column_count: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM pragma_table_info('orders') WHERE name = 'order_name'",
+            )
+            .fetch_one(&mut connection)
+            .await
+            .expect("order name column");
+            assert_eq!(column_count, 1);
+
+            connection
+                .execute("INSERT INTO orders (id, ticket_number, total, created_at) VALUES ('order-1', 1, 100, 1)")
+                .await
+                .expect("legacy order");
+            let order_name: Option<String> =
+                sqlx::query_scalar("SELECT order_name FROM orders WHERE id = 'order-1'")
+                    .fetch_one(&mut connection)
+                    .await
+                    .expect("nullable order name");
+            assert_eq!(order_name, None);
+
+            connection.close().await.expect("close sqlite database");
+        });
+        let _ = fs::remove_file(database);
+    }
+
+    #[test]
     fn migrates_legacy_cash_and_allows_one_payment_per_method() {
         let database = temporary_database_path();
         tauri::async_runtime::block_on(async {

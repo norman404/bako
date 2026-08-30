@@ -17,7 +17,7 @@ export function usePrintCommands(options: UsePrintCommandsOptions) {
   const headerText = comandaHeaderText?.trim() || "COMANDA";
 
   return {
-    printCommands: async (cartItems: CartItem[]) => {
+    printCommands: async (cartItems: CartItem[], orderName: string | null = null) => {
       const commands = buildKitchenCommands(
         cartItems.map((item) => ({
           product: {
@@ -31,6 +31,7 @@ export function usePrintCommands(options: UsePrintCommandsOptions) {
         printers,
         categories,
         headerText,
+        orderName,
       );
 
       const results = await Promise.all(commands.map((command) => printCommand(command)));

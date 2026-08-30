@@ -153,6 +153,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
   const orderRows = await db
     .select({
       id: orders.id,
+      orderName: orders.orderName,
       ticketNumber: orders.ticketNumber,
       createdAt: orders.createdAt,
       total: orders.total,
@@ -229,6 +230,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
 
   return {
     id: orderRow.id,
+    orderName: orderRow.orderName ?? null,
     ticketNumber: orderRow.ticketNumber,
     createdAt: orderRow.createdAt,
     total: orderRow.total,
@@ -380,6 +382,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
         const orderRows = await db
           .select({
             orderId: orders.id,
+            orderName: orders.orderName,
             ticketNumber: orders.ticketNumber,
             orderTotal: orders.total,
             createdAt: orders.createdAt,
@@ -448,6 +451,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
 
           reportOrders.push({
             orderId: orderRow.orderId,
+            orderName: orderRow.orderName ?? null,
             ticketNumber: orderRow.ticketNumber,
             createdAt: orderRow.createdAt,
             total: orderRow.orderTotal,

@@ -1,6 +1,8 @@
 import { desc, inArray } from "drizzle-orm";
 import { errAsync, ResultAsync } from "neverthrow";
 
+import { normalizeOrderName } from "@/modules/order";
+
 import { withTransaction, type DatabaseClient } from "@/db/client";
 import {
   orderItems,
@@ -49,6 +51,7 @@ interface NormalizedCheckoutPaymentInput {
 }
 
 interface NormalizedCreateOrderInput {
+  orderName: string | null;
   items: CheckoutOrderItemInput[];
   shiftId: string | null;
   payments: NormalizedCheckoutPaymentInput[];
@@ -170,6 +173,7 @@ function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPe
 
 function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrderInput {
   return {
+    orderName: normalizeOrderName(input.orderName),
     items: input.items.map((item) => ({
       productId: item.productId.trim(),
       quantity: item.quantity,
@@ -239,6 +243,7 @@ function rowToCheckoutOrder(
 ): CheckoutOrder {
   return {
     id: row.id,
+    orderName: row.orderName ?? null,
     ticketNumber: row.ticketNumber,
     shiftId: row.shiftId ?? null,
     total: row.total,
@@ -266,6 +271,7 @@ async function loadNextTicketNumber(tx: DatabaseClient): Promise<number> {
 async function createOrderRow(
   tx: DatabaseClient,
   ticketNumber: number,
+  orderName: string | null,
   shiftId: string | null,
   total: number,
   now: Date,
@@ -273,6 +279,7 @@ async function createOrderRow(
   const orderValues: OrderInsert = {
     id: crypto.randomUUID(),
     ticketNumber,
+    orderName,
     shiftId,
     total,
     createdAt: now,
@@ -418,7 +425,14 @@ export const orderDrizzleRepository = {
       withTransaction(async (tx) => {
         const now = new Date();
         const ticketNumber = await loadNextTicketNumber(tx);
-        const orderRow = await createOrderRow(tx, ticketNumber, normalizedInput.shiftId, total, now);
+        const orderRow = await createOrderRow(
+          tx,
+          ticketNumber,
+          normalizedInput.orderName,
+          normalizedInput.shiftId,
+          total,
+          now,
+        );
         const paymentRows = await createPaymentRows(tx, orderRow.id, normalizedInput.payments, now);
         const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
         await createOrderItemModifiers(tx, orderItemRows, normalizedInput.items, now);

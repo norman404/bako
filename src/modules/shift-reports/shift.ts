@@ -56,6 +56,7 @@ export interface ShiftReportPayment {
 
 export interface ShiftReportOrder {
   orderId: string;
+  orderName: string | null;
   ticketNumber: number;
   createdAt: Date;
   total: number;

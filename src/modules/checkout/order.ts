@@ -29,6 +29,7 @@ export interface CheckoutPaymentInput {
 }
 
 export interface CreateOrderInput {
+  orderName?: string | null;
   items: CheckoutOrderItemInput[];
   payments: CheckoutPaymentInput[];
   shiftId?: string | null;
@@ -67,6 +68,7 @@ export interface CheckoutPayment {
 
 export interface CheckoutOrder {
   id: string;
+  orderName: string | null;
   ticketNumber: number;
   shiftId: string | null;
   total: number;

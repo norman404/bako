@@ -11,6 +11,8 @@ import {
 
 interface OrderStore {
   currentOrder: CartItem[];
+  orderName: string;
+  setOrderName: (orderName: string) => void;
   addItem: (product: Product, modifiers?: SelectedModifier[]) => void;
   incrementItemQuantity: (lineId: string) => void;
   decrementItemQuantity: (lineId: string) => void;
@@ -20,6 +22,9 @@ interface OrderStore {
 
 const useOrderStore = create<OrderStore>((set) => ({
   currentOrder: [],
+  orderName: "",
+
+  setOrderName: (orderName) => set({ orderName }),
 
   addItem: (product, modifiers = []) =>
     set((state) => ({
@@ -41,7 +46,7 @@ const useOrderStore = create<OrderStore>((set) => ({
       currentOrder: removeItemFromCart(state.currentOrder, lineId),
     })),
 
-  clearOrder: () => set({ currentOrder: [] }),
+  clearOrder: () => set({ currentOrder: [], orderName: "" }),
 }));
 
 export { useOrderStore };

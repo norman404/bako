@@ -32,6 +32,7 @@ pub struct TicketPayment {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TicketPayload {
+    pub order_name: Option<String>,
     pub ticket_number: u32,
     pub created_at: String,
     pub total: u32,
@@ -64,6 +65,7 @@ pub struct CommandItem {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CommandPayload {
+    pub order_name: Option<String>,
     pub header_text: String,
     pub items: Vec<CommandItem>,
 }
@@ -99,8 +101,19 @@ pub fn build_ticket<D: Driver>(
         .writeln(&payload.created_at)
         .map_err(map_err)?;
 
-    // Payment metadata
+    // Order metadata
     printer.justify(JustifyMode::LEFT).map_err(map_err)?;
+    if let Some(order_name) = payload
+        .order_name
+        .as_deref()
+        .filter(|order_name| !order_name.is_empty())
+    {
+        printer
+            .writeln(&format!("Name: {}", order_name))
+            .map_err(map_err)?;
+    }
+
+    // Payment metadata
     for payment in &payload.payments {
         printer
             .writeln(&format!(
@@ -212,7 +225,19 @@ pub fn build_command<D: Driver>(
         .bold(false)
         .map_err(map_err)?
         .justify(JustifyMode::LEFT)
-        .map_err(map_err)?
+        .map_err(map_err)?;
+
+    if let Some(order_name) = payload
+        .order_name
+        .as_deref()
+        .filter(|order_name| !order_name.is_empty())
+    {
+        printer
+            .writeln(&format!("Name: {}", order_name))
+            .map_err(map_err)?;
+    }
+
+    printer
         .writeln("--------------------------------")
         .map_err(map_err)?;
 
@@ -303,6 +328,7 @@ mod tests {
 
     fn build_payload_with_modifiers() -> TicketPayload {
         TicketPayload {
+            order_name: None,
             ticket_number: 42,
             created_at: "2026-07-11".to_owned(),
             total: 550,
@@ -329,6 +355,32 @@ mod tests {
                 cash_received: Some(600),
             }],
         }
+    }
+
+    #[test]
+    fn build_ticket_renders_order_name_when_present() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+        let payload = TicketPayload {
+            order_name: Some("Mesa 4".to_owned()),
+            ..build_payload_with_modifiers()
+        };
+
+        build_ticket(&mut printer, &payload).unwrap();
+
+        let output = driver.output();
+        assert!(output.contains("Name: Mesa 4"));
+    }
+
+    #[test]
+    fn build_ticket_omits_order_name_when_absent() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+
+        build_ticket(&mut printer, &build_payload_with_modifiers()).unwrap();
+
+        let output = driver.output();
+        assert!(!output.contains("Name:"));
     }
 
     #[test]
@@ -433,10 +485,27 @@ mod tests {
     }
 
     #[test]
+    fn build_command_renders_order_name_when_present() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+        let payload = CommandPayload {
+            order_name: Some("Mesa 4".to_owned()),
+            header_text: "COCINA".to_owned(),
+            items: vec![],
+        };
+
+        build_command(&mut printer, &payload).unwrap();
+
+        let output = driver.output();
+        assert!(output.contains("Name: Mesa 4"));
+    }
+
+    #[test]
     fn build_command_renders_items_without_prices() {
         let driver = MockDriver::new();
         let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
         let payload = CommandPayload {
+            order_name: None,
             header_text: "COCINA".to_owned(),
             items: vec![
                 CommandItem {
@@ -463,6 +532,7 @@ mod tests {
         assert!(!output.contains("COMANDA"));
         assert!(!output.contains("Ticket #"));
         assert!(!output.contains("Order:"));
+        assert!(!output.contains("Name:"));
         assert!(!output.contains("Cliente"));
         assert!(output.contains("Taco"));
         assert!(!output.contains("2x Taco"));
@@ -485,6 +555,7 @@ mod tests {
         let mut printer = Printer::new(driver.clone(), Protocol::default(), Some(options));
 
         let payload = TicketPayload {
+            order_name: None,
             ticket_number: 1,
             created_at: "13 jul 2026".to_owned(),
             total: 100,

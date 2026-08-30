@@ -35,7 +35,13 @@ pub fn build_label_bytes(payload: &LabelPayload) -> Result<Vec<u8>, PrintError> 
     let height = payload.height_mm.unwrap_or(DEFAULT_LABEL_HEIGHT_MM);
     let gap = payload.gap_mm.unwrap_or(DEFAULT_LABEL_GAP_MM);
 
-    let label = super::raster::render_label(width, height, &payload.header_text, &payload.items)?;
+    let label = super::raster::render_label(
+        width,
+        height,
+        &payload.header_text,
+        payload.order_name.as_deref(),
+        &payload.items,
+    )?;
 
     let mut output = Vec::new();
     write_setup_commands(&mut output, width, height, gap)?;
@@ -62,6 +68,7 @@ pub fn build_test_label() -> Vec<u8> {
 
 pub fn build_minimal_test_label() -> Vec<u8> {
     let payload = LabelPayload {
+        order_name: None,
         header_text: "BAKO TEST".to_owned(),
         items: vec![],
         width_mm: Some(DEFAULT_LABEL_WIDTH_MM),
@@ -93,6 +100,7 @@ mod tests {
     #[test]
     fn build_label_bytes_generates_tspl_command_structure() {
         let payload = LabelPayload {
+            order_name: None,
             header_text: "COMANDA".to_owned(),
             items: vec![CommandItem {
                 name: "Taco".to_owned(),
@@ -139,6 +147,7 @@ mod tests {
     #[test]
     fn build_label_bytes_bitmap_data_length_matches_dimensions() {
         let payload = LabelPayload {
+            order_name: None,
             header_text: "COMANDA".to_owned(),
             items: vec![CommandItem {
                 name: "Taco".to_owned(),
@@ -166,6 +175,7 @@ mod tests {
     #[test]
     fn build_label_bytes_includes_xprinter_config_commands() {
         let payload = LabelPayload {
+            order_name: None,
             header_text: "COMANDA".to_owned(),
             items: vec![],
             width_mm: Some(40),
@@ -200,6 +210,7 @@ mod tests {
     #[test]
     fn build_label_bytes_uses_defaults_when_dimensions_missing() {
         let payload = LabelPayload {
+            order_name: None,
             header_text: "COCINA".to_owned(),
             items: vec![CommandItem {
                 name: "Burrito".to_owned(),
@@ -226,6 +237,7 @@ mod tests {
     #[test]
     fn build_label_bytes_renders_custom_dimensions() {
         let payload = LabelPayload {
+            order_name: None,
             header_text: "BAR".to_owned(),
             items: vec![CommandItem {
                 name: "Margarita".to_owned(),
@@ -260,6 +272,7 @@ mod tests {
     #[test]
     fn build_label_bytes_contains_no_text_command() {
         let payload = LabelPayload {
+            order_name: None,
             header_text: "COMANDA".to_owned(),
             items: vec![CommandItem {
                 name: "Taco".to_owned(),

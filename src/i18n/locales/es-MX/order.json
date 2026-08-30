@@ -5,6 +5,8 @@
     "headerCuenta": "Cuenta",
     "clearAriaLabel": "Vaciar comanda",
     "clearButton": "Vaciar",
+    "orderNameLabel": "Nombre de la orden",
+    "orderNamePlaceholder": "Opcional",
     "emptyTitle": "Aún no hay productos",
     "emptyHint": "Seleccioná del menú",
     "decreaseAriaLabel": "Disminuir {{productName}}",

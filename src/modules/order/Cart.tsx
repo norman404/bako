@@ -1,14 +1,20 @@
 import { Minus, Plus, ShoppingBasket, Trash2, X } from "lucide-react";
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
 import { calculateCartTotals, type CartItem } from "./cart-operations";
 import { calculateItemUnitPrice, type SelectedModifier } from "@/modules/menu";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatPosCurrency } from "@/lib/currency";
+import { ORDER_NAME_MAX_LENGTH } from "./order-name";
 
 interface CartProps {
   items: CartItem[];
+  orderName: string;
+  onOrderNameChange: (orderName: string) => void;
   onIncreaseQuantity: (lineId: string) => void;
   onDecreaseQuantity: (lineId: string) => void;
   onRemoveItem: (lineId: string) => void;
@@ -18,6 +24,8 @@ interface CartProps {
 
 function Cart({
   items,
+  orderName,
+  onOrderNameChange,
   onIncreaseQuantity,
   onDecreaseQuantity,
   onRemoveItem,
@@ -30,6 +38,7 @@ function Cart({
   const totals = calculateCartTotals(items);
   const isEmpty = items.length === 0;
   const totalItems = totals.itemsCount;
+  const orderNameInputId = useId();
 
   return (
     <aside className="flex h-full flex-col overflow-hidden bg-surface-raised text-text">
@@ -54,6 +63,20 @@ function Cart({
               {t('cart.clearButton')}
             </Button>
           ) : null}
+        </div>
+        <div className="mt-5 grid gap-1.5">
+          <Label htmlFor={orderNameInputId} className="eyebrow">
+            {t('cart.orderNameLabel')}
+          </Label>
+          <Input
+            id={orderNameInputId}
+            value={orderName}
+            maxLength={ORDER_NAME_MAX_LENGTH}
+            autoComplete="off"
+            placeholder={t('cart.orderNamePlaceholder')}
+            onChange={(event) => onOrderNameChange(event.currentTarget.value)}
+            className="h-10"
+          />
         </div>
       </header>
 
