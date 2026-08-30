@@ -44,19 +44,12 @@ const REPORT: ShiftReport = {
       categoryName: "Comida",
       totalItems: 4,
       totalSales: 580,
-      products: [
-        { productId: "burger", productName: "Hamburguesa", quantity: 3, totalSales: 500 },
-        { productId: "fries", productName: "Papas", quantity: 1, totalSales: 80 },
-      ],
     },
     {
       categoryId: null,
       categoryName: null,
       totalItems: 2,
       totalSales: 100,
-      products: [
-        { productId: "soda", productName: "Refresco", quantity: 2, totalSales: 100 },
-      ],
     },
   ],
   openingCash: 0,
@@ -69,9 +62,9 @@ const REPORT: ShiftReport = {
 };
 
 describe("buildReprintShiftReportPayload", () => {
-  // CASE: Categories are enabled for a shift report that contains category and product totals.
-  // VALIDATES: The print payload carries a category heading, category totals, and product totals.
-  it("should include category summary rows when categories are enabled", () => {
+  // CASE: Categories are enabled for a shift report that contains category totals.
+  // VALIDATES: The print payload carries category totals without exposing product rows.
+  it("should include category totals without product rows when categories are enabled", () => {
     // Arrange
     const categoriesEnabled = true;
 
@@ -82,10 +75,11 @@ describe("buildReprintShiftReportPayload", () => {
     // Assert
     expect(itemNames).toContain("Ventas por categoría");
     expect(itemNames).toContain("Comida — 4 productos");
-    expect(itemNames).toContain("  Hamburguesa — 3 productos");
     expect(itemNames).toContain("Sin categoría — 2 productos");
+    expect(itemNames).not.toContain("  Hamburguesa — 3 productos");
+    expect(itemNames).not.toContain("  Papas — 1 productos");
+    expect(itemNames).not.toContain("  Refresco — 2 productos");
     expect(payload.items.find((item) => item.name === "Comida — 4 productos")?.unitPrice).toBe(580);
-    expect(payload.items.find((item) => item.name === "  Hamburguesa — 3 productos")?.unitPrice).toBe(500);
   });
 
   // CASE: Categories are disabled while a report still has computed category data.

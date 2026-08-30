@@ -41,19 +41,11 @@ export interface ShiftReportOrderItem {
   unitPrice: number;
 }
 
-export interface ShiftReportCategoryProduct {
-  productId: string;
-  productName: string;
-  quantity: number;
-  totalSales: number;
-}
-
 export interface ShiftReportCategory {
   categoryId: string | null;
   categoryName: string | null;
   totalItems: number;
   totalSales: number;
-  products: ShiftReportCategoryProduct[];
 }
 
 export interface ShiftReportPayment {

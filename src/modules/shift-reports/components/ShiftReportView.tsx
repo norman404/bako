@@ -64,22 +64,6 @@ function CategorySalesBlock({ categories, t }: CategorySalesBlockProps) {
                 {formatPosCurrency(category.totalSales)}
               </span>
             </div>
-            <div className="mt-2 grid gap-1.5 border-t border-border pt-2">
-              {category.products.map((product) => (
-                <div
-                  key={product.productId}
-                  className="flex items-center justify-between gap-3 text-sm"
-                >
-                  <span className="min-w-0 truncate text-text">
-                    {product.productName}
-                    <span className="ml-1 text-text-muted">× {product.quantity}</span>
-                  </span>
-                  <span className="font-mono-tabular shrink-0 text-text-muted">
-                    {formatPosCurrency(product.totalSales)}
-                  </span>
-                </div>
-              ))}
-            </div>
           </section>
         ))}
       </div>

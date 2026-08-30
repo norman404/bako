@@ -63,20 +63,12 @@ function buildCategorySummaryItems(
 
   return [
     createSummaryItem(labels.categorySalesLabel),
-    ...report.salesByCategory.flatMap((category) => {
+    ...report.salesByCategory.map((category) => {
       const categoryName = category.categoryName ?? labels.uncategorizedCategoryLabel;
-      return [
-        createSummaryItem(
-          `${categoryName} — ${category.totalItems} ${labels.itemCountLabel}`,
-          category.totalSales,
-        ),
-        ...category.products.map((product) =>
-          createSummaryItem(
-            `  ${product.productName} — ${product.quantity} ${labels.itemCountLabel}`,
-            product.totalSales,
-          ),
-        ),
-      ];
+      return createSummaryItem(
+        `${categoryName} — ${category.totalItems} ${labels.itemCountLabel}`,
+        category.totalSales,
+      );
     }),
   ];
 }

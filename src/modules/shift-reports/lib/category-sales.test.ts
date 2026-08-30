@@ -20,8 +20,8 @@ function createOrder(items: ShiftReportOrderItem[], isVoided = false) {
 
 describe("aggregateCategorySales", () => {
   // CASE: A shift sells several products from the same and different categories at different prices.
-  // VALIDATES: The summary groups products by category and accumulates both units and line totals.
-  it("should group products by category and accumulate units and sales when orders contain repeated products", () => {
+  // VALIDATES: The summary exposes only the accumulated units and sales for each category.
+  it("should aggregate units and sales by category when orders contain repeated products", () => {
     // Arrange
     const orders = [
       createOrder([
@@ -44,25 +44,18 @@ describe("aggregateCategorySales", () => {
         categoryName: "Comida",
         totalItems: 4,
         totalSales: 580,
-        products: [
-          { productId: "burger", productName: "Hamburguesa", quantity: 3, totalSales: 500 },
-          { productId: "fries", productName: "Papas", quantity: 1, totalSales: 80 },
-        ],
       },
       {
         categoryId: "drinks",
         categoryName: "Bebidas",
         totalItems: 2,
         totalSales: 100,
-        products: [
-          { productId: "soda", productName: "Refresco", quantity: 2, totalSales: 100 },
-        ],
       },
     ]);
   });
 
   // CASE: A shift contains a voided order and products whose category no longer exists in the catalog.
-  // VALIDATES: Voided sales are excluded and all missing categories share one uncategorized block.
+  // VALIDATES: Voided sales are excluded and all missing categories share one uncategorized total.
   it("should exclude voided orders and combine missing categories when building the summary", () => {
     // Arrange
     const orders = [
@@ -87,12 +80,6 @@ describe("aggregateCategorySales", () => {
         categoryName: null,
         totalItems: 6,
         totalSales: 155,
-        products: [
-          { productId: "coffee", productName: "Café", quantity: 2, totalSales: 70 },
-          { productId: "juice", productName: "Jugo", quantity: 1, totalSales: 25 },
-          { productId: "tea", productName: "Té", quantity: 1, totalSales: 40 },
-          { productId: "water", productName: "Agua", quantity: 2, totalSales: 20 },
-        ],
       },
     ]);
   });
