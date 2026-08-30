@@ -81,6 +81,8 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
 
   const {
     currentOrder,
+    orderName,
+    setOrderName,
     addItem,
     handleIncreaseQuantity,
     handleDecreaseQuantity,
@@ -89,6 +91,8 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
   } = useOrderStore(
     useShallow((state) => ({
       currentOrder: state.currentOrder,
+      orderName: state.orderName,
+      setOrderName: state.setOrderName,
       addItem: state.addItem,
       handleIncreaseQuantity: state.incrementItemQuantity,
       handleDecreaseQuantity: state.decrementItemQuantity,
@@ -205,6 +209,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
 
     if (receiptPrintingEnabled) {
       const printResult = await printOrder({
+        orderName: createdOrder.orderName,
         ticketNumber: createdOrder.ticketNumber,
         createdAt: createdOrder.createdAt,
         total: createdOrder.total,
@@ -244,7 +249,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
     });
 
     if (comandasEnabled) {
-      const commandErrors = await printCommands(synchronizedCartItems);
+      const commandErrors = await printCommands(synchronizedCartItems, createdOrder.orderName);
 
       for (const commandError of commandErrors) {
         toast.error(t('toast.comandaPrintError'), {
@@ -390,6 +395,8 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
         <aside className="hidden w-[30%] min-h-0 min-w-0 overflow-hidden border-l border-border bg-surface-raised lg:block">
           <Cart
             items={synchronizedCartItems}
+            orderName={orderName}
+            onOrderNameChange={setOrderName}
             onIncreaseQuantity={handleIncreaseQuantity}
             onDecreaseQuantity={handleDecreaseQuantity}
             onRemoveItem={handleRemoveItem}
@@ -442,6 +449,8 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
             </Button>
             <Cart
               items={synchronizedCartItems}
+              orderName={orderName}
+              onOrderNameChange={setOrderName}
               onIncreaseQuantity={handleIncreaseQuantity}
               onDecreaseQuantity={handleDecreaseQuantity}
               onRemoveItem={handleRemoveItem}
@@ -459,6 +468,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
         key={checkoutSessionKey}
         open={isCheckoutOpen}
         items={synchronizedCartItems}
+        orderName={orderName}
         isSubmitting={createOrderMutation.isPending}
         onClose={closeCheckoutModal}
         onConfirmCheckout={handleConfirmCheckout}

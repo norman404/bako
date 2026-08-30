@@ -13,6 +13,7 @@ import { useCheckoutForm } from "../use-checkout-form";
 interface CheckoutModalProps {
   open: boolean;
   items: CartItem[];
+  orderName: string;
   isSubmitting?: boolean;
   onClose: () => void;
   onConfirmCheckout: (input: CreateOrderInput) => Promise<void>;
@@ -21,6 +22,7 @@ interface CheckoutModalProps {
 function CheckoutModal({
   open,
   items,
+  orderName,
   isSubmitting = false,
   onClose,
   onConfirmCheckout,
@@ -45,6 +47,7 @@ function CheckoutModal({
   } = useCheckoutForm({
     open,
     items,
+    orderName,
     totals,
     isSubmitting,
     onClose,

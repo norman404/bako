@@ -26,6 +26,7 @@ export interface PrintOrderPayment {
 }
 
 export interface PrintOrderOptions {
+  orderName: string | null;
   ticketNumber: number;
   createdAt: Date;
   total: number;

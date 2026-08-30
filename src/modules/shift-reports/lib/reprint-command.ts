@@ -77,7 +77,13 @@ export async function reprintCommand(
     return cartLines;
   }
 
-  const commands = buildKitchenCommands(cartLines, printers, categories, headerText);
+  const commands = buildKitchenCommands(
+    cartLines,
+    printers,
+    categories,
+    headerText,
+    orderDetail.orderName,
+  );
   const results = await Promise.all(commands.map((command) => printCommand(command)));
   const errors = results.filter((result) => result.isErr()).map((result) => result.error);
 

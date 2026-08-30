@@ -6,6 +6,7 @@ import type { PrintCommandOptions } from "./print-command";
 export interface PrintCommandPayload {
   printerType: string;
   printerAddress: string;
+  orderName: string | null;
   headerText: string;
   items: Array<{
     name: string;
@@ -22,10 +23,11 @@ export interface PrintCommandPayload {
   labelLanguage?: string;
 }
 
-function buildPayload(input: PrintCommandOptions): PrintCommandPayload {
+export function buildPrintCommandPayload(input: PrintCommandOptions): PrintCommandPayload {
   return {
     printerType: input.destination.printerType,
     printerAddress: input.destination.printerAddress,
+    orderName: input.orderName,
     headerText: input.headerText,
     items: input.items.map((item) => ({
       name: item.name,
@@ -40,7 +42,7 @@ function buildPayload(input: PrintCommandOptions): PrintCommandPayload {
 }
 
 export function printCommand(input: PrintCommandOptions): ResultAsync<void, Error> {
-  const payload = buildPayload(input);
+  const payload = buildPrintCommandPayload(input);
 
   const invokeAsync = async (): Promise<void> => {
     await invoke("print_command", { input: payload });

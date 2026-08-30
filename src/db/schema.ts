@@ -170,6 +170,7 @@ export const orders = sqliteTable(
   {
     id: text("id").primaryKey(),
     ticketNumber: integer("ticket_number").notNull(),
+    orderName: text("order_name"),
     shiftId: text("shift_id"),
     total: integer("total").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),

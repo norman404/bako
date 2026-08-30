@@ -120,8 +120,13 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
                     <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-surface-raised text-2xs font-bold text-primary-strong">
                       #{order.ticketNumber}
                     </span>
-                    <div className="grid gap-0.5">
-                      <span className="flex items-center gap-2 text-sm font-medium text-text">
+                    <div className="grid min-w-0 gap-0.5">
+                      {order.orderName ? (
+                        <span className="truncate text-sm font-medium text-text">
+                          {order.orderName}
+                        </span>
+                      ) : null}
+                      <span className="flex items-center gap-2 text-2xs text-text-muted">
                         {formatPaymentMethods(order.payments, t)}
                         {order.isVoided && (
                           <span className="rounded-card border border-danger/40 bg-danger/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-danger">
@@ -210,6 +215,9 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
 
                 {isExpanded && (
                   <div className="border-t border-border bg-surface-raised/30 px-4 py-3">
+                    {order.orderName ? (
+                      <p className="mb-3 text-sm font-semibold text-text">{order.orderName}</p>
+                    ) : null}
                     <div className="grid gap-2">
                       {order.payments.map((payment, index) => (
                         <div

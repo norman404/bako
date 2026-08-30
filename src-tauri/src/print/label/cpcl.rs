@@ -44,6 +44,21 @@ pub fn build_label_bytes(payload: &LabelPayload) -> Result<Vec<u8>, PrintError> 
         .map_err(map_err)?;
     y += 36;
 
+    if let Some(order_name) = payload
+        .order_name
+        .as_deref()
+        .filter(|order_name| !order_name.is_empty())
+    {
+        output
+            .write_fmt(format_args!(
+                "T 2 0 10 {} Name: {}\r\n",
+                y,
+                escape_cpcl(order_name)
+            ))
+            .map_err(map_err)?;
+        y += 24;
+    }
+
     for item in &payload.items {
         output
             .write_fmt(format_args!(
@@ -93,8 +108,25 @@ mod tests {
     use crate::print::ticket::CommandItem;
 
     #[test]
+    fn build_label_bytes_renders_order_name() {
+        let payload = LabelPayload {
+            order_name: Some("Mesa 4".to_owned()),
+            header_text: "COMANDA".to_owned(),
+            items: vec![],
+            width_mm: Some(40),
+            height_mm: Some(30),
+            gap_mm: Some(2),
+        };
+
+        let output = String::from_utf8(build_label_bytes(&payload).unwrap()).unwrap();
+
+        assert!(output.contains("Name: Mesa 4"));
+    }
+
+    #[test]
     fn build_label_bytes_generates_cpcl_command_structure() {
         let payload = LabelPayload {
+            order_name: None,
             header_text: "COMANDA".to_owned(),
             items: vec![CommandItem {
                 name: "Taco".to_owned(),

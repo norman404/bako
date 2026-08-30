@@ -5,6 +5,8 @@
     "headerCuenta": "Account",
     "clearAriaLabel": "Clear ticket",
     "clearButton": "Clear",
+    "orderNameLabel": "Order name",
+    "orderNamePlaceholder": "Optional",
     "emptyTitle": "No products yet",
     "emptyHint": "Select from the menu",
     "decreaseAriaLabel": "Decrease {{productName}}",

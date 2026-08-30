@@ -32,6 +32,7 @@ export interface CommandItemSelection {
 
 export interface OrderDetail {
   id: string;
+  orderName: string | null;
   ticketNumber: number;
   createdAt: Date;
   total: number;

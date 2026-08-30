@@ -14,6 +14,7 @@ export function reprintOrder(
   defaultReceiptPrinter: Printer | null,
 ): ResultAsync<void, Error> {
   const options: PrintOrderOptions = {
+    orderName: orderDetail.orderName,
     ticketNumber: orderDetail.ticketNumber,
     createdAt: orderDetail.createdAt,
     total: orderDetail.total,

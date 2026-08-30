@@ -24,6 +24,7 @@ import { calculateCartTotals, type CartItem } from "@/modules/order";
 interface UseCheckoutFormOptions {
   open: boolean;
   items: CartItem[];
+  orderName: string;
   totals?: ReturnType<typeof calculateCartTotals>;
   isSubmitting?: boolean;
   onClose: () => void;
@@ -74,6 +75,7 @@ function getPaymentSummary(breakdown: PaymentBreakdown) {
 
 export function useCheckoutForm({
   items,
+  orderName,
   totals,
   isSubmitting = false,
   onClose,
@@ -143,6 +145,7 @@ export function useCheckoutForm({
       paymentMode,
       cashAmountInput,
       normalizedTotals.total,
+      orderName,
     );
     if (!payload) {
       setFormError(paymentValidationMessage ?? t("errors.formEmptyCart"));

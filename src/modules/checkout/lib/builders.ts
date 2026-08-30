@@ -43,6 +43,7 @@ export function buildCreateOrderInput(
   paymentMode: CheckoutPaymentMode,
   cashAmountInput: string,
   total: number,
+  orderName: string,
 ): CreateOrderInput | null {
   if (items.length === 0) {
     return null;
@@ -54,6 +55,7 @@ export function buildCreateOrderInput(
   }
 
   return {
+    orderName,
     items: buildOrderItemsInput(items),
     payments,
   };

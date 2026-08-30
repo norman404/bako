@@ -59,6 +59,7 @@ export function buildKitchenCommands(
   printers: Printer[],
   categories: Category[],
   headerText: string,
+  orderName: string | null = null,
 ): PrintCommandOptions[] {
   const printerMap = new Map<string, Printer>();
   for (const printer of printers) {
@@ -94,6 +95,7 @@ export function buildKitchenCommands(
 
       for (let i = 0; i < line.quantity; i++) {
         options.push({
+          orderName,
           headerText,
           items: [item],
           destination,
