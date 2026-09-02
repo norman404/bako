@@ -56,7 +56,7 @@ export function useVoidOrder() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["shift"] });
-      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.SALES });
     },
   });
 }
@@ -73,7 +73,7 @@ export function useUpdateOrder() {
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["shift"] });
       await queryClient.invalidateQueries({ queryKey: ORDER_QUERY_KEYS.detail(data.id) });
-      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.SALES });
     },
   });
 }

@@ -22,7 +22,7 @@ export function useCreateOrder() {
       return result.value;
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.SALES });
     },
   });
 }

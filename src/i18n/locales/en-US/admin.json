@@ -19,19 +19,35 @@
   },
   "dashboard": {
     "eyebrow": "Administration",
-    "title": "Today",
-    "summaryAriaLabel": "Today's sales summary",
+    "title": "Sales analytics",
+    "description": "Analyze business performance by date range and category.",
+    "summaryAriaLabel": "Sales summary for the selected period",
     "refresh": "Refresh",
     "retry": "Retry",
     "error": {
       "title": "We could not load the metrics",
-      "description": "Try refreshing the operational summary."
+      "description": "Try changing the date range or refreshing the analytics.",
+      "invalidRange": "Select a valid date range"
     },
+    "filters": { "from": "From", "to": "To", "days": "{{count}} days", "month": "This month" },
     "metrics": {
       "sales": "Sales",
+      "products": "Products sold",
       "orders": "Orders",
       "averageTicket": "Avg. ticket"
     },
+    "chart": { "title": "Sales over time", "empty": "There are no sales in this period." },
+    "categories": {
+      "title": "Sales by category",
+      "description": "Switch between amount and products from the chart.",
+      "empty": "There are no categories with sales.",
+      "uncategorized": "Uncategorized"
+    },
+    "products": { "title": "Top-selling products" },
+    "profit": { "title": "Profitability", "cost": "Cost of goods", "gross": "Gross profit", "margin": "Margin", "note": "Set each product's cost in Catalog for accurate profit reporting." },
+    "peaks": { "title": "Peak hours and days", "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] },
+    "shifts": { "title": "Shift performance", "count": "Shifts", "averageSales": "Average sales", "duration": "Average duration", "difference": "Cash difference" },
+    "voids": { "title": "Voids", "rate": "of orders" },
     "payments": {
       "title": "Payment methods",
       "cash": "Cash",

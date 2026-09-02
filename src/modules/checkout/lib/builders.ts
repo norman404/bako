@@ -19,6 +19,7 @@ export function buildOrderItemsInput(items: CartItem[]): CreateOrderInput["items
     productId: item.product.id,
     quantity: item.quantity,
     unitPrice: calculateItemUnitPrice(item.product, item.selectedModifiers),
+    unitCost: item.product.costPrice,
     modifiers: item.selectedModifiers.map((m) => ({
       groupId: m.groupId,
       groupName: m.groupName,

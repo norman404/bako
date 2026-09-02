@@ -45,7 +45,7 @@ export function useOpenShift() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.active });
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.history });
-      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.SALES });
     },
   });
 }
@@ -63,7 +63,7 @@ export function useCloseShift() {
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.active });
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.history });
       await queryClient.invalidateQueries({ queryKey: SHIFT_QUERY_KEYS.report(variables.shiftId) });
-      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.TODAY });
+      await queryClient.invalidateQueries({ queryKey: METRICS_QUERY_KEYS.SALES });
     },
   });
 }

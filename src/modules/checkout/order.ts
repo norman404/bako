@@ -19,6 +19,7 @@ export interface CheckoutOrderItemInput {
   productId: string;
   quantity: number;
   unitPrice: number;
+  unitCost: number;
   modifiers: CheckoutOrderItemModifierInput[];
 }
 
@@ -53,6 +54,7 @@ export interface CheckoutOrderItem {
   productId: string;
   quantity: number;
   unitPrice: number;
+  unitCost: number;
   modifiers: CheckoutOrderItemModifier[];
   createdAt: Date;
 }

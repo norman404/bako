@@ -35,6 +35,7 @@ export const products = sqliteTable(
     name: text("name").notNull(),
     description: text("description").notNull(),
     price: integer("price").notNull(),
+    costPrice: integer("cost_price").notNull().default(0),
     prepTimeMinutes: integer("prep_time_minutes").notNull(),
     image: text("image").notNull(),
     isPopular: integer("is_popular", { mode: "boolean" }).notNull().default(false),
@@ -227,6 +228,7 @@ export const orderItems = sqliteTable(
       .references(() => products.id),
     quantity: integer("quantity").notNull(),
     unitPrice: integer("unit_price").notNull(),
+    unitCost: integer("unit_cost").notNull().default(0),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
@@ -291,5 +293,4 @@ export type OrderItemInsert = typeof orderItems.$inferInsert;
 export type OrderItemModifierInsert = typeof orderItemModifiers.$inferInsert;
 export type ShiftRow = typeof shifts.$inferSelect;
 export type CashMovementRow = typeof cashMovements.$inferSelect;
-
 

@@ -19,19 +19,35 @@
   },
   "dashboard": {
     "eyebrow": "Administración",
-    "title": "Hoy",
-    "summaryAriaLabel": "Resumen de ventas del día",
+    "title": "Estadísticas de ventas",
+    "description": "Analiza el desempeño de tu negocio por periodo y categoría.",
+    "summaryAriaLabel": "Resumen de ventas del periodo",
     "refresh": "Actualizar",
     "retry": "Reintentar",
     "error": {
       "title": "No pudimos cargar las métricas",
-      "description": "Intentá actualizar el resumen operativo."
+      "description": "Intenta cambiar el periodo o actualizar las estadísticas.",
+      "invalidRange": "Selecciona un periodo válido"
     },
+    "filters": { "from": "Desde", "to": "Hasta", "days": "{{count}} días", "month": "Este mes" },
     "metrics": {
       "sales": "Ventas",
+      "products": "Productos vendidos",
       "orders": "Órdenes",
       "averageTicket": "Ticket prom."
     },
+    "chart": { "title": "Evolución de ventas", "empty": "No hay ventas en este periodo." },
+    "categories": {
+      "title": "Ventas por categoría",
+      "description": "Cambia entre monto y productos desde la gráfica.",
+      "empty": "No hay categorías con ventas.",
+      "uncategorized": "Sin categoría"
+    },
+    "products": { "title": "Productos más vendidos" },
+    "profit": { "title": "Rentabilidad", "cost": "Costo de venta", "gross": "Utilidad bruta", "margin": "Margen", "note": "Configura el costo de cada producto en Catálogo para obtener una utilidad precisa." },
+    "peaks": { "title": "Horas y días de mayor demanda", "days": ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] },
+    "shifts": { "title": "Rendimiento por turnos", "count": "Turnos", "averageSales": "Venta promedio", "duration": "Duración promedio", "difference": "Diferencia de caja" },
+    "voids": { "title": "Cancelaciones", "rate": "de las órdenes" },
     "payments": {
       "title": "Métodos de pago",
       "cash": "Efectivo",

@@ -165,6 +165,10 @@ function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPe
     if (!Number.isInteger(item.unitPrice) || item.unitPrice < 0) {
       return new CheckoutPersistenceError("orderItemUnitPriceInvalid", { unitPrice: item.unitPrice });
     }
+
+    if (!Number.isInteger(item.unitCost) || item.unitCost < 0) {
+      return new CheckoutPersistenceError("orderItemUnitPriceInvalid", { unitCost: item.unitCost });
+    }
   }
 
   const total = calculateOrderTotal(input.items);
@@ -178,6 +182,7 @@ function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrd
       productId: item.productId.trim(),
       quantity: item.quantity,
       unitPrice: item.unitPrice,
+      unitCost: item.unitCost,
       modifiers: (item.modifiers ?? []).map((modifier) => ({
         groupId: modifier.groupId,
         groupName: modifier.groupName,
@@ -216,6 +221,7 @@ function rowToCheckoutOrderItem(row: OrderItemRow, modifiers: CheckoutOrderItemM
     productId: row.productId,
     quantity: row.quantity,
     unitPrice: row.unitPrice,
+    unitCost: row.unitCost,
     modifiers,
     createdAt: row.createdAt,
   };
@@ -338,6 +344,7 @@ async function createOrderItemRows(
     productId: item.productId,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    unitCost: item.unitCost,
     createdAt: now,
   }));
 

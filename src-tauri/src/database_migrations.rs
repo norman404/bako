@@ -9,6 +9,9 @@ pub const LABEL_ORIENTATION_MIGRATION_VERSION: i64 = 27;
 const LABEL_ORIENTATION_MIGRATION_DESCRIPTION: &str = "printer_label_orientation";
 const LABEL_ORIENTATION_MIGRATION_SQL: &str =
     include_str!("../migrations/0027_printer_label_orientation.sql");
+const PRODUCT_COSTS_MIGRATION_VERSION: i64 = 31;
+const PRODUCT_COSTS_MIGRATION_DESCRIPTION: &str = "product_costs";
+const PRODUCT_COSTS_MIGRATION_SQL: &str = include_str!("../migrations/0031_product_costs.sql");
 
 fn migration_checksum() -> Vec<u8> {
     Migration::new(
@@ -16,6 +19,18 @@ fn migration_checksum() -> Vec<u8> {
         Cow::Borrowed(LABEL_ORIENTATION_MIGRATION_DESCRIPTION),
         MigrationType::ReversibleUp,
         SqlStr::from_static(LABEL_ORIENTATION_MIGRATION_SQL),
+        false,
+    )
+    .checksum
+    .into_owned()
+}
+
+fn product_costs_migration_checksum() -> Vec<u8> {
+    Migration::new(
+        PRODUCT_COSTS_MIGRATION_VERSION,
+        Cow::Borrowed(PRODUCT_COSTS_MIGRATION_DESCRIPTION),
+        MigrationType::ReversibleUp,
+        SqlStr::from_static(PRODUCT_COSTS_MIGRATION_SQL),
         false,
     )
     .checksum
@@ -108,6 +123,55 @@ pub async fn repair_partial_label_orientation_migration(path: &Path) -> Result<(
     Ok(())
 }
 
+async fn apply_pending_product_costs_migration(path: &Path) -> Result<(), String> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let mut connection = open_database(path).await?;
+    let latest: Option<i64> =
+        sqlx::query_scalar("SELECT MAX(version) FROM _sqlx_migrations WHERE success = TRUE")
+            .fetch_one(&mut connection)
+            .await
+            .map_err(|error| format!("Could not inspect migration history: {error}"))?;
+
+    if latest != Some(PRODUCT_COSTS_MIGRATION_VERSION - 1) {
+        connection
+            .close()
+            .await
+            .map_err(|error| error.to_string())?;
+        return Ok(());
+    }
+
+    let mut transaction = connection
+        .begin()
+        .await
+        .map_err(|error| format!("Could not start product costs migration: {error}"))?;
+    for statement in PRODUCT_COSTS_MIGRATION_SQL
+        .split(';')
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+    {
+        sqlx::query(statement)
+            .execute(&mut *transaction)
+            .await
+            .map_err(|error| format!("Could not apply product costs migration: {error}"))?;
+    }
+    sqlx::query(
+        "INSERT INTO _sqlx_migrations (version, description, success, checksum, execution_time) VALUES (?, ?, TRUE, ?, -1)",
+    )
+    .bind(PRODUCT_COSTS_MIGRATION_VERSION)
+    .bind(PRODUCT_COSTS_MIGRATION_DESCRIPTION)
+    .bind(product_costs_migration_checksum())
+    .execute(&mut *transaction)
+    .await
+    .map_err(|error| format!("Could not record product costs migration: {error}"))?;
+    transaction
+        .commit()
+        .await
+        .map_err(|error| format!("Could not commit product costs migration: {error}"))
+}
+
 pub fn init<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
     tauri::plugin::Builder::new("database-migrations")
         .setup(|app, _api| {
@@ -123,6 +187,12 @@ pub fn init<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
                 log::error!("Database migration compatibility repair failed: {error}");
                 return Err(Box::new(std::io::Error::other(error)));
             }
+            if let Err(error) =
+                tauri::async_runtime::block_on(apply_pending_product_costs_migration(&path))
+            {
+                log::error!("Database startup migration failed: {error}");
+                return Err(Box::new(std::io::Error::other(error)));
+            }
             Ok(())
         })
         .build()
@@ -131,8 +201,8 @@ pub fn init<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
 #[cfg(test)]
 mod tests {
     use super::{
-        migration_checksum, repair_partial_label_orientation_migration,
-        LABEL_ORIENTATION_MIGRATION_VERSION,
+        apply_pending_product_costs_migration, migration_checksum,
+        repair_partial_label_orientation_migration, LABEL_ORIENTATION_MIGRATION_VERSION,
     };
     use sqlx::sqlite::SqliteConnectOptions;
     use sqlx::{Connection, Executor, SqliteConnection};
@@ -431,5 +501,127 @@ mod tests {
             assert!(error.contains(expected_error));
             let _ = fs::remove_file(database);
         }
+    }
+
+    #[test]
+    fn adds_product_cost_snapshots_without_changing_existing_values() {
+        // CASE: an existing catalog and order history migrate to profitability reporting.
+        // VALIDATES: both cost columns default safely and reject negative values.
+        let database = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            let options = SqliteConnectOptions::new()
+                .filename(&database)
+                .create_if_missing(true);
+            let mut connection = SqliteConnection::connect_with(&options)
+                .await
+                .expect("sqlite database");
+            connection
+                .execute("CREATE TABLE products (id TEXT PRIMARY KEY, price INTEGER NOT NULL)")
+                .await
+                .expect("products table");
+            connection
+                .execute(
+                    "CREATE TABLE order_items (id TEXT PRIMARY KEY, unit_price INTEGER NOT NULL)",
+                )
+                .await
+                .expect("order items table");
+            connection
+                .execute("INSERT INTO products (id, price) VALUES ('coffee', 500)")
+                .await
+                .expect("product row");
+            connection
+                .execute("INSERT INTO order_items (id, unit_price) VALUES ('item', 500)")
+                .await
+                .expect("item row");
+
+            for statement in include_str!("../migrations/0031_product_costs.sql").split(';') {
+                let statement = statement.trim();
+                if !statement.is_empty() {
+                    connection
+                        .execute(statement)
+                        .await
+                        .expect("migration statement");
+                }
+            }
+
+            let product_cost: i64 =
+                sqlx::query_scalar("SELECT cost_price FROM products WHERE id = 'coffee'")
+                    .fetch_one(&mut connection)
+                    .await
+                    .expect("product cost");
+            let item_cost: i64 =
+                sqlx::query_scalar("SELECT unit_cost FROM order_items WHERE id = 'item'")
+                    .fetch_one(&mut connection)
+                    .await
+                    .expect("item cost");
+            assert_eq!((product_cost, item_cost), (0, 0));
+            assert!(connection
+                .execute("UPDATE products SET cost_price = -1 WHERE id = 'coffee'")
+                .await
+                .is_err());
+            connection.close().await.expect("close sqlite database");
+        });
+        let _ = fs::remove_file(database);
+    }
+
+    #[test]
+    fn applies_product_costs_before_the_frontend_opens_the_database() {
+        // CASE: a restored database is on version 30 when the native process starts.
+        // VALIDATES: startup adds and records version 31 without waiting for the webview.
+        let database = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            let options = SqliteConnectOptions::new()
+                .filename(&database)
+                .create_if_missing(true);
+            let mut connection = SqliteConnection::connect_with(&options)
+                .await
+                .expect("sqlite database");
+            connection.execute("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY, description TEXT NOT NULL, installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, success BOOLEAN NOT NULL, checksum BLOB NOT NULL, execution_time BIGINT NOT NULL)").await.expect("migration table");
+            connection.execute("INSERT INTO _sqlx_migrations (version, description, success, checksum, execution_time) VALUES (30, 'order_name', TRUE, X'00', 1)").await.expect("migration history");
+            connection
+                .execute("CREATE TABLE products (id TEXT PRIMARY KEY, price INTEGER NOT NULL)")
+                .await
+                .expect("products table");
+            connection
+                .execute(
+                    "CREATE TABLE order_items (id TEXT PRIMARY KEY, unit_price INTEGER NOT NULL)",
+                )
+                .await
+                .expect("order items table");
+            connection.close().await.expect("close sqlite database");
+        });
+
+        tauri::async_runtime::block_on(apply_pending_product_costs_migration(&database))
+            .expect("startup migration");
+
+        tauri::async_runtime::block_on(async {
+            let options = SqliteConnectOptions::new()
+                .filename(&database)
+                .read_only(true);
+            let mut connection = SqliteConnection::connect_with(&options)
+                .await
+                .expect("sqlite database");
+            let version: i64 = sqlx::query_scalar(
+                "SELECT MAX(version) FROM _sqlx_migrations WHERE success = TRUE",
+            )
+            .fetch_one(&mut connection)
+            .await
+            .expect("migration version");
+            let product_column: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM pragma_table_info('products') WHERE name = 'cost_price'",
+            )
+            .fetch_one(&mut connection)
+            .await
+            .expect("product column");
+            let item_column: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM pragma_table_info('order_items') WHERE name = 'unit_cost'",
+            )
+            .fetch_one(&mut connection)
+            .await
+            .expect("item column");
+            assert_eq!((version, product_column, item_column), (31, 1, 1));
+            connection.close().await.expect("close sqlite database");
+        });
+        let _ = fs::remove_file(database);
     }
 }

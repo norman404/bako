@@ -50,13 +50,14 @@ interface ProductFormState {
   name: string;
   description: string;
   price: string;
+  costPrice: string;
   prepTimeMinutes: string;
   image: string;
   isPopular: boolean;
 }
 
 interface ProductFormError {
-  field?: "name" | "price" | "prepTime" | "categoryId";
+  field?: "name" | "price" | "costPrice" | "prepTime" | "categoryId";
   message: string;
 }
 
@@ -71,6 +72,7 @@ function buildEmptyFormState(defaultCategoryId: string): ProductFormState {
     name: "",
     description: "",
     price: "",
+    costPrice: "",
     prepTimeMinutes: "0",
     image: "☕",
     isPopular: false,
@@ -84,6 +86,7 @@ function buildFormStateFromProduct(product: Product): ProductFormState {
     name: product.name,
     description: product.description,
     price: formatProductPriceInput(product.price),
+    costPrice: product.costPrice === 0 ? "" : formatProductPriceInput(product.costPrice),
     prepTimeMinutes: String(product.prepTimeMinutes),
     image: product.image,
     isPopular: product.isPopular,
@@ -97,6 +100,7 @@ function toProductPayload(
   const categoryId = formState.categoryId.trim() || defaultCategoryId.trim();
   const name = formState.name.trim();
   const price = parseProductPriceInput(formState.price);
+  const costPrice = formState.costPrice.trim() === "" ? 0 : parseProductPriceInput(formState.costPrice);
   const rawPrepTime = formState.prepTimeMinutes.trim();
   const prepTimeMinutes = rawPrepTime.length === 0 ? 0 : Number.parseInt(rawPrepTime, 10);
 
@@ -112,6 +116,10 @@ function toProductPayload(
     return { success: false, error: { field: "price", message: "Ingresá un precio válido." } };
   }
 
+  if (costPrice === null) {
+    return { success: false, error: { field: "costPrice", message: "Ingresá un costo válido." } };
+  }
+
   if (!Number.isInteger(prepTimeMinutes) || prepTimeMinutes < 0) {
     return { success: false, error: { field: "prepTime", message: "Ingresá un tiempo de preparación válido." } };
   }
@@ -124,6 +132,7 @@ function toProductPayload(
       name,
       description: formState.description.trim(),
       price,
+      costPrice,
       prepTimeMinutes,
       image: formState.image.trim(),
       isPopular: formState.isPopular,
@@ -416,7 +425,7 @@ function ProductSettingsPanel() {
             </div>
 
             <div className="grid gap-3 rounded-card border border-border bg-surface-raised/40 p-3.5">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <FormField label="Precio" htmlFor="product-price">
                   {/* ADR-0001: product prices are integer cents; the input accepts monetary units. */}
                   <Input
@@ -432,6 +441,20 @@ function ProductSettingsPanel() {
                     inputMode="decimal"
                     className={`font-mono-tabular ${formError?.field === "price" ? "border-danger" : ""}`}
                     placeholder="55.50"
+                  />
+                </FormField>
+
+                <FormField label="Costo" htmlFor="product-cost-price">
+                  <Input
+                    id="product-cost-price"
+                    value={formState.costPrice}
+                    onInput={(event) => {
+                      const value = event.currentTarget.value;
+                      setFormState((previous) => ({ ...previous, costPrice: value.replace(/[^\d,.-]/g, "") }));
+                    }}
+                    inputMode="decimal"
+                    className={`font-mono-tabular ${formError?.field === "costPrice" ? "border-danger" : ""}`}
+                    placeholder="30.00"
                   />
                 </FormField>
 
