@@ -13,9 +13,8 @@
   },
   "panel": {
     "title": "Updates",
+    "manualDescription": "Check for and install updates manually from here.",
     "currentVersionLabel": "Installed version",
-    "autoUpdateLabel": "Check for updates automatically",
-    "autoUpdateDescription": "When Bako starts, it checks whether a new version is available.",
     "checkButton": "Check for updates now",
     "checking": "Checking...",
     "upToDate": "You're on the latest version",
