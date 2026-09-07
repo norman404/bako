@@ -1,6 +1,7 @@
 export const PRINT_TICKET_PAYMENT_METHOD = {
   CASH: "cash",
   CARD: "card",
+  PLATFORM: "platform",
 } as const;
 
 export type PrintTicketPaymentMethod =

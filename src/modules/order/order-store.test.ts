@@ -33,3 +33,15 @@ describe("order store", () => {
     expect(useOrderStore.getState().orderName).toBe("");
   });
 });
+
+// CASE: The cashier finishes a DiDi order and starts a local order.
+// VALIDATES: The next customer never inherits the platform or app reference.
+it("should reset delivery metadata when the cart is cleared", () => {
+  // Arrange
+  useOrderStore.getState().setChannel("didi");
+  useOrderStore.getState().setDeliveryReference("APP-42");
+  // Act
+  useOrderStore.getState().clearOrder();
+  // Assert
+  expect(useOrderStore.getState()).toMatchObject({ channel: "local", deliveryReference: "", orderName: "", currentOrder: [] });
+});

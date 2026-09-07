@@ -1,4 +1,5 @@
 import type { Category } from "@/modules/menu";
+import { orderPrintName } from "@/modules/order";
 import type { Printer } from "@/modules/printer";
 import { buildKitchenCommands, printCommand, type CartLine } from "@/modules/checkout";
 import type { CommandItemSelection, OrderDetail, OrderDetailItem } from "../order-management";
@@ -82,7 +83,7 @@ export async function reprintCommand(
     printers,
     categories,
     headerText,
-    orderDetail.orderName,
+    orderPrintName(orderDetail.channel, orderDetail.deliveryReference, orderDetail.orderName, orderDetail.ticketNumber),
   );
   const results = await Promise.all(commands.map((command) => printCommand(command)));
   const errors = results.filter((result) => result.isErr()).map((result) => result.error);

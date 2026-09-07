@@ -18,6 +18,10 @@ const LABELS: ReprintShiftReportLabels = {
   itemsLabel: "Productos vendidos",
   cashLabel: "Efectivo",
   cardLabel: "Tarjeta",
+  platformLabel: "Pagado en app",
+  localLabel: "Local",
+  pendingLabel: "Delivery pendiente",
+  voidedLabel: "Anulado",
   totalLabel: "Total vendido",
   openingCashLabel: "Efectivo inicial",
   expectedCashLabel: "Esperado",
@@ -37,6 +41,11 @@ const REPORT: ShiftReport = {
   totalSales: 680,
   cashTotal: 680,
   cardTotal: 0,
+  platformTotal: 0,
+  localTotal: 680,
+  uberTotal: 0,
+  didiTotal: 0,
+  pendingDeliveries: 0,
   orders: [],
   salesByCategory: [
     {
@@ -97,4 +106,20 @@ describe("buildReprintShiftReportPayload", () => {
     expect(itemNames).not.toContain("Comida — 4 productos");
     expect(itemNames).not.toContain("  Hamburguesa — 3 productos");
   });
+});
+
+// CASE: A cut contains cash, terminal card, app sales and a pending delivery.
+// VALIDATES: The printed report preserves the actual payment split instead of reporting all sales as cash.
+it("should print separate app collections and pending counts when reprinting a delivery cut", () => {
+  // Arrange
+  const report = { ...REPORT, totalSales: 16000, cashTotal: 8000, cardTotal: 3000, platformTotal: 5000, localTotal: 3000, didiTotal: 8000, uberTotal: 5000, pendingDeliveries: 1 };
+  // Act
+  const payload = buildReprintShiftReportPayload(report, PRINTER, LABELS, false);
+  // Assert
+  expect(payload.payments).toEqual([
+    { method: "cash", amount: 8000, cashReceived: 8000 },
+    { method: "card", amount: 3000, cashReceived: null },
+    { method: "platform", amount: 5000, cashReceived: null },
+  ]);
+  expect(payload.items.map((item) => item.name)).toContain("Delivery pendiente: 1");
 });

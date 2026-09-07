@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { formatPosCurrency } from "@/lib/currency";
+import { ORDER_CHANNEL } from "@/modules/order";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { useSettingsStore } from "@/modules/settings";
 import { sortShiftList } from "../list-order";
@@ -21,6 +22,7 @@ function formatPaymentMethod(method: string, t: (key: string) => string): string
   const normalized = method.trim().toLowerCase();
   if (normalized === "cash") return t("cashTotal");
   if (normalized === "card") return t("cardTotal");
+  if (normalized === "platform") return t("platformTotal");
   return method || t("paymentMethodOther");
 }
 
@@ -81,8 +83,8 @@ interface SalesListProps {
 }
 
 function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onReprintCommand }: SalesListProps) {
+  const { i18n } = useTranslation("shift");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
-  const hasActions = Boolean(onReprintOrder || onEditOrder || onVoidOrder || onReprintCommand);
 
   if (orders.length === 0) {
     return (
@@ -93,164 +95,130 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
   }
 
   return (
-    <div className="rounded-card border border-border bg-surface-sunken overflow-hidden">
+    <div className="min-w-0 overflow-hidden rounded-card border border-border bg-surface-sunken">
       <div className="border-b border-border bg-surface-raised/40 px-4 py-3">
         <h3 className="flex items-center gap-2 eyebrow">
           <Package className="h-3.5 w-3.5 text-primary" />
           {t("salesList")}
         </h3>
       </div>
-      <div className="scrollbar-thin max-h-[18rem] overflow-y-auto">
-        <div className="grid divide-y divide-border">
+      <div className="scrollbar-thin max-h-96 overflow-y-auto">
+        <div className="grid min-w-0 divide-y divide-border">
           {orders.map((order) => {
             const isExpanded = expandedOrderId === order.orderId;
-            const showActions = hasActions && !order.isVoided;
+            const isDelivery = order.channel !== ORDER_CHANNEL.LOCAL;
+            const showReceipt = Boolean(onReprintOrder && !order.isPending && !order.isVoided);
+            const showEdit = Boolean(onEditOrder && !isDelivery && !order.isVoided);
+            const showVoid = Boolean(onVoidOrder && order.canModify && !order.isVoided);
+            const showCommand = Boolean(onReprintCommand && (order.canModify || !order.isPending) && !order.isVoided);
+            const showActions = showReceipt || showEdit || showVoid || showCommand;
+            const detailId = `shift-order-detail-${order.orderId}`;
             return (
-              <div
-                key={order.orderId}
-                data-testid={`shift-report-order-${order.orderId}`}
-                className="bg-surface-sunken"
-              >
-                <div className="flex w-full items-center justify-between px-4 py-3">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setExpandedOrderId(isExpanded ? null : order.orderId)}
-                    className="flex min-w-0 flex-1 items-center gap-3 text-left transition-colors hover:bg-surface-raised/40"
-                  >
-                    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-surface-raised text-2xs font-bold text-primary-strong">
-                      #{order.ticketNumber}
+              <div key={order.orderId} data-testid={`shift-report-order-${order.orderId}`} className="min-w-0 bg-surface-sunken">
+                <Button
+                  variant="ghost"
+                  size="medium"
+                  onClick={() => setExpandedOrderId(isExpanded ? null : order.orderId)}
+                  aria-expanded={isExpanded}
+                  aria-controls={isExpanded ? detailId : undefined}
+                  className="h-auto min-h-16 w-full min-w-0 flex-col items-stretch gap-2 whitespace-normal rounded-none px-4 py-3 text-left hover:bg-surface-raised/40"
+                >
+                  <span className="flex min-w-0 items-center justify-between gap-3">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="font-mono-tabular shrink-0 rounded-sm border border-border px-2 py-1 text-xs font-semibold text-primary-strong">#{order.ticketNumber}</span>
+                      {order.orderName ? <span className="truncate text-sm font-medium text-text">{order.orderName}</span> : null}
                     </span>
-                    <div className="grid min-w-0 gap-0.5">
-                      {order.orderName ? (
-                        <span className="truncate text-sm font-medium text-text">
-                          {order.orderName}
-                        </span>
-                      ) : null}
-                      <span className="flex items-center gap-2 text-2xs text-text-muted">
-                        {formatPaymentMethods(order.payments, t)}
-                        {order.isVoided && (
-                          <span className="rounded-card border border-danger/40 bg-danger/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-danger">
-                            {t("orderVoidedBadge")}
-                          </span>
-                        )}
-                      </span>
-                      <span className="text-2xs text-text-muted">
-                        {order.createdAt.toLocaleString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          day: "2-digit",
-                          month: "2-digit",
-                        })}
-                        {" · "}
-                        {order.itemCount} {t("itemCount")}
-                      </span>
-                    </div>
-                  </Button>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-mono-tabular text-sm font-semibold text-text">
-                      {formatPosCurrency(order.total)}
+                    <span className="flex shrink-0 items-center gap-2">
+                      <span className="font-mono-tabular whitespace-nowrap text-sm font-semibold text-text">{order.isPending ? "—" : formatPosCurrency(order.total)}</span>
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-text-dim" /> : <ChevronDown className="h-4 w-4 text-text-dim" />}
                     </span>
-                    {showActions && (
-                      <div className="flex items-center gap-1">
-                        {onReprintOrder && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onReprintOrder(order)}
-                            className="h-7 w-7 rounded-card text-text-muted hover:bg-surface-sunken hover:text-text"
-                            title={t("reprintOrder")}
-                            aria-label={t("reprintOrder")}
-                          >
-                            <Printer className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {onEditOrder && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onEditOrder(order)}
-                            className="h-7 w-7 rounded-card text-text-muted hover:bg-surface-sunken hover:text-text"
-                            title={t("editOrder")}
-                            aria-label={t("editOrder")}
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {onVoidOrder && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onVoidOrder(order)}
-                            className="h-7 w-7 rounded-card text-text-muted hover:bg-danger/10 hover:text-danger"
-                            title={t("voidOrder")}
-                            aria-label={t("voidOrder")}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {onReprintCommand && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => onReprintCommand(order)}
-                            className="h-7 w-7 rounded-card text-text-muted hover:bg-surface-sunken hover:text-text"
-                            title={t("reprintCommand")}
-                            aria-label={t("reprintCommand")}
-                          >
-                            <ChefHat className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                    <span className="flex h-6 w-6 items-center justify-center rounded-card text-text-dim">
-                      {isExpanded ? (
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      )}
-                    </span>
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <div className="border-t border-border bg-surface-raised/30 px-4 py-3">
-                    {order.orderName ? (
-                      <p className="mb-3 text-sm font-semibold text-text">{order.orderName}</p>
+                  </span>
+                  <span className="flex flex-wrap items-center gap-2 text-xs font-normal text-text-muted">
+                    {isDelivery ? <span className="rounded-sm bg-primary/10 px-2 py-1 font-semibold text-primary-strong">{order.channel === ORDER_CHANNEL.DIDI ? "DiDi" : "Uber Eats"}</span> : null}
+                    {order.isPending ? <span className="rounded-sm bg-warning/10 px-2 py-1 text-warning">{t("order:delivery.pending")}</span> : formatPaymentMethods(order.payments, t)}
+                    {order.isVoided ? <span className="rounded-sm bg-danger/10 px-2 py-1 text-danger">{t("orderVoidedBadge")}</span> : null}
+                  </span>
+                  {order.deliveryReference ? <span className="font-mono-tabular break-all text-xs font-normal leading-5 text-text-muted">{order.deliveryReference}</span> : null}
+                  <span className="text-xs font-normal leading-5 text-text-dim">
+                    <time dateTime={order.createdAt.toISOString()}>
+                      {order.createdAt.toLocaleString(i18n.language, { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", hour12: false })}
+                    </time>
+                    {" · "}{order.itemCount} {t("itemCount")}
+                  </span>
+                </Button>
+                {showActions ? (
+                  <div className="flex flex-wrap justify-end gap-1 border-t border-border/60 bg-surface-raised/20 px-3 py-1">
+                    {showReceipt ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onReprintOrder?.(order)}
+                        className="h-11 w-11 rounded-card"
+                        title={t("reprintOrder")}
+                        aria-label={t("reprintOrder")}
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
                     ) : null}
+                    {showEdit ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onEditOrder?.(order)}
+                        className="h-11 w-11 rounded-card"
+                        title={t("editOrder")}
+                        aria-label={t("editOrder")}
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                    {showCommand ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onReprintCommand?.(order)}
+                        className="h-11 w-11 rounded-card"
+                        title={t("reprintCommand")}
+                        aria-label={t("reprintCommand")}
+                      >
+                        <ChefHat className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                    {showVoid ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onVoidOrder?.(order)}
+                        className="h-11 w-11 rounded-card hover:bg-danger/10 hover:text-danger"
+                        title={t("voidOrder")}
+                        aria-label={t("voidOrder")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
+                {isExpanded ? (
+                  <div id={detailId} className="border-t border-border bg-surface-raised/30 px-4 py-3">
+                    {order.orderName ? <p className="mb-3 break-words text-sm font-semibold text-text">{order.orderName}</p> : null}
                     <div className="grid gap-2">
                       {order.payments.map((payment, index) => (
-                        <div
-                          key={`${order.orderId}-payment-${index}`}
-                          className="flex items-center justify-between text-sm"
-                        >
-                          <span className="text-text-muted">
-                            {formatPaymentMethod(payment.method, t)}
-                          </span>
-                          <span className="font-mono-tabular text-text">
-                            {formatPosCurrency(payment.amount)}
-                          </span>
+                        <div key={`${order.orderId}-payment-${index}`} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="text-text-muted">{formatPaymentMethod(payment.method, t)}</span>
+                          <span className="font-mono-tabular shrink-0 text-text">{formatPosCurrency(payment.amount)}</span>
                         </div>
                       ))}
                     </div>
                     <div className="mt-3 grid gap-2 border-t border-border pt-3">
                       {order.items.map((item, index) => (
-                        <div
-                          key={`${order.orderId}-item-${index}`}
-                          className="flex items-center justify-between text-sm"
-                        >
-                          <span className="text-text">
-                            {item.productName}
-                            <span className="ml-1 text-text-muted">× {item.quantity}</span>
-                          </span>
-                          <span className="font-mono-tabular text-text-muted">
-                            {formatPosCurrency(item.unitPrice)}
-                          </span>
+                        <div key={`${order.orderId}-item-${index}`} className="flex items-center justify-between gap-3 text-sm">
+                          <span className="min-w-0 break-words text-text">{item.productName}<span className="ml-1 text-text-muted">× {item.quantity}</span></span>
+                          {!isDelivery ? <span className="font-mono-tabular shrink-0 text-text-muted">{formatPosCurrency(item.unitPrice)}</span> : null}
                         </div>
                       ))}
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             );
           })}
@@ -267,7 +235,7 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
   const orderedOrders = sortShiftList(report.orders, (order) => order.createdAt, shiftListOrder);
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 gap-4">
       {/* Fechas */}
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-card border border-border bg-surface-sunken p-3">
@@ -348,6 +316,28 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
       {categoriesEnabled && report.salesByCategory.length > 0 ? (
         <CategorySalesBlock categories={report.salesByCategory} t={t} />
       ) : null}
+
+      <div className="rounded-card border border-border bg-surface-sunken p-4">
+        <h3 className="eyebrow">{t("salesByChannel")}</h3>
+        <dl className="mt-3 grid gap-2 text-sm">
+          {[
+            { label: t("localSales"), amount: report.localTotal },
+            { label: "Uber Eats", amount: report.uberTotal },
+            { label: "DiDi", amount: report.didiTotal },
+          ].map(({ label, amount }) => (
+            <div key={label} className="flex justify-between gap-3"><dt>{label}</dt><dd className="font-mono-tabular">{formatPosCurrency(amount)}</dd></div>
+          ))}
+        </dl>
+      </div>
+      <div className="rounded-card border border-border bg-surface-sunken p-4">
+        <p className="eyebrow">{t("platformTotal")}</p>
+        <p className="font-mono-tabular mt-1 text-lg font-semibold">{formatPosCurrency(report.platformTotal)}</p>
+        <p className="mt-2 text-xs text-text-muted">{t("platformHint")}</p>
+      </div>
+      {report.pendingDeliveries > 0 ? <div className="rounded-card border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
+        {t("pendingDeliveries", { count: report.pendingDeliveries })}
+        <p className="mt-1 text-xs">{t("pendingDeliveriesHint")}</p>
+      </div> : null}
 
       {/* Resumen de efectivo */}
       <div className="rounded-card border border-border bg-surface-sunken p-4">

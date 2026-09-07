@@ -12,7 +12,7 @@
   "cardTotal": "Card",
   "totalItems": "Items sold",
   "salesList": "Sales list",
-  "salesByCategory": "Sales by category",
+  "salesByCategory": "Sales by category · Local",
   "uncategorizedCategory": "Uncategorized",
   "itemCount": "Items",
   "emptySalesList": "No sales recorded",
@@ -118,6 +118,18 @@
     "orderAlreadyVoided": "This order has already been voided.",
     "invalidOrderPayment": "Payment amounts do not match the order total.",
     "dbError": "We couldn't load shifts. Please try again.",
-    "generic": "An error occurred with shifts."
-  }
+    "generic": "An error occurred with shifts.",
+    "deliveryRequired": "This order is not a valid delivery.",
+    "deliveryAlreadyConfirmed": "This delivery was already confirmed. No additional collection was recorded.",
+    "invalidDeliveryAmount": "The final amount is invalid.",
+    "deliveryEditNotAllowed": "Confirm deliveries from Pending deliveries; they cannot be edited as local sales.",
+    "closedShift": "This shift is already closed. Its collection cannot be changed."
+  },
+  "platformTotal": "Paid in app",
+  "salesByChannel": "Sales by source",
+  "localSales": "Local",
+  "deliveryPending": "Pending delivery",
+  "pendingDeliveries": "{{count}} pending deliveries",
+  "pendingDeliveriesHint": "Excluded from sales and cash. They remain available for confirmation in another shift.",
+  "platformHint": "App payments are separate from cash and terminal card payments."
 }

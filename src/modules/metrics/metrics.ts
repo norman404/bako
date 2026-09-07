@@ -1,11 +1,14 @@
+import { ORDER_CHANNEL } from "@/modules/order";
+
 export interface MetricsDateRange { start: Date; end: Date }
-export interface SalesOrderRow { id: string; total: number; createdAt: Date; shiftId?: string | null }
+export interface SalesOrderRow { channel: string; id: string; total: number; createdAt: Date; shiftId?: string | null }
 export interface SalesItemRow { orderId: string; productId: string; productName: string; quantity: number; unitPrice: number; unitCost: number; categoryId: string | null; categoryName: string | null }
 export interface MetricsPaymentRow { method: string; amount: number }
 export interface MetricsShiftRow { id: string; openedAt: Date; closedAt: Date | null; cashDifference: number | null }
 export interface SalesSeriesPoint { date: string; sales: number; items: number; orders: number }
 export interface CategoryMetric { categoryId: string | null; categoryName: string | null; sales: number; items: number; profit: number }
 export interface ProductMetric { productId: string; productName: string; sales: number; items: number; profit: number }
+export interface ChannelMetric { channel: string; sales: number; orders: number }
 export interface PaymentMetric { method: string; amount: number; percentage: number }
 export interface SalesSummary { sales: number; totalOrders: number; totalItems: number; averageTicket: number; cost: number; profit: number; margin: number }
 export interface SalesMetrics extends SalesSummary {
@@ -14,6 +17,7 @@ export interface SalesMetrics extends SalesSummary {
   categories: CategoryMetric[];
   products: ProductMetric[];
   payments: PaymentMetric[];
+  channels: ChannelMetric[];
   hourlySales: number[];
   weekdaySales: number[];
   shifts: { count: number; averageSales: number; averageDurationMinutes: number; cashDifference: number };
@@ -42,13 +46,15 @@ export function aggregateSalesMetrics(
   voidedOrders: SalesOrderRow[] = [],
   shifts: MetricsShiftRow[] = [],
 ): SalesMetrics {
+  const localOrderIds = new Set(orders.filter((order) => order.channel === ORDER_CHANNEL.LOCAL).map((order) => order.id));
   const countsByOrder = new Map<string, number>();
   const categories = new Map<string | null, CategoryMetric>();
   const products = new Map<string, ProductMetric>();
   for (const item of items) {
+    countsByOrder.set(item.orderId, (countsByOrder.get(item.orderId) ?? 0) + item.quantity);
+    if (!localOrderIds.has(item.orderId)) continue;
     const sales = item.unitPrice * item.quantity;
     const profit = (item.unitPrice - item.unitCost) * item.quantity;
-    countsByOrder.set(item.orderId, (countsByOrder.get(item.orderId) ?? 0) + item.quantity);
     const categoryId = item.categoryName === null ? null : item.categoryId;
     const category = categories.get(categoryId) ?? { categoryId, categoryName: categoryId === null ? null : item.categoryName, sales: 0, items: 0, profit: 0 };
     category.sales += sales; category.items += item.quantity; category.profit += profit; categories.set(categoryId, category);
@@ -75,12 +81,20 @@ export function aggregateSalesMetrics(
   for (const order of orders) if (order.shiftId) salesByShift.set(order.shiftId, (salesByShift.get(order.shiftId) ?? 0) + order.total);
   const closedShifts = shifts.filter((shift) => shift.closedAt);
   const duration = closedShifts.reduce((sum, shift) => sum + ((shift.closedAt?.getTime() ?? shift.openedAt.getTime()) - shift.openedAt.getTime()) / 60_000, 0);
+  const channels = new Map<string, ChannelMetric>();
+  for (const order of orders) {
+    const channel = channels.get(order.channel) ?? { channel: order.channel, sales: 0, orders: 0 };
+    channel.sales += order.total;
+    channel.orders += 1;
+    channels.set(order.channel, channel);
+  }
   const current = summary(orders, items);
   const voidAmount = voidedOrders.reduce((sum, order) => sum + order.total, 0);
 
   return {
     ...current,
     previous: summary(previousOrders, previousItems),
+    channels: [...channels.values()],
     series: [...points.values()],
     categories: [...categories.values()].sort((a, b) => b.sales - a.sales),
     products: [...products.values()].sort((a, b) => b.sales - a.sales),

@@ -1,5 +1,5 @@
 import { BarChart3, Ban, Boxes, Clock, CreditCard, Receipt, RefreshCw, TrendingUp, Wallet, type LucideIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -80,12 +80,12 @@ export function DashboardPanel() {
   const { t } = useTranslation("admin");
   const [range, setRange] = useState(initialRange);
   const [metric, setMetric] = useState<ChartMetric>("sales");
-  const dates = useMemo(() => {
+  const dates = (() => {
     const start = parseInputDate(range.start);
     const end = parseInputDate(range.end);
     end.setDate(end.getDate() + 1);
     return { start, end };
-  }, [range]);
+  })();
   const invalidRange = dates.start >= dates.end;
   const { data, isError, isFetching, isLoading, refetch } = useSalesMetrics(dates.start, dates.end);
 
@@ -114,6 +114,11 @@ export function DashboardPanel() {
       {invalidRange || isError || !data ? <div className="mt-6 rounded-card border border-danger/40 bg-surface-raised p-6 text-center"><h2 className="font-semibold text-text">{invalidRange ? t("dashboard.error.invalidRange") : t("dashboard.error.title")}</h2><p className="mt-2 text-sm text-text-muted">{t("dashboard.error.description")}</p></div> : <>
         <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label={t("dashboard.summaryAriaLabel")}><MetricCard label={t("dashboard.metrics.sales")} value={formatPosCurrency(data.sales)} current={data.sales} previous={data.previous.sales} icon={TrendingUp} /><MetricCard label={t("dashboard.metrics.products")} value={data.totalItems} current={data.totalItems} previous={data.previous.totalItems} icon={Boxes} /><MetricCard label={t("dashboard.metrics.orders")} value={data.totalOrders} current={data.totalOrders} previous={data.previous.totalOrders} icon={Receipt} /><MetricCard label={t("dashboard.metrics.averageTicket")} value={formatPosCurrency(data.averageTicket)} current={data.averageTicket} previous={data.previous.averageTicket} icon={CreditCard} /></section>
 
+        <section className="mt-6 rounded-card border border-border bg-surface-raised p-4">
+          <h2 className="text-sm font-semibold">{t("dashboard.delivery.channels")}</h2>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-3">{data.channels.map((channel) => <div key={channel.channel} className="flex justify-between gap-3 text-sm"><dt>{t(`order:channels.${channel.channel}`)}</dt><dd className="font-mono-tabular">{formatPosCurrency(channel.sales)}</dd></div>)}</dl>
+          <p className="mt-3 text-xs text-text-muted">{t("dashboard.delivery.note")}</p>
+        </section>
         <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,1fr)]">
           <section className="rounded-card border border-border bg-surface-raised p-5 shadow-card">
             <header className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /><h2 className="text-sm font-semibold text-text">{t("dashboard.chart.title")}</h2></div><div className="flex rounded-card border border-border p-1"><button className={`rounded-sm px-3 py-1 text-xs ${metric === "sales" ? "bg-primary text-on-primary" : "text-text-muted"}`} onClick={() => setMetric("sales")}>{t("dashboard.metrics.sales")}</button><button className={`rounded-sm px-3 py-1 text-xs ${metric === "items" ? "bg-primary text-on-primary" : "text-text-muted"}`} onClick={() => setMetric("items")}>{t("dashboard.metrics.products")}</button></div></header>

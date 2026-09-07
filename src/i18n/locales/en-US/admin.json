@@ -29,35 +29,40 @@
       "description": "Try changing the date range or refreshing the analytics.",
       "invalidRange": "Select a valid date range"
     },
-    "filters": { "from": "From", "to": "To", "days": "{{count}} days", "month": "This month" },
+    "filters": {"from": "From", "to": "To", "days": "{{count}} days", "month": "This month"},
     "metrics": {
       "sales": "Sales",
       "products": "Products sold",
       "orders": "Orders",
       "averageTicket": "Avg. ticket"
     },
-    "chart": { "title": "Sales over time", "empty": "There are no sales in this period." },
+    "chart": {"title": "Sales over time", "empty": "There are no sales in this period."},
     "categories": {
       "title": "Sales by category",
       "description": "Switch between amount and products from the chart.",
       "empty": "There are no categories with sales.",
       "uncategorized": "Uncategorized"
     },
-    "products": { "title": "Top-selling products" },
-    "profit": { "title": "Profitability", "cost": "Cost of goods", "gross": "Gross profit", "margin": "Margin", "note": "Set each product's cost in Catalog for accurate profit reporting." },
-    "peaks": { "title": "Peak hours and days", "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] },
-    "shifts": { "title": "Shift performance", "count": "Shifts", "averageSales": "Average sales", "duration": "Average duration", "difference": "Cash difference" },
-    "voids": { "title": "Voids", "rate": "of orders" },
+    "products": {"title": "Top-selling products"},
+    "profit": {"title": "Profitability", "cost": "Cost of goods", "gross": "Gross profit", "margin": "Margin", "note": "Recorded amounts minus product costs. Delivery commissions and app settlements are not calculated."},
+    "peaks": {"title": "Peak hours and days", "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]},
+    "shifts": {"title": "Shift performance", "count": "Shifts", "averageSales": "Average sales", "duration": "Average duration", "difference": "Cash difference"},
+    "voids": {"title": "Voids", "rate": "of orders"},
     "payments": {
       "title": "Payment methods",
       "cash": "Cash",
       "card": "Card",
-      "other": "Other"
+      "other": "Other",
+      "platform": "Paid in app"
     },
     "activeShift": {
       "title": "Current shift",
       "openedAt": "Opened {{time}}",
       "empty": "There is no active shift."
+    },
+    "delivery": {
+      "channels": "Confirmed sales by source",
+      "note": "Delivery uses the entered final amount and confirmation date. Product and category breakdowns only show local sales; discounts and commissions are not allocated."
     }
   }
 }

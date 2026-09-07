@@ -1,7 +1,7 @@
-import { asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { ResultAsync } from "neverthrow";
 
-import { db, withTransaction } from "@/db/client";
+import { db, withTransaction, type DatabaseClient } from "@/db/client";
 import {
   categories,
   cashMovements,
@@ -15,6 +15,8 @@ import {
   type PaymentRow,
   type ShiftRow,
 } from "@/db/schema";
+import { isOrderChannel, ORDER_CHANNEL } from "@/modules/order";
+import { projectShiftOrder, summarizeShiftOrders } from "./shift-accounting";
 import { ShiftPersistenceError } from "./errors";
 import { aggregateCategorySales } from "./lib/category-sales";
 import type { ShiftRepository } from "./ports";
@@ -154,6 +156,9 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     .select({
       id: orders.id,
       orderName: orders.orderName,
+      channel: orders.channel,
+      deliveryReference: orders.deliveryReference,
+      confirmedAt: orders.confirmedAt,
       ticketNumber: orders.ticketNumber,
       createdAt: orders.createdAt,
       total: orders.total,
@@ -228,8 +233,12 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     modifiers: modifiersByItem.get(item.id) ?? [],
   }));
 
+  if (!isOrderChannel(orderRow.channel)) throw new ShiftPersistenceError("deliveryRequired");
   return {
     id: orderRow.id,
+    channel: orderRow.channel,
+    deliveryReference: orderRow.deliveryReference,
+    confirmedAt: orderRow.confirmedAt,
     orderName: orderRow.orderName ?? null,
     ticketNumber: orderRow.ticketNumber,
     createdAt: orderRow.createdAt,
@@ -238,6 +247,137 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     items,
     isVoided: orderRow.voidedAt !== null,
     voidedAt: orderRow.voidedAt ?? null,
+  };
+}
+
+async function queryShiftReport(tx: DatabaseClient, shiftId: string, now: Date): Promise<ShiftReport> {
+  const shiftRows = await tx.select().from(shifts).where(eq(shifts.id, shiftId)).limit(1);
+  const shift = shiftRows[0];
+  if (!shift) {
+    throw new ShiftPersistenceError("shiftNotFound", { shiftId });
+  }
+
+  const cutoff = shift.closedAt ?? now;
+
+  const orderRows = await tx
+    .select({
+      orderId: orders.id,
+      orderName: orders.orderName,
+      channel: orders.channel,
+      deliveryReference: orders.deliveryReference,
+      confirmedAt: orders.confirmedAt,
+      shiftId: orders.shiftId,
+      financialShiftId: orders.financialShiftId,
+      ticketNumber: orders.ticketNumber,
+      orderTotal: orders.total,
+      createdAt: orders.createdAt,
+      voidedAt: orders.voidedAt,
+    })
+    .from(orders)
+    .where(and(lte(orders.createdAt, cutoff), or(
+      eq(orders.financialShiftId, shiftId),
+      eq(orders.shiftId, shiftId),
+      shift.closedAt
+        ? inArray(orders.id, shift.deliveryPendingIds ?? [])
+        : and(ne(orders.channel, ORDER_CHANNEL.LOCAL), isNull(orders.confirmedAt), isNull(orders.voidedAt)),
+    )))
+    .orderBy(asc(orders.createdAt));
+
+  const orderIds = orderRows.map((row) => row.orderId);
+  const paymentRows =
+    orderIds.length === 0
+      ? []
+      : await tx.select().from(payments).where(inArray(payments.orderId, orderIds));
+  const paymentsByOrder = groupPaymentsByOrder(paymentRows);
+
+  const itemRows =
+    orderIds.length === 0
+      ? []
+      : await tx
+          .select({
+            orderId: orderItems.orderId,
+            productId: orderItems.productId,
+            productName: sql<string | null>`${products.name}`.as("product_name"),
+            categoryId: products.categoryId,
+            categoryName: sql<string | null>`${categories.name}`.as("category_name"),
+            quantity: orderItems.quantity,
+            unitPrice: orderItems.unitPrice,
+          })
+          .from(orderItems)
+          .leftJoin(products, eq(products.id, orderItems.productId))
+          .leftJoin(categories, eq(categories.id, products.categoryId))
+          .where(inArray(orderItems.orderId, orderIds));
+
+  const itemsByOrder = new Map<string, typeof itemRows>();
+  for (const item of itemRows) {
+    const list = itemsByOrder.get(item.orderId) ?? [];
+    list.push(item);
+    itemsByOrder.set(item.orderId, list);
+  }
+
+  const reportOrders: ShiftReportOrder[] = [];
+
+  for (const orderRow of orderRows) {
+    const projection = projectShiftOrder({ ...orderRow, id: orderRow.orderId, total: orderRow.orderTotal }, shift, now);
+    if (!projection) continue;
+    if (!isOrderChannel(orderRow.channel)) throw new ShiftPersistenceError("deliveryRequired");
+    const { isVoided, isPending, canModify } = projection;
+    const orderItemsList = itemsByOrder.get(orderRow.orderId) ?? [];
+    const orderPayments = projection.includePayments ? paymentsByOrder.get(orderRow.orderId) ?? [] : [];
+    const itemCount = orderItemsList.reduce((sum, item) => sum + item.quantity, 0);
+
+
+    reportOrders.push({
+      orderId: orderRow.orderId,
+      channel: orderRow.channel,
+      deliveryReference: orderRow.deliveryReference,
+      isPending,
+      canModify,
+      orderName: orderRow.orderName ?? null,
+      ticketNumber: orderRow.ticketNumber,
+      createdAt: orderRow.createdAt,
+      total: projection.total,
+      payments: orderPayments.map(rowToReportPayment),
+      itemCount,
+      items: orderItemsList.map((item) => ({
+        productId: item.productId,
+        productName: item.productName ?? "",
+        categoryId: item.categoryId ?? null,
+        categoryName: item.categoryName ?? null,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      })),
+      isVoided,
+    });
+  }
+
+  const totals = summarizeShiftOrders(reportOrders);
+  const movementRows = await tx.select().from(cashMovements).where(eq(cashMovements.shiftId, shiftId));
+  const cashMovementsIn = movementRows
+    .filter((m) => m.type === "income")
+    .reduce((sum, m) => sum + m.amount, 0);
+  const cashMovementsOut = movementRows
+    .filter((m) => m.type === "expense")
+    .reduce((sum, m) => sum + m.amount, 0);
+  const openingCash = shift.openingCash ?? 0;
+  const expectedCash = openingCash + totals.cashTotal + cashMovementsIn - cashMovementsOut;
+  const countedCash = shift.countedCash ?? null;
+  const cashDifference = shift.cashDifference ?? null;
+
+  return {
+    shiftId: shift.id,
+    openedAt: shift.openedAt,
+    closedAt: shift.closedAt ?? null,
+    ...totals,
+    orders: reportOrders,
+    salesByCategory: aggregateCategorySales(reportOrders),
+    openingCash,
+    cashMovementsIn,
+    cashMovementsOut,
+    expectedCash,
+    countedCash,
+    cashDifference,
+    cashMovements: movementRows.map(rowToCashMovement),
   };
 }
 
@@ -269,60 +409,22 @@ export const shiftDrizzleRepository: ShiftRepository = {
 
   closeShift(shiftId: string, countedCash: number): ResultAsync<Shift, ShiftPersistenceError> {
     return ResultAsync.fromPromise(
-      (async () => {
-        const shiftRows = await db.select().from(shifts).where(eq(shifts.id, shiftId)).limit(1);
-        const shift = shiftRows[0];
-        if (!shift) {
-          throw new ShiftPersistenceError("shiftNotFound", { shiftId });
-        }
-
-        const orderRows = await db
-          .select({ orderId: orders.id, voidedAt: orders.voidedAt })
-          .from(orders)
-          .where(eq(orders.shiftId, shiftId))
-          .orderBy(asc(orders.createdAt));
-        const orderIds = orderRows.map((row) => row.orderId);
-        const paymentRows =
-          orderIds.length === 0
-            ? []
-            : await db.select().from(payments).where(inArray(payments.orderId, orderIds));
-        const paymentsByOrder = groupPaymentsByOrder(paymentRows);
-
-        let cashSales = 0;
-        for (const row of orderRows) {
-          if (row.voidedAt !== null) continue;
-          for (const payment of paymentsByOrder.get(row.orderId) ?? []) {
-            if (payment.method.trim().toLowerCase() === "cash") {
-              cashSales += payment.amount;
-            }
-          }
-        }
-
-        const movementRows = await db.select().from(cashMovements).where(eq(cashMovements.shiftId, shiftId));
-        const totalIncome = movementRows
-          .filter((m) => m.type === "income")
-          .reduce((sum, m) => sum + m.amount, 0);
-        const totalExpense = movementRows
-          .filter((m) => m.type === "expense")
-          .reduce((sum, m) => sum + m.amount, 0);
-
-        const openingCash = shift.openingCash ?? 0;
-        const expectedCash = openingCash + cashSales + totalIncome - totalExpense;
-        const cashDifference = countedCash - expectedCash;
-
+      withTransaction(async (tx) => {
+        const [shift] = await tx.select().from(shifts).where(eq(shifts.id, shiftId));
+        if (!shift) throw new ShiftPersistenceError("shiftNotFound");
+        if (shift.status !== "active") throw new ShiftPersistenceError("closedShift");
         const now = new Date();
-        const [updated] = await db
-          .update(shifts)
-          .set({ closedAt: now, status: "closed", countedCash, cashDifference })
-          .where(eq(shifts.id, shiftId))
-          .returning();
-
-        if (!updated) {
-          throw new ShiftPersistenceError("shiftNotFound", { shiftId });
-        }
-
+        const report = await queryShiftReport(tx, shiftId, now);
+        const [updated] = await tx.update(shifts).set({
+          closedAt: now,
+          status: "closed",
+          countedCash,
+          cashDifference: countedCash - report.expectedCash,
+          deliveryPendingIds: report.orders.filter((order) => order.isPending).map((order) => order.orderId),
+        }).where(eq(shifts.id, shiftId)).returning();
+        if (!updated) throw new ShiftPersistenceError("shiftNotFound");
         return rowToShift(updated);
-      })(),
+      }),
       wrapDbError("Failed to close shift"),
     );
   },
@@ -344,13 +446,16 @@ export const shiftDrizzleRepository: ShiftRepository = {
         const shiftRows = await db.select().from(shifts).orderBy(desc(shifts.openedAt));
         const orderRows = await db.select().from(orders);
 
-        const ordersByShift = new Map<string, Array<{ total: number }>>();
+        const shiftsById = new Map(shiftRows.map((shift) => [shift.id, shift]));
+        const ordersByShift = new Map<string, typeof orderRows>();
+        const now = new Date();
         for (const order of orderRows) {
-          if (!order.shiftId) continue;
-          if (order.voidedAt !== null) continue;
-          const list = ordersByShift.get(order.shiftId) ?? [];
-          list.push(order);
-          ordersByShift.set(order.shiftId, list);
+          if (!order.financialShiftId) continue;
+          const shift = shiftsById.get(order.financialShiftId);
+          if (!shift || !projectShiftOrder(order, shift, now)?.countsAsSale) continue;
+          const grouped = ordersByShift.get(shift.id) ?? [];
+          grouped.push(order);
+          ordersByShift.set(shift.id, grouped);
         }
 
         return shiftRows.map((shift) => {
@@ -372,135 +477,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
 
   getReport(shiftId: string): ResultAsync<ShiftReport, ShiftPersistenceError> {
     return ResultAsync.fromPromise(
-      (async () => {
-        const shiftRows = await db.select().from(shifts).where(eq(shifts.id, shiftId)).limit(1);
-        const shift = shiftRows[0];
-        if (!shift) {
-          throw new ShiftPersistenceError("shiftNotFound", { shiftId });
-        }
-
-        const orderRows = await db
-          .select({
-            orderId: orders.id,
-            orderName: orders.orderName,
-            ticketNumber: orders.ticketNumber,
-            orderTotal: orders.total,
-            createdAt: orders.createdAt,
-            voidedAt: orders.voidedAt,
-          })
-          .from(orders)
-          .where(eq(orders.shiftId, shiftId))
-          .orderBy(asc(orders.createdAt));
-
-        const orderIds = orderRows.map((row) => row.orderId);
-        const paymentRows =
-          orderIds.length === 0
-            ? []
-            : await db.select().from(payments).where(inArray(payments.orderId, orderIds));
-        const paymentsByOrder = groupPaymentsByOrder(paymentRows);
-
-        const itemRows =
-          orderIds.length === 0
-            ? []
-            : await db
-                .select({
-                  orderId: orderItems.orderId,
-                  productId: orderItems.productId,
-                  productName: sql<string | null>`${products.name}`.as("product_name"),
-                  categoryId: products.categoryId,
-                  categoryName: sql<string | null>`${categories.name}`.as("category_name"),
-                  quantity: orderItems.quantity,
-                  unitPrice: orderItems.unitPrice,
-                })
-                .from(orderItems)
-                .leftJoin(products, eq(products.id, orderItems.productId))
-                .leftJoin(categories, eq(categories.id, products.categoryId))
-                .where(inArray(orderItems.orderId, orderIds));
-
-        const itemsByOrder = new Map<string, typeof itemRows>();
-        for (const item of itemRows) {
-          const list = itemsByOrder.get(item.orderId) ?? [];
-          list.push(item);
-          itemsByOrder.set(item.orderId, list);
-        }
-
-        let totalOrders = 0;
-        let totalSales = 0;
-        let cashTotal = 0;
-        let cardTotal = 0;
-        let totalItems = 0;
-        const reportOrders: ShiftReportOrder[] = [];
-
-        for (const orderRow of orderRows) {
-          const isVoided = orderRow.voidedAt !== null;
-          const orderItemsList = itemsByOrder.get(orderRow.orderId) ?? [];
-          const orderPayments = paymentsByOrder.get(orderRow.orderId) ?? [];
-          const itemCount = orderItemsList.reduce((sum, item) => sum + item.quantity, 0);
-
-          if (!isVoided) {
-            totalOrders += 1;
-            totalSales += orderRow.orderTotal;
-            totalItems += itemCount;
-
-            for (const payment of orderPayments) {
-              const method = payment.method.trim().toLowerCase();
-              if (method === "cash") cashTotal += payment.amount;
-              if (method === "card") cardTotal += payment.amount;
-            }
-          }
-
-          reportOrders.push({
-            orderId: orderRow.orderId,
-            orderName: orderRow.orderName ?? null,
-            ticketNumber: orderRow.ticketNumber,
-            createdAt: orderRow.createdAt,
-            total: orderRow.orderTotal,
-            payments: orderPayments.map(rowToReportPayment),
-            itemCount,
-            items: orderItemsList.map((item) => ({
-              productId: item.productId,
-              productName: item.productName ?? "",
-              categoryId: item.categoryId ?? null,
-              categoryName: item.categoryName ?? null,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-            })),
-            isVoided,
-          });
-        }
-
-        const movementRows = await db.select().from(cashMovements).where(eq(cashMovements.shiftId, shiftId));
-        const cashMovementsIn = movementRows
-          .filter((m) => m.type === "income")
-          .reduce((sum, m) => sum + m.amount, 0);
-        const cashMovementsOut = movementRows
-          .filter((m) => m.type === "expense")
-          .reduce((sum, m) => sum + m.amount, 0);
-        const openingCash = shift.openingCash ?? 0;
-        const expectedCash = openingCash + cashTotal + cashMovementsIn - cashMovementsOut;
-        const countedCash = shift.countedCash ?? null;
-        const cashDifference = shift.cashDifference ?? null;
-
-        return {
-          shiftId: shift.id,
-          openedAt: shift.openedAt,
-          closedAt: shift.closedAt ?? null,
-          totalOrders,
-          totalItems,
-          totalSales,
-          cashTotal,
-          cardTotal,
-          orders: reportOrders,
-          salesByCategory: aggregateCategorySales(reportOrders),
-          openingCash,
-          cashMovementsIn,
-          cashMovementsOut,
-          expectedCash,
-          countedCash,
-          cashDifference,
-          cashMovements: movementRows.map(rowToCashMovement),
-        };
-      })(),
+      withTransaction((tx) => queryShiftReport(tx, shiftId, new Date())),
       wrapDbError("Failed to get shift report"),
     );
   },
@@ -514,9 +491,9 @@ export const shiftDrizzleRepository: ShiftRepository = {
 
   voidOrder(orderId: string): ResultAsync<void, ShiftPersistenceError> {
     return ResultAsync.fromPromise(
-      (async () => {
-        const existing = await db
-          .select({ id: orders.id, voidedAt: orders.voidedAt })
+      withTransaction(async (tx) => {
+        const existing = await tx
+          .select({ id: orders.id, channel: orders.channel, confirmedAt: orders.confirmedAt, financialShiftId: orders.financialShiftId, voidedAt: orders.voidedAt })
           .from(orders)
           .where(eq(orders.id, orderId))
           .limit(1);
@@ -530,9 +507,13 @@ export const shiftDrizzleRepository: ShiftRepository = {
           throw new ShiftPersistenceError("orderAlreadyVoided", { orderId });
         }
 
+        if (order.channel !== ORDER_CHANNEL.LOCAL && order.confirmedAt !== null && order.financialShiftId) {
+          const [shift] = await tx.select().from(shifts).where(eq(shifts.id, order.financialShiftId));
+          if (!shift || shift.status !== "active") throw new ShiftPersistenceError("closedShift");
+        }
         const now = new Date();
-        await db.update(orders).set({ voidedAt: now }).where(eq(orders.id, orderId));
-      })(),
+        await tx.update(orders).set({ voidedAt: now }).where(eq(orders.id, orderId));
+      }),
       wrapDbError("Failed to void order"),
     );
   },
@@ -544,7 +525,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
     return ResultAsync.fromPromise(
       (async () => {
         const existing = await db
-          .select({ id: orders.id, voidedAt: orders.voidedAt })
+          .select({ id: orders.id, channel: orders.channel, confirmedAt: orders.confirmedAt, financialShiftId: orders.financialShiftId, voidedAt: orders.voidedAt })
           .from(orders)
           .where(eq(orders.id, orderId))
           .limit(1);
@@ -557,6 +538,8 @@ export const shiftDrizzleRepository: ShiftRepository = {
         if (order.voidedAt !== null) {
           throw new ShiftPersistenceError("orderAlreadyVoided", { orderId });
         }
+
+        if (order.channel !== ORDER_CHANNEL.LOCAL) throw new ShiftPersistenceError("deliveryEditNotAllowed");
 
         const newTotal = input.items.reduce(
           (sum, item) => sum + item.unitPrice * item.quantity,

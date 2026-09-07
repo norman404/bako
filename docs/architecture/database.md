@@ -58,6 +58,13 @@ The tables, all declared with `sqliteTable(...)`:
 `shifts`, `orders`, `payments`, `cashMovements`, `orderItems`, `printers`,
 `systemSettings`, `featureFlags`.
 
+Delivery orders use `orders.channel`, `delivery_reference`, `confirmed_at`, and
+`financial_shift_id`. `shift_id` preserves the creation shift; money belongs to the
+confirmation shift. Pending deliveries have no payment and a zero financial total.
+The closure transaction freezes their IDs in `shifts.delivery_pending_ids` so later
+confirmation or cancellation cannot change a closed cut's pending list. See
+[`../delivery.md`](../delivery.md) for the operational and reporting rules.
+
 The historical `customers` table, `orders.customer_id` column, `delivery_persons` table,
 and `orders.delivery_person_id` column remain in existing databases because their
 migrations are immutable; none are declared in the active TypeScript schema.

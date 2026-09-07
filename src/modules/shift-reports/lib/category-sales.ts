@@ -1,3 +1,4 @@
+import { ORDER_CHANNEL } from "@/modules/order";
 import type { ShiftReportCategory, ShiftReportOrder } from "../shift";
 
 interface MutableCategory {
@@ -8,12 +9,12 @@ interface MutableCategory {
 }
 
 export function aggregateCategorySales(
-  orders: Array<Pick<ShiftReportOrder, "isVoided" | "items">>,
+  orders: Array<Pick<ShiftReportOrder, "isVoided" | "items" | "channel" | "isPending">>,
 ): ShiftReportCategory[] {
   const categories = new Map<string | null, MutableCategory>();
 
   for (const order of orders) {
-    if (order.isVoided) continue;
+    if (order.isVoided || order.isPending || order.channel !== ORDER_CHANNEL.LOCAL) continue;
 
     for (const item of order.items) {
       const categoryId = item.categoryName === null ? null : item.categoryId;

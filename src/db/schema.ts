@@ -159,6 +159,7 @@ export const shifts = sqliteTable(
     openingCash: integer("opening_cash"),
     countedCash: integer("counted_cash"),
     cashDifference: integer("cash_difference"),
+    deliveryPendingIds: text("delivery_pending_ids", { mode: "json" }).$type<string[]>(),
   },
   (table) => [
     index("idx_shifts_status").on(table.status),
@@ -172,6 +173,10 @@ export const orders = sqliteTable(
     id: text("id").primaryKey(),
     ticketNumber: integer("ticket_number").notNull(),
     orderName: text("order_name"),
+    channel: text("channel").notNull().default("local"),
+    deliveryReference: text("delivery_reference"),
+    confirmedAt: integer("confirmed_at", { mode: "timestamp_ms" }),
+    financialShiftId: text("financial_shift_id"),
     shiftId: text("shift_id"),
     total: integer("total").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
@@ -180,6 +185,8 @@ export const orders = sqliteTable(
   (table) => [
     uniqueIndex("idx_orders_ticket_number").on(table.ticketNumber),
     index("idx_orders_shift_id").on(table.shiftId),
+    index("idx_orders_financial_shift_id").on(table.financialShiftId),
+    index("idx_orders_confirmed_at").on(table.confirmedAt),
     index("idx_orders_created_at").on(table.createdAt),
   ],
 );

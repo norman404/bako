@@ -15,7 +15,7 @@ function createItem(
 }
 
 function createOrder(items: ShiftReportOrderItem[], isVoided = false) {
-  return { isVoided, items };
+  return { channel: "local" as const, isPending: false, isVoided, items };
 }
 
 describe("aggregateCategorySales", () => {
@@ -96,4 +96,18 @@ describe("aggregateCategorySales", () => {
     // Assert
     expect(result).toEqual([]);
   });
+});
+
+// CASE: Delivery product prices are only catalog references, not confirmed line revenue.
+// VALIDATES: Neither pending nor confirmed deliveries inflate category sales.
+it("should exclude delivery catalog amounts when calculating category sales", () => {
+  // Arrange
+  const items = [createItem("coffee", "Coffee", "drinks", "Drinks", 2, 7000)];
+  // Act
+  const categories = aggregateCategorySales([
+    { channel: "didi", isPending: true, isVoided: false, items },
+    { channel: "uber", isPending: false, isVoided: false, items },
+  ]);
+  // Assert
+  expect(categories).toEqual([]);
 });

@@ -8,8 +8,8 @@ describe("aggregateSalesMetrics", () => {
     const result = aggregateSalesMetrics(
       range,
       [
-        { id: "order-1", total: 3000, createdAt: new Date(2026, 7, 1, 12) },
-        { id: "order-2", total: 1500, createdAt: new Date(2026, 7, 3, 12) },
+        { channel: "local", id: "order-1", total: 3000, createdAt: new Date(2026, 7, 1, 12) },
+        { channel: "local", id: "order-2", total: 1500, createdAt: new Date(2026, 7, 3, 12) },
       ],
       [
         { orderId: "order-1", productId: "burger", productName: "Burger", quantity: 2, unitPrice: 1000, unitCost: 400, categoryId: "food", categoryName: "Comida" },
@@ -35,7 +35,7 @@ describe("aggregateSalesMetrics", () => {
     expect(empty.averageTicket).toBe(0);
     expect(empty.categories).toEqual([]);
 
-    const result = aggregateSalesMetrics(range, [{ id: "order", total: 500, createdAt: new Date(2026, 7, 1) }], [
+    const result = aggregateSalesMetrics(range, [{ channel: "local", id: "order", total: 500, createdAt: new Date(2026, 7, 1) }], [
       { orderId: "order", productId: "deleted", productName: "Deleted", quantity: 1, unitPrice: 500, unitCost: 100, categoryId: "deleted", categoryName: null },
     ]);
     expect(result.categories).toEqual([{ categoryId: null, categoryName: null, sales: 500, items: 1, profit: 400 }]);
@@ -46,12 +46,12 @@ describe("aggregateSalesMetrics", () => {
     const item = { orderId: "current", productId: "coffee", productName: "Coffee", quantity: 2, unitPrice: 500, unitCost: 200, categoryId: "drinks", categoryName: "Drinks" };
     const result = aggregateSalesMetrics(
       range,
-      [{ id: "current", total: 1000, createdAt: new Date(2026, 7, 3, 9), shiftId: "shift" }],
+      [{ channel: "local", id: "current", total: 1000, createdAt: new Date(2026, 7, 3, 9), shiftId: "shift" }],
       [item],
-      [{ id: "previous", total: 500, createdAt: new Date(2026, 7, 2, 9) }],
+      [{ channel: "local", id: "previous", total: 500, createdAt: new Date(2026, 7, 2, 9) }],
       [{ ...item, orderId: "previous", quantity: 1 }],
       [{ method: "cash", amount: 600 }, { method: "card", amount: 400 }],
-      [{ id: "void", total: 300, createdAt: new Date(2026, 7, 3, 10) }],
+      [{ channel: "local", id: "void", total: 300, createdAt: new Date(2026, 7, 3, 10) }],
       [{ id: "shift", openedAt: new Date(2026, 7, 3, 8), closedAt: new Date(2026, 7, 3, 16), cashDifference: -50 }],
     );
 
@@ -66,4 +66,24 @@ describe("aggregateSalesMetrics", () => {
     expect(result.shifts).toEqual({ count: 1, averageSales: 1000, averageDurationMinutes: 480, cashDifference: -50 });
     expect(result.voids).toEqual({ count: 1, amount: 300, rate: 0.5 });
   });
+});
+
+// CASE: The manual DiDi total is $50 although its catalog products total $140.
+// VALIDATES: Revenue uses $50 and product/category revenue does not invent delivery allocations.
+it("should use the manual delivery total when aggregating revenue by channel", () => {
+  // Arrange
+  const range = { start: new Date(2026, 7, 1), end: new Date(2026, 7, 2) };
+  const orders = [
+    { id: "local", channel: "local", total: 7000, createdAt: new Date(2026, 7, 1, 10) },
+    { id: "delivery", channel: "didi", total: 5000, createdAt: new Date(2026, 7, 1, 17) },
+  ];
+  const item = { productId: "coffee", productName: "Coffee", quantity: 1, unitPrice: 7000, unitCost: 2000, categoryId: "drinks", categoryName: "Drinks" };
+  // Act
+  const result = aggregateSalesMetrics(range, orders, [{ ...item, orderId: "local" }, { ...item, orderId: "delivery", quantity: 2 }], [], [], [{ method: "cash", amount: 7000 }, { method: "platform", amount: 5000 }]);
+  // Assert
+  expect(result).toMatchObject({ sales: 12000, totalItems: 3, totalOrders: 2, cost: 6000, profit: 6000 });
+  expect(result.channels).toEqual([{ channel: "local", sales: 7000, orders: 1 }, { channel: "didi", sales: 5000, orders: 1 }]);
+  expect(result.categories[0]).toMatchObject({ sales: 7000, items: 1 });
+  expect(result.products[0]).toMatchObject({ sales: 7000, items: 1 });
+  expect(result.hourlySales[17]).toBe(5000);
 });

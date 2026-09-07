@@ -12,7 +12,7 @@
   "cardTotal": "Tarjeta",
   "totalItems": "Productos vendidos",
   "salesList": "Listado de ventas",
-  "salesByCategory": "Ventas por categoría",
+  "salesByCategory": "Ventas por categoría · Local",
   "uncategorizedCategory": "Sin categoría",
   "itemCount": "Productos",
   "emptySalesList": "No hay ventas registradas",
@@ -118,6 +118,18 @@
     "orderAlreadyVoided": "El pedido ya fue anulado.",
     "invalidOrderPayment": "Los importes de pago no coinciden con el total del pedido.",
     "dbError": "No pudimos cargar los turnos. Intentá de nuevo.",
-    "generic": "Ocurrió un error con los turnos."
-  }
+    "generic": "Ocurrió un error con los turnos.",
+    "deliveryRequired": "El pedido no es un delivery válido.",
+    "deliveryAlreadyConfirmed": "Este delivery ya fue confirmado. No se registró otro cobro.",
+    "invalidDeliveryAmount": "El importe final no es válido.",
+    "deliveryEditNotAllowed": "Los deliveries se confirman desde Delivery pendientes; no se modifican como ventas locales.",
+    "closedShift": "El turno ya está cerrado. No se puede modificar su cobro."
+  },
+  "platformTotal": "Pagado en app",
+  "salesByChannel": "Ventas por origen",
+  "localSales": "Local",
+  "deliveryPending": "Delivery pendiente",
+  "pendingDeliveries": "{{count}} deliveries pendientes",
+  "pendingDeliveriesHint": "No suman a ventas ni caja. Permanecen disponibles para confirmar en otro turno.",
+  "platformHint": "Pagado en app está separado del efectivo y de las tarjetas de tu terminal."
 }

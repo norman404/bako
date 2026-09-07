@@ -625,3 +625,132 @@ mod tests {
         let _ = fs::remove_file(database);
     }
 }
+
+
+#[cfg(test)]
+mod delivery_orders_migration {
+    use sqlx::{Connection, Executor, SqliteConnection};
+
+    async fn migrate_legacy_orders(url: &str) -> SqliteConnection {
+        let mut db = SqliteConnection::connect(url).await.unwrap();
+        db.execute("CREATE TABLE orders (id TEXT PRIMARY KEY, total INTEGER NOT NULL, created_at INTEGER NOT NULL, shift_id TEXT, voided_at INTEGER);
+            CREATE TABLE shifts (id TEXT PRIMARY KEY, status TEXT, closed_at INTEGER);
+            INSERT INTO shifts VALUES ('A', 'closed', 2000);
+            INSERT INTO orders VALUES ('paid', 7000, 1000, 'A', NULL), ('voided', 5000, 1100, 'A', 1500), ('no-shift', 9000, 1200, NULL, NULL);")
+            .await.unwrap();
+        db.execute(include_str!("../migrations/0032_delivery_orders.sql")).await.unwrap();
+        db
+    }
+
+    // CASE: An existing installation upgrades with paid, voided and shiftless sales.
+    // VALIDATES: The migration preserves amounts, dates, cancellation and financial shift attribution.
+    #[test]
+    fn should_preserve_existing_sales_when_delivery_migration_runs() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = migrate_legacy_orders("sqlite::memory:").await;
+            // Act
+            let rows: Vec<(String, i64, String, i64, Option<String>, Option<i64>)> = sqlx::query_as(
+                "SELECT id, total, channel, confirmed_at, financial_shift_id, voided_at FROM orders ORDER BY id"
+            ).fetch_all(&mut db).await.unwrap();
+            // Assert
+            assert_eq!(rows, vec![
+                ("no-shift".into(), 9000, "local".into(), 1200, None, None),
+                ("paid".into(), 7000, "local".into(), 1000, Some("A".into()), None),
+                ("voided".into(), 5000, "local".into(), 1100, Some("A".into()), Some(1500)),
+            ]);
+        });
+    }
+
+    // CASE: A delivery is stored without collection and remains pending across app restarts.
+    // VALIDATES: Pending state and closed-cut membership are persistent, not only UI state.
+    #[test]
+    fn should_store_pending_state_and_cut_membership_when_delivery_is_unconfirmed() {
+        let suffix = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+        let path = std::env::temp_dir().join(format!("bako-delivery-{}-{suffix}.db", std::process::id()));
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let url = format!("sqlite:{}?mode=rwc", path.display());
+            let mut db = migrate_legacy_orders(&url).await;
+            db.execute("INSERT INTO orders (id, total, created_at, shift_id, channel, delivery_reference) VALUES ('delivery', 0, 1800, 'A', 'didi', 'APP-42');
+                UPDATE shifts SET delivery_pending_ids = '[\"delivery\"]' WHERE id = 'A';").await.unwrap();
+            // Act
+            db.close().await.unwrap();
+            let mut db = SqliteConnection::connect(&url).await.unwrap();
+            let order: (i64, Option<i64>, Option<String>, String) = sqlx::query_as(
+                "SELECT total, confirmed_at, financial_shift_id, delivery_reference FROM orders WHERE id = 'delivery'"
+            ).fetch_one(&mut db).await.unwrap();
+            let pending: String = sqlx::query_scalar("SELECT delivery_pending_ids FROM shifts WHERE id = 'A'").fetch_one(&mut db).await.unwrap();
+            // Assert
+            assert_eq!(order, (0, None, None, "APP-42".into()));
+            assert_eq!(pending, "[\"delivery\"]");
+            db.close().await.unwrap();
+        });
+        std::fs::remove_file(path).unwrap();
+    }
+
+    // CASE: A fresh installation applies the complete shipped SQL chain including delivery.
+    // VALIDATES: The new migration is compatible with the real schema, not only a legacy fixture.
+    #[test]
+    fn should_apply_delivery_migration_when_installing_a_fresh_database() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
+            // Act
+            for sql in [
+                include_str!("../migrations/0000_initial.sql"),
+                include_str!("../migrations/0001_seed_menu.sql"),
+                include_str!("../migrations/0002_orders_customers.sql"),
+                include_str!("../migrations/0003_payments.sql"),
+                include_str!("../migrations/0005_system_settings.sql"),
+                include_str!("../migrations/0006_category_colors.sql"),
+                include_str!("../migrations/0007_feature_flags.sql"),
+                include_str!("../migrations/0008_menus.sql"),
+                include_str!("../migrations/0009_product_menus.sql"),
+                include_str!("../migrations/0010_delivery_persons.sql"),
+                include_str!("../migrations/0011_printer_settings.sql"),
+                include_str!("../migrations/0012_shifts.sql"),
+                include_str!("../migrations/0013_updater_flag.sql"),
+                include_str!("../migrations/0014_product_modifiers.sql"),
+                include_str!("../migrations/0015_modifiers_flag_seed.sql"),
+                include_str!("../migrations/0016_comandas_flag_seed.sql"),
+                include_str!("../migrations/0017_printers_and_category_printer.sql"),
+                include_str!("../migrations/0018_receipt_printing_flag_seed.sql"),
+                include_str!("../migrations/0019_comanda_header_text.sql"),
+                include_str!("../migrations/0020_first_option_free.sql"),
+                include_str!("../migrations/0021_label_printer_columns.sql"),
+                include_str!("../migrations/0022_label_printer_language.sql"),
+                include_str!("../migrations/0023_printer_is_default.sql"),
+                include_str!("../migrations/0024_printer_role_comanda.sql"),
+                include_str!("../migrations/0025_voided_at_orders.sql"),
+                include_str!("../migrations/0026_cash_management.sql"),
+                include_str!("../migrations/0027_printer_label_orientation.sql"),
+                include_str!("../migrations/0028_mixed_payments.sql"),
+                include_str!("../migrations/0029_shift_list_order.sql"),
+                include_str!("../migrations/0030_order_name.sql"),
+                include_str!("../migrations/0031_product_costs.sql"),
+                include_str!("../migrations/0032_delivery_orders.sql"),
+            ] {
+                db.execute(sql).await.unwrap();
+            }
+            let columns: i64 = sqlx::query_scalar("SELECT count(*) FROM pragma_table_info('orders') WHERE name IN ('channel', 'delivery_reference', 'confirmed_at', 'financial_shift_id')")
+                .fetch_one(&mut db).await.unwrap();
+            // Assert
+            assert_eq!(columns, 4);
+        });
+    }
+
+    // CASE: Invalid channel data bypasses the TypeScript form.
+    // VALIDATES: SQLite itself rejects unknown delivery sources.
+    #[test]
+    fn should_reject_an_unknown_channel_when_data_bypasses_the_form() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = migrate_legacy_orders("sqlite::memory:").await;
+            // Act
+            let result = db.execute("INSERT INTO orders (id, total, created_at, channel) VALUES ('invalid', 0, 1800, 'unknown')").await;
+            // Assert
+            assert!(result.is_err());
+        });
+    }
+}

@@ -191,6 +191,8 @@ The step-by-step procedure for restructuring a module, plus the name-collision t
 
 ## Further reading
 
+- [`docs/delivery.md`](docs/delivery.md) — pending Uber/DiDi orders, manual collection amounts, and cross-shift accounting.
+
 - [`docs/README.md`](docs/README.md) — index of contributor guides.
 - [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its documented exceptions, the `settings ↔ updater` cycle, and the procedure for restructuring a module.
 - [`docs/architecture/database.md`](docs/architecture/database.md) — the serialization queue, schema, migrations.

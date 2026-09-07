@@ -1,4 +1,4 @@
-import { Minus, Plus, ShoppingBasket, Trash2, X } from "lucide-react";
+import { LoaderCircle, Minus, Plus, Printer, ShoppingBasket, Trash2, X } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -9,11 +9,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPosCurrency } from "@/lib/currency";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { DELIVERY_REFERENCE_MAX_LENGTH, ORDER_CHANNEL, isOrderChannel, type OrderChannel } from "./order-channel";
 import { ORDER_NAME_MAX_LENGTH } from "./order-name";
 
 interface CartProps {
   items: CartItem[];
   orderName: string;
+  channel: OrderChannel;
+  deliveryReference: string;
+  isSubmitting?: boolean;
+  onChannelChange: (channel: OrderChannel) => void;
+  onDeliveryReferenceChange: (reference: string) => void;
   onOrderNameChange: (orderName: string) => void;
   onIncreaseQuantity: (lineId: string) => void;
   onDecreaseQuantity: (lineId: string) => void;
@@ -25,6 +32,11 @@ interface CartProps {
 function Cart({
   items,
   orderName,
+  channel,
+  deliveryReference,
+  isSubmitting = false,
+  onChannelChange,
+  onDeliveryReferenceChange,
   onOrderNameChange,
   onIncreaseQuantity,
   onDecreaseQuantity,
@@ -39,161 +51,186 @@ function Cart({
   const isEmpty = items.length === 0;
   const totalItems = totals.itemsCount;
   const orderNameInputId = useId();
+  const referenceInputId = useId();
+  const isDelivery = channel !== ORDER_CHANNEL.LOCAL;
 
   return (
     <aside className="flex h-full flex-col overflow-hidden bg-surface-raised text-text">
-      <header className="relative px-7 pb-5 pt-7">
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="eyebrow">{t('cart.eyebrow')}</p>
-            <h2 className="font-display mt-2 text-xl leading-none text-primary-strong">
-              <span className="text-text-muted">{t('cart.headerLa')}</span>{" "}
-              <span>{t('cart.headerCuenta')}</span>
-            </h2>
-          </div>
-          {!isEmpty ? (
-            <Button
-              variant="ghost"
-              size="small"
-              onClick={onClearCart}
-              className="rounded-sharp border border-border text-text-dim hover:border-danger/40 hover:text-danger"
-              aria-label={t('cart.clearAriaLabel')}
-            >
-              <Trash2 className="h-3 w-3" />
-              {t('cart.clearButton')}
-            </Button>
-          ) : null}
-        </div>
-        <div className="mt-5 grid gap-1.5">
-          <Label htmlFor={orderNameInputId} className="eyebrow">
-            {t('cart.orderNameLabel')}
-          </Label>
-          <Input
-            id={orderNameInputId}
-            value={orderName}
-            maxLength={ORDER_NAME_MAX_LENGTH}
-            autoComplete="off"
-            placeholder={t('cart.orderNamePlaceholder')}
-            onChange={(event) => onOrderNameChange(event.currentTarget.value)}
-            className="h-10"
-          />
-        </div>
-      </header>
-
-      <div className="mx-7 border-t border-border" />
-
-      <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-7 py-5">
-        {isEmpty ? (
-          <div className="flex h-full min-h-44 flex-col items-center justify-center text-center">
-            <ShoppingBasket className="h-14 w-14 text-text-dim" aria-hidden="true" />
-            <p className="mt-5 text-xs font-medium uppercase tracking-[0.18em] text-text-muted">
-              {t('cart.emptyTitle')}
-            </p>
-            <p className="mt-2 eyebrow">{t('cart.emptyHint')}</p>
-          </div>
-        ) : (
-          <ul className="space-y-5">
-            {items.map((item) => {
-              const unitPrice = calculateItemUnitPrice(item.product, item.selectedModifiers);
-              const hasModifiers = modifierGroupsEnabled && item.selectedModifiers.length > 0;
-
-              return (
-              <li key={item.lineId} className="group">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-md font-bold leading-tight tracking-[-0.01em] text-text">
-                      {item.product.name}
-                    </h4>
-                    <p className="mt-1 font-mono-tabular text-2xs text-text-dim">
-                      × {formatPosCurrency(unitPrice)}
-                    </p>
-                    {hasModifiers && (
-                      <ModifierList
-                        modifiers={item.selectedModifiers}
-                        quantity={item.quantity}
-                      />
-                    )}
-                  </div>
-                  <span className="font-mono-tabular text-md tracking-tight text-text">
-                    {formatPosCurrency(unitPrice * item.quantity)}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="inline-flex items-center rounded-sharp border border-border-strong">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDecreaseQuantity(item.lineId)}
-                      className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
-                      aria-label={t('cart.decreaseAriaLabel', { productName: item.product.name })}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="font-mono-tabular flex h-11 min-w-11 items-center justify-center border-x border-border-strong bg-primary/10 px-2 text-center text-sm font-semibold text-primary-strong">
-                      {item.quantity}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onIncreaseQuantity(item.lineId)}
-                      className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
-                      aria-label={t('cart.increaseAriaLabel', { productName: item.product.name })}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onRemoveItem(item.lineId)}
-                    className="h-11 w-11 text-text-dim opacity-40 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
-                    aria-label={t('cart.removeAriaLabel', { productName: item.product.name })}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      {!isEmpty ? (
-        <footer className="border-t border-border bg-surface-raised px-7 pb-7 pt-5">
-          <dl className="space-y-2 text-xs">
-            <div className="flex items-baseline">
-              <dt className="eyebrow">{t('cart.productsLabel')}</dt>
-              <span className="dotted-leader" />
-              <dd className="font-mono-tabular text-text-muted">
-                {String(totalItems).padStart(2, "0")}
-              </dd>
+      <fieldset disabled={isSubmitting} className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="shrink-0 border-b border-border px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="eyebrow">{t("cart.eyebrow")}</p>
+              <h2 className="font-display mt-1 text-xl leading-tight text-primary-strong">
+                <span className="text-text-muted">{t("cart.headerLa")}</span>{" "}
+                {t("cart.headerCuenta")}
+              </h2>
             </div>
-          </dl>
-
-          <div className="mt-5 flex items-baseline justify-between border-t border-border-strong pt-5">
-            <span className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">
-              {t('cart.totalLabel')}
-            </span>
-            <span className="font-mono-tabular text-display font-bold leading-none tracking-[-0.02em] text-text">
-              {formatPosCurrency(totals.total)}
-            </span>
+            {!isEmpty ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClearCart}
+                className="h-11 w-11 rounded-card text-text-dim hover:text-danger"
+                aria-label={t("cart.clearAriaLabel")}
+                title={t("cart.clearAriaLabel")}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            ) : null}
           </div>
+          <div className="mt-4 grid gap-2">
+            <span className="text-sm font-medium text-text-muted">{t("delivery.origin")}</span>
+            <SegmentedControl
+              compact
+              ariaLabel={t("delivery.origin")}
+              options={Object.values(ORDER_CHANNEL).map((value) => ({ value, label: t(`channels.${value}`) }))}
+              activeValue={channel}
+              onSelect={(value) => { if (isOrderChannel(value)) onChannelChange(value); }}
+            />
+          </div>
+          <div className={isDelivery ? "mt-4 grid grid-cols-2 gap-3" : "mt-4 grid gap-2"}>
+            {isDelivery ? (
+              <div className="grid min-w-0 gap-2">
+                <Label htmlFor={referenceInputId} className="text-sm normal-case tracking-normal text-text-muted">
+                  {t("delivery.referenceShort")}
+                </Label>
+                <Input
+                  id={referenceInputId}
+                  value={deliveryReference}
+                  maxLength={DELIVERY_REFERENCE_MAX_LENGTH}
+                  autoComplete="off"
+                  placeholder={t("cart.orderNamePlaceholder")}
+                  aria-label={t("delivery.reference")}
+                  onChange={(event) => onDeliveryReferenceChange(event.currentTarget.value)}
+                  className="h-10 min-w-0"
+                />
+              </div>
+            ) : null}
+            <div className="grid min-w-0 gap-2">
+              <Label htmlFor={orderNameInputId} className="text-sm normal-case tracking-normal text-text-muted">
+                {t("cart.orderNameLabel")}
+              </Label>
+              <Input
+                id={orderNameInputId}
+                value={orderName}
+                maxLength={ORDER_NAME_MAX_LENGTH}
+                autoComplete="off"
+                placeholder={t("cart.orderNamePlaceholder")}
+                onChange={(event) => onOrderNameChange(event.currentTarget.value)}
+                className="h-10 min-w-0"
+              />
+            </div>
+          </div>
+        </header>
 
-          <Button
-            variant="cta"
-            size="large"
-            onClick={onCheckout}
-            className="mt-6 h-[72px] w-full justify-between px-5"
-          >
-            <span className="text-xs font-black uppercase tracking-[0.28em]">{t('cart.payButton')}</span>
-            <span className="font-mono-tabular text-lg font-bold tracking-tight">
-              {formatPosCurrency(totals.total)}
-            </span>
-          </Button>
-        </footer>
-      ) : null}
+        <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">
+          {isEmpty ? (
+            <div className="flex h-full min-h-44 flex-col items-center justify-center text-center">
+              <ShoppingBasket className="h-14 w-14 text-text-dim" aria-hidden="true" />
+              <p className="mt-5 text-xs font-medium uppercase tracking-[0.18em] text-text-muted">
+                {t('cart.emptyTitle')}
+              </p>
+              <p className="mt-2 eyebrow">{t('cart.emptyHint')}</p>
+            </div>
+          ) : (
+            <ul className="space-y-5">
+              {items.map((item) => {
+                const unitPrice = calculateItemUnitPrice(item.product, item.selectedModifiers);
+                const hasModifiers = modifierGroupsEnabled && item.selectedModifiers.length > 0;
+
+                return (
+                <li key={item.lineId} className="group">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-md font-bold leading-tight tracking-[-0.01em] text-text">
+                        {item.product.name}
+                      </h4>
+                      <p className="mt-1 font-mono-tabular text-2xs text-text-dim">
+                        × {formatPosCurrency(unitPrice)}
+                      </p>
+                      {hasModifiers && (
+                        <ModifierList
+                          modifiers={item.selectedModifiers}
+                          quantity={item.quantity}
+                        />
+                      )}
+                    </div>
+                    <span className="font-mono-tabular text-md tracking-tight text-text">
+                      {formatPosCurrency(unitPrice * item.quantity)}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="inline-flex items-center rounded-sharp border border-border-strong">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onDecreaseQuantity(item.lineId)}
+                        className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
+                        aria-label={t('cart.decreaseAriaLabel', { productName: item.product.name })}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="font-mono-tabular flex h-11 min-w-11 items-center justify-center border-x border-border-strong bg-primary/10 px-2 text-center text-sm font-semibold text-primary-strong">
+                        {item.quantity}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onIncreaseQuantity(item.lineId)}
+                        className="h-11 w-11 text-text-muted hover:bg-surface-sunken hover:text-text"
+                        aria-label={t('cart.increaseAriaLabel', { productName: item.product.name })}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onRemoveItem(item.lineId)}
+                      className="h-11 w-11 text-text-dim opacity-40 hover:text-danger group-hover:opacity-100 focus-visible:opacity-100"
+                      aria-label={t('cart.removeAriaLabel', { productName: item.product.name })}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {!isEmpty ? (
+          <footer className="shrink-0 border-t border-border bg-surface-raised px-5 py-4">
+            <div className="flex items-center justify-between gap-3 text-xs text-text-dim">
+              <span>{t("cart.productsLabel")}</span>
+              <span className="font-mono-tabular">{String(totalItems).padStart(2, "0")}</span>
+            </div>
+            <div className="mt-2 flex items-baseline justify-between gap-3">
+              <span className="min-w-0 text-sm text-text-muted">
+                {isDelivery ? t("delivery.catalogReference") : t("cart.totalLabel")}
+              </span>
+              <span className={isDelivery ? "font-mono-tabular shrink-0 text-lg font-semibold text-text-muted" : "font-mono-tabular shrink-0 text-display font-bold leading-tight text-text"}>
+                {formatPosCurrency(totals.total)}
+              </span>
+            </div>
+            {isDelivery ? <p className="mt-2 text-xs leading-5 text-text-dim">{t("delivery.saveHint")}</p> : null}
+            <Button
+              variant="cta"
+              size="large"
+              onClick={onCheckout}
+              aria-label={isDelivery ? t("delivery.saveAndPrintAriaLabel") : undefined}
+              aria-busy={isSubmitting}
+              className="mt-4 h-12 w-full gap-2 rounded-card px-4 text-sm font-semibold"
+            >
+              {isSubmitting ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : isDelivery ? <Printer className="h-4 w-4" aria-hidden="true" /> : null}
+              <span className="whitespace-normal leading-5">{isSubmitting ? t("delivery.saving") : isDelivery ? t("delivery.saveAndPrint") : t("cart.payButton")}</span>
+            </Button>
+          </footer>
+        ) : null}
+      </fieldset>
     </aside>
   );
 }

@@ -1,7 +1,7 @@
-import { desc, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { errAsync, ResultAsync } from "neverthrow";
 
-import { normalizeOrderName } from "@/modules/order";
+import { isOrderChannel } from "@/modules/order";
 
 import { withTransaction, type DatabaseClient } from "@/db/client";
 import {
@@ -9,6 +9,8 @@ import {
   orderItemModifiers,
   orders,
   payments,
+  shifts,
+  featureFlags,
   type OrderInsert,
   type OrderItemInsert,
   type OrderItemModifierInsert,
@@ -19,8 +21,6 @@ import {
   type PaymentRow,
 } from "@/db/schema";
 import {
-  CHECKOUT_PAYMENT_METHOD,
-  calculateOrderTotal,
   type CheckoutOrder,
   type CheckoutOrderItem,
   type CheckoutOrderItemInput,
@@ -30,6 +30,7 @@ import {
   type CreateOrderInput,
 } from "./order";
 import { CheckoutPersistenceError } from "./errors";
+import { initialOrderAccounting, isCheckoutPaymentMethod, normalizeCreateOrderInput, validateCreateOrderInput, type NormalizedCheckoutPaymentInput, type NormalizedCreateOrderInput } from "./checkout-validation";
 
 export {
   CHECKOUT_PAYMENT_METHOD,
@@ -39,23 +40,6 @@ export {
   type CheckoutOrder,
 } from "./order";
 export { CheckoutPersistenceError } from "./errors";
-
-const CHECKOUT_PAYMENT_METHOD_VALUES = new Set<CheckoutPaymentMethod>(
-  Object.values(CHECKOUT_PAYMENT_METHOD),
-);
-
-interface NormalizedCheckoutPaymentInput {
-  method: string;
-  amount: number;
-  cashReceived: number | null;
-}
-
-interface NormalizedCreateOrderInput {
-  orderName: string | null;
-  items: CheckoutOrderItemInput[];
-  shiftId: string | null;
-  payments: NormalizedCheckoutPaymentInput[];
-}
 
 function formatUnknownError(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
@@ -75,132 +59,12 @@ function wrapPersistenceError(context: string) {
   };
 }
 
-function isCheckoutPaymentMethod(value: string): value is CheckoutPaymentMethod {
-  return CHECKOUT_PAYMENT_METHOD_VALUES.has(value as CheckoutPaymentMethod);
-}
-
 function toCheckoutPaymentMethod(value: string): CheckoutPaymentMethod {
   if (!isCheckoutPaymentMethod(value)) {
     throw new CheckoutPersistenceError("invalidPaymentMethod", { value });
   }
 
   return value;
-}
-
-function validatePaymentInput(
-  paymentsInput: NormalizedCheckoutPaymentInput[],
-  total: number,
-): CheckoutPersistenceError | null {
-  if (paymentsInput.length === 0) {
-    return new CheckoutPersistenceError("paymentRequired");
-  }
-
-  const methods = new Set<string>();
-  let appliedTotal = 0;
-
-  for (const payment of paymentsInput) {
-    if (!isCheckoutPaymentMethod(payment.method)) {
-      return new CheckoutPersistenceError("invalidPaymentMethod", { method: payment.method });
-    }
-
-    if (!Number.isInteger(payment.amount) || payment.amount < 0) {
-      return new CheckoutPersistenceError("invalidPaymentAmount", { amount: payment.amount });
-    }
-
-    if (paymentsInput.length > 1 && payment.amount === 0) {
-      return new CheckoutPersistenceError("invalidPaymentAmount", { amount: payment.amount });
-    }
-
-    if (methods.has(payment.method)) {
-      return new CheckoutPersistenceError("duplicatePaymentMethod", { method: payment.method });
-    }
-    methods.add(payment.method);
-
-    if (payment.method === CHECKOUT_PAYMENT_METHOD.CASH) {
-      if (
-        payment.cashReceived === null ||
-        !Number.isInteger(payment.cashReceived) ||
-        payment.cashReceived < payment.amount
-      ) {
-        return new CheckoutPersistenceError("cashReceivedInvalid", {
-          amount: payment.amount,
-          cashReceived: payment.cashReceived,
-        });
-      }
-
-      if (paymentsInput.length > 1 && payment.cashReceived !== payment.amount) {
-        return new CheckoutPersistenceError("mixedPaymentCashReceivedMismatch");
-      }
-    } else if (payment.cashReceived !== null) {
-      return new CheckoutPersistenceError("cashReceivedInvalid");
-    }
-
-    appliedTotal += payment.amount;
-  }
-
-  if (appliedTotal !== total) {
-    return new CheckoutPersistenceError("paymentTotalMismatch", {
-      appliedTotal,
-      total,
-    });
-  }
-
-  return null;
-}
-
-function validateCreateOrderInput(input: NormalizedCreateOrderInput): CheckoutPersistenceError | null {
-  if (input.items.length === 0) {
-    return new CheckoutPersistenceError("orderItemsRequired");
-  }
-
-  for (const item of input.items) {
-    if (item.productId.trim().length === 0) {
-      return new CheckoutPersistenceError("orderItemProductIdRequired");
-    }
-
-    if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
-      return new CheckoutPersistenceError("orderItemQuantityInvalid", { quantity: item.quantity });
-    }
-
-    if (!Number.isInteger(item.unitPrice) || item.unitPrice < 0) {
-      return new CheckoutPersistenceError("orderItemUnitPriceInvalid", { unitPrice: item.unitPrice });
-    }
-
-    if (!Number.isInteger(item.unitCost) || item.unitCost < 0) {
-      return new CheckoutPersistenceError("orderItemUnitPriceInvalid", { unitCost: item.unitCost });
-    }
-  }
-
-  const total = calculateOrderTotal(input.items);
-  return validatePaymentInput(input.payments, total);
-}
-
-function normalizeCreateOrderInput(input: CreateOrderInput): NormalizedCreateOrderInput {
-  return {
-    orderName: normalizeOrderName(input.orderName),
-    items: input.items.map((item) => ({
-      productId: item.productId.trim(),
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      unitCost: item.unitCost,
-      modifiers: (item.modifiers ?? []).map((modifier) => ({
-        groupId: modifier.groupId,
-        groupName: modifier.groupName,
-        optionId: modifier.optionId,
-        optionName: modifier.optionName ?? "",
-        priceDelta: modifier.priceDelta,
-        textValue: modifier.textValue,
-      })),
-    })),
-    shiftId: input.shiftId?.trim() || null,
-    payments: (input.payments ?? []).map((payment) => ({
-      method: String(payment.method ?? "")
-        .trim()
-        .toLowerCase(),
-      amount: payment.amount,
-      cashReceived: payment.cashReceived ?? null,
-    })),
-  };
 }
 
 function rowToCheckoutPayment(row: PaymentRow): CheckoutPayment {
@@ -247,8 +111,12 @@ function rowToCheckoutOrder(
   modifierRowsByItem: Map<string, OrderItemModifierRow[]>,
   paymentRows: PaymentRow[],
 ): CheckoutOrder {
+  if (!isOrderChannel(row.channel)) throw new CheckoutPersistenceError("invalidOrderChannel");
   return {
     id: row.id,
+    channel: row.channel,
+    deliveryReference: row.deliveryReference,
+    confirmedAt: row.confirmedAt,
     orderName: row.orderName ?? null,
     ticketNumber: row.ticketNumber,
     shiftId: row.shiftId ?? null,
@@ -277,17 +145,17 @@ async function loadNextTicketNumber(tx: DatabaseClient): Promise<number> {
 async function createOrderRow(
   tx: DatabaseClient,
   ticketNumber: number,
-  orderName: string | null,
-  shiftId: string | null,
-  total: number,
+  input: NormalizedCreateOrderInput,
   now: Date,
 ): Promise<OrderRow> {
   const orderValues: OrderInsert = {
     id: crypto.randomUUID(),
     ticketNumber,
-    orderName,
-    shiftId,
-    total,
+    orderName: input.orderName,
+    shiftId: input.shiftId,
+    channel: input.channel,
+    deliveryReference: input.deliveryReference,
+    ...initialOrderAccounting(input, now),
     createdAt: now,
   };
 
@@ -426,21 +294,26 @@ export const orderDrizzleRepository = {
       return errAsync(validationError);
     }
 
-    const total = calculateOrderTotal(normalizedInput.items);
-
     return ResultAsync.fromPromise(
       withTransaction(async (tx) => {
         const now = new Date();
+        const [shiftFlag] = await tx.select().from(featureFlags).where(eq(featureFlags.key, "shift_management_enabled"));
+        if (normalizedInput.shiftId) {
+          const [shift] = await tx.select().from(shifts).where(eq(shifts.id, normalizedInput.shiftId));
+          if (!shift || shift.status !== "active") throw new CheckoutPersistenceError("noActiveShift");
+        } else if (shiftFlag?.value === "true") {
+          throw new CheckoutPersistenceError("noActiveShift");
+        }
         const ticketNumber = await loadNextTicketNumber(tx);
         const orderRow = await createOrderRow(
           tx,
           ticketNumber,
-          normalizedInput.orderName,
-          normalizedInput.shiftId,
-          total,
+          normalizedInput,
           now,
         );
-        const paymentRows = await createPaymentRows(tx, orderRow.id, normalizedInput.payments, now);
+        const paymentRows = normalizedInput.payments.length === 0
+          ? []
+          : await createPaymentRows(tx, orderRow.id, normalizedInput.payments, now);
         const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
         await createOrderItemModifiers(tx, orderItemRows, normalizedInput.items, now);
 

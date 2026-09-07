@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { ORDER_CHANNEL, type OrderChannel } from "./order-channel";
 
 import type { Product, SelectedModifier } from "@/modules/menu";
 import {
@@ -12,6 +13,10 @@ import {
 interface OrderStore {
   currentOrder: CartItem[];
   orderName: string;
+  channel: OrderChannel;
+  deliveryReference: string;
+  setChannel: (channel: OrderChannel) => void;
+  setDeliveryReference: (reference: string) => void;
   setOrderName: (orderName: string) => void;
   addItem: (product: Product, modifiers?: SelectedModifier[]) => void;
   incrementItemQuantity: (lineId: string) => void;
@@ -23,6 +28,10 @@ interface OrderStore {
 const useOrderStore = create<OrderStore>((set) => ({
   currentOrder: [],
   orderName: "",
+  channel: ORDER_CHANNEL.LOCAL,
+  deliveryReference: "",
+  setChannel: (channel) => set({ channel, deliveryReference: "" }),
+  setDeliveryReference: (deliveryReference) => set({ deliveryReference }),
 
   setOrderName: (orderName) => set({ orderName }),
 
@@ -46,7 +55,7 @@ const useOrderStore = create<OrderStore>((set) => ({
       currentOrder: removeItemFromCart(state.currentOrder, lineId),
     })),
 
-  clearOrder: () => set({ currentOrder: [], orderName: "" }),
+  clearOrder: () => set({ currentOrder: [], orderName: "", channel: ORDER_CHANNEL.LOCAL, deliveryReference: "" }),
 }));
 
 export { useOrderStore };

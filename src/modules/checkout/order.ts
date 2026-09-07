@@ -1,6 +1,9 @@
+import type { OrderChannel } from "@/modules/order";
+
 export const CHECKOUT_PAYMENT_METHOD = {
   CASH: "cash",
   CARD: "card",
+  PLATFORM: "platform",
 } as const;
 
 type CheckoutPaymentMethod =
@@ -31,6 +34,8 @@ export interface CheckoutPaymentInput {
 
 export interface CreateOrderInput {
   orderName?: string | null;
+  channel?: OrderChannel;
+  deliveryReference?: string | null;
   items: CheckoutOrderItemInput[];
   payments: CheckoutPaymentInput[];
   shiftId?: string | null;
@@ -70,6 +75,9 @@ export interface CheckoutPayment {
 
 export interface CheckoutOrder {
   id: string;
+  channel: OrderChannel;
+  deliveryReference: string | null;
+  confirmedAt: Date | null;
   orderName: string | null;
   ticketNumber: number;
   shiftId: string | null;

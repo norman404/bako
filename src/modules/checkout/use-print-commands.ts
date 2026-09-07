@@ -34,6 +34,9 @@ export function usePrintCommands(options: UsePrintCommandsOptions) {
         orderName,
       );
 
+      if (commands.length === 0 && cartItems.length > 0) {
+        return [new Error("No command printer configured for these products")];
+      }
       const results = await Promise.all(commands.map((command) => printCommand(command)));
       const errors = results.filter((result) => result.isErr()).map((result) => result.error);
 

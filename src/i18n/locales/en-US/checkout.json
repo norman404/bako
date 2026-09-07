@@ -49,6 +49,9 @@
     "orderItemUnitPriceInvalid": "Unit price must be a non-negative integer.",
     "dbError": "We couldn't process the charge. Please try again.",
     "generic": "An unexpected error occurred while processing the charge.",
-    "formEmptyCart": "Add at least one product before charging."
+    "formEmptyCart": "Add at least one product before charging.",
+    "invalidOrderChannel": "Invalid order source.",
+    "pendingPaymentNotAllowed": "Save the delivery without payment and confirm its amount later.",
+    "noActiveShift": "Open a shift before saving the order."
   }
 }

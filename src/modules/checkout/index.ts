@@ -28,3 +28,4 @@ export { usePrintCommands } from "./use-print-commands";
 
 // Lib
 export { buildKitchenCommands, type CartLine } from "./lib/build-kitchen-commands";
+export { buildOrderItemsInput } from "./lib/builders";

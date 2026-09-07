@@ -1,3 +1,5 @@
+import type { OrderChannel } from "@/modules/order";
+
 export interface OrderDetailItemModifier {
   groupId: string | null;
   groupName: string;
@@ -32,6 +34,9 @@ export interface CommandItemSelection {
 
 export interface OrderDetail {
   id: string;
+  channel: OrderChannel;
+  deliveryReference: string | null;
+  confirmedAt: Date | null;
   orderName: string | null;
   ticketNumber: number;
   createdAt: Date;
