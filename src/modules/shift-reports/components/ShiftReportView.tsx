@@ -27,7 +27,9 @@ function formatPaymentMethod(method: string, t: (key: string) => string): string
 }
 
 function formatPaymentMethods(payments: ShiftReportPayment[], t: (key: string) => string): string {
-  const labels = payments.map((payment) => formatPaymentMethod(payment.method, t));
+  const collected = payments.filter((payment) => payment.amount > 0);
+  if (payments.length > 0 && collected.length === 0) return "";
+  const labels = collected.map((payment) => formatPaymentMethod(payment.method, t));
   return [...new Set(labels)].join(" + ") || t("paymentMethodOther");
 }
 
@@ -202,7 +204,7 @@ function SalesList({ orders, t, onReprintOrder, onEditOrder, onVoidOrder, onRepr
                   <div id={detailId} className="border-t border-border bg-surface-raised/30 px-4 py-3">
                     {order.orderName ? <p className="mb-3 break-words text-sm font-semibold text-text">{order.orderName}</p> : null}
                     <div className="grid gap-2">
-                      {order.payments.map((payment, index) => (
+                      {order.payments.filter((payment) => payment.amount > 0).map((payment, index) => (
                         <div key={`${order.orderId}-payment-${index}`} className="flex items-center justify-between gap-3 text-sm">
                           <span className="text-text-muted">{formatPaymentMethod(payment.method, t)}</span>
                           <span className="font-mono-tabular shrink-0 text-text">{formatPosCurrency(payment.amount)}</span>
@@ -321,19 +323,32 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
         <h3 className="eyebrow">{t("salesByChannel")}</h3>
         <dl className="mt-3 grid gap-2 text-sm">
           {[
-            { label: t("localSales"), amount: report.localTotal },
-            { label: "Uber Eats", amount: report.uberTotal },
-            { label: "DiDi", amount: report.didiTotal },
-          ].map(({ label, amount }) => (
-            <div key={label} className="flex justify-between gap-3"><dt>{label}</dt><dd className="font-mono-tabular">{formatPosCurrency(amount)}</dd></div>
-          ))}
+            { label: t("localSales"), amount: report.localTotal, channel: ORDER_CHANNEL.LOCAL },
+            { label: "Uber Eats", amount: report.uberTotal, channel: ORDER_CHANNEL.UBER },
+            { label: "DiDi", amount: report.didiTotal, channel: ORDER_CHANNEL.DIDI },
+          ].map(({ label, amount, channel }) => {
+            const breakdown = report.deliveryByChannel.find((entry) => entry.channel === channel);
+            return (
+              <div key={label}>
+                <div className="flex justify-between gap-3"><dt>{label}</dt><dd className="font-mono-tabular">{formatPosCurrency(amount)}</dd></div>
+                {breakdown && (breakdown.cash > 0 || breakdown.platform > 0) ? (
+                  <div className="mt-1 grid gap-1 pl-3 text-xs text-text-muted">
+                    {breakdown.cash > 0 ? <div className="flex justify-between gap-3"><dt>{t("cashTotal")}</dt><dd className="font-mono-tabular">{formatPosCurrency(breakdown.cash)}</dd></div> : null}
+                    {breakdown.platform > 0 ? <div className="flex justify-between gap-3"><dt>{t("platformTotal")}</dt><dd className="font-mono-tabular">{formatPosCurrency(breakdown.platform)}</dd></div> : null}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </dl>
       </div>
-      <div className="rounded-card border border-border bg-surface-sunken p-4">
-        <p className="eyebrow">{t("platformTotal")}</p>
-        <p className="font-mono-tabular mt-1 text-lg font-semibold">{formatPosCurrency(report.platformTotal)}</p>
-        <p className="mt-2 text-xs text-text-muted">{t("platformHint")}</p>
-      </div>
+      {report.platformTotal > 0 ? (
+        <div className="rounded-card border border-border bg-surface-sunken p-4">
+          <p className="eyebrow">{t("platformTotal")}</p>
+          <p className="font-mono-tabular mt-1 text-lg font-semibold">{formatPosCurrency(report.platformTotal)}</p>
+          <p className="mt-2 text-xs text-text-muted">{t("platformHint")}</p>
+        </div>
+      ) : null}
       {report.pendingDeliveries > 0 ? <div className="rounded-card border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
         {t("pendingDeliveries", { count: report.pendingDeliveries })}
         <p className="mt-1 text-xs">{t("pendingDeliveriesHint")}</p>

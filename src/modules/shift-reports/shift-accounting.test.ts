@@ -75,6 +75,27 @@ describe("delivery shift accounting", () => {
     expect(totals).toMatchObject({ totalSales: 5000, platformTotal: 5000, cashTotal: 0, cardTotal: 0, localTotal: 0 });
   });
 
+  // CASE: A cut mixes cash and app collections across Uber and DiDi.
+  // VALIDATES: Delivery totals break down by platform and method.
+  it("should break down confirmed delivery collections by channel and method", () => {
+    // Arrange
+    const base = {
+      deliveryReference: "APP-42", orderName: null, ticketNumber: 1,
+      createdAt: LATER, isPending: false, isVoided: false, canModify: false, itemCount: 1, items: [],
+    };
+    const orders: ShiftReportOrder[] = [
+      { ...base, orderId: "u", channel: "uber", total: 9000, payments: [{ method: "cash", amount: 4000, cashReceived: 4000 }, { method: "platform", amount: 5000, cashReceived: null }] },
+      { ...base, orderId: "d", channel: "didi", total: 7000, payments: [{ method: "platform", amount: 7000, cashReceived: null }] },
+    ];
+    // Act
+    const totals = summarizeShiftOrders(orders);
+    // Assert
+    expect(totals.deliveryByChannel).toEqual([
+      { channel: "uber", cash: 4000, platform: 5000 },
+      { channel: "didi", cash: 0, platform: 7000 },
+    ]);
+  });
+
   // CASE: A pending order carries over multiple shifts without being collected.
   // VALIDATES: Pending work stays visible but never creates a sale.
   it("should carry pending work forward when a new shift opens", () => {

@@ -75,7 +75,10 @@ export function aggregateSalesMetrics(
   }
 
   const paymentMap = new Map<string, number>();
-  for (const payment of payments) paymentMap.set(payment.method, (paymentMap.get(payment.method) ?? 0) + payment.amount);
+  for (const payment of payments) {
+    if (payment.amount <= 0) continue;
+    paymentMap.set(payment.method, (paymentMap.get(payment.method) ?? 0) + payment.amount);
+  }
   const paymentTotal = payments.reduce((sum, payment) => sum + payment.amount, 0);
   const salesByShift = new Map<string, number>();
   for (const order of orders) if (order.shiftId) salesByShift.set(order.shiftId, (salesByShift.get(order.shiftId) ?? 0) + order.total);

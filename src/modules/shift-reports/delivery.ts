@@ -32,12 +32,14 @@ export interface PendingDelivery {
   deliveryReference: string | null;
   createdAt: Date;
   itemCount: number;
+  catalogTotal: number;
 }
 
 export interface DeliveryConfirmationState {
   channel: string;
   confirmedAt: Date | null;
   voidedAt: Date | null;
+  catalogTotal: number;
 }
 
 export function validateDeliveryConfirmation(
@@ -49,11 +51,12 @@ export function validateDeliveryConfirmation(
   }
   if (order.voidedAt !== null) return new ShiftPersistenceError("orderAlreadyVoided");
   if (order.confirmedAt !== null) return new ShiftPersistenceError("deliveryAlreadyConfirmed");
-  if (!Number.isSafeInteger(input.amount) || input.amount < 0 || input.amount > MAX_DELIVERY_AMOUNT) {
-    return new ShiftPersistenceError("invalidDeliveryAmount");
-  }
   if (input.method !== DELIVERY_PAYMENT_METHOD.CASH && input.method !== DELIVERY_PAYMENT_METHOD.PLATFORM) {
     return new ShiftPersistenceError("invalidOrderPayment");
+  }
+  const amount = input.method === DELIVERY_PAYMENT_METHOD.PLATFORM ? order.catalogTotal : input.amount;
+  if (!Number.isSafeInteger(amount) || amount < 0 || amount > MAX_DELIVERY_AMOUNT) {
+    return new ShiftPersistenceError("invalidDeliveryAmount");
   }
   return null;
 }
@@ -61,13 +64,15 @@ export function validateDeliveryConfirmation(
 export function buildDeliveryConfirmation(order: DeliveryConfirmationState, input: ConfirmDeliveryInput, now: Date) {
   const error = validateDeliveryConfirmation(order, input);
   if (error) throw error;
+  const isPlatform = input.method === DELIVERY_PAYMENT_METHOD.PLATFORM;
+  const total = isPlatform ? order.catalogTotal : input.amount;
   return {
     payment: {
       method: input.method,
-      amount: input.amount,
+      amount: isPlatform ? 0 : input.amount,
       cashReceived: input.method === DELIVERY_PAYMENT_METHOD.CASH ? input.amount : null,
       createdAt: now,
     },
-    order: { total: input.amount, confirmedAt: now, financialShiftId: input.shiftId },
+    order: { total, confirmedAt: now, financialShiftId: input.shiftId },
   };
 }

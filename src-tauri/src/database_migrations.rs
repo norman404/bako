@@ -730,6 +730,7 @@ mod delivery_orders_migration {
                 include_str!("../migrations/0030_order_name.sql"),
                 include_str!("../migrations/0031_product_costs.sql"),
                 include_str!("../migrations/0032_delivery_orders.sql"),
+                include_str!("../migrations/0033_payments_platform.sql"),
             ] {
                 db.execute(sql).await.unwrap();
             }
@@ -751,6 +752,48 @@ mod delivery_orders_migration {
             let result = db.execute("INSERT INTO orders (id, total, created_at, channel) VALUES ('invalid', 0, 1800, 'unknown')").await;
             // Assert
             assert!(result.is_err());
+        });
+    }
+}
+
+#[cfg(test)]
+mod payments_platform_migration {
+    use sqlx::{Connection, Executor, SqliteConnection};
+
+    // CASE: A platform collection is stored after the payments table was migrated.
+    // VALIDATES: Existing cash rows survive and `platform` is now an accepted method.
+    #[test]
+    fn should_allow_platform_and_preserve_existing_payments_when_migration_runs() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
+            db.execute("CREATE TABLE orders (id TEXT PRIMARY KEY, total INTEGER NOT NULL);")
+                .await
+                .unwrap();
+            db.execute(include_str!("../migrations/0003_payments.sql")).await.unwrap();
+            db.execute(include_str!("../migrations/0028_mixed_payments.sql")).await.unwrap();
+            db.execute("INSERT INTO orders (id, total) VALUES ('o', 7000);
+                INSERT INTO payments (id, order_id, method, amount, cash_received, created_at)
+                    VALUES ('p', 'o', 'cash', 7000, 7000, 1000);")
+                .await
+                .unwrap();
+            // Act
+            db.execute(include_str!("../migrations/0033_payments_platform.sql")).await.unwrap();
+            db.execute("INSERT INTO payments (id, order_id, method, amount, cash_received, created_at)
+                    VALUES ('q', 'o', 'platform', 0, NULL, 2000);")
+                .await
+                .unwrap();
+            // Assert
+            let rows: Vec<(String, i64)> =
+                sqlx::query_as("SELECT method, amount FROM payments ORDER BY method")
+                    .fetch_all(&mut db)
+                    .await
+                    .unwrap();
+            assert_eq!(rows, vec![("cash".into(), 7000), ("platform".into(), 0)]);
+            let rejected = db
+                .execute("INSERT INTO payments (id, order_id, method, amount, created_at) VALUES ('r', 'o', 'other', 1, 3000)")
+                .await;
+            assert!(rejected.is_err());
         });
     }
 }

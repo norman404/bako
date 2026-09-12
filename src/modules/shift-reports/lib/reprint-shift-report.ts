@@ -165,7 +165,14 @@ export function buildReprintShiftReportPayload(
       createSummaryItem(`${labels.localLabel}: ${formatPosCurrency(report.localTotal)}`),
       createSummaryItem(`Uber Eats: ${formatPosCurrency(report.uberTotal)}`),
       createSummaryItem(`DiDi: ${formatPosCurrency(report.didiTotal)}`),
-      createSummaryItem(`${labels.platformLabel}: ${formatPosCurrency(report.platformTotal)}`),
+      ...report.deliveryByChannel.flatMap((entry) => {
+        const channelLabel = entry.channel === "didi" ? "DiDi" : "Uber Eats";
+        return [
+          ...(entry.cash > 0 ? [createSummaryItem(`${channelLabel} · ${labels.cashLabel}: ${formatPosCurrency(entry.cash)}`)] : []),
+          ...(entry.platform > 0 ? [createSummaryItem(`${channelLabel} · ${labels.platformLabel}: ${formatPosCurrency(entry.platform)}`)] : []),
+        ];
+      }),
+      ...(report.platformTotal > 0 ? [createSummaryItem(`${labels.platformLabel}: ${formatPosCurrency(report.platformTotal)}`)] : []),
       createSummaryItem(`${labels.pendingLabel}: ${report.pendingDeliveries}`),
       ...(categoriesEnabled ? buildCategorySummaryItems(report, labels) : []),
       ...report.orders.map((order) => ({

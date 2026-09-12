@@ -45,6 +45,7 @@ const REPORT: ShiftReport = {
   localTotal: 680,
   uberTotal: 0,
   didiTotal: 0,
+  deliveryByChannel: [],
   pendingDeliveries: 0,
   orders: [],
   salesByCategory: [
@@ -112,14 +113,32 @@ describe("buildReprintShiftReportPayload", () => {
 // VALIDATES: The printed report preserves the actual payment split instead of reporting all sales as cash.
 it("should print separate app collections and pending counts when reprinting a delivery cut", () => {
   // Arrange
-  const report = { ...REPORT, totalSales: 16000, cashTotal: 8000, cardTotal: 3000, platformTotal: 5000, localTotal: 3000, didiTotal: 8000, uberTotal: 5000, pendingDeliveries: 1 };
+  const report = { ...REPORT, totalSales: 16000, cashTotal: 8000, cardTotal: 3000, platformTotal: 5000, localTotal: 3000, didiTotal: 8000, uberTotal: 5000, pendingDeliveries: 1, deliveryByChannel: [{ channel: "didi" as const, cash: 3000, platform: 5000 }, { channel: "uber" as const, cash: 0, platform: 5000 }] };
   // Act
   const payload = buildReprintShiftReportPayload(report, PRINTER, LABELS, false);
+  const itemNames = payload.items.map((item) => item.name);
   // Assert
   expect(payload.payments).toEqual([
     { method: "cash", amount: 8000, cashReceived: 8000 },
     { method: "card", amount: 3000, cashReceived: null },
     { method: "platform", amount: 5000, cashReceived: null },
   ]);
-  expect(payload.items.map((item) => item.name)).toContain("Delivery pendiente: 1");
+  expect(itemNames).toContain("Delivery pendiente: 1");
+  expect(itemNames.some((name) => name.startsWith("Uber Eats · Pagado en app:"))).toBe(true);
+  expect(itemNames.some((name) => name.startsWith("DiDi · Efectivo:"))).toBe(true);
+  expect(itemNames.some((name) => name.startsWith("DiDi · Pagado en app:"))).toBe(true);
+});
+
+// CASE: An app collection is stored as zero because the register receives no money.
+// VALIDATES: The zero platform total is omitted from printed delivery rows and totals.
+it("should omit zero platform collections when reprinting a delivery cut", () => {
+  // Arrange
+  const report = { ...REPORT, totalSales: 8000, cashTotal: 0, cardTotal: 0, platformTotal: 0, localTotal: 0, didiTotal: 8000, uberTotal: 0, pendingDeliveries: 0, deliveryByChannel: [{ channel: "didi" as const, cash: 0, platform: 0 }] };
+  // Act
+  const payload = buildReprintShiftReportPayload(report, PRINTER, LABELS, false);
+  const itemNames = payload.items.map((item) => item.name);
+  // Assert
+  expect(itemNames.some((name) => name.startsWith("DiDi · Pagado en app:"))).toBe(false);
+  expect(itemNames.some((name) => name.startsWith(`${LABELS.platformLabel}:`))).toBe(false);
+  expect(payload.payments).toEqual([]);
 });

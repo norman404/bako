@@ -35,10 +35,12 @@ function ConfirmDeliveryForm({ order, onConfirmed }: ConfirmDeliveryFormProps) {
   const mutation = useConfirmDelivery();
   const shiftEnabled = useFeatureFlagsStore((state) => state.flags.shift_management_enabled ?? false);
   const { data: activeShift, isPending: loadingShift } = useActiveShift();
-  const amount = parseDeliveryAmount(amountInput);
+  const isPlatform = method === DELIVERY_PAYMENT_METHOD.PLATFORM;
+  const parsedAmount = parseDeliveryAmount(amountInput);
+  const amount = isPlatform ? order.catalogTotal : parsedAmount;
   const needsShift = shiftEnabled && (loadingShift || !activeShift);
   const amountId = `delivery-amount-${order.id}`;
-  const invalidAmount = amountInput.length > 0 && amount === null;
+  const invalidAmount = !isPlatform && amountInput.length > 0 && parsedAmount === null;
   const collectionHint = method === null ? "delivery.collectionHint"
     : method === DELIVERY_PAYMENT_METHOD.CASH ? "delivery.cashHint" : "delivery.platformHint";
 
@@ -69,26 +71,28 @@ function ConfirmDeliveryForm({ order, onConfirmed }: ConfirmDeliveryFormProps) {
             {order.orderName ? <p className="mt-1 break-words text-sm leading-5 text-text-muted">{order.orderName}</p> : null}
             <p className="mt-1 text-xs text-text-dim">{order.itemCount} {t("shift:itemCount")}</p>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor={amountId} className="text-sm normal-case tracking-normal">{t("delivery.finalAmount")}</Label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center font-mono-tabular text-lg text-text-dim" aria-hidden="true">$</span>
-              <Input
-                id={amountId}
-                value={amountInput}
-                inputMode="decimal"
-                autoComplete="off"
-                autoFocus
-                placeholder="0.00"
-                className="h-14 pl-9 font-mono-tabular text-xl"
-                aria-invalid={invalidAmount}
-                aria-describedby={`${amountId}-hint${invalidAmount ? ` ${amountId}-error` : ""}`}
-                onChange={(event) => { setAmountInput(event.currentTarget.value); setError(null); }}
-              />
+          {isPlatform ? null : (
+            <div className="grid gap-2">
+              <Label htmlFor={amountId} className="text-sm normal-case tracking-normal">{t("delivery.finalAmount")}</Label>
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center font-mono-tabular text-lg text-text-dim" aria-hidden="true">$</span>
+                <Input
+                  id={amountId}
+                  value={amountInput}
+                  inputMode="decimal"
+                  autoComplete="off"
+                  autoFocus
+                  placeholder="0.00"
+                  className="h-14 pl-9 font-mono-tabular text-xl"
+                  aria-invalid={invalidAmount}
+                  aria-describedby={`${amountId}-hint${invalidAmount ? ` ${amountId}-error` : ""}`}
+                  onChange={(event) => { setAmountInput(event.currentTarget.value); setError(null); }}
+                />
+              </div>
+              <p id={`${amountId}-hint`} className="text-xs leading-5 text-text-dim">{t("delivery.amountHint")}</p>
+              {invalidAmount ? <p id={`${amountId}-error`} role="alert" className="text-xs leading-5 text-danger">{t("delivery.invalidAmount")}</p> : null}
             </div>
-            <p id={`${amountId}-hint`} className="text-xs leading-5 text-text-dim">{t("delivery.amountHint")}</p>
-            {invalidAmount ? <p id={`${amountId}-error`} role="alert" className="text-xs leading-5 text-danger">{t("delivery.invalidAmount")}</p> : null}
-          </div>
+          )}
           <div className="grid gap-2">
             <span className="text-sm font-semibold">{t("delivery.collection")}</span>
             <SegmentedControl
@@ -121,7 +125,7 @@ function ConfirmDeliveryForm({ order, onConfirmed }: ConfirmDeliveryFormProps) {
           onClick={() => { void handleConfirm(); }}
         >
           {mutation.isPending ? <LoaderCircle className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Check className="h-4 w-4" aria-hidden="true" />}
-          {mutation.isPending ? t("delivery.confirming") : amount === null ? t("delivery.confirm") : t("delivery.confirmAmount", { amount: formatPosCurrency(amount) })}
+          {mutation.isPending ? t("delivery.confirming") : isPlatform || amount === null ? t("delivery.confirm") : t("delivery.confirmAmount", { amount: formatPosCurrency(amount) })}
         </Button>
       </footer>
     </div>

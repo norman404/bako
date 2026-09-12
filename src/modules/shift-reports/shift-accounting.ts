@@ -1,5 +1,5 @@
-import type { ShiftReportOrder } from "./shift";
-import { ORDER_CHANNEL } from "@/modules/order";
+import type { DeliveryChannelTotal, ShiftReportOrder } from "./shift";
+import { ORDER_CHANNEL, type OrderChannel } from "@/modules/order";
 
 export interface AccountingOrder {
   id: string;
@@ -41,7 +41,8 @@ export function projectShiftOrder(order: AccountingOrder, shift: AccountingShift
 }
 
 export function summarizeShiftOrders(orders: ShiftReportOrder[]) {
-  const totals = { totalOrders: 0, totalItems: 0, totalSales: 0, cashTotal: 0, cardTotal: 0, platformTotal: 0, localTotal: 0, uberTotal: 0, didiTotal: 0, pendingDeliveries: 0 };
+  const totals = { totalOrders: 0, totalItems: 0, totalSales: 0, cashTotal: 0, cardTotal: 0, platformTotal: 0, localTotal: 0, uberTotal: 0, didiTotal: 0, deliveryByChannel: [] as DeliveryChannelTotal[], pendingDeliveries: 0 };
+  const deliveryByChannel = new Map<OrderChannel, DeliveryChannelTotal>();
   for (const order of orders) {
     if (order.isPending) totals.pendingDeliveries += 1;
     if (order.isPending || order.isVoided) continue;
@@ -51,12 +52,22 @@ export function summarizeShiftOrders(orders: ShiftReportOrder[]) {
     if (order.channel === ORDER_CHANNEL.LOCAL) totals.localTotal += order.total;
     if (order.channel === ORDER_CHANNEL.UBER) totals.uberTotal += order.total;
     if (order.channel === ORDER_CHANNEL.DIDI) totals.didiTotal += order.total;
+    if (order.channel === ORDER_CHANNEL.UBER || order.channel === ORDER_CHANNEL.DIDI) {
+      const channel = deliveryByChannel.get(order.channel) ?? { channel: order.channel, cash: 0, platform: 0 };
+      deliveryByChannel.set(order.channel, channel);
+    }
     for (const payment of order.payments) {
       const method = payment.method.trim().toLowerCase();
       if (method === "cash") totals.cashTotal += payment.amount;
       if (method === "card") totals.cardTotal += payment.amount;
       if (method === "platform") totals.platformTotal += payment.amount;
+      if (order.channel === ORDER_CHANNEL.UBER || order.channel === ORDER_CHANNEL.DIDI) {
+        const channel = deliveryByChannel.get(order.channel);
+        if (channel && method === "cash") channel.cash += payment.amount;
+        if (channel && method === "platform") channel.platform += payment.amount;
+      }
     }
   }
+  totals.deliveryByChannel = [...deliveryByChannel.values()];
   return totals;
 }

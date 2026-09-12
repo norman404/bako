@@ -87,3 +87,14 @@ it("should use the manual delivery total when aggregating revenue by channel", (
   expect(result.products[0]).toMatchObject({ sales: 7000, items: 1 });
   expect(result.hourlySales[17]).toBe(5000);
 });
+
+// CASE: An app collection is persisted as zero and must not surface as a payment method.
+// VALIDATES: Zero-amount payments are excluded from the payment breakdown.
+it("should exclude zero-amount payments from the payment breakdown", () => {
+  // Arrange
+  const range = { start: new Date(2026, 7, 3), end: new Date(2026, 7, 4) };
+  // Act
+  const result = aggregateSalesMetrics(range, [], [], [], [], [{ method: "cash", amount: 7000 }, { method: "platform", amount: 0 }]);
+  // Assert
+  expect(result.payments).toEqual([{ method: "cash", amount: 7000, percentage: 1 }]);
+});

@@ -56,6 +56,12 @@ export interface ShiftReportPayment {
   cashReceived: number | null;
 }
 
+export interface DeliveryChannelTotal {
+  channel: OrderChannel;
+  cash: number;
+  platform: number;
+}
+
 export interface ShiftReportOrder {
   orderId: string;
   channel: OrderChannel;
@@ -85,6 +91,7 @@ export interface ShiftReport {
   localTotal: number;
   uberTotal: number;
   didiTotal: number;
+  deliveryByChannel: DeliveryChannelTotal[];
   pendingDeliveries: number;
   orders: ShiftReportOrder[];
   salesByCategory: ShiftReportCategory[];
