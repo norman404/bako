@@ -18,51 +18,42 @@
     "noEntries": "No sections are available."
   },
   "dashboard": {
-    "eyebrow": "Administration",
     "title": "Sales analytics",
-    "description": "Analyze business performance by date range and category.",
-    "summaryAriaLabel": "Sales summary for the selected period",
     "refresh": "Refresh",
-    "retry": "Retry",
     "error": {
-      "title": "We could not load the metrics",
-      "description": "Try changing the date range or refreshing the analytics.",
+      "title": "We could not load the analytics",
+      "description": "Try changing the period or refreshing.",
       "invalidRange": "Select a valid date range"
     },
-    "filters": {"from": "From", "to": "To", "days": "{{count}} days", "month": "This month"},
-    "metrics": {
-      "sales": "Sales",
-      "products": "Products sold",
-      "orders": "Orders",
-      "averageTicket": "Avg. ticket"
+    "period": {
+      "ariaLabel": "Period",
+      "day": "Today",
+      "week": "Week",
+      "month": "Month",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To"
     },
-    "chart": {"title": "Sales over time", "empty": "There are no sales in this period."},
-    "categories": {
-      "title": "Sales by category",
-      "description": "Switch between amount and products from the chart.",
-      "empty": "There are no categories with sales.",
-      "uncategorized": "Uncategorized"
+    "sales": "Sales",
+    "chart": {
+      "title": "Sales over time",
+      "granularityAriaLabel": "View sales by day or by hour",
+      "byDay": "By day",
+      "byHour": "By hour",
+      "empty": "There are no sales in this period."
     },
-    "products": {"title": "Top-selling products"},
-    "profit": {"title": "Profitability", "cost": "Cost of goods", "gross": "Gross profit", "margin": "Margin", "note": "Recorded amounts minus product costs. Delivery commissions and app settlements are not calculated."},
-    "peaks": {"title": "Peak hours and days", "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]},
-    "shifts": {"title": "Shift performance", "count": "Shifts", "averageSales": "Average sales", "duration": "Average duration", "difference": "Cash difference"},
-    "voids": {"title": "Voids", "rate": "of orders"},
+    "products": {
+      "title": "Top-selling products",
+      "units": "{{count}} units",
+      "empty": "No products sold."
+    },
     "payments": {
       "title": "Payment methods",
       "cash": "Cash",
       "card": "Card",
       "other": "Other",
-      "platform": "Paid in app"
-    },
-    "activeShift": {
-      "title": "Current shift",
-      "openedAt": "Opened {{time}}",
-      "empty": "There is no active shift."
-    },
-    "delivery": {
-      "channels": "Confirmed sales by source",
-      "note": "Delivery uses the entered final amount and confirmation date. Product and category breakdowns only show local sales; discounts and commissions are not allocated."
+      "platform": "Paid in app",
+      "empty": "No payments recorded."
     }
   }
 }

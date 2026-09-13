@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { aggregateSalesMetrics } from "./metrics";
 
 describe("aggregateSalesMetrics", () => {
-  it("aggregates sales, products and categories while preserving empty days", () => {
+  it("aggregates sales and top products while preserving empty days", () => {
     const range = { start: new Date(2026, 7, 1), end: new Date(2026, 7, 4) };
     const result = aggregateSalesMetrics(
       range,
@@ -12,64 +12,51 @@ describe("aggregateSalesMetrics", () => {
         { channel: "local", id: "order-2", total: 1500, createdAt: new Date(2026, 7, 3, 12) },
       ],
       [
-        { orderId: "order-1", productId: "burger", productName: "Burger", quantity: 2, unitPrice: 1000, unitCost: 400, categoryId: "food", categoryName: "Comida" },
-        { orderId: "order-1", productId: "soda", productName: "Soda", quantity: 1, unitPrice: 1000, unitCost: 200, categoryId: "drinks", categoryName: "Bebidas" },
-        { orderId: "order-2", productId: "burger", productName: "Burger", quantity: 3, unitPrice: 500, unitCost: 300, categoryId: "food", categoryName: "Comida" },
+        { orderId: "order-1", productId: "burger", productName: "Burger", quantity: 2, unitPrice: 1000 },
+        { orderId: "order-1", productId: "soda", productName: "Soda", quantity: 1, unitPrice: 1000 },
+        { orderId: "order-2", productId: "burger", productName: "Burger", quantity: 3, unitPrice: 500 },
       ],
     );
 
     expect(result.sales).toBe(4500);
-    expect(result.totalItems).toBe(6);
-    expect(result.averageTicket).toBe(2250);
     expect(result.series).toEqual([
-      { date: "2026-08-01", sales: 3000, items: 3, orders: 1 },
-      { date: "2026-08-02", sales: 0, items: 0, orders: 0 },
-      { date: "2026-08-03", sales: 1500, items: 3, orders: 1 },
+      { date: "2026-08-01", sales: 3000 },
+      { date: "2026-08-02", sales: 0 },
+      { date: "2026-08-03", sales: 1500 },
     ]);
-    expect(result.categories[0]).toEqual({ categoryId: "food", categoryName: "Comida", sales: 3500, items: 5, profit: 1800 });
+    expect(result.products).toEqual([
+      { productId: "burger", productName: "Burger", sales: 3500, items: 5 },
+      { productId: "soda", productName: "Soda", sales: 1000, items: 1 },
+    ]);
   });
 
-  it("returns zero metrics and combines missing categories", () => {
+  it("returns zero metrics for an empty range", () => {
     const range = { start: new Date(2026, 7, 1), end: new Date(2026, 7, 2) };
     const empty = aggregateSalesMetrics(range, [], []);
-    expect(empty.averageTicket).toBe(0);
-    expect(empty.categories).toEqual([]);
-
-    const result = aggregateSalesMetrics(range, [{ channel: "local", id: "order", total: 500, createdAt: new Date(2026, 7, 1) }], [
-      { orderId: "order", productId: "deleted", productName: "Deleted", quantity: 1, unitPrice: 500, unitCost: 100, categoryId: "deleted", categoryName: null },
-    ]);
-    expect(result.categories).toEqual([{ categoryId: null, categoryName: null, sales: 500, items: 1, profit: 400 }]);
+    expect(empty.sales).toBe(0);
+    expect(empty.products).toEqual([]);
+    expect(empty.payments).toEqual([]);
   });
 
-  it("calculates comparison, payments, peaks, shifts, voids and profitability", () => {
+  it("calculates payments and hourly peaks", () => {
     const range = { start: new Date(2026, 7, 3), end: new Date(2026, 7, 4) };
-    const item = { orderId: "current", productId: "coffee", productName: "Coffee", quantity: 2, unitPrice: 500, unitCost: 200, categoryId: "drinks", categoryName: "Drinks" };
     const result = aggregateSalesMetrics(
       range,
-      [{ channel: "local", id: "current", total: 1000, createdAt: new Date(2026, 7, 3, 9), shiftId: "shift" }],
-      [item],
-      [{ channel: "local", id: "previous", total: 500, createdAt: new Date(2026, 7, 2, 9) }],
-      [{ ...item, orderId: "previous", quantity: 1 }],
+      [{ channel: "local", id: "current", total: 1000, createdAt: new Date(2026, 7, 3, 9) }],
+      [{ orderId: "current", productId: "coffee", productName: "Coffee", quantity: 2, unitPrice: 500 }],
       [{ method: "cash", amount: 600 }, { method: "card", amount: 400 }],
-      [{ channel: "local", id: "void", total: 300, createdAt: new Date(2026, 7, 3, 10) }],
-      [{ id: "shift", openedAt: new Date(2026, 7, 3, 8), closedAt: new Date(2026, 7, 3, 16), cashDifference: -50 }],
     );
 
-    expect(result).toMatchObject({ cost: 400, profit: 600, margin: 0.6 });
-    expect(result.previous.sales).toBe(500);
     expect(result.payments).toEqual([
       { method: "cash", amount: 600, percentage: 0.6 },
       { method: "card", amount: 400, percentage: 0.4 },
     ]);
     expect(result.hourlySales[9]).toBe(1000);
-    expect(result.weekdaySales[1]).toBe(1000);
-    expect(result.shifts).toEqual({ count: 1, averageSales: 1000, averageDurationMinutes: 480, cashDifference: -50 });
-    expect(result.voids).toEqual({ count: 1, amount: 300, rate: 0.5 });
   });
 });
 
 // CASE: The manual DiDi total is $50 although its catalog products total $140.
-// VALIDATES: Revenue uses $50 and product/category revenue does not invent delivery allocations.
+// VALIDATES: Revenue uses $50 and the top-products list does not invent delivery allocations.
 it("should use the manual delivery total when aggregating revenue by channel", () => {
   // Arrange
   const range = { start: new Date(2026, 7, 1), end: new Date(2026, 7, 2) };
@@ -77,14 +64,12 @@ it("should use the manual delivery total when aggregating revenue by channel", (
     { id: "local", channel: "local", total: 7000, createdAt: new Date(2026, 7, 1, 10) },
     { id: "delivery", channel: "didi", total: 5000, createdAt: new Date(2026, 7, 1, 17) },
   ];
-  const item = { productId: "coffee", productName: "Coffee", quantity: 1, unitPrice: 7000, unitCost: 2000, categoryId: "drinks", categoryName: "Drinks" };
+  const item = { productId: "coffee", productName: "Coffee", quantity: 1, unitPrice: 7000 };
   // Act
-  const result = aggregateSalesMetrics(range, orders, [{ ...item, orderId: "local" }, { ...item, orderId: "delivery", quantity: 2 }], [], [], [{ method: "cash", amount: 7000 }, { method: "platform", amount: 5000 }]);
+  const result = aggregateSalesMetrics(range, orders, [{ ...item, orderId: "local" }, { ...item, orderId: "delivery", quantity: 2 }], [{ method: "cash", amount: 7000 }, { method: "platform", amount: 5000 }]);
   // Assert
-  expect(result).toMatchObject({ sales: 12000, totalItems: 3, totalOrders: 2, cost: 6000, profit: 6000 });
-  expect(result.channels).toEqual([{ channel: "local", sales: 7000, orders: 1 }, { channel: "didi", sales: 5000, orders: 1 }]);
-  expect(result.categories[0]).toMatchObject({ sales: 7000, items: 1 });
-  expect(result.products[0]).toMatchObject({ sales: 7000, items: 1 });
+  expect(result.sales).toBe(12000);
+  expect(result.products).toEqual([{ productId: "coffee", productName: "Coffee", sales: 7000, items: 1 }]);
   expect(result.hourlySales[17]).toBe(5000);
 });
 
@@ -94,7 +79,7 @@ it("should exclude zero-amount payments from the payment breakdown", () => {
   // Arrange
   const range = { start: new Date(2026, 7, 3), end: new Date(2026, 7, 4) };
   // Act
-  const result = aggregateSalesMetrics(range, [], [], [], [], [{ method: "cash", amount: 7000 }, { method: "platform", amount: 0 }]);
+  const result = aggregateSalesMetrics(range, [], [], [{ method: "cash", amount: 7000 }, { method: "platform", amount: 0 }]);
   // Assert
   expect(result.payments).toEqual([{ method: "cash", amount: 7000, percentage: 1 }]);
 });

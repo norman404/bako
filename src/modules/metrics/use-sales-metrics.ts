@@ -5,7 +5,7 @@ import { metricsDrizzleRepository } from "./repository";
 
 export const METRICS_QUERY_KEYS = { SALES: ["metrics", "sales"] } as const;
 
-export function useSalesMetrics(start: Date, end: Date) {
+export function useSalesMetrics(start: Date, end: Date, enabled = true) {
   return useQuery({
     queryKey: [...METRICS_QUERY_KEYS.SALES, start.getTime(), end.getTime()],
     queryFn: async () => {
@@ -13,6 +13,7 @@ export function useSalesMetrics(start: Date, end: Date) {
       if (result.isErr()) throw result.error;
       return result.value;
     },
+    enabled,
     staleTime: 30_000,
   });
 }
