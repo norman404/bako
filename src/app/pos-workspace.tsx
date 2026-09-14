@@ -12,6 +12,7 @@ import {
   printOrder,
   useCreateOrder,
   usePrintCommands,
+  type CheckoutOrder,
   type CreateOrderInput,
 } from "@/modules/checkout";
 import { usePrinters } from "@/modules/printer";
@@ -28,7 +29,7 @@ import {
   type Product,
   type SelectedModifier,
 } from "@/modules/menu";
-import { Cart, calculateCartTotals, ORDER_CHANNEL, orderPrintName, useOrderStore } from "@/modules/order";
+import { Cart, calculateCartTotals, ORDER_CHANNEL, orderPrintName, useOrderStore, type CartItem } from "@/modules/order";
 import { ShiftButton, CashMovementsButton, DeliveryPendingButton, useActiveShift } from "@/modules/shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos";
@@ -217,25 +218,20 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
     openCheckoutModal();
   };
 
-  const handleConfirmCheckout = async (input: CreateOrderInput) => {
-    if (checkoutInFlight.current) return;
-    checkoutInFlight.current = true;
-    setIsProcessingCheckout(true);
+  const printReceiptTicket = async (
+    createdOrder: CheckoutOrder,
+    input: CreateOrderInput,
+    cartItems: CartItem[],
+  ) => {
     try {
-      const orderInput = shiftManagementEnabled && activeShift
-        ? { ...input, shiftId: activeShift.id }
-        : input;
-
-      const createdOrder = await createOrderMutation.mutateAsync(orderInput);
-
-      if (receiptPrintingEnabled && createdOrder.channel === ORDER_CHANNEL.LOCAL) {
-        const printResult = await printOrder({
+      const printResult = await printOrder(
+        {
           orderName: createdOrder.orderName,
           ticketNumber: createdOrder.ticketNumber,
           createdAt: createdOrder.createdAt,
           total: createdOrder.total,
           items: input.items.map((item, index) => {
-            const cartItem = synchronizedCartItems[index];
+            const cartItem = cartItems[index];
             return {
               name: cartItem?.product.name ?? "Producto",
               quantity: item.quantity,
@@ -252,14 +248,54 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
             amount: payment.amount,
             cashReceived: payment.cashReceived,
           })),
-        }, defaultReceiptPrinter);
+        },
+        defaultReceiptPrinter,
+      );
 
-        printResult.mapErr((printError) => {
-          toast.error(t('toast.printError'), {
-            description: printError.message,
-          });
+      printResult.mapErr((printError) => {
+        toast.error(t('toast.printError'), {
+          description: printError.message,
+        });
+      });
+    } catch (error) {
+      toast.error(t('toast.printError'), {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const printKitchenCommands = async (
+    createdOrder: CheckoutOrder,
+    cartItems: CartItem[],
+  ) => {
+    try {
+      const commandErrors = await printCommands(
+        cartItems,
+        orderPrintName(createdOrder.channel, createdOrder.deliveryReference, createdOrder.orderName, createdOrder.ticketNumber),
+      );
+
+      for (const commandError of commandErrors) {
+        toast.error(t('toast.comandaPrintError'), {
+          description: commandError.message,
         });
       }
+    } catch (error) {
+      toast.error(t('toast.comandaPrintError'), {
+        description: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const handleConfirmCheckout = async (input: CreateOrderInput) => {
+    if (checkoutInFlight.current) return;
+    checkoutInFlight.current = true;
+    setIsProcessingCheckout(true);
+    try {
+      const orderInput = shiftManagementEnabled && activeShift
+        ? { ...input, shiftId: activeShift.id }
+        : input;
+
+      const createdOrder = await createOrderMutation.mutateAsync(orderInput);
 
       handleClearCart();
       closeCheckoutModal();
@@ -269,15 +305,12 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
         description: t('toast.orderItemsCount', { itemsCount: cartTotals.itemsCount }),
       });
 
-      if (comandasEnabled) {
-        const commandErrors = await printCommands(synchronizedCartItems,
-          orderPrintName(createdOrder.channel, createdOrder.deliveryReference, createdOrder.orderName, createdOrder.ticketNumber));
+      if (receiptPrintingEnabled && createdOrder.channel === ORDER_CHANNEL.LOCAL) {
+        void printReceiptTicket(createdOrder, input, synchronizedCartItems);
+      }
 
-        for (const commandError of commandErrors) {
-          toast.error(t('toast.comandaPrintError'), {
-            description: commandError.message,
-          });
-        }
+      if (comandasEnabled) {
+        void printKitchenCommands(createdOrder, synchronizedCartItems);
       } else if (createdOrder.channel !== ORDER_CHANNEL.LOCAL) {
         toast.warning(t("order:delivery.printDisabled"));
       }

@@ -3,6 +3,7 @@ export { CheckoutModal } from "./components/CheckoutModal";
 
 // Domain — print ticket
 export type { PrintOrderOptions, PrintOrderPayment } from "./print-ticket";
+export type { CheckoutOrder } from "./order";
 
 // Adapters
 export { printOrder } from "./print-ticket.adapter";
