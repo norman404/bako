@@ -83,3 +83,17 @@ it("should exclude zero-amount payments from the payment breakdown", () => {
   // Assert
   expect(result.payments).toEqual([{ method: "cash", amount: 7000, percentage: 1 }]);
 });
+
+// CASE: A local 2x1 sells two coffees for the price of one.
+// VALIDATES: Top products report the money actually charged, not the catalog price.
+it("should report product sales net of promotion discounts", () => {
+  // Arrange
+  const range = { start: new Date(2026, 7, 1), end: new Date(2026, 7, 2) };
+  const orders = [{ id: "local", channel: "local", total: 7000, createdAt: new Date(2026, 7, 1, 10) }];
+  const items = [{ orderId: "local", productId: "coffee", productName: "Coffee", quantity: 2, unitPrice: 7000, discountAmount: 7000 }];
+  // Act
+  const result = aggregateSalesMetrics(range, orders, items, [{ method: "cash", amount: 7000 }]);
+  // Assert
+  expect(result.sales).toBe(7000);
+  expect(result.products).toEqual([{ productId: "coffee", productName: "Coffee", sales: 7000, items: 2 }]);
+});

@@ -17,9 +17,10 @@ async function listOrders(db: DatabaseClient, range: MetricsDateRange): Promise<
 }
 
 async function listItems(db: DatabaseClient, range: MetricsDateRange): Promise<SalesItemRow[]> {
-  return db.select({ orderId: orderItems.orderId, productId: orderItems.productId, productName: sql<string>`coalesce(${products.name}, 'Producto eliminado')`, quantity: orderItems.quantity, unitPrice: orderItems.unitPrice })
+  return db.select({ orderId: orderItems.orderId, productId: orderItems.productId, productName: sql<string>`coalesce(${products.name}, 'Producto eliminado')`, quantity: orderItems.quantity, unitPrice: orderItems.unitPrice, discountAmount: orderItems.discountAmount })
     .from(orderItems).innerJoin(orders, eq(orderItems.orderId, orders.id)).leftJoin(products, eq(orderItems.productId, products.id))
-    .where(and(gte(orders.confirmedAt, range.start), lt(orders.confirmedAt, range.end), isNull(orders.voidedAt)));
+    // Composite children carry no money; the bundle itself is the product sold.
+    .where(and(gte(orders.confirmedAt, range.start), lt(orders.confirmedAt, range.end), isNull(orders.voidedAt), isNull(orderItems.parentOrderItemId)));
 }
 
 async function load(range: MetricsDateRange): Promise<SalesMetrics> {
