@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 mod commands;
+mod database;
 mod database_migrations;
 mod print;
 
@@ -255,6 +256,7 @@ pub fn run() {
                 .add_migrations(DATABASE_URL, migrations)
                 .build(),
         )
+        .manage(database::DatabaseState::default())
         .setup(|app| {
             #[cfg(desktop)]
             app.handle()
@@ -271,6 +273,12 @@ pub fn run() {
             commands::export_database,
             commands::prepare_database_restore,
             commands::restore_database,
+            database::db_execute,
+            database::db_select,
+            database::db_begin,
+            database::db_commit,
+            database::db_rollback,
+            database::db_close,
             open_settings_window,
         ])
         .run(tauri::generate_context!())

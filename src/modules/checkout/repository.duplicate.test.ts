@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 interface SqliteStatement {
   all(...params: unknown[]): unknown[];
+  values(...params: unknown[]): unknown[][];
   run(...params: unknown[]): { changes: number; lastInsertRowid: number | bigint };
 }
 
@@ -12,7 +13,11 @@ interface SqliteDatabase {
   query(sql: string): SqliteStatement;
 }
 
-const sqliteRef = vi.hoisted(() => ({ db: null as SqliteDatabase | null }));
+const sqliteRef = vi.hoisted(() => ({
+  db: null as SqliteDatabase | null,
+  failNextStatementMatching: null as RegExp | null,
+  failNextCommit: false,
+}));
 
 const SCHEMA_SQL = `
 CREATE TABLE orders (
@@ -75,6 +80,7 @@ CREATE TABLE feature_flags (
 );
 `;
 
+// The plugin only runs migrations: here it just creates the schema.
 vi.mock("@tauri-apps/plugin-sql", () => ({
   default: {
     async load() {
@@ -83,22 +89,82 @@ vi.mock("@tauri-apps/plugin-sql", () => ({
       db.exec(SCHEMA_SQL);
       sqliteRef.db = db;
 
-      return {
-        async execute(sql: string, params: SQLQueryBindings[] = []) {
-          const result = db.query(sql).run(...params);
-          return {
-            rowsAffected: result.changes,
-            lastInsertId: Number(result.lastInsertRowid),
-          };
-        },
-        async select<T>(sql: string, params: SQLQueryBindings[] = []) {
-          return db.query(sql).all(...params) as T;
-        },
-        async close() {},
-      };
+      return { async close() {} };
     },
   },
 }));
+
+// Mirrors src-tauri/src/database.rs: one pinned connection that a transaction owns.
+vi.mock("@tauri-apps/api/core", () => {
+  let nextTransactionId = 0;
+  const openTransactions = new Set<number>();
+
+  function connection() {
+    if (!sqliteRef.db) throw new Error("Database not initialized");
+    return sqliteRef.db;
+  }
+
+  function assertTransaction(transactionId: number | undefined) {
+    if (transactionId === undefined && openTransactions.size > 0) {
+      // In Rust this query would wait for the transaction forever.
+      throw new Error("Query outside the open transaction would deadlock");
+    }
+    if (transactionId !== undefined && !openTransactions.has(transactionId)) {
+      throw new Error(`Unknown transaction ${transactionId}`);
+    }
+  }
+
+  function injectFailure(sql: string) {
+    if (sqliteRef.failNextStatementMatching?.test(sql)) {
+      sqliteRef.failNextStatementMatching = null;
+      throw new Error("database is locked");
+    }
+  }
+
+  type Args = { sql: string; values: SQLQueryBindings[]; transactionId?: number };
+
+  return {
+    async invoke(command: string, args: Record<string, unknown> = {}) {
+      const { sql, values = [], transactionId } = args as Args;
+
+      switch (command) {
+        case "db_execute": {
+          assertTransaction(transactionId);
+          injectFailure(sql);
+          const result = connection().query(sql).run(...values);
+          return { rowsAffected: result.changes, lastInsertId: Number(result.lastInsertRowid) };
+        }
+        case "db_select":
+          assertTransaction(transactionId);
+          injectFailure(sql);
+          return connection().query(sql).values(...values);
+        case "db_begin":
+          connection().exec("BEGIN IMMEDIATE");
+          openTransactions.add(nextTransactionId);
+          return nextTransactionId++;
+        case "db_commit":
+          assertTransaction(transactionId);
+          openTransactions.delete(transactionId as number);
+          if (sqliteRef.failNextCommit) {
+            sqliteRef.failNextCommit = false;
+            connection().exec("ROLLBACK");
+            throw new Error("database is locked");
+          }
+          connection().exec("COMMIT");
+          return null;
+        case "db_rollback":
+          assertTransaction(transactionId);
+          openTransactions.delete(transactionId as number);
+          connection().exec("ROLLBACK");
+          return null;
+        case "db_close":
+          return null;
+        default:
+          throw new Error(`Unexpected command ${command}`);
+      }
+    },
+  };
+});
 
 import { initDatabase } from "@/db/client";
 
@@ -186,4 +252,41 @@ describe("exploratory: duplicated checkout submissions", () => {
   });
 
   it.todo("deduplicates a retried submission that carries the same idempotency key");
+});
+
+describe("checkout retry after a failed save", () => {
+  beforeEach(async () => {
+    await initDatabase();
+    sqliteRef.failNextStatementMatching = null;
+    sqliteRef.failNextCommit = false;
+  });
+
+  it("leaves no partial order when a statement fails after the order insert", async () => {
+    // CASE: the order row is inserted, then saving its items fails (e.g. database is locked).
+    // VALIDATES: the order is rolled back, so the user's retry saves exactly one order.
+    sqliteRef.failNextStatementMatching = /insert into "order_items"/i;
+
+    const failed = await orderDrizzleRepository.createOrder(ORDER_INPUT);
+    expect(failed.isErr()).toBe(true);
+    expect(queryOrders()).toHaveLength(0);
+
+    const retried = await orderDrizzleRepository.createOrder(ORDER_INPUT);
+    expect(retried.isOk()).toBe(true);
+    expect(queryOrders().map((order) => order.ticket_number)).toEqual([1]);
+    expect(queryOrderItems(1)).toHaveLength(2);
+  });
+
+  it("does not keep the order when the commit fails", async () => {
+    // CASE: every statement succeeds but COMMIT fails, the error the user saw before the fix.
+    // VALIDATES: a reported error means nothing was saved, so retrying cannot duplicate.
+    sqliteRef.failNextCommit = true;
+
+    const failed = await orderDrizzleRepository.createOrder(ORDER_INPUT);
+    expect(failed.isErr()).toBe(true);
+    expect(queryOrders()).toHaveLength(0);
+
+    const retried = await orderDrizzleRepository.createOrder(ORDER_INPUT);
+    expect(retried.isOk()).toBe(true);
+    expect(queryOrders()).toHaveLength(1);
+  });
 });

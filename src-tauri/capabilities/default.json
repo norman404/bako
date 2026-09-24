@@ -9,9 +9,8 @@
     "core:event:allow-listen",
     "core:event:allow-unlisten",
     "dialog:default",
-    "sql:default",
-    "sql:allow-execute",
-    "sql:allow-select",
+    "sql:allow-load",
+    "sql:allow-close",
     "updater:default",
     "process:default"
   ]

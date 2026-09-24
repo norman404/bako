@@ -156,6 +156,7 @@ dependencies = [
  "tauri-plugin-process",
  "tauri-plugin-sql",
  "tauri-plugin-updater",
+ "tokio",
 ]
 
 [[package]]
