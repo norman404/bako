@@ -628,7 +628,46 @@ mod tests {
 
 
 #[cfg(test)]
+const SHIPPED_MIGRATIONS: &[&str] = &[
+    include_str!("../migrations/0000_initial.sql"),
+    include_str!("../migrations/0001_seed_menu.sql"),
+    include_str!("../migrations/0002_orders_customers.sql"),
+    include_str!("../migrations/0003_payments.sql"),
+    include_str!("../migrations/0005_system_settings.sql"),
+    include_str!("../migrations/0006_category_colors.sql"),
+    include_str!("../migrations/0007_feature_flags.sql"),
+    include_str!("../migrations/0008_menus.sql"),
+    include_str!("../migrations/0009_product_menus.sql"),
+    include_str!("../migrations/0010_delivery_persons.sql"),
+    include_str!("../migrations/0011_printer_settings.sql"),
+    include_str!("../migrations/0012_shifts.sql"),
+    include_str!("../migrations/0013_updater_flag.sql"),
+    include_str!("../migrations/0014_product_modifiers.sql"),
+    include_str!("../migrations/0015_modifiers_flag_seed.sql"),
+    include_str!("../migrations/0016_comandas_flag_seed.sql"),
+    include_str!("../migrations/0017_printers_and_category_printer.sql"),
+    include_str!("../migrations/0018_receipt_printing_flag_seed.sql"),
+    include_str!("../migrations/0019_comanda_header_text.sql"),
+    include_str!("../migrations/0020_first_option_free.sql"),
+    include_str!("../migrations/0021_label_printer_columns.sql"),
+    include_str!("../migrations/0022_label_printer_language.sql"),
+    include_str!("../migrations/0023_printer_is_default.sql"),
+    include_str!("../migrations/0024_printer_role_comanda.sql"),
+    include_str!("../migrations/0025_voided_at_orders.sql"),
+    include_str!("../migrations/0026_cash_management.sql"),
+    include_str!("../migrations/0027_printer_label_orientation.sql"),
+    include_str!("../migrations/0028_mixed_payments.sql"),
+    include_str!("../migrations/0029_shift_list_order.sql"),
+    include_str!("../migrations/0030_order_name.sql"),
+    include_str!("../migrations/0031_product_costs.sql"),
+    include_str!("../migrations/0032_delivery_orders.sql"),
+    include_str!("../migrations/0033_payments_platform.sql"),
+    include_str!("../migrations/0034_promotions.sql"),
+];
+
+#[cfg(test)]
 mod delivery_orders_migration {
+    use super::SHIPPED_MIGRATIONS;
     use sqlx::{Connection, Executor, SqliteConnection};
 
     async fn migrate_legacy_orders(url: &str) -> SqliteConnection {
@@ -697,42 +736,8 @@ mod delivery_orders_migration {
             // Arrange
             let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
             // Act
-            for sql in [
-                include_str!("../migrations/0000_initial.sql"),
-                include_str!("../migrations/0001_seed_menu.sql"),
-                include_str!("../migrations/0002_orders_customers.sql"),
-                include_str!("../migrations/0003_payments.sql"),
-                include_str!("../migrations/0005_system_settings.sql"),
-                include_str!("../migrations/0006_category_colors.sql"),
-                include_str!("../migrations/0007_feature_flags.sql"),
-                include_str!("../migrations/0008_menus.sql"),
-                include_str!("../migrations/0009_product_menus.sql"),
-                include_str!("../migrations/0010_delivery_persons.sql"),
-                include_str!("../migrations/0011_printer_settings.sql"),
-                include_str!("../migrations/0012_shifts.sql"),
-                include_str!("../migrations/0013_updater_flag.sql"),
-                include_str!("../migrations/0014_product_modifiers.sql"),
-                include_str!("../migrations/0015_modifiers_flag_seed.sql"),
-                include_str!("../migrations/0016_comandas_flag_seed.sql"),
-                include_str!("../migrations/0017_printers_and_category_printer.sql"),
-                include_str!("../migrations/0018_receipt_printing_flag_seed.sql"),
-                include_str!("../migrations/0019_comanda_header_text.sql"),
-                include_str!("../migrations/0020_first_option_free.sql"),
-                include_str!("../migrations/0021_label_printer_columns.sql"),
-                include_str!("../migrations/0022_label_printer_language.sql"),
-                include_str!("../migrations/0023_printer_is_default.sql"),
-                include_str!("../migrations/0024_printer_role_comanda.sql"),
-                include_str!("../migrations/0025_voided_at_orders.sql"),
-                include_str!("../migrations/0026_cash_management.sql"),
-                include_str!("../migrations/0027_printer_label_orientation.sql"),
-                include_str!("../migrations/0028_mixed_payments.sql"),
-                include_str!("../migrations/0029_shift_list_order.sql"),
-                include_str!("../migrations/0030_order_name.sql"),
-                include_str!("../migrations/0031_product_costs.sql"),
-                include_str!("../migrations/0032_delivery_orders.sql"),
-                include_str!("../migrations/0033_payments_platform.sql"),
-            ] {
-                db.execute(sql).await.unwrap();
+            for sql in SHIPPED_MIGRATIONS {
+                db.execute(*sql).await.unwrap();
             }
             let columns: i64 = sqlx::query_scalar("SELECT count(*) FROM pragma_table_info('orders') WHERE name IN ('channel', 'delivery_reference', 'confirmed_at', 'financial_shift_id')")
                 .fetch_one(&mut db).await.unwrap();
@@ -794,6 +799,75 @@ mod payments_platform_migration {
                 .execute("INSERT INTO payments (id, order_id, method, amount, created_at) VALUES ('r', 'o', 'other', 1, 3000)")
                 .await;
             assert!(rejected.is_err());
+        });
+    }
+}
+
+#[cfg(test)]
+mod promotions_migration {
+    use super::SHIPPED_MIGRATIONS;
+    use sqlx::{Connection, Executor, SqliteConnection};
+
+    async fn fresh_database() -> SqliteConnection {
+        let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
+        db.execute("PRAGMA foreign_keys = ON;").await.unwrap();
+        for sql in SHIPPED_MIGRATIONS {
+            db.execute(*sql).await.unwrap();
+        }
+        db.execute("INSERT INTO promotions (id, name, type, buy_quantity, pay_quantity, schedule, created_at, updated_at)
+                VALUES ('p', '2x1', 'nxm', 2, 1, '{}', 1, 1);")
+            .await
+            .unwrap();
+        db
+    }
+
+    // CASE: An installation upgrades with sales recorded before promotions existed.
+    // VALIDATES: Existing sale lines default to no discount and new flags start disabled.
+    #[test]
+    fn should_default_existing_lines_to_no_discount_when_migration_runs() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = fresh_database().await;
+            // Act
+            let flag: String = sqlx::query_scalar("SELECT value FROM feature_flags WHERE key = 'promotions_enabled'")
+                .fetch_one(&mut db)
+                .await
+                .unwrap();
+            let discount_default: String = sqlx::query_scalar(
+                "SELECT dflt_value FROM pragma_table_info('order_items') WHERE name = 'discount_amount'",
+            )
+            .fetch_one(&mut db)
+            .await
+            .unwrap();
+            // Assert
+            assert_eq!(flag, "false");
+            assert_eq!(discount_default, "0");
+        });
+    }
+
+    // CASE: Invalid promotion rules bypass the TypeScript form.
+    // VALIDATES: SQLite rejects an NxM that pays for everything, mixed rule columns and ambiguous targets.
+    #[test]
+    fn should_reject_invalid_promotion_rules_when_data_bypasses_the_form() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = fresh_database().await;
+            // Act
+            let pays_all = db
+                .execute("INSERT INTO promotions (id, name, type, buy_quantity, pay_quantity, schedule, created_at, updated_at)
+                    VALUES ('a', 'bad', 'nxm', 2, 2, '{}', 1, 1)")
+                .await;
+            let mixed = db
+                .execute("INSERT INTO promotions (id, name, type, bundle_price, buy_quantity, schedule, created_at, updated_at)
+                    VALUES ('b', 'bad', 'bundle', 100, 2, '{}', 1, 1)")
+                .await;
+            let ambiguous_target = db
+                .execute("INSERT INTO promotion_targets (id, promotion_id) VALUES ('t', 'p')")
+                .await;
+            // Assert
+            assert!(pays_all.is_err());
+            assert!(mixed.is_err());
+            assert!(ambiguous_target.is_err());
         });
     }
 }

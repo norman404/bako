@@ -13,6 +13,9 @@ export type CheckoutErrorCode =
   | "orderItemProductIdRequired"
   | "orderItemQuantityInvalid"
   | "orderItemUnitPriceInvalid"
+  | "orderItemDiscountInvalid"
+  | "orderItemChildInvalid"
+  | "orderPromotionInvalid"
   | "dbError";
 
 export interface CheckoutTranslatableError {

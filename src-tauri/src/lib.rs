@@ -10,7 +10,7 @@ use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 pub const DATABASE_FILENAME: &str = "bako.db";
 pub const DATABASE_URL: &str = "sqlite:bako.db";
-pub const CURRENT_MIGRATION_VERSION: i64 = 33;
+pub const CURRENT_MIGRATION_VERSION: i64 = 34;
 
 #[tauri::command]
 async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
@@ -240,9 +240,15 @@ pub fn run() {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: CURRENT_MIGRATION_VERSION,
+            version: 33,
             description: "payments_platform",
             sql: include_str!("../migrations/0033_payments_platform.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: CURRENT_MIGRATION_VERSION,
+            description: "promotions",
+            sql: include_str!("../migrations/0034_promotions.sql"),
             kind: MigrationKind::Up,
         },
     ];
