@@ -187,6 +187,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
       categoryId: products.categoryId,
       quantity: orderItems.quantity,
       unitPrice: orderItems.unitPrice,
+      unitCost: orderItems.unitCost,
     })
     .from(orderItems)
     .leftJoin(products, eq(products.id, orderItems.productId))
@@ -230,6 +231,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     categoryId: item.categoryId ?? null,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    unitCost: item.unitCost,
     modifiers: modifiersByItem.get(item.id) ?? [],
   }));
 
@@ -583,6 +585,7 @@ export const shiftDrizzleRepository: ShiftRepository = {
               productId: itemInput.productId,
               quantity: itemInput.quantity,
               unitPrice: itemInput.unitPrice,
+              unitCost: itemInput.unitCost,
               createdAt: now,
             });
 

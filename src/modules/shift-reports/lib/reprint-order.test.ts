@@ -7,7 +7,7 @@ const ORDER: OrderDetail = {
   createdAt: new Date("2026-08-01T15:00:00Z"), confirmedAt: new Date("2026-08-01T17:00:00Z"),
   total: 5000, isVoided: false, voidedAt: null,
   payments: [{ id: "payment", method: "platform", amount: 5000, cashReceived: null, createdAt: new Date("2026-08-01T17:00:00Z") }],
-  items: [{ id: "item", productId: "coffee", productName: "Café", categoryId: "drinks", quantity: 2, unitPrice: 7000, modifiers: [] }],
+  items: [{ id: "item", productId: "coffee", productName: "Café", categoryId: "drinks", quantity: 2, unitPrice: 7000, unitCost: 0, modifiers: [] }],
 };
 
 describe("delivery receipt", () => {

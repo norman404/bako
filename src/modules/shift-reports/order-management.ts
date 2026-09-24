@@ -16,6 +16,7 @@ export interface OrderDetailItem {
   categoryId: string | null;
   quantity: number;
   unitPrice: number;
+  unitCost: number;
   modifiers: OrderDetailItemModifier[];
 }
 
@@ -60,6 +61,7 @@ export interface UpdateOrderItemInput {
   productId: string;
   quantity: number;
   unitPrice: number;
+  unitCost: number;
   modifiers: UpdateOrderItemModifierInput[];
 }
 

@@ -182,6 +182,7 @@ function EditOrderForm({ orderDetail, onClose, title }: EditOrderFormProps) {
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        unitCost: item.unitCost,
         modifiers: item.modifiers.map((mod) => ({
           groupId: mod.groupId ?? "",
           groupName: mod.groupName,
