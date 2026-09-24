@@ -12,13 +12,35 @@ pub struct TicketItemModifier {
     pub text_value: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TicketItemChild {
+    pub name: String,
+    pub quantity: u32,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct TicketItem {
     pub name: String,
     pub quantity: u32,
     pub unit_price: u32,
     pub modifiers: Vec<TicketItemModifier>,
+    /// Promotion discount already subtracted from this line, in cents.
+    #[serde(default)]
+    pub discount: u32,
+    #[serde(default)]
+    pub discount_label: Option<String>,
+    /// Products included in a composite item, printed under it.
+    #[serde(default)]
+    pub children: Vec<TicketItemChild>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct TicketDiscount {
+    pub name: String,
+    pub amount: u32,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -29,7 +51,7 @@ pub struct TicketPayment {
     pub cash_received: Option<u32>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct TicketPayload {
     pub order_name: Option<String>,
@@ -38,6 +60,9 @@ pub struct TicketPayload {
     pub total: u32,
     pub items: Vec<TicketItem>,
     pub payments: Vec<TicketPayment>,
+    /// One entry per applied promotion; empty for sales without promotions.
+    #[serde(default)]
+    pub discounts: Vec<TicketDiscount>,
 }
 
 fn format_cents(cents: u32) -> String {
@@ -158,6 +183,19 @@ pub fn build_ticket<D: Driver>(
             };
             printer.writeln(&label).map_err(map_err)?;
         }
+
+        for child in &item.children {
+            printer
+                .writeln(&format!("  · {} x{}", child.name, child.quantity))
+                .map_err(map_err)?;
+        }
+
+        if item.discount > 0 {
+            let label = item.discount_label.as_deref().unwrap_or("Promo");
+            printer
+                .writeln(&format!("  {} -{}", label, format_cents(item.discount)))
+                .map_err(map_err)?;
+        }
     }
 
     // Divider
@@ -166,9 +204,22 @@ pub fn build_ticket<D: Driver>(
         .map_err(map_err)?;
 
     // Totals and cash change
+    printer.justify(JustifyMode::RIGHT).map_err(map_err)?;
+    if !payload.discounts.is_empty() {
+        let discount_total: u32 = payload.discounts.iter().map(|discount| discount.amount).sum();
+        printer
+            .writeln(&format!(
+                "Subtotal: {}",
+                format_cents(payload.total + discount_total)
+            ))
+            .map_err(map_err)?;
+        for discount in &payload.discounts {
+            printer
+                .writeln(&format!("{}: -{}", discount.name, format_cents(discount.amount)))
+                .map_err(map_err)?;
+        }
+    }
     printer
-        .justify(JustifyMode::RIGHT)
-        .map_err(map_err)?
         .bold(true)
         .map_err(map_err)?
         .writeln(&format!("Total: {}", format_cents(payload.total)))
@@ -348,12 +399,14 @@ mod tests {
                         text_value: Some("bien fría".to_owned()),
                     },
                 ],
+                ..Default::default()
             }],
             payments: vec![TicketPayment {
                 method: "cash".to_owned(),
                 amount: 550,
                 cash_received: Some(600),
             }],
+            ..Default::default()
         }
     }
 
@@ -410,6 +463,7 @@ mod tests {
                     option_name: None,
                     text_value: Some("sin azúcar".to_owned()),
                 }],
+                ..Default::default()
             }],
             ..build_payload_with_modifiers()
         };
@@ -419,6 +473,71 @@ mod tests {
         let output = driver.output();
         assert!(output.contains("Té"));
         assert!(output.contains("Instrucciones: sin azúcar"));
+    }
+
+    // CASE: A sale with a 2x1 and a composite promo item is printed.
+    // VALIDATES: The receipt shows each discounted line, the composite contents, the subtotal
+    // and one line per promotion, so the printed total reconciles with the items.
+    #[test]
+    fn build_ticket_renders_promotion_discounts_and_composite_children() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+        let payload = TicketPayload {
+            total: 8_500,
+            items: vec![
+                TicketItem {
+                    name: "Latte".to_owned(),
+                    quantity: 2,
+                    unit_price: 5_000,
+                    discount: 5_000,
+                    discount_label: Some("2x1 Latte".to_owned()),
+                    ..Default::default()
+                },
+                TicketItem {
+                    name: "Paquete tarde".to_owned(),
+                    quantity: 1,
+                    unit_price: 4_500,
+                    discount: 1_000,
+                    discount_label: Some("Paquete tarde".to_owned()),
+                    children: vec![TicketItemChild { name: "Bagel".to_owned(), quantity: 1 }],
+                    ..Default::default()
+                },
+            ],
+            discounts: vec![
+                TicketDiscount { name: "2x1 Latte".to_owned(), amount: 5_000 },
+                TicketDiscount { name: "Paquete tarde".to_owned(), amount: 1_000 },
+            ],
+            ..build_payload_with_modifiers()
+        };
+
+        build_ticket(&mut printer, &payload).unwrap();
+
+        let output = driver.output();
+        assert!(output.contains("2x1 Latte -$50.00"));
+        assert!(output.contains("· Bagel x1"));
+        assert!(output.contains("Subtotal: $145.00"));
+        assert!(output.contains("Paquete tarde: -$10.00"));
+        assert!(output.contains("Total: $85.00"));
+    }
+
+    // CASE: A receipt from before promotions existed is reprinted.
+    // VALIDATES: Missing discount fields deserialize to "no discount" and no subtotal is printed.
+    #[test]
+    fn build_ticket_accepts_payloads_without_promotion_fields() {
+        let driver = MockDriver::new();
+        let mut printer = Printer::new(driver.clone(), Protocol::default(), None);
+        let payload: TicketPayload = serde_json::from_str(
+            r#"{"orderName":null,"ticketNumber":7,"createdAt":"hoy","total":300,
+                "items":[{"name":"Café","quantity":1,"unitPrice":300,"modifiers":[]}],
+                "payments":[{"method":"card","amount":300,"cashReceived":null}]}"#,
+        )
+        .unwrap();
+
+        build_ticket(&mut printer, &payload).unwrap();
+
+        let output = driver.output();
+        assert!(!output.contains("Subtotal"));
+        assert!(output.contains("Total: $3.00"));
     }
 
     #[test]
@@ -564,12 +683,14 @@ mod tests {
                 quantity: 1,
                 unit_price: 100,
                 modifiers: vec![],
+                ..Default::default()
             }],
             payments: vec![TicketPayment {
                 method: "cash".to_owned(),
                 amount: 100,
                 cash_received: Some(100),
             }],
+            ..Default::default()
         };
 
         build_ticket(&mut printer, &payload).unwrap();

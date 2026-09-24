@@ -30,3 +30,11 @@ export { usePrintCommands } from "./use-print-commands";
 // Lib
 export { buildKitchenCommands, type CartLine } from "./lib/build-kitchen-commands";
 export { buildOrderItemsInput } from "./lib/builders";
+export { buildReceiptLines } from "./lib/receipt";
+
+export {
+  validatePromotionEvidence,
+  type PromotionEvidence,
+  type PromotionEvidenceLine,
+} from "./checkout-validation";
+export { CheckoutPersistenceError } from "./errors";

@@ -2,7 +2,7 @@ import { ResultAsync, okAsync } from "neverthrow";
 import { invoke } from "@tauri-apps/api/core";
 
 import type { Printer } from "@/modules/printer";
-import type { PrintOrderOptions } from "./print-ticket";
+import type { PrintOrderDiscount, PrintOrderItemChild, PrintOrderOptions } from "./print-ticket";
 
 export interface PrintTicketPayload {
   printerType: string;
@@ -20,12 +20,16 @@ export interface PrintTicketPayload {
       optionName: string | null;
       textValue: string | null;
     }>;
+    discount: number;
+    discountLabel: string | null;
+    children: PrintOrderItemChild[];
   }>;
   payments: Array<{
     method: string;
     amount: number;
     cashReceived: number | null;
   }>;
+  discounts: PrintOrderDiscount[];
 }
 
 export function buildPrintTicketPayload(
@@ -51,12 +55,16 @@ export function buildPrintTicketPayload(
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       modifiers: item.modifiers,
+      discount: item.discount ?? 0,
+      discountLabel: item.discountLabel ?? null,
+      children: item.children ?? [],
     })),
     payments: input.payments.map((payment) => ({
       method: payment.method,
       amount: payment.amount,
       cashReceived: payment.cashReceived,
     })),
+    discounts: input.discounts ?? [],
   };
 }
 

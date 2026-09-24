@@ -388,12 +388,14 @@ mod tests {
                 quantity: 1,
                 unit_price: 100,
                 modifiers: vec![],
+                ..Default::default()
             }],
             payments: vec![TicketPayment {
                 method: "cash".to_owned(),
                 amount: 100,
                 cash_received: Some(100),
             }],
+            ..Default::default()
         };
 
         print_ticket_inner(driver.clone(), &payload).unwrap();
