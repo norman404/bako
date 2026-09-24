@@ -1,6 +1,6 @@
 # BAKO.md
 
-This document is Bako's living architecture guide and the single source of truth for architectural decisions. It is stated in the present tense because the code matches it: all ten modules are in the flat shape described below, and every rule here is enforceable against the tree as it stands.
+This document is Bako's living architecture guide and the single source of truth for architectural decisions. It is stated in the present tense because the code matches it: all eleven modules are in the flat shape described below, and every rule here is enforceable against the tree as it stands.
 
 ## Product
 
@@ -171,7 +171,7 @@ Frontend tests are co-located as `*.test.ts` under `src/`; Rust tests normally l
 
 ## Migration strategy
 
-The migration to this structure is complete — all ten modules are flat, no layer folders remain under `src/modules/`, and `src/shared/` is deleted. The rules below are what keeps it that way; they govern every future change, not a one-time move.
+The migration to this structure is complete — all eleven modules are flat, no layer folders remain under `src/modules/`, and `src/shared/` is deleted. The rules below are what keeps it that way; they govern every future change, not a one-time move.
 
 1. New features use the flat module structure from day one. A module is never born with layer folders "to be flattened later".
 2. Existing modules are simplified when meaningful work already touches them — not as a standalone refactor. Restructuring without a reason is churn with a rollback risk.
@@ -192,6 +192,7 @@ The step-by-step procedure for restructuring a module, plus the name-collision t
 ## Further reading
 
 - [`docs/delivery.md`](docs/delivery.md) — pending Uber/DiDi orders, manual collection amounts, and cross-shift accounting.
+- [`docs/promotions.md`](docs/promotions.md) — scheduled NxM and bundle promotions, composite products, and the per-sale promotion evidence.
 
 - [`docs/README.md`](docs/README.md) — index of contributor guides.
 - [`docs/architecture/module-system.md`](docs/architecture/module-system.md) — project structure, module shape, the barrel rule and its documented exceptions, the `settings ↔ updater` cycle, and the procedure for restructuring a module.
