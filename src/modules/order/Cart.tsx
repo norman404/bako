@@ -2,7 +2,8 @@ import { LoaderCircle, Minus, Plus, Printer, ShoppingBasket, Trash2, X } from "l
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 
-import { calculateCartTotals, type CartItem } from "./cart-operations";
+import type { CartItem } from "./cart-operations";
+import { getLinePricing, type CartPricing } from "./cart-pricing";
 import { calculateItemUnitPrice, type SelectedModifier } from "@/modules/menu";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { ORDER_NAME_MAX_LENGTH } from "./order-name";
 
 interface CartProps {
   items: CartItem[];
+  pricing: CartPricing;
   orderName: string;
   channel: OrderChannel;
   deliveryReference: string;
@@ -31,6 +33,7 @@ interface CartProps {
 
 function Cart({
   items,
+  pricing,
   orderName,
   channel,
   deliveryReference,
@@ -44,10 +47,10 @@ function Cart({
   onClearCart,
   onCheckout,
 }: CartProps) {
-  const { t } = useTranslation('order');
+  const { t } = useTranslation(['order', 'promotions']);
   const { flags } = useFeatureFlagsStore();
   const modifierGroupsEnabled = flags.modifier_groups_enabled ?? false;
-  const totals = calculateCartTotals(items);
+  const totals = pricing;
   const isEmpty = items.length === 0;
   const totalItems = totals.itemsCount;
   const orderNameInputId = useId();
@@ -137,6 +140,7 @@ function Cart({
             <ul className="space-y-5">
               {items.map((item) => {
                 const unitPrice = calculateItemUnitPrice(item.product, item.selectedModifiers);
+                const line = getLinePricing(pricing, item.lineId);
                 const hasModifiers = modifierGroupsEnabled && item.selectedModifiers.length > 0;
 
                 return (
@@ -155,9 +159,29 @@ function Cart({
                           quantity={item.quantity}
                         />
                       )}
+                      {item.composite ? (
+                        <ul className="mt-1.5 space-y-0.5 border-l border-border pl-2">
+                          {item.composite.components.map((component) => (
+                            <li key={component.product.id} className="text-2xs text-text-muted">
+                              {component.product.name}
+                              <span className="font-mono-tabular text-text-dim"> ×{component.quantity * item.quantity}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {line.promotionNames.length > 0 ? (
+                        <p className="mt-1.5 inline-flex items-center gap-1 rounded-sharp bg-success/10 px-1.5 py-0.5 text-2xs font-semibold text-success">
+                          {line.promotionNames.join(" · ")} −{formatPosCurrency(line.discountAmount)}
+                        </p>
+                      ) : null}
                     </div>
-                    <span className="font-mono-tabular text-md tracking-tight text-text">
-                      {formatPosCurrency(unitPrice * item.quantity)}
+                    <span className="font-mono-tabular text-right text-md tracking-tight text-text">
+                      {line.discountAmount > 0 ? (
+                        <span className="block text-2xs text-text-dim line-through">
+                          {formatPosCurrency(line.grossTotal)}
+                        </span>
+                      ) : null}
+                      {formatPosCurrency(line.netTotal)}
                     </span>
                   </div>
 
@@ -208,6 +232,18 @@ function Cart({
               <span>{t("cart.productsLabel")}</span>
               <span className="font-mono-tabular">{String(totalItems).padStart(2, "0")}</span>
             </div>
+            {pricing.discountTotal > 0 ? (
+              <>
+                <div className="mt-1 flex items-center justify-between gap-3 text-xs text-text-dim">
+                  <span>{t("promotions:cart.subtotal")}</span>
+                  <span className="font-mono-tabular">{formatPosCurrency(pricing.subtotal)}</span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-3 text-xs font-semibold text-success">
+                  <span>{t("promotions:cart.discounts")}</span>
+                  <span className="font-mono-tabular">−{formatPosCurrency(pricing.discountTotal)}</span>
+                </div>
+              </>
+            ) : null}
             <div className="mt-2 flex items-baseline justify-between gap-3">
               <span className="min-w-0 text-sm text-text-muted">
                 {isDelivery ? t("delivery.catalogReference") : t("cart.totalLabel")}

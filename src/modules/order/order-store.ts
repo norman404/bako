@@ -3,10 +3,12 @@ import { ORDER_CHANNEL, type OrderChannel } from "./order-channel";
 
 import type { Product, SelectedModifier } from "@/modules/menu";
 import {
+  addCompositeToCart,
   addItemToCart,
   decrementItemQuantity,
   incrementItemQuantity,
   removeItemFromCart,
+  type CartCompositeComponent,
   type CartItem,
 } from "./cart-operations";
 
@@ -19,6 +21,7 @@ interface OrderStore {
   setDeliveryReference: (reference: string) => void;
   setOrderName: (orderName: string) => void;
   addItem: (product: Product, modifiers?: SelectedModifier[]) => void;
+  addComposite: (product: Product, components: CartCompositeComponent[]) => void;
   incrementItemQuantity: (lineId: string) => void;
   decrementItemQuantity: (lineId: string) => void;
   removeItem: (lineId: string) => void;
@@ -37,12 +40,17 @@ const useOrderStore = create<OrderStore>((set) => ({
 
   addItem: (product, modifiers = []) =>
     set((state) => ({
-      currentOrder: addItemToCart(state.currentOrder, product, modifiers, crypto.randomUUID()),
+      currentOrder: addItemToCart(state.currentOrder, product, modifiers, crypto.randomUUID(), Date.now()),
+    })),
+
+  addComposite: (product, components) =>
+    set((state) => ({
+      currentOrder: addCompositeToCart(state.currentOrder, product, components, () => crypto.randomUUID(), Date.now()),
     })),
 
   incrementItemQuantity: (lineId) =>
     set((state) => ({
-      currentOrder: incrementItemQuantity(state.currentOrder, lineId),
+      currentOrder: incrementItemQuantity(state.currentOrder, lineId, Date.now()),
     })),
 
   decrementItemQuantity: (lineId) =>

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   CheckoutModal,
   buildOrderItemsInput,
+  buildReceiptLines,
   printOrder,
   useCreateOrder,
   usePrintCommands,
@@ -20,6 +21,7 @@ import { PRINTER_ROLE } from "@/modules/printer";
 import {
   CategoryNav,
   MenuSelector,
+  PRODUCT_KIND,
   ProductCustomizationDialog,
   ProductGrid,
   ProductSearch,
@@ -29,7 +31,18 @@ import {
   type Product,
   type SelectedModifier,
 } from "@/modules/menu";
-import { Cart, calculateCartTotals, ORDER_CHANNEL, orderPrintName, useOrderStore, type CartItem } from "@/modules/order";
+import {
+  Cart,
+  ORDER_CHANNEL,
+  expandCompositeItems,
+  isCompositeActive,
+  orderPrintName,
+  priceCart,
+  useOrderStore,
+  type CartItem,
+  type CartPricing,
+} from "@/modules/order";
+import { usePromotions } from "@/modules/promotions";
 import { ShiftButton, CashMovementsButton, DeliveryPendingButton, useActiveShift } from "@/modules/shift-reports";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { POS_CATEGORY_FILTER, usePosStore } from "@/modules/pos";
@@ -51,6 +64,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
   const shiftManagementEnabled = flags.shift_management_enabled ?? false;
   const comandasEnabled = flags.comandas_enabled ?? false;
   const receiptPrintingEnabled = flags.receipt_printing_enabled ?? true;
+  const promotionsEnabled = flags.promotions_enabled ?? false;
 
   // Shift state
   const { data: activeShift } = useActiveShift();
@@ -90,6 +104,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
     setDeliveryReference,
     setOrderName,
     addItem,
+    addComposite,
     handleIncreaseQuantity,
     handleDecreaseQuantity,
     handleRemoveItem,
@@ -104,6 +119,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
       setDeliveryReference: state.setDeliveryReference,
       setOrderName: state.setOrderName,
       addItem: state.addItem,
+      addComposite: state.addComposite,
       handleIncreaseQuantity: state.incrementItemQuantity,
       handleDecreaseQuantity: state.decrementItemQuantity,
       handleRemoveItem: state.removeItem,
@@ -146,11 +162,26 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
   ) ?? null;
   const { printCommands } = usePrintCommands({ enabled: comandasEnabled, categories });
 
+  const productsById = new Map(products.map((product) => [product.id, product]));
   const synchronizedCartItems = currentOrder.map((item) => {
-    const currentProduct = products.find((product) => product.id === item.product.id);
-    return currentProduct ? { ...item, product: currentProduct } : item;
+    const currentProduct = productsById.get(item.product.id);
+    const synced = currentProduct ? { ...item, product: currentProduct } : item;
+    if (!synced.composite) return synced;
+    return {
+      ...synced,
+      composite: {
+        components: synced.composite.components.map((component) => ({
+          product: productsById.get(component.product.id) ?? component.product,
+          quantity: component.quantity,
+        })),
+      },
+    };
   });
-  const cartTotals = calculateCartTotals(synchronizedCartItems);
+  const { data: promotions = [] } = usePromotions({ enabled: promotionsEnabled });
+  const cartPricing = priceCart(synchronizedCartItems, promotionsEnabled ? promotions : [], {
+    applyDiscounts: channel === ORDER_CHANNEL.LOCAL,
+  });
+  const cartTotals = cartPricing;
 
   const emptyStateTitle =
     selectedCategory === POS_CATEGORY_FILTER.ALL
@@ -161,8 +192,29 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
       ? t('empty.setupHint')
       : t('empty.changeCategoryHint');
 
+  const handleAddComposite = (product: Product) => {
+    const components = product.components.flatMap((component) => {
+      const componentProduct = productsById.get(component.productId);
+      return componentProduct ? [{ product: componentProduct, quantity: component.quantity }] : [];
+    });
+    if (components.length !== product.components.length) {
+      toast.error(t("toast.compositeUnavailable", { productName: product.name }));
+      return;
+    }
+
+    const insideSchedule = isCompositeActive(product, Date.now());
+    addComposite(product, components);
+    toast.success(t("toast.productAdded", { productName: product.name }), {
+      description: insideSchedule ? t("toast.readyToPay") : t("toast.compositeAddedSeparately"),
+    });
+  };
+
   const handleAddToCart = (product: Product, modifiers?: SelectedModifier[]) => {
     if (checkoutInFlight.current) return;
+    if (product.kind === PRODUCT_KIND.COMPOSITE) {
+      handleAddComposite(product);
+      return;
+    }
     if (modifiers && modifiers.length > 0) {
       addItem(product, modifiers);
       setCustomizationProduct(null);
@@ -211,7 +263,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
     }
 
     if (channel !== ORDER_CHANNEL.LOCAL) {
-      void handleConfirmCheckout({ channel, deliveryReference, orderName, items: buildOrderItemsInput(synchronizedCartItems), payments: [] })
+      void handleConfirmCheckout({ channel, deliveryReference, orderName, items: buildOrderItemsInput(synchronizedCartItems, cartPricing), payments: [] })
         .catch(() => toast.error(t("order:delivery.saveFailed")));
       return;
     }
@@ -220,7 +272,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
 
   const printReceiptTicket = async (
     createdOrder: CheckoutOrder,
-    input: CreateOrderInput,
+    pricing: CartPricing,
     cartItems: CartItem[],
   ) => {
     try {
@@ -230,19 +282,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
           ticketNumber: createdOrder.ticketNumber,
           createdAt: createdOrder.createdAt,
           total: createdOrder.total,
-          items: input.items.map((item, index) => {
-            const cartItem = cartItems[index];
-            return {
-              name: cartItem?.product.name ?? "Producto",
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              modifiers: (cartItem?.selectedModifiers ?? []).map((m) => ({
-                groupName: m.groupName,
-                optionName: m.optionName,
-                textValue: m.textValue,
-              })),
-            };
-          }),
+          ...buildReceiptLines(cartItems, pricing),
           payments: createdOrder.payments.map((payment) => ({
             method: payment.method,
             amount: payment.amount,
@@ -270,7 +310,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
   ) => {
     try {
       const commandErrors = await printCommands(
-        cartItems,
+        expandCompositeItems(cartItems),
         orderPrintName(createdOrder.channel, createdOrder.deliveryReference, createdOrder.orderName, createdOrder.ticketNumber),
       );
 
@@ -306,7 +346,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
       });
 
       if (receiptPrintingEnabled && createdOrder.channel === ORDER_CHANNEL.LOCAL) {
-        void printReceiptTicket(createdOrder, input, synchronizedCartItems);
+        void printReceiptTicket(createdOrder, cartPricing, synchronizedCartItems);
       }
 
       if (comandasEnabled) {
@@ -458,6 +498,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
         <aside className="hidden w-[30%] min-h-0 min-w-0 overflow-hidden border-l border-border bg-surface-raised lg:block">
           <Cart
             items={synchronizedCartItems}
+            pricing={cartPricing}
             orderName={orderName}
             channel={channel}
             deliveryReference={deliveryReference}
@@ -517,6 +558,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
             </Button>
             <Cart
               items={synchronizedCartItems}
+              pricing={cartPricing}
               orderName={orderName}
               channel={channel}
               deliveryReference={deliveryReference}
@@ -541,6 +583,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
         key={checkoutSessionKey}
         open={isCheckoutOpen}
         items={synchronizedCartItems}
+        pricing={cartPricing}
         orderName={orderName}
         isSubmitting={isProcessingCheckout}
         onClose={closeCheckoutModal}
