@@ -25,6 +25,7 @@ import {
 import { formatPosCurrency } from "@/lib/currency";
 import { useOrderDetail, useUpdateOrder } from "../use-order-management";
 import type { OrderDetail, OrderDetailItem, UpdateOrderInput } from "../order-management";
+import { priceEditedOrder } from "../lib/edit-order-pricing";
 
 interface EditOrderModalProps {
   orderId: string | null;
@@ -49,10 +50,6 @@ function getPaymentMode(orderDetail: OrderDetail): CheckoutPaymentMode {
 function getCashInput(orderDetail: OrderDetail): string {
   const cashPayment = orderDetail.payments.find((payment) => payment.method === "cash");
   return formatPaymentAmountInput(cashPayment?.cashReceived ?? cashPayment?.amount ?? orderDetail.total);
-}
-
-function calculateTotal(items: OrderDetailItem[]): number {
-  return items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 }
 
 function ModalHeader({ title, onClose }: ModalHeaderProps) {
@@ -100,7 +97,7 @@ function VoidedOrderNotice({
                 <span className="ml-1 text-text-muted">× {item.quantity}</span>
               </span>
               <span className="font-mono-tabular text-text-muted">
-                {formatPosCurrency(item.unitPrice * item.quantity)}
+                {formatPosCurrency(item.unitPrice * item.quantity - item.discountAmount)}
               </span>
             </div>
           ))}
@@ -134,7 +131,8 @@ function EditOrderForm({ orderDetail, onClose, title }: EditOrderFormProps) {
 
   const updateOrderMutation = useUpdateOrder();
   const isSaving = updateOrderMutation.isPending;
-  const total = calculateTotal(items);
+  const pricing = priceEditedOrder(orderDetail, items);
+  const total = pricing.total;
   const paymentValidationMessage = getPaymentValidationMessage(
     paymentMode,
     cashAmountInput,
@@ -178,20 +176,8 @@ function EditOrderForm({ orderDetail, onClose, title }: EditOrderFormProps) {
     if (!payments) return;
 
     const input: UpdateOrderInput = {
-      items: items.map((item) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        unitCost: item.unitCost,
-        modifiers: item.modifiers.map((mod) => ({
-          groupId: mod.groupId ?? "",
-          groupName: mod.groupName,
-          optionId: mod.optionId,
-          optionName: mod.optionName,
-          priceDelta: mod.priceDelta,
-          textValue: mod.textValue,
-        })),
-      })),
+      items: pricing.items,
+      promotions: pricing.promotions,
       payments: payments.map((payment) => ({
         method: payment.method,
         amount: payment.amount,
@@ -227,7 +213,12 @@ function EditOrderForm({ orderDetail, onClose, title }: EditOrderFormProps) {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-text">{item.productName}</p>
                 <p className="font-mono-tabular text-2xs text-text-muted">
-                  {formatPosCurrency(item.unitPrice * item.quantity)}
+                  {formatPosCurrency(item.unitPrice * item.quantity - (pricing.discountByItemId.get(item.id) ?? 0))}
+                  {(pricing.discountByItemId.get(item.id) ?? 0) > 0 ? (
+                    <span className="ml-1.5 text-success">
+                      {t("promotions.discountLine")} −{formatPosCurrency(pricing.discountByItemId.get(item.id) ?? 0)}
+                    </span>
+                  ) : null}
                 </p>
               </div>
               <Input

@@ -18,6 +18,9 @@ export function buildReprintOrderOptions(order: OrderDetail): PrintOrderOptions 
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         modifiers: item.modifiers.map((mod) => ({ groupName: mod.groupName, optionName: mod.optionName, textValue: mod.textValue })),
+        discount: item.discountAmount,
+        discountLabel: item.promotionName,
+        children: item.children.map((child) => ({ name: child.productName, quantity: child.quantity })),
       }))
     : [{
         name: order.channel === ORDER_CHANNEL.DIDI ? "DiDi" : "Uber Eats",
@@ -36,6 +39,7 @@ export function buildReprintOrderOptions(order: OrderDetail): PrintOrderOptions 
     total: order.total,
     items,
     payments,
+    discounts: order.promotions.map((promotion) => ({ name: promotion.name, amount: promotion.discountAmount })),
   };
 }
 

@@ -209,6 +209,7 @@ export function ShiftControlPanel() {
       categorySalesLabel: t("salesByCategory"),
       uncategorizedCategoryLabel: t("uncategorizedCategory"),
       itemCountLabel: t("itemCount"),
+      promotionsLabel: t("promotions.title"),
     }, categoriesEnabled);
     if (result.isErr()) {
       toast.error(t("reprintFailed"));
