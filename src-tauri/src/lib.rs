@@ -254,7 +254,15 @@ pub fn run() {
     ];
 
     tauri::Builder::default()
-        .plugin(database_migrations::init())
+        .plugin(database_migrations::init(
+            migrations
+                .iter()
+                .map(|migration| database_migrations::MigrationSource {
+                    version: migration.version,
+                    sql: migration.sql,
+                })
+                .collect(),
+        ))
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(

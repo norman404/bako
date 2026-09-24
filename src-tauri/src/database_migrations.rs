@@ -1,6 +1,6 @@
 use sqlx::migrate::{Migration, MigrationType};
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{Connection, SqlStr, SqliteConnection};
+use sqlx::{AssertSqlSafe, Connection, SqlSafeStr, SqlStr, SqliteConnection};
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 use tauri::{Manager, Runtime};
@@ -172,14 +172,112 @@ async fn apply_pending_product_costs_migration(path: &Path) -> Result<(), String
         .map_err(|error| format!("Could not commit product costs migration: {error}"))
 }
 
-pub fn init<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
+/// A shipped migration as the running build embeds it: its version and exact SQL text.
+#[derive(Clone, Copy)]
+pub struct MigrationSource {
+    pub version: i64,
+    pub sql: &'static str,
+}
+
+fn sql_checksum(version: i64, sql: String) -> Vec<u8> {
+    Migration::new(
+        version,
+        Cow::Borrowed(""),
+        MigrationType::ReversibleUp,
+        AssertSqlSafe(sql).into_sql_str(),
+        false,
+    )
+    .checksum
+    .into_owned()
+}
+
+/// sqlx checksums the exact bytes of each migration. A Windows checkout converts the
+/// `.sql` files to CRLF, so a database created by a Windows build and restored on
+/// another platform (or the reverse) looks "modified" and can never migrate again. A
+/// stored checksum is realigned only when it equals the LF or CRLF variant of the very
+/// same SQL, which proves the applied migration is identical; anything else still fails.
+pub async fn repair_line_ending_checksums(
+    path: &Path,
+    sources: &[MigrationSource],
+) -> Result<u64, String> {
+    if !path.exists() {
+        return Ok(0);
+    }
+
+    let mut connection = open_database(path).await?;
+    let migrations_table_exists: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = '_sqlx_migrations'",
+    )
+    .fetch_one(&mut connection)
+    .await
+    .map_err(|error| format!("Could not inspect migration history: {error}"))?;
+    if migrations_table_exists == 0 {
+        connection
+            .close()
+            .await
+            .map_err(|error| error.to_string())?;
+        return Ok(0);
+    }
+
+    let applied: Vec<(i64, Vec<u8>)> =
+        sqlx::query_as("SELECT version, checksum FROM _sqlx_migrations WHERE success = TRUE")
+            .fetch_all(&mut connection)
+            .await
+            .map_err(|error| format!("Could not read migration checksums: {error}"))?;
+
+    let mut transaction = connection
+        .begin()
+        .await
+        .map_err(|error| format!("Could not start checksum repair: {error}"))?;
+    let mut repaired = 0;
+    for (version, stored) in applied {
+        let Some(source) = sources.iter().find(|source| source.version == version) else {
+            continue;
+        };
+        let expected = sql_checksum(version, source.sql.to_owned());
+        if stored == expected {
+            continue;
+        }
+
+        let lf = source.sql.replace("\r\n", "\n");
+        let crlf = lf.replace('\n', "\r\n");
+        if stored != sql_checksum(version, lf) && stored != sql_checksum(version, crlf) {
+            continue;
+        }
+
+        sqlx::query("UPDATE _sqlx_migrations SET checksum = ? WHERE version = ?")
+            .bind(expected)
+            .bind(version)
+            .execute(&mut *transaction)
+            .await
+            .map_err(|error| format!("Could not repair checksum of migration {version}: {error}"))?;
+        repaired += 1;
+    }
+    transaction
+        .commit()
+        .await
+        .map_err(|error| format!("Could not commit checksum repair: {error}"))?;
+
+    Ok(repaired)
+}
+
+pub fn init<R: Runtime>(sources: Vec<MigrationSource>) -> tauri::plugin::TauriPlugin<R> {
     tauri::plugin::Builder::new("database-migrations")
-        .setup(|app, _api| {
+        .setup(move |app, _api| {
             let mut path = app
                 .path()
                 .app_config_dir()
                 .map_err(|error| format!("Could not resolve database directory: {error}"))?;
             path.push(PathBuf::from(crate::DATABASE_FILENAME));
+
+            match tauri::async_runtime::block_on(repair_line_ending_checksums(&path, &sources)) {
+                Ok(0) => {}
+                Ok(repaired) => log::info!("Realigned {repaired} migration checksums that differed only in line endings"),
+                Err(error) => {
+                    log::error!("Database checksum repair failed: {error}");
+                    return Err(Box::new(std::io::Error::other(error)));
+                }
+            }
 
             if let Err(error) =
                 tauri::async_runtime::block_on(repair_partial_label_orientation_migration(&path))
@@ -868,6 +966,144 @@ mod promotions_migration {
             assert!(pays_all.is_err());
             assert!(mixed.is_err());
             assert!(ambiguous_target.is_err());
+        });
+    }
+}
+
+#[cfg(test)]
+mod line_ending_checksum_repair {
+    use super::{repair_line_ending_checksums, sql_checksum, MigrationSource};
+    use sqlx::migrate::{Migration, MigrationType, Migrator};
+    use sqlx::sqlite::SqliteConnectOptions;
+    use sqlx::{Connection, Executor, SqlStr, SqliteConnection, SqlitePool};
+    use std::borrow::Cow;
+    use std::path::PathBuf;
+
+    const CREATE_ITEMS: &str = "CREATE TABLE items (id TEXT PRIMARY KEY);\nCREATE INDEX idx_items ON items (id);\n";
+    const ADD_NAME: &str = "ALTER TABLE items ADD COLUMN name TEXT;\n";
+    const ADD_PRICE: &str = "ALTER TABLE items ADD COLUMN price INTEGER;\n";
+    const SOURCES: [MigrationSource; 2] = [
+        MigrationSource { version: 1, sql: CREATE_ITEMS },
+        MigrationSource { version: 2, sql: ADD_NAME },
+    ];
+
+    fn temporary_database_path() -> PathBuf {
+        let suffix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("bako-line-endings-{}-{suffix}.db", std::process::id()))
+    }
+
+    fn crlf(sql: &str) -> String {
+        sql.replace('\n', "\r\n")
+    }
+
+    fn migration(version: i64, sql: &'static str) -> Migration {
+        Migration::new(version, Cow::Borrowed("m"), MigrationType::ReversibleUp, SqlStr::from_static(sql), false)
+    }
+
+    // A database whose schema and history were written by a build with CRLF migrations.
+    async fn create_windows_database(path: &PathBuf, tampered_version_2: bool) {
+        let options = SqliteConnectOptions::new().filename(path).create_if_missing(true);
+        let mut connection = SqliteConnection::connect_with(&options).await.unwrap();
+        connection
+            .execute("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY, description TEXT NOT NULL, installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, success BOOLEAN NOT NULL, checksum BLOB NOT NULL, execution_time BIGINT NOT NULL)")
+            .await
+            .unwrap();
+        connection.execute(sqlx::AssertSqlSafe(crlf(CREATE_ITEMS))).await.unwrap();
+        connection.execute(sqlx::AssertSqlSafe(crlf(ADD_NAME))).await.unwrap();
+        let version_2_checksum = if tampered_version_2 {
+            sql_checksum(2, "ALTER TABLE items ADD COLUMN nombre TEXT;\r\n".to_owned())
+        } else {
+            sql_checksum(2, crlf(ADD_NAME))
+        };
+        for (version, checksum) in [(1, sql_checksum(1, crlf(CREATE_ITEMS))), (2, version_2_checksum)] {
+            sqlx::query("INSERT INTO _sqlx_migrations (version, description, success, checksum, execution_time) VALUES (?, 'm', TRUE, ?, 1)")
+                .bind(version)
+                .bind(checksum)
+                .execute(&mut connection)
+                .await
+                .unwrap();
+        }
+        connection.close().await.unwrap();
+    }
+
+    // CASE: A backup made on Windows is restored on macOS and a new migration ships.
+    // VALIDATES: sqlx rejects it as modified before the repair, and after the repair the real
+    // migrator accepts the history and applies the pending migration.
+    #[test]
+    fn should_let_a_restored_crlf_database_apply_new_migrations() {
+        let path = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            create_windows_database(&path, false).await;
+            let url = format!("sqlite:{}", path.display());
+            let migrator = Migrator::with_migrations(vec![
+                migration(1, CREATE_ITEMS),
+                migration(2, ADD_NAME),
+                migration(3, ADD_PRICE),
+            ]);
+            let pool = SqlitePool::connect(&url).await.unwrap();
+            let before = migrator.run(&pool).await;
+            pool.close().await;
+
+            // Act
+            let repaired = repair_line_ending_checksums(&path, &SOURCES).await.unwrap();
+            let pool = SqlitePool::connect(&url).await.unwrap();
+            let after = migrator.run(&pool).await;
+            let price_column: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM pragma_table_info('items') WHERE name = 'price'")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            pool.close().await;
+
+            // Assert
+            assert!(matches!(before, Err(sqlx::migrate::MigrateError::VersionMismatch(1))));
+            assert_eq!(repaired, 2);
+            assert!(after.is_ok(), "{after:?}");
+            assert_eq!(price_column, 1);
+        });
+        let _ = std::fs::remove_file(path);
+    }
+
+    // CASE: A migration's stored checksum differs by more than line endings.
+    // VALIDATES: Genuinely different SQL is never "repaired", so sqlx still reports it.
+    #[test]
+    fn should_not_realign_a_migration_whose_sql_really_differs() {
+        let path = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            create_windows_database(&path, true).await;
+
+            // Act
+            let repaired = repair_line_ending_checksums(&path, &SOURCES).await.unwrap();
+            let pool = SqlitePool::connect(&format!("sqlite:{}", path.display())).await.unwrap();
+            let stored: Vec<u8> = sqlx::query_scalar("SELECT checksum FROM _sqlx_migrations WHERE version = 2")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            pool.close().await;
+
+            // Assert
+            assert_eq!(repaired, 1);
+            assert_ne!(stored, sql_checksum(2, ADD_NAME.to_owned()));
+        });
+        let _ = std::fs::remove_file(path);
+    }
+
+    // CASE: A normal installation whose history already matches the running build starts up.
+    // VALIDATES: The repair is a no-op, including for a fresh install without a database.
+    #[test]
+    fn should_leave_matching_or_missing_databases_untouched() {
+        let missing = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            // Act
+            let repaired = repair_line_ending_checksums(&missing, &SOURCES).await.unwrap();
+
+            // Assert
+            assert_eq!(repaired, 0);
+            assert!(!missing.exists());
         });
     }
 }
