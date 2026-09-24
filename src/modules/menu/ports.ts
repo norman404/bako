@@ -7,7 +7,8 @@ import type {
   ModifierGroup,
   ModifierGroupType,
 } from "./modifier-group";
-import type { Product } from "./product";
+import type { Product, ProductComponent, ProductKind } from "./product";
+import type { WeeklySchedule } from "@/lib/weekly-schedule";
 
 export interface ProductUpsertInput {
   categoryId: string;
@@ -19,6 +20,9 @@ export interface ProductUpsertInput {
   prepTimeMinutes?: number;
   image?: string;
   isPopular: boolean;
+  kind?: ProductKind;
+  availabilitySchedule?: WeeklySchedule | null;
+  components?: ProductComponent[];
 }
 
 export interface CategoryCreateInput {

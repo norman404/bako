@@ -7,7 +7,8 @@ export { ProductSearch } from "./components/ProductSearch";
 
 // Domain
 export type { Category } from "./category";
-export type { Product } from "./product";
+export type { Product, ProductComponent, ProductKind } from "./product";
+export { PRODUCT_KIND } from "./product";
 export type { ModifierGroup, SelectedModifier } from "./modifier-group";
 export { buildCartItemKey } from "./modifier-group";
 
@@ -15,8 +16,9 @@ export { buildCartItemKey } from "./modifier-group";
 export { useCategories } from "./use-categories";
 export { useFilteredProducts } from "./use-filtered-products";
 export { useMenus } from "./use-menus";
+export { useProducts } from "./use-products";
 export { useProductModifierGroupsMap } from "./use-modifier-groups";
 
 // Lib
 export { calculateItemUnitPrice } from "./lib/modifier-price";
-export { parseProductPriceInput } from "./lib/product-price";
+export { formatProductPriceInput, parseProductPriceInput } from "./lib/product-price";
