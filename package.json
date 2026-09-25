@@ -61,7 +61,7 @@
     "@types/bun": "^1.4.2",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
-    "@vitejs/plugin-react": "^6.0.5",
+    "@vitejs/plugin-react": "^6.1.1",
     "drizzle-kit": "^0.31.9",
     "oxlint": "^1.85.0",
     "tailwindcss": "4.3.3",
