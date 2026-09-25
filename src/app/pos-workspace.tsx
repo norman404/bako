@@ -179,7 +179,7 @@ export function PosWorkspace({ onOpenAdmin, onOpenSettings }: PosWorkspaceProps)
   });
   const { data: promotions = [] } = usePromotions({ enabled: promotionsEnabled });
   const cartPricing = priceCart(synchronizedCartItems, promotionsEnabled ? promotions : [], {
-    applyDiscounts: channel === ORDER_CHANNEL.LOCAL,
+    applyDiscounts: promotionsEnabled && channel === ORDER_CHANNEL.LOCAL,
   });
   const cartTotals = cartPricing;
 

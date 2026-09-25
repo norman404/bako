@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import type { CartItem } from "./cart-operations";
 import { getLinePricing, type CartPricing } from "./cart-pricing";
 import {
-  calculateItemUnitPrice,
   formatRepeatedModifierLabel,
   groupRepeatedModifiers,
   type RepeatedModifier,
@@ -145,8 +144,8 @@ function Cart({
           ) : (
             <ul className="space-y-5">
               {items.map((item) => {
-                const unitPrice = calculateItemUnitPrice(item.product, item.selectedModifiers);
                 const line = getLinePricing(pricing, item.lineId);
+                const unitPrice = item.quantity > 0 ? line.grossTotal / item.quantity : 0;
                 const hasModifiers = modifierGroupsEnabled && item.selectedModifiers.length > 0;
 
                 return (

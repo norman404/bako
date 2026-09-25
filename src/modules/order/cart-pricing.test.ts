@@ -169,6 +169,7 @@ describe("composite products", () => {
 
     // Assert
     expect(pricing).toMatchObject({ subtotal: 8_000, discountTotal: 0, total: 8_000, applications: [] });
+    expect(getLinePricing(pricing, items[0]?.lineId ?? "").grossTotal).toBe(8_000);
   });
 });
 

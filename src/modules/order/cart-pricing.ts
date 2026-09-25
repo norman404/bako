@@ -72,7 +72,7 @@ function priceComposite(item: CartItem, ref: string, applyDiscounts: boolean): C
 }
 
 export interface PriceCartOptions {
-  // Delivery platforms set their own prices, so their carts carry no discounts at all.
+  // Controls both promotion and composite discounts; delivery carts and disabled features pass false.
   applyDiscounts: boolean;
 }
 
