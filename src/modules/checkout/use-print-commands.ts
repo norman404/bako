@@ -17,7 +17,7 @@ export function usePrintCommands(options: UsePrintCommandsOptions) {
   const headerText = comandaHeaderText?.trim() || "COMANDA";
 
   return {
-    printCommands: async (cartItems: CartItem[]) => {
+    printCommands: async (cartItems: CartItem[], orderName: string | null = null) => {
       const commands = buildKitchenCommands(
         cartItems.map((item) => ({
           product: {
@@ -31,8 +31,12 @@ export function usePrintCommands(options: UsePrintCommandsOptions) {
         printers,
         categories,
         headerText,
+        orderName,
       );
 
+      if (commands.length === 0 && cartItems.length > 0) {
+        return [new Error("No command printer configured for these products")];
+      }
       const results = await Promise.all(commands.map((command) => printCommand(command)));
       const errors = results.filter((result) => result.isErr()).map((result) => result.error);
 

@@ -19,6 +19,7 @@ export function buildOrderItemsInput(items: CartItem[]): CreateOrderInput["items
     productId: item.product.id,
     quantity: item.quantity,
     unitPrice: calculateItemUnitPrice(item.product, item.selectedModifiers),
+    unitCost: item.product.costPrice,
     modifiers: item.selectedModifiers.map((m) => ({
       groupId: m.groupId,
       groupName: m.groupName,
@@ -43,6 +44,7 @@ export function buildCreateOrderInput(
   paymentMode: CheckoutPaymentMode,
   cashAmountInput: string,
   total: number,
+  orderName: string,
 ): CreateOrderInput | null {
   if (items.length === 0) {
     return null;
@@ -54,6 +56,7 @@ export function buildCreateOrderInput(
   }
 
   return {
+    orderName,
     items: buildOrderItemsInput(items),
     payments,
   };

@@ -18,30 +18,42 @@
     "noEntries": "No hay secciones disponibles."
   },
   "dashboard": {
-    "eyebrow": "Administración",
-    "title": "Hoy",
-    "summaryAriaLabel": "Resumen de ventas del día",
+    "title": "Estadísticas de ventas",
     "refresh": "Actualizar",
-    "retry": "Reintentar",
     "error": {
-      "title": "No pudimos cargar las métricas",
-      "description": "Intentá actualizar el resumen operativo."
+      "title": "No pudimos cargar las estadísticas",
+      "description": "Intenta cambiar el periodo o actualizar.",
+      "invalidRange": "Selecciona un periodo válido"
     },
-    "metrics": {
-      "sales": "Ventas",
-      "orders": "Órdenes",
-      "averageTicket": "Ticket prom."
+    "period": {
+      "ariaLabel": "Periodo",
+      "day": "Hoy",
+      "week": "Semana",
+      "month": "Mes",
+      "custom": "Personalizado",
+      "from": "Desde",
+      "to": "Hasta"
+    },
+    "sales": "Ventas",
+    "chart": {
+      "title": "Evolución de ventas",
+      "granularityAriaLabel": "Ver ventas por día o por hora",
+      "byDay": "Por día",
+      "byHour": "Por hora",
+      "empty": "No hay ventas en este periodo."
+    },
+    "products": {
+      "title": "Productos más vendidos",
+      "units": "{{count}} uds",
+      "empty": "No hay productos vendidos."
     },
     "payments": {
       "title": "Métodos de pago",
       "cash": "Efectivo",
       "card": "Tarjeta",
-      "other": "Otros"
-    },
-    "activeShift": {
-      "title": "Turno actual",
-      "openedAt": "Abierto {{time}}",
-      "empty": "No hay un turno activo."
+      "other": "Otros",
+      "platform": "Pagado en app",
+      "empty": "No hay pagos registrados."
     }
   }
 }

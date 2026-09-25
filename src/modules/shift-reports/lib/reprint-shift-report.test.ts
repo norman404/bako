@@ -18,6 +18,10 @@ const LABELS: ReprintShiftReportLabels = {
   itemsLabel: "Productos vendidos",
   cashLabel: "Efectivo",
   cardLabel: "Tarjeta",
+  platformLabel: "Pagado en app",
+  localLabel: "Local",
+  pendingLabel: "Delivery pendiente",
+  voidedLabel: "Anulado",
   totalLabel: "Total vendido",
   openingCashLabel: "Efectivo inicial",
   expectedCashLabel: "Esperado",
@@ -37,6 +41,12 @@ const REPORT: ShiftReport = {
   totalSales: 680,
   cashTotal: 680,
   cardTotal: 0,
+  platformTotal: 0,
+  localTotal: 680,
+  uberTotal: 0,
+  didiTotal: 0,
+  deliveryByChannel: [],
+  pendingDeliveries: 0,
   orders: [],
   salesByCategory: [
     {
@@ -44,19 +54,12 @@ const REPORT: ShiftReport = {
       categoryName: "Comida",
       totalItems: 4,
       totalSales: 580,
-      products: [
-        { productId: "burger", productName: "Hamburguesa", quantity: 3, totalSales: 500 },
-        { productId: "fries", productName: "Papas", quantity: 1, totalSales: 80 },
-      ],
     },
     {
       categoryId: null,
       categoryName: null,
       totalItems: 2,
       totalSales: 100,
-      products: [
-        { productId: "soda", productName: "Refresco", quantity: 2, totalSales: 100 },
-      ],
     },
   ],
   openingCash: 0,
@@ -69,9 +72,9 @@ const REPORT: ShiftReport = {
 };
 
 describe("buildReprintShiftReportPayload", () => {
-  // CASE: Categories are enabled for a shift report that contains category and product totals.
-  // VALIDATES: The print payload carries a category heading, category totals, and product totals.
-  it("should include category summary rows when categories are enabled", () => {
+  // CASE: Categories are enabled for a shift report that contains category totals.
+  // VALIDATES: The print payload carries category totals without exposing product rows.
+  it("should include category totals without product rows when categories are enabled", () => {
     // Arrange
     const categoriesEnabled = true;
 
@@ -82,10 +85,11 @@ describe("buildReprintShiftReportPayload", () => {
     // Assert
     expect(itemNames).toContain("Ventas por categoría");
     expect(itemNames).toContain("Comida — 4 productos");
-    expect(itemNames).toContain("  Hamburguesa — 3 productos");
     expect(itemNames).toContain("Sin categoría — 2 productos");
+    expect(itemNames).not.toContain("  Hamburguesa — 3 productos");
+    expect(itemNames).not.toContain("  Papas — 1 productos");
+    expect(itemNames).not.toContain("  Refresco — 2 productos");
     expect(payload.items.find((item) => item.name === "Comida — 4 productos")?.unitPrice).toBe(580);
-    expect(payload.items.find((item) => item.name === "  Hamburguesa — 3 productos")?.unitPrice).toBe(500);
   });
 
   // CASE: Categories are disabled while a report still has computed category data.
@@ -103,4 +107,38 @@ describe("buildReprintShiftReportPayload", () => {
     expect(itemNames).not.toContain("Comida — 4 productos");
     expect(itemNames).not.toContain("  Hamburguesa — 3 productos");
   });
+});
+
+// CASE: A cut contains cash, terminal card, app sales and a pending delivery.
+// VALIDATES: The printed report preserves the actual payment split instead of reporting all sales as cash.
+it("should print separate app collections and pending counts when reprinting a delivery cut", () => {
+  // Arrange
+  const report = { ...REPORT, totalSales: 16000, cashTotal: 8000, cardTotal: 3000, platformTotal: 5000, localTotal: 3000, didiTotal: 8000, uberTotal: 5000, pendingDeliveries: 1, deliveryByChannel: [{ channel: "didi" as const, cash: 3000, platform: 5000 }, { channel: "uber" as const, cash: 0, platform: 5000 }] };
+  // Act
+  const payload = buildReprintShiftReportPayload(report, PRINTER, LABELS, false);
+  const itemNames = payload.items.map((item) => item.name);
+  // Assert
+  expect(payload.payments).toEqual([
+    { method: "cash", amount: 8000, cashReceived: 8000 },
+    { method: "card", amount: 3000, cashReceived: null },
+    { method: "platform", amount: 5000, cashReceived: null },
+  ]);
+  expect(itemNames).toContain("Delivery pendiente: 1");
+  expect(itemNames.some((name) => name.startsWith("Uber Eats · Pagado en app:"))).toBe(true);
+  expect(itemNames.some((name) => name.startsWith("DiDi · Efectivo:"))).toBe(true);
+  expect(itemNames.some((name) => name.startsWith("DiDi · Pagado en app:"))).toBe(true);
+});
+
+// CASE: An app collection is stored as zero because the register receives no money.
+// VALIDATES: The zero platform total is omitted from printed delivery rows and totals.
+it("should omit zero platform collections when reprinting a delivery cut", () => {
+  // Arrange
+  const report = { ...REPORT, totalSales: 8000, cashTotal: 0, cardTotal: 0, platformTotal: 0, localTotal: 0, didiTotal: 8000, uberTotal: 0, pendingDeliveries: 0, deliveryByChannel: [{ channel: "didi" as const, cash: 0, platform: 0 }] };
+  // Act
+  const payload = buildReprintShiftReportPayload(report, PRINTER, LABELS, false);
+  const itemNames = payload.items.map((item) => item.name);
+  // Assert
+  expect(itemNames.some((name) => name.startsWith("DiDi · Pagado en app:"))).toBe(false);
+  expect(itemNames.some((name) => name.startsWith(`${LABELS.platformLabel}:`))).toBe(false);
+  expect(payload.payments).toEqual([]);
 });

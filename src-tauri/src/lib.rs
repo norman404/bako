@@ -1,6 +1,7 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 mod commands;
+mod database;
 mod database_migrations;
 mod print;
 
@@ -9,7 +10,7 @@ use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 pub const DATABASE_FILENAME: &str = "bako.db";
 pub const DATABASE_URL: &str = "sqlite:bako.db";
-pub const CURRENT_MIGRATION_VERSION: i64 = 29;
+pub const CURRENT_MIGRATION_VERSION: i64 = 33;
 
 #[tauri::command]
 async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
@@ -215,9 +216,33 @@ pub fn run() {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: CURRENT_MIGRATION_VERSION,
+            version: 29,
             description: "shift_list_order",
             sql: include_str!("../migrations/0029_shift_list_order.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 30,
+            description: "order_name",
+            sql: include_str!("../migrations/0030_order_name.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 31,
+            description: "product_costs",
+            sql: include_str!("../migrations/0031_product_costs.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 32,
+            description: "delivery_orders",
+            sql: include_str!("../migrations/0032_delivery_orders.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: CURRENT_MIGRATION_VERSION,
+            description: "payments_platform",
+            sql: include_str!("../migrations/0033_payments_platform.sql"),
             kind: MigrationKind::Up,
         },
     ];
@@ -231,6 +256,7 @@ pub fn run() {
                 .add_migrations(DATABASE_URL, migrations)
                 .build(),
         )
+        .manage(database::DatabaseState::default())
         .setup(|app| {
             #[cfg(desktop)]
             app.handle()
@@ -247,6 +273,12 @@ pub fn run() {
             commands::export_database,
             commands::prepare_database_restore,
             commands::restore_database,
+            database::db_execute,
+            database::db_select,
+            database::db_begin,
+            database::db_commit,
+            database::db_rollback,
+            database::db_close,
             open_settings_window,
         ])
         .run(tauri::generate_context!())

@@ -23,6 +23,7 @@ const SQLITE_HEADER: &[u8; 16] = b"SQLite format 3\0";
 pub struct PrintTicketInput {
     pub printer_type: String,
     pub printer_address: String,
+    pub order_name: Option<String>,
     pub ticket_number: u32,
     pub created_at: String,
     pub total: u32,
@@ -46,6 +47,7 @@ pub fn print_ticket(input: PrintTicketInput) -> Result<(), String> {
         })?;
 
     let payload = TicketPayload {
+        order_name: input.order_name,
         ticket_number: input.ticket_number,
         created_at: input.created_at,
         total: input.total,
@@ -64,6 +66,7 @@ pub fn print_ticket(input: PrintTicketInput) -> Result<(), String> {
 pub struct PrintCommandInput {
     pub printer_type: String,
     pub printer_address: String,
+    pub order_name: Option<String>,
     pub header_text: String,
     pub items: Vec<CommandItem>,
     pub label_width_mm: Option<u32>,
@@ -88,6 +91,7 @@ pub fn print_command(input: PrintCommandInput) -> Result<(), String> {
         })?;
 
     let payload = CommandPayload {
+        order_name: input.order_name.clone(),
         header_text: input.header_text.clone(),
         items: input.items.clone(),
     };

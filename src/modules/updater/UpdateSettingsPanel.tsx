@@ -1,17 +1,11 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Download, RefreshCw, RotateCw, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { APP_VERSION } from "@/lib/app-version";
 import {
-  requestSettingsOperation,
-  SETTINGS_RPC_OPERATION,
   SETTINGS_UPDATE_STATUS,
-  useSettingsWindowStore,
   useSettingsWindowUpdater,
   type SettingsUpdateInfoDto,
 } from "@/modules/settings/settings-window-entry";
@@ -62,36 +56,15 @@ function StatusMessage({ status }: { status: SettingsUpdateInfoDto }) {
 }
 
 export function UpdateSettingsPanel() {
-  const { t } = useTranslation(["updater", "settings"]);
+  const { t } = useTranslation("updater");
   const updater = useSettingsWindowUpdater();
-  const flags = useSettingsWindowStore((state) => state.snapshot?.flags);
-  const [isUpdatingAutoUpdate, setIsUpdatingAutoUpdate] = useState(false);
-
-  if (!flags) return null;
-
-  const autoUpdateEnabled = flags.auto_update_enabled ?? true;
   const status = updater.status;
 
   async function runUpdaterAction(action: () => Promise<void>) {
     try {
       await action();
     } catch {
-      toast.error(t("updater:panel.genericError"));
-    }
-  }
-
-  async function updateAutoUpdate(checked: boolean) {
-    setIsUpdatingAutoUpdate(true);
-    try {
-      const updated = await requestSettingsOperation(SETTINGS_RPC_OPERATION.UPDATE_FEATURE_FLAG, {
-        key: "auto_update_enabled",
-        value: checked,
-      });
-      useSettingsWindowStore.getState().applySnapshot(updated);
-    } catch {
-      toast.error(t("settings:featureFlags.updateError"));
-    } finally {
-      setIsUpdatingAutoUpdate(false);
+      toast.error(t("panel.genericError"));
     }
   }
 
@@ -102,31 +75,16 @@ export function UpdateSettingsPanel() {
           <Download className="h-4 w-4" aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-sm font-medium text-text">{t("updater:panel.title")}</h3>
+          <h3 className="text-sm font-medium text-text">{t("panel.title")}</h3>
+          <p className="mt-1 text-xs text-text-dim">{t("panel.manualDescription")}</p>
         </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-4 border-t border-border py-3">
         <span className="text-sm font-medium text-text">
-          {t("updater:panel.currentVersionLabel")}
+          {t("panel.currentVersionLabel")}
         </span>
         <span className="font-mono-tabular text-xs text-text-muted">{APP_VERSION}</span>
-      </div>
-
-      <div className="flex items-center justify-between gap-4 border-t border-border py-3">
-        <div className="grid gap-0.5">
-          <Label htmlFor="auto-update-enabled" className="text-sm font-medium text-text">
-            {t("updater:panel.autoUpdateLabel")}
-          </Label>
-          <p className="text-xs text-text-dim">{t("updater:panel.autoUpdateDescription")}</p>
-        </div>
-        <Switch
-          id="auto-update-enabled"
-          aria-label={t("updater:panel.autoUpdateLabel")}
-          checked={autoUpdateEnabled}
-          onCheckedChange={(checked) => void updateAutoUpdate(checked)}
-          disabled={isUpdatingAutoUpdate}
-        />
       </div>
 
       <div className="flex items-center justify-between gap-4 border-t border-border py-3">
@@ -142,7 +100,7 @@ export function UpdateSettingsPanel() {
               disabled={updater.isChecking}
             >
               <Search className="h-3.5 w-3.5" />
-              {t("updater:panel.checkButton")}
+              {t("panel.checkButton")}
             </Button>
           ) : null}
 
@@ -154,7 +112,7 @@ export function UpdateSettingsPanel() {
               disabled={updater.isDownloading}
             >
               <Download className="h-3.5 w-3.5" />
-              {t("updater:panel.downloadAndInstall")}
+              {t("panel.downloadAndInstall")}
             </Button>
           ) : null}
 
@@ -165,7 +123,7 @@ export function UpdateSettingsPanel() {
               onClick={() => void runUpdaterAction(updater.relaunch)}
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              {t("updater:panel.restart")}
+              {t("panel.restart")}
             </Button>
           ) : null}
 
@@ -176,7 +134,7 @@ export function UpdateSettingsPanel() {
               onClick={() => void runUpdaterAction(updater.checkForUpdates)}
             >
               <RotateCw className="h-3.5 w-3.5" />
-              {t("updater:panel.tryAgain")}
+              {t("panel.tryAgain")}
             </Button>
           ) : null}
         </div>

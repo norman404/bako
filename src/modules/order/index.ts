@@ -7,3 +7,14 @@ export { calculateCartTotals } from "./cart-operations";
 
 // Store
 export { useOrderStore } from "./order-store";
+
+// Order name
+export { normalizeOrderName, ORDER_NAME_MAX_LENGTH } from "./order-name";
+export {
+  ORDER_CHANNEL,
+  DELIVERY_REFERENCE_MAX_LENGTH,
+  isOrderChannel,
+  normalizeDeliveryReference,
+  orderPrintName,
+  type OrderChannel,
+} from "./order-channel";

@@ -11,6 +11,10 @@ export interface ReprintShiftReportLabels {
   itemsLabel: string;
   cashLabel: string;
   cardLabel: string;
+  platformLabel: string;
+  localLabel: string;
+  pendingLabel: string;
+  voidedLabel: string;
   totalLabel: string;
   openingCashLabel: string;
   expectedCashLabel: string;
@@ -63,20 +67,12 @@ function buildCategorySummaryItems(
 
   return [
     createSummaryItem(labels.categorySalesLabel),
-    ...report.salesByCategory.flatMap((category) => {
+    ...report.salesByCategory.map((category) => {
       const categoryName = category.categoryName ?? labels.uncategorizedCategoryLabel;
-      return [
-        createSummaryItem(
-          `${categoryName} — ${category.totalItems} ${labels.itemCountLabel}`,
-          category.totalSales,
-        ),
-        ...category.products.map((product) =>
-          createSummaryItem(
-            `  ${product.productName} — ${product.quantity} ${labels.itemCountLabel}`,
-            product.totalSales,
-          ),
-        ),
-      ];
+      return createSummaryItem(
+        `${categoryName} — ${category.totalItems} ${labels.itemCountLabel}`,
+        category.totalSales,
+      );
     }),
   ];
 }
@@ -166,21 +162,37 @@ export function buildReprintShiftReportPayload(
             },
           ]
         : []),
+      createSummaryItem(`${labels.localLabel}: ${formatPosCurrency(report.localTotal)}`),
+      createSummaryItem(`Uber Eats: ${formatPosCurrency(report.uberTotal)}`),
+      createSummaryItem(`DiDi: ${formatPosCurrency(report.didiTotal)}`),
+      ...report.deliveryByChannel.flatMap((entry) => {
+        const channelLabel = entry.channel === "didi" ? "DiDi" : "Uber Eats";
+        return [
+          ...(entry.cash > 0 ? [createSummaryItem(`${channelLabel} · ${labels.cashLabel}: ${formatPosCurrency(entry.cash)}`)] : []),
+          ...(entry.platform > 0 ? [createSummaryItem(`${channelLabel} · ${labels.platformLabel}: ${formatPosCurrency(entry.platform)}`)] : []),
+        ];
+      }),
+      ...(report.platformTotal > 0 ? [createSummaryItem(`${labels.platformLabel}: ${formatPosCurrency(report.platformTotal)}`)] : []),
+      createSummaryItem(`${labels.pendingLabel}: ${report.pendingDeliveries}`),
       ...(categoriesEnabled ? buildCategorySummaryItems(report, labels) : []),
       ...report.orders.map((order) => ({
-        name: `#${order.ticketNumber} — ${formatPosCurrency(order.total)}`,
+        name: [
+          `#${order.ticketNumber}`,
+          order.channel === "local" ? null : order.channel === "didi" ? "DiDi" : "Uber Eats",
+          order.deliveryReference,
+          order.isPending ? labels.pendingLabel : formatPosCurrency(order.total),
+          order.isVoided ? labels.voidedLabel : null,
+        ].filter(Boolean).join(" — "),
         quantity: 1,
         unitPrice: 0,
         modifiers: [] as Array<{ groupName: string; optionName: string | null; textValue: string | null }>,
       })),
     ],
     payments: [
-      {
-        method: "cash",
-        amount: report.totalSales,
-        cashReceived: report.totalSales,
-      },
-    ],
+      { method: "cash", amount: report.cashTotal, cashReceived: report.cashTotal },
+      { method: "card", amount: report.cardTotal, cashReceived: null },
+      { method: "platform", amount: report.platformTotal, cashReceived: null },
+    ].filter((payment) => payment.amount > 0),
   };
 }
 

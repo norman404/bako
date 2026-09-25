@@ -1,3 +1,5 @@
+import type { OrderChannel } from "@/modules/order";
+
 export type ShiftStatus = "active" | "closed";
 
 export type CashMovementType = "income" | "expense";
@@ -41,19 +43,11 @@ export interface ShiftReportOrderItem {
   unitPrice: number;
 }
 
-export interface ShiftReportCategoryProduct {
-  productId: string;
-  productName: string;
-  quantity: number;
-  totalSales: number;
-}
-
 export interface ShiftReportCategory {
   categoryId: string | null;
   categoryName: string | null;
   totalItems: number;
   totalSales: number;
-  products: ShiftReportCategoryProduct[];
 }
 
 export interface ShiftReportPayment {
@@ -62,8 +56,19 @@ export interface ShiftReportPayment {
   cashReceived: number | null;
 }
 
+export interface DeliveryChannelTotal {
+  channel: OrderChannel;
+  cash: number;
+  platform: number;
+}
+
 export interface ShiftReportOrder {
   orderId: string;
+  channel: OrderChannel;
+  deliveryReference: string | null;
+  isPending: boolean;
+  canModify: boolean;
+  orderName: string | null;
   ticketNumber: number;
   createdAt: Date;
   total: number;
@@ -82,6 +87,12 @@ export interface ShiftReport {
   totalSales: number;
   cashTotal: number;
   cardTotal: number;
+  platformTotal: number;
+  localTotal: number;
+  uberTotal: number;
+  didiTotal: number;
+  deliveryByChannel: DeliveryChannelTotal[];
+  pendingDeliveries: number;
   orders: ShiftReportOrder[];
   salesByCategory: ShiftReportCategory[];
   openingCash: number;

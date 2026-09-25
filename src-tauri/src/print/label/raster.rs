@@ -144,6 +144,7 @@ pub fn render_label(
     width_mm: u32,
     height_mm: u32,
     header_text: &str,
+    order_name: Option<&str>,
     items: &[CommandItem],
 ) -> Result<RasterLabel, PrintError> {
     let font = load_font()?;
@@ -163,6 +164,19 @@ pub fn render_label(
         header_baseline,
     );
     cursor_y += line_height(&font, header_size) + HEADER_GAP;
+
+    if let Some(order_name) = order_name.filter(|order_name| !order_name.is_empty()) {
+        let scaled_name = font.as_scaled(mod_size);
+        let name_baseline = cursor_y as f32 + scaled_name.ascent();
+        label.render_text_line(
+            &font,
+            mod_size,
+            &format!("Name: {}", order_name),
+            LEFT_MARGIN,
+            name_baseline,
+        );
+        cursor_y += line_height(&font, mod_size);
+    }
 
     for item in items {
         let display_name = if item.quantity > 1 {
@@ -202,7 +216,15 @@ mod tests {
     use crate::print::ticket::CommandItem;
 
     fn render_default(header: &str, items: &[CommandItem]) -> RasterLabel {
-        render_label(40, 30, header, items).unwrap()
+        render_label(40, 30, header, None, items).unwrap()
+    }
+
+    #[test]
+    fn render_label_adds_order_name_content_when_present() {
+        let without_name = render_default("COMANDA", &[]);
+        let with_name = render_label(40, 30, "COMANDA", Some("Mesa 4"), &[]).unwrap();
+
+        assert_ne!(with_name.data, without_name.data);
     }
 
     #[test]

@@ -1,6 +1,7 @@
 export const PRINT_TICKET_PAYMENT_METHOD = {
   CASH: "cash",
   CARD: "card",
+  PLATFORM: "platform",
 } as const;
 
 export type PrintTicketPaymentMethod =
@@ -26,6 +27,7 @@ export interface PrintOrderPayment {
 }
 
 export interface PrintOrderOptions {
+  orderName: string | null;
   ticketNumber: number;
   createdAt: Date;
   total: number;

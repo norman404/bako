@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import Database from "@tauri-apps/plugin-sql";
 import { drizzle } from "drizzle-orm/sqlite-proxy";
 
@@ -5,43 +6,35 @@ import * as schema from "@/db/schema";
 
 const DATABASE_URL = "sqlite:bako.db";
 
-type SqlClient = Awaited<ReturnType<typeof Database.load>>;
 type SqliteMethod = "run" | "all" | "values" | "get";
 type SqlResponse = {
   rows: unknown[] | unknown[][];
 };
 type SqlExecutor = (sql: string, params: unknown[], method: SqliteMethod) => Promise<SqlResponse>;
 
-let sqlClient: SqlClient | null = null;
 let databaseQueue: Promise<void> = Promise.resolve();
 
-async function getSqlClient(): Promise<SqlClient> {
-  if (!sqlClient) {
-    sqlClient = await Database.load(DATABASE_URL);
-  }
-
-  return sqlClient;
-}
-
+// Queries run on a single pinned connection in Rust (see src-tauri/src/database.rs).
+// tauri-plugin-sql is only used to run migrations: its pool spreads BEGIN, the
+// statements and COMMIT across different connections, which breaks transactions.
 async function executeSql(
-  client: SqlClient,
   sql: string,
   params: unknown[],
   method: SqliteMethod,
+  transactionId?: number,
 ): Promise<SqlResponse> {
   if (method === "run") {
-    await client.execute(sql, params);
+    await invoke("db_execute", { sql, values: params, transactionId });
     return { rows: [] };
   }
 
-  const rows = await client.select<Record<string, unknown>[]>(sql, params);
-  const values = rows.map((row) => Object.values(row));
+  const rows = await invoke<unknown[][]>("db_select", { sql, values: params, transactionId });
 
   if (method === "get") {
-    return { rows: values[0] ?? [] };
+    return { rows: rows[0] ?? [] };
   }
 
-  return { rows: values };
+  return { rows };
 }
 
 function runExclusive<T>(operation: () => Promise<T>): Promise<T> {
@@ -60,40 +53,34 @@ function createDatabase(execute: SqlExecutor) {
 }
 
 export async function initDatabase(): Promise<void> {
-  await getSqlClient();
+  // Loading through the plugin creates the file and applies pending migrations.
+  // Its pool is closed right away so every query goes through the pinned connection.
+  const migrator = await Database.load(DATABASE_URL);
+  await migrator.close(DATABASE_URL);
 }
 
 export async function closeDatabase(): Promise<void> {
-  await runExclusive(async () => {
-    if (!sqlClient) return;
-
-    await sqlClient.close(DATABASE_URL);
-    sqlClient = null;
-  });
+  await runExclusive(() => invoke<void>("db_close"));
 }
 
 export const db = createDatabase(async (sql, params, method) =>
-  runExclusive(async () => executeSql(await getSqlClient(), sql, params, method)),
+  runExclusive(() => executeSql(sql, params, method)),
 );
 
 export type DatabaseClient = typeof db;
 
 export async function withTransaction<T>(operation: (tx: DatabaseClient) => Promise<T>): Promise<T> {
   return runExclusive(async () => {
-    const client = await getSqlClient();
-    const tx = createDatabase((sql, params, method) => executeSql(client, sql, params, method));
-
-    await client.execute("BEGIN");
+    const transactionId = await invoke<number>("db_begin");
+    const tx = createDatabase((sql, params, method) => executeSql(sql, params, method, transactionId));
 
     try {
       const result = await operation(tx);
-      await client.execute("COMMIT");
+      await invoke("db_commit", { transactionId });
       return result;
     } catch (error) {
-      try {
-        await client.execute("ROLLBACK");
-      } catch {}
-
+      // A failed commit is already rolled back in Rust; this covers errors inside `operation`.
+      await invoke("db_rollback", { transactionId }).catch(() => undefined);
       throw error;
     }
   });

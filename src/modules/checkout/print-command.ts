@@ -21,6 +21,7 @@ export interface PrintCommandDestination {
 }
 
 export interface PrintCommandOptions {
+  orderName: string | null;
   headerText: string;
   items: PrintCommandItem[];
   destination: PrintCommandDestination;

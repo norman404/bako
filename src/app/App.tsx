@@ -6,10 +6,7 @@ import { AdminWorkspace } from "@/app/admin-workspace";
 import { MODULE_REGISTRY } from "@/app/module-registry";
 import { PosWorkspace } from "@/app/pos-workspace";
 import { useSettingsWindowBridge } from "@/settings/use-settings-bridge";
-import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { openSettingsWindow, useSettingsStore } from "@/modules/settings";
-import { UpdateToast, useUpdater } from "@/modules/updater";
-import { useMountEffect } from "@/lib/use-mount-effect";
 
 const APP_WORKSPACE = {
   POS: "pos",
@@ -23,15 +20,7 @@ export function App() {
 
   const [workspace, setWorkspace] = useState<AppWorkspace>(APP_WORKSPACE.POS);
   const { t } = useTranslation("settings");
-  const { flags } = useFeatureFlagsStore();
-  const updater = useUpdater();
   const waitForSettingsWindowBridge = useSettingsWindowBridge();
-
-  useMountEffect(() => {
-    if (flags.auto_update_enabled) {
-      updater.checkForUpdates();
-    }
-  });
 
   async function handleOpenSettings() {
     try {
@@ -57,8 +46,6 @@ export function App() {
           onOpenSettings={handleOpenSettings}
         />
       )}
-
-      <UpdateToast updater={updater} />
     </>
   );
 }

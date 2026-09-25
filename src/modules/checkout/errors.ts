@@ -1,4 +1,7 @@
 export type CheckoutErrorCode =
+  | "invalidOrderChannel"
+  | "pendingPaymentNotAllowed"
+  | "noActiveShift"
   | "invalidPaymentMethod"
   | "invalidPaymentAmount"
   | "paymentRequired"

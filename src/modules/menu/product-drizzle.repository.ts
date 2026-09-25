@@ -15,6 +15,7 @@ function rowToProduct(row: ProductRow, menuIds: string[] = []): Product {
     name: row.name,
     description: row.description,
     price: row.price,
+    costPrice: row.costPrice,
     prepTimeMinutes: row.prepTimeMinutes,
     image: row.image,
     isPopular: row.isPopular,
@@ -39,6 +40,10 @@ function validateProductInput(input: ProductUpsertInput): MenuDomainError | null
 
   if (!Number.isInteger(input.price) || input.price < 0) {
     return new MenuDomainError("Product price must be a non-negative integer in cents");
+  }
+
+  if (!Number.isInteger(input.costPrice ?? 0) || (input.costPrice ?? 0) < 0) {
+    return new MenuDomainError("Product cost must be a non-negative integer in cents");
   }
 
   const prepTimeMinutes = input.prepTimeMinutes ?? 0;
@@ -96,6 +101,7 @@ function normalizeProductInput(input: ProductUpsertInput): Required<ProductUpser
     description: (input.description ?? "").trim(),
     image: (input.image ?? "").trim(),
     prepTimeMinutes: input.prepTimeMinutes ?? 0,
+    costPrice: input.costPrice ?? 0,
     menuIds: input.menuIds,
   };
 }
@@ -179,6 +185,7 @@ export const productDrizzleRepository: ProductRepository = {
             name: normalizedInput.name,
             description: normalizedInput.description,
             price: normalizedInput.price,
+            costPrice: normalizedInput.costPrice,
             prepTimeMinutes: normalizedInput.prepTimeMinutes,
             image: normalizedInput.image,
             isPopular: normalizedInput.isPopular,
@@ -227,6 +234,7 @@ export const productDrizzleRepository: ProductRepository = {
             name: normalizedInput.name,
             description: normalizedInput.description,
             price: normalizedInput.price,
+            costPrice: normalizedInput.costPrice,
             prepTimeMinutes: normalizedInput.prepTimeMinutes,
             image: normalizedInput.image,
             isPopular: normalizedInput.isPopular,

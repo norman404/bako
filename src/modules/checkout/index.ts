@@ -3,6 +3,7 @@ export { CheckoutModal } from "./components/CheckoutModal";
 
 // Domain — print ticket
 export type { PrintOrderOptions, PrintOrderPayment } from "./print-ticket";
+export type { CheckoutOrder } from "./order";
 
 // Adapters
 export { printOrder } from "./print-ticket.adapter";
@@ -28,3 +29,4 @@ export { usePrintCommands } from "./use-print-commands";
 
 // Lib
 export { buildKitchenCommands, type CartLine } from "./lib/build-kitchen-commands";
+export { buildOrderItemsInput } from "./lib/builders";

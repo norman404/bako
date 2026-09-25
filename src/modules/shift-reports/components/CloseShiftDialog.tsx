@@ -42,7 +42,7 @@ function BreakdownRow({ label, value, sign }: BreakdownRowProps) {
 
 export function CloseShiftDialog({ open, onOpenChange, shiftId, onClosed }: CloseShiftDialogProps) {
   const { t } = useTranslation("shift");
-  const { data: report } = useShiftReport(shiftId);
+  const { data: report, isLoading: isLoadingReport, isError: reportError } = useShiftReport(shiftId);
   const closeShiftMutation = useCloseShift();
   const [countedInput, setCountedInput] = useState("");
 
@@ -82,7 +82,7 @@ export function CloseShiftDialog({ open, onOpenChange, shiftId, onClosed }: Clos
       : "";
 
   function handleConfirm() {
-    if (!isValid || parsedCounted === null || !shiftId) return;
+    if (!isValid || parsedCounted === null || !shiftId || !report || reportError || isLoadingReport) return;
     closeShiftMutation.mutate(
       { shiftId, countedCash: parsedCounted },
       {
@@ -134,6 +134,10 @@ export function CloseShiftDialog({ open, onOpenChange, shiftId, onClosed }: Clos
             </div>
           </div>
 
+          {report && report.pendingDeliveries > 0 ? <p className="mt-4 rounded-card bg-warning/10 p-3 text-sm text-warning">
+            {t("pendingDeliveries", { count: report.pendingDeliveries })} {t("pendingDeliveriesHint")}
+          </p> : null}
+          {reportError ? <p role="alert" className="mt-3 text-danger">{t("errors.dbError")}</p> : null}
           <div className="mt-4 grid gap-2">
             <Label htmlFor="counted-cash" className="eyebrow">
               {t("countedCashLabel")}
@@ -175,7 +179,7 @@ export function CloseShiftDialog({ open, onOpenChange, shiftId, onClosed }: Clos
           <Button
             size="medium"
             onClick={handleConfirm}
-            disabled={!isValid || isPending}
+            disabled={!isValid || isPending || !report || reportError || isLoadingReport}
           >
             {t("closeButton")}
           </Button>

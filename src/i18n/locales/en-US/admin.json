@@ -18,30 +18,42 @@
     "noEntries": "No sections are available."
   },
   "dashboard": {
-    "eyebrow": "Administration",
-    "title": "Today",
-    "summaryAriaLabel": "Today's sales summary",
+    "title": "Sales analytics",
     "refresh": "Refresh",
-    "retry": "Retry",
     "error": {
-      "title": "We could not load the metrics",
-      "description": "Try refreshing the operational summary."
+      "title": "We could not load the analytics",
+      "description": "Try changing the period or refreshing.",
+      "invalidRange": "Select a valid date range"
     },
-    "metrics": {
-      "sales": "Sales",
-      "orders": "Orders",
-      "averageTicket": "Avg. ticket"
+    "period": {
+      "ariaLabel": "Period",
+      "day": "Today",
+      "week": "Week",
+      "month": "Month",
+      "custom": "Custom",
+      "from": "From",
+      "to": "To"
+    },
+    "sales": "Sales",
+    "chart": {
+      "title": "Sales over time",
+      "granularityAriaLabel": "View sales by day or by hour",
+      "byDay": "By day",
+      "byHour": "By hour",
+      "empty": "There are no sales in this period."
+    },
+    "products": {
+      "title": "Top-selling products",
+      "units": "{{count}} units",
+      "empty": "No products sold."
     },
     "payments": {
       "title": "Payment methods",
       "cash": "Cash",
       "card": "Card",
-      "other": "Other"
-    },
-    "activeShift": {
-      "title": "Current shift",
-      "openedAt": "Opened {{time}}",
-      "empty": "There is no active shift."
+      "other": "Other",
+      "platform": "Paid in app",
+      "empty": "No payments recorded."
     }
   }
 }

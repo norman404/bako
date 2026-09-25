@@ -13,9 +13,8 @@
   },
   "panel": {
     "title": "Actualizaciones",
+    "manualDescription": "Busca e instala actualizaciones manualmente desde aquí.",
     "currentVersionLabel": "Versión instalada",
-    "autoUpdateLabel": "Buscar actualizaciones automáticamente",
-    "autoUpdateDescription": "Al iniciar, Bako verifica si hay una nueva versión disponible.",
     "checkButton": "Buscar actualizaciones ahora",
     "checking": "Buscando...",
     "upToDate": "Estás en la última versión",

@@ -7,6 +7,7 @@ pub const DEFAULT_LABEL_GAP_MM: u32 = 2;
 
 #[derive(Debug, Clone)]
 pub struct LabelPayload {
+    pub order_name: Option<String>,
     pub header_text: String,
     pub items: Vec<CommandItem>,
     pub width_mm: Option<u32>,

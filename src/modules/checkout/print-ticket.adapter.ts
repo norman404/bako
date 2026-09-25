@@ -7,6 +7,7 @@ import type { PrintOrderOptions } from "./print-ticket";
 export interface PrintTicketPayload {
   printerType: string;
   printerAddress: string;
+  orderName: string | null;
   ticketNumber: number;
   createdAt: string;
   total: number;
@@ -27,10 +28,15 @@ export interface PrintTicketPayload {
   }>;
 }
 
-function buildPayload(input: PrintOrderOptions, printerType: string, printerAddress: string): PrintTicketPayload {
+export function buildPrintTicketPayload(
+  input: PrintOrderOptions,
+  printerType: string,
+  printerAddress: string,
+): PrintTicketPayload {
   return {
     printerType,
     printerAddress,
+    orderName: input.orderName,
     ticketNumber: input.ticketNumber,
     createdAt: input.createdAt.toLocaleString(undefined, {
       day: "numeric",
@@ -62,7 +68,11 @@ export function printOrder(
     return okAsync(undefined);
   }
 
-  const payload = buildPayload(input, defaultReceiptPrinter.type, defaultReceiptPrinter.address);
+  const payload = buildPrintTicketPayload(
+    input,
+    defaultReceiptPrinter.type,
+    defaultReceiptPrinter.address,
+  );
 
   const invokeAsync = async (): Promise<void> => {
     await invoke("print_ticket", { input: payload });

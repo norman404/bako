@@ -5,6 +5,7 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  costPrice: number;
   prepTimeMinutes: number;
   image: string;
   isPopular: boolean;

@@ -16,6 +16,7 @@ const PRODUCT: Product = {
   name: "Coffee",
   description: "",
   price: 300,
+  costPrice: 100,
   prepTimeMinutes: 1,
   image: "",
   isPopular: false,
