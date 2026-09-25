@@ -28,6 +28,18 @@ function toCartLine(item: OrderDetailItem, quantity: number): CartLine {
   };
 }
 
+// The kitchen prepares what a composite contains, so its children are printed instead of it.
+// Child rows store the total for the whole line; a partial reprint scales them per unit.
+function toKitchenLines(item: OrderDetailItem, quantity: number): CartLine[] {
+  if (item.children.length === 0) return [toCartLine(item, quantity)];
+
+  return item.children.map((child) => ({
+    product: { id: child.productId, name: child.productName, categoryId: child.categoryId },
+    quantity: (child.quantity / item.quantity) * quantity,
+    selectedModifiers: [],
+  }));
+}
+
 function invalidCommandSelection(): ReprintCommandResult {
   return {
     printedCount: 0,
@@ -40,7 +52,7 @@ function selectCartLines(
   selections: CommandItemSelection[] | undefined,
 ): CartLine[] | ReprintCommandResult {
   if (selections === undefined) {
-    return orderDetail.items.map((item) => toCartLine(item, item.quantity));
+    return orderDetail.items.flatMap((item) => toKitchenLines(item, item.quantity));
   }
 
   const itemsById = new Map(orderDetail.items.map((item) => [item.id, item]));
@@ -62,7 +74,7 @@ function selectCartLines(
 
   return orderDetail.items.flatMap((item) => {
     const quantity = quantitiesByItemId.get(item.id);
-    return quantity === undefined ? [] : [toCartLine(item, quantity)];
+    return quantity === undefined ? [] : toKitchenLines(item, quantity);
   });
 }
 

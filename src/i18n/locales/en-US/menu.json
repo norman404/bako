@@ -30,9 +30,27 @@
     "requiredLabel": "Required",
     "optionalLabel": "Optional",
     "missingSelectionHint": "Please select {{groupName}}",
-    "summaryTotal": "Total"
+    "summaryTotal": "Total",
+    "decreaseOption": "Remove one {{optionName}}",
+    "increaseOption": "Add another {{optionName}}"
   },
   "modifierBadge": {
     "label": "Customizable"
+  },
+  "composite": {
+    "toggle": "Composite product (bundle)",
+    "hint": "Selling it records the included products. Within its schedule this product's price is charged; outside it, the products are added separately at regular price.",
+    "componentsLabel": "Included products",
+    "componentPlaceholder": "Choose a product",
+    "add": "Add",
+    "remove": "Remove",
+    "quantityLabel": "Quantity",
+    "missing": "Deleted product",
+    "separately": "Separately: {{amount}}",
+    "savings": "Savings: {{amount}}",
+    "moreExpensive": "The bundle costs more than buying separately",
+    "scheduleToggle": "Bundle price only during a schedule",
+    "badge": "Bundle",
+    "outsideSchedule": "Outside schedule: added separately"
   }
 }

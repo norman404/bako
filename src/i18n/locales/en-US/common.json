@@ -1,4 +1,24 @@
 {
   "confirm": "Confirm",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "schedule": {
+    "daysLabel": "Days",
+    "startLabel": "Start time",
+    "endLabel": "End time",
+    "until": "to",
+    "removeWindow": "Remove time slot",
+    "addWindow": "Add time slot",
+    "midnightHint": "An end of 00:00 means until midnight. If the end is before the start (22:00 to 02:00), the slot crosses midnight.",
+    "validFrom": "Valid from (optional)",
+    "validUntil": "Valid until (optional)",
+    "weekdays": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    }
+  }
 }

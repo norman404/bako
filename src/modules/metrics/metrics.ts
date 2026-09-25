@@ -2,7 +2,7 @@ import { ORDER_CHANNEL } from "@/modules/order";
 
 export interface MetricsDateRange { start: Date; end: Date }
 export interface SalesOrderRow { channel: string; id: string; total: number; createdAt: Date }
-export interface SalesItemRow { orderId: string; productId: string; productName: string; quantity: number; unitPrice: number }
+export interface SalesItemRow { orderId: string; productId: string; productName: string; quantity: number; unitPrice: number; discountAmount?: number }
 export interface MetricsPaymentRow { method: string; amount: number }
 export interface SalesSeriesPoint { date: string; sales: number }
 export interface ProductMetric { productId: string; productName: string; sales: number; items: number }
@@ -31,7 +31,7 @@ export function aggregateSalesMetrics(
   for (const item of items) {
     if (!localOrderIds.has(item.orderId)) continue;
     const product = products.get(item.productId) ?? { productId: item.productId, productName: item.productName, sales: 0, items: 0 };
-    product.sales += item.unitPrice * item.quantity;
+    product.sales += item.unitPrice * item.quantity - (item.discountAmount ?? 0);
     product.items += item.quantity;
     products.set(item.productId, product);
   }

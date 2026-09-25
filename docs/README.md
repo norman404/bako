@@ -22,6 +22,7 @@ The split is deliberate; do not translate a document into the other language whi
 | [`docs/architecture/`](architecture/) and [`docs/contributing/`](contributing/) | English |
 | [`docs/adr/`](adr/README.md) | Spanish |
 | [`docs/database-backups.md`](database-backups.md) | Spanish |
+| [`docs/promotions.md`](promotions.md) | Spanish |
 
 ## Architecture
 
@@ -40,3 +41,4 @@ The split is deliberate; do not translate a document into the other language whi
 ## Other guides
 
 - [Database backups](database-backups.md) — the export/restore flow exposed in Settings.
+- [Promotions](promotions.md) — scheduled promotions, composite products, and how each sale records the discounts it received.

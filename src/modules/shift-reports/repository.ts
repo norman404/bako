@@ -7,6 +7,7 @@ import {
   cashMovements,
   orderItems,
   orderItemModifiers,
+  orderPromotions,
   orders,
   payments,
   products,
@@ -15,10 +16,12 @@ import {
   type PaymentRow,
   type ShiftRow,
 } from "@/db/schema";
+import { validatePromotionEvidence } from "@/modules/checkout";
 import { isOrderChannel, ORDER_CHANNEL } from "@/modules/order";
 import { projectShiftOrder, summarizeShiftOrders } from "./shift-accounting";
 import { ShiftPersistenceError } from "./errors";
 import { aggregateCategorySales } from "./lib/category-sales";
+import { aggregatePromotions } from "./lib/promotion-summary";
 import type { ShiftRepository } from "./ports";
 import type {
   CashMovement,
@@ -179,7 +182,7 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     .where(eq(payments.orderId, orderId))
     .orderBy(asc(payments.createdAt));
 
-  const itemRows = await db
+  const allItemRows = await db
     .select({
       id: orderItems.id,
       productId: orderItems.productId,
@@ -187,10 +190,22 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
       categoryId: products.categoryId,
       quantity: orderItems.quantity,
       unitPrice: orderItems.unitPrice,
+      unitCost: orderItems.unitCost,
+      discountAmount: orderItems.discountAmount,
+      orderPromotionId: orderItems.orderPromotionId,
+      parentOrderItemId: orderItems.parentOrderItemId,
     })
     .from(orderItems)
     .leftJoin(products, eq(products.id, orderItems.productId))
     .where(eq(orderItems.orderId, orderId));
+  const itemRows = allItemRows.filter((row) => row.parentOrderItemId === null);
+
+  const promotionRows = await db
+    .select()
+    .from(orderPromotions)
+    .where(eq(orderPromotions.orderId, orderId))
+    .orderBy(asc(orderPromotions.createdAt));
+  const promotionNameById = new Map(promotionRows.map((row) => [row.id, row.nameSnapshot]));
 
   const itemIds = itemRows.map((r) => r.id);
   const modifierRows =
@@ -230,7 +245,19 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     categoryId: item.categoryId ?? null,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    unitCost: item.unitCost,
+    discountAmount: item.discountAmount,
+    orderPromotionId: item.orderPromotionId,
+    promotionName: item.orderPromotionId ? (promotionNameById.get(item.orderPromotionId) ?? null) : null,
     modifiers: modifiersByItem.get(item.id) ?? [],
+    children: allItemRows
+      .filter((child) => child.parentOrderItemId === item.id)
+      .map((child) => ({
+        productId: child.productId,
+        productName: child.productName ?? "",
+        categoryId: child.categoryId ?? null,
+        quantity: child.quantity,
+      })),
   }));
 
   if (!isOrderChannel(orderRow.channel)) throw new ShiftPersistenceError("deliveryRequired");
@@ -245,6 +272,14 @@ async function queryOrderDetail(orderId: string): Promise<OrderDetail> {
     total: orderRow.total,
     payments: paymentRows.map(rowToOrderPayment),
     items,
+    promotions: promotionRows.map((row) => ({
+      id: row.id,
+      promotionId: row.promotionId,
+      kind: row.kind,
+      name: row.nameSnapshot,
+      ruleSnapshot: row.ruleSnapshot,
+      discountAmount: row.discountAmount,
+    })),
     isVoided: orderRow.voidedAt !== null,
     voidedAt: orderRow.voidedAt ?? null,
   };
@@ -302,11 +337,26 @@ async function queryShiftReport(tx: DatabaseClient, shiftId: string, now: Date):
             categoryName: sql<string | null>`${categories.name}`.as("category_name"),
             quantity: orderItems.quantity,
             unitPrice: orderItems.unitPrice,
+            discountAmount: orderItems.discountAmount,
           })
           .from(orderItems)
           .leftJoin(products, eq(products.id, orderItems.productId))
           .leftJoin(categories, eq(categories.id, products.categoryId))
-          .where(inArray(orderItems.orderId, orderIds));
+          // Composite children carry no money and would count the bundle twice.
+          .where(and(inArray(orderItems.orderId, orderIds), isNull(orderItems.parentOrderItemId)));
+  const promotionRows =
+    orderIds.length === 0
+      ? []
+      : await tx
+          .select({
+            orderId: orderPromotions.orderId,
+            promotionId: orderPromotions.promotionId,
+            kind: orderPromotions.kind,
+            name: orderPromotions.nameSnapshot,
+            discountAmount: orderPromotions.discountAmount,
+          })
+          .from(orderPromotions)
+          .where(inArray(orderPromotions.orderId, orderIds));
 
   const itemsByOrder = new Map<string, typeof itemRows>();
   for (const item of itemRows) {
@@ -346,6 +396,7 @@ async function queryShiftReport(tx: DatabaseClient, shiftId: string, now: Date):
         categoryName: item.categoryName ?? null,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
+        discountAmount: item.discountAmount,
       })),
       isVoided,
     });
@@ -371,6 +422,7 @@ async function queryShiftReport(tx: DatabaseClient, shiftId: string, now: Date):
     ...totals,
     orders: reportOrders,
     salesByCategory: aggregateCategorySales(reportOrders),
+    promotions: aggregatePromotions(promotionRows, reportOrders),
     openingCash,
     cashMovementsIn,
     cashMovementsOut,
@@ -541,8 +593,13 @@ export const shiftDrizzleRepository: ShiftRepository = {
 
         if (order.channel !== ORDER_CHANNEL.LOCAL) throw new ShiftPersistenceError("deliveryEditNotAllowed");
 
+        const evidenceError = validatePromotionEvidence(input.items, input.promotions);
+        if (evidenceError) {
+          throw new ShiftPersistenceError("invalidOrderPromotion", { cause: evidenceError.code });
+        }
+
         const newTotal = input.items.reduce(
-          (sum, item) => sum + item.unitPrice * item.quantity,
+          (sum, item) => sum + item.unitPrice * item.quantity - item.discountAmount,
           0,
         );
         const paymentError = validateUpdatePayments(input.payments, newTotal);
@@ -572,8 +629,28 @@ export const shiftDrizzleRepository: ShiftRepository = {
               .where(inArray(orderItemModifiers.orderItemId, oldItemIds));
             await tx.delete(orderItems).where(inArray(orderItems.id, oldItemIds));
           }
+          // The evidence is rewritten with the lines: an edited sale keeps exactly the
+          // promotions its remaining items justify.
+          await tx.delete(orderPromotions).where(eq(orderPromotions.orderId, orderId));
 
           const now = new Date();
+          const promotionIdsByRef = new Map<string, string>();
+          for (const promotion of input.promotions) {
+            const id = crypto.randomUUID();
+            promotionIdsByRef.set(promotion.ref, id);
+            // eslint-disable-next-line no-await-in-loop -- sqlite proxy transaction is sequential
+            await tx.insert(orderPromotions).values({
+              id,
+              orderId,
+              promotionId: promotion.promotionId,
+              kind: promotion.kind,
+              nameSnapshot: promotion.name,
+              ruleSnapshot: promotion.ruleSnapshot,
+              discountAmount: promotion.discountAmount,
+              createdAt: now,
+            });
+          }
+
           for (const itemInput of input.items) {
             const itemId = crypto.randomUUID();
             // eslint-disable-next-line no-await-in-loop -- sqlite proxy transaction is sequential
@@ -583,8 +660,25 @@ export const shiftDrizzleRepository: ShiftRepository = {
               productId: itemInput.productId,
               quantity: itemInput.quantity,
               unitPrice: itemInput.unitPrice,
+              unitCost: itemInput.unitCost,
+              discountAmount: itemInput.discountAmount,
+              orderPromotionId: itemInput.promotionRef === null ? null : (promotionIdsByRef.get(itemInput.promotionRef) ?? null),
               createdAt: now,
             });
+
+            for (const child of itemInput.children) {
+              // eslint-disable-next-line no-await-in-loop -- sqlite proxy transaction is sequential
+              await tx.insert(orderItems).values({
+                id: crypto.randomUUID(),
+                orderId,
+                productId: child.productId,
+                quantity: child.quantity,
+                unitPrice: 0,
+                unitCost: 0,
+                parentOrderItemId: itemId,
+                createdAt: now,
+              });
+            }
 
             for (const mod of itemInput.modifiers) {
               // eslint-disable-next-line no-await-in-loop -- sqlite proxy transaction is sequential

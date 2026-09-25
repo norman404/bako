@@ -1,4 +1,5 @@
 import type { OrderChannel } from "@/modules/order";
+import type { AppliedPromotionKind } from "@/modules/promotions";
 
 export const CHECKOUT_PAYMENT_METHOD = {
   CASH: "cash",
@@ -18,12 +19,29 @@ export interface CheckoutOrderItemModifierInput {
   textValue: string | null;
 }
 
+export interface CheckoutOrderItemChildInput {
+  productId: string;
+  quantity: number;
+}
+
 export interface CheckoutOrderItemInput {
   productId: string;
   quantity: number;
   unitPrice: number;
   unitCost: number;
+  discountAmount?: number;
+  promotionRef?: string | null;
+  children?: CheckoutOrderItemChildInput[];
   modifiers: CheckoutOrderItemModifierInput[];
+}
+
+export interface CheckoutOrderPromotionInput {
+  ref: string;
+  promotionId: string | null;
+  kind: AppliedPromotionKind;
+  name: string;
+  ruleSnapshot: Record<string, unknown>;
+  discountAmount: number;
 }
 
 export interface CheckoutPaymentInput {
@@ -37,6 +55,7 @@ export interface CreateOrderInput {
   channel?: OrderChannel;
   deliveryReference?: string | null;
   items: CheckoutOrderItemInput[];
+  promotions?: CheckoutOrderPromotionInput[];
   payments: CheckoutPaymentInput[];
   shiftId?: string | null;
 }
@@ -60,6 +79,9 @@ export interface CheckoutOrderItem {
   quantity: number;
   unitPrice: number;
   unitCost: number;
+  discountAmount: number;
+  orderPromotionId: string | null;
+  parentOrderItemId: string | null;
   modifiers: CheckoutOrderItemModifier[];
   createdAt: Date;
 }
@@ -87,8 +109,14 @@ export interface CheckoutOrder {
   payments: CheckoutPayment[];
 }
 
-export function calculateOrderTotal(items: Array<{ unitPrice: number; quantity: number }>): number {
-  return items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
+export interface OrderTotalLine {
+  unitPrice: number;
+  quantity: number;
+  discountAmount?: number;
+}
+
+export function calculateOrderTotal(items: OrderTotalLine[]): number {
+  return items.reduce((total, item) => total + item.unitPrice * item.quantity - (item.discountAmount ?? 0), 0);
 }
 
 export type { CheckoutPaymentMethod };

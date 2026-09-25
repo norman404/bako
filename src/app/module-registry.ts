@@ -6,11 +6,13 @@ import { checkoutManifest } from "@/modules/checkout/manifest";
 import { menuManifest } from "@/modules/menu/manifest";
 import { metricsManifest } from "@/modules/metrics/manifest";
 import { printerManifest } from "@/modules/printer/manifest";
+import { promotionsManifest } from "@/modules/promotions/manifest";
 import { shiftReportsManifest } from "@/modules/shift-reports/manifest";
 import { updaterManifest } from "@/modules/updater/manifest";
 
 export const MODULE_REGISTRY: ModuleManifest[] = validateModuleRegistry([
   menuManifest,
+  promotionsManifest,
   checkoutManifest,
   metricsManifest,
   printerManifest,

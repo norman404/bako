@@ -129,6 +129,7 @@
     "orderNotFound": "We couldn't find that order.",
     "orderAlreadyVoided": "This order has already been voided.",
     "invalidOrderPayment": "Payment amounts do not match the order total.",
+    "invalidOrderPromotion": "The sale promotions do not match their discounts.",
     "dbError": "We couldn't load shifts. Please try again.",
     "generic": "An error occurred with shifts.",
     "deliveryRequired": "This order is not a valid delivery.",
@@ -143,5 +144,12 @@
   "deliveryPending": "Pending delivery",
   "pendingDeliveries": "{{count}} pending deliveries",
   "pendingDeliveriesHint": "Excluded from sales and cash. They remain available for confirmation in another shift.",
-  "platformHint": "App payments are separate from cash and terminal card payments."
+  "platformHint": "App payments are separate from cash and terminal card payments.",
+  "promotions": {
+    "title": "Promotions",
+    "timesApplied_one": "{{count}} time",
+    "timesApplied_other": "{{count}} times",
+    "hint": "Discount already subtracted from total sales.",
+    "discountLine": "Promo"
+  }
 }

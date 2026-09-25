@@ -4,7 +4,8 @@ import type { Category } from "../category";
 import type { ModifierGroup } from "../modifier-group";
 import { filterProductsByCategory } from "../product-filters";
 import { sortProductsForMenu } from "../product-order";
-import type { Product } from "../product";
+import { PRODUCT_KIND, type Product } from "../product";
+import { isScheduleActive } from "@/lib/weekly-schedule";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { formatPosCurrency } from "@/lib/currency";
@@ -25,6 +26,7 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart, prod
   const visibleProducts = filterProductsByCategory(sortProductsForMenu(products, categories), activeCategoryId);
 
   const categoryById = new Map(categories.map((c) => [c.id, c]));
+  const now = new Date();
 
   if (visibleProducts.length === 0) {
     return (
@@ -46,6 +48,9 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart, prod
           const color = category?.color;
           const groups = productModifierGroups?.[product.id] ?? [];
           const hasModifiers = modifierGroupsEnabled && groups.length > 0;
+          const isComposite = product.kind === PRODUCT_KIND.COMPOSITE;
+          const compositeOutsideSchedule =
+            isComposite && product.availabilitySchedule !== null && !isScheduleActive(product.availabilitySchedule, now);
 
           return (
             <Button
@@ -77,6 +82,12 @@ function ProductGrid({ products, categories, activeCategoryId, onAddToCart, prod
               <span className="font-mono-tabular text-md font-semibold tracking-tight text-text transition-colors duration-200 group-hover:text-primary-strong">
                 {formatPosCurrency(product.price)}
               </span>
+
+              {isComposite ? (
+                <span className="text-2xs font-semibold uppercase tracking-[0.12em] text-primary">
+                  {compositeOutsideSchedule ? t('composite.outsideSchedule') : t('composite.badge')}
+                </span>
+              ) : null}
             </Button>
           );
         })}

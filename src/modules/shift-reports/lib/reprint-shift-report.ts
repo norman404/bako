@@ -23,6 +23,7 @@ export interface ReprintShiftReportLabels {
   categorySalesLabel: string;
   uncategorizedCategoryLabel: string;
   itemCountLabel: string;
+  promotionsLabel: string;
 }
 
 export interface ReprintShiftReportPayload {
@@ -74,6 +75,20 @@ function buildCategorySummaryItems(
         category.totalSales,
       );
     }),
+  ];
+}
+
+function buildPromotionSummaryItems(
+  report: ShiftReport,
+  labels: ReprintShiftReportLabels,
+): ReprintShiftReportItem[] {
+  if (report.promotions.length === 0) return [];
+
+  return [
+    createSummaryItem(labels.promotionsLabel),
+    ...report.promotions.map((promotion) =>
+      createSummaryItem(`${promotion.name} — ${promotion.timesApplied}x`, promotion.discountTotal),
+    ),
   ];
 }
 
@@ -175,6 +190,7 @@ export function buildReprintShiftReportPayload(
       ...(report.platformTotal > 0 ? [createSummaryItem(`${labels.platformLabel}: ${formatPosCurrency(report.platformTotal)}`)] : []),
       createSummaryItem(`${labels.pendingLabel}: ${report.pendingDeliveries}`),
       ...(categoriesEnabled ? buildCategorySummaryItems(report, labels) : []),
+      ...buildPromotionSummaryItems(report, labels),
       ...report.orders.map((order) => ({
         name: [
           `#${order.ticketNumber}`,

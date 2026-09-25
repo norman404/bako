@@ -1,13 +1,18 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { errAsync, okAsync, ResultAsync } from "neverthrow";
 
-import { MenuDomainError, ProductNotFoundError } from "./errors";
+import { CompositeProductError, MenuDomainError, ProductNotFoundError } from "./errors";
 import type { ProductRepository, ProductUpsertInput } from "./ports";
-import type { Product } from "./product";
-import { db } from "@/db/client";
-import { productMenus, products, type ProductRow } from "@/db/schema";
+import { PRODUCT_KIND, type Product, type ProductComponent, type ProductKind } from "./product";
+import { parseWeeklySchedule } from "@/lib/weekly-schedule";
+import { db, withTransaction, type DatabaseClient } from "@/db/client";
+import { productComponents, productMenus, products, type ProductRow } from "@/db/schema";
 
-function rowToProduct(row: ProductRow, menuIds: string[] = []): Product {
+function toProductKind(value: string): ProductKind {
+  return value === PRODUCT_KIND.COMPOSITE ? PRODUCT_KIND.COMPOSITE : PRODUCT_KIND.STANDARD;
+}
+
+function rowToProduct(row: ProductRow, menuIds: string[] = [], components: ProductComponent[] = []): Product {
   return {
     id: row.id,
     categoryId: row.categoryId,
@@ -19,6 +24,9 @@ function rowToProduct(row: ProductRow, menuIds: string[] = []): Product {
     prepTimeMinutes: row.prepTimeMinutes,
     image: row.image,
     isPopular: row.isPopular,
+    kind: toProductKind(row.kind),
+    availabilitySchedule: row.availabilitySchedule === null ? null : parseWeeklySchedule(row.availabilitySchedule),
+    components,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
@@ -26,7 +34,8 @@ function rowToProduct(row: ProductRow, menuIds: string[] = []): Product {
 }
 
 function wrapDbError(context: string) {
-  return (cause: unknown) => new MenuDomainError(`${context}: ${String(cause)}`);
+  return (cause: unknown) =>
+    cause instanceof MenuDomainError ? cause : new MenuDomainError(`${context}: ${String(cause)}`);
 }
 
 function validateProductInput(input: ProductUpsertInput): MenuDomainError | null {
@@ -51,7 +60,73 @@ function validateProductInput(input: ProductUpsertInput): MenuDomainError | null
     return new MenuDomainError("Prep time must be a non-negative integer in minutes");
   }
 
+  return validateCompositeInput(input);
+}
+
+function validateCompositeInput(input: ProductUpsertInput): MenuDomainError | null {
+  if (input.kind !== PRODUCT_KIND.COMPOSITE) return null;
+
+  const components = input.components ?? [];
+  const units = components.reduce((sum, component) => sum + component.quantity, 0);
+  const ids = new Set(components.map((component) => component.productId));
+  if (
+    units < 2 ||
+    ids.size !== components.length ||
+    !components.every((component) => Number.isInteger(component.quantity) && component.quantity >= 1)
+  ) {
+    return new CompositeProductError("compositeComponentsInvalid", "A composite product needs at least 2 included units");
+  }
+
+  if (input.availabilitySchedule && !parseWeeklySchedule(input.availabilitySchedule)) {
+    return new CompositeProductError("compositeScheduleInvalid", "Composite schedule is invalid");
+  }
+
   return null;
+}
+
+async function loadComponentsByProductId(tx: DatabaseClient, productIds: string[]): Promise<Map<string, ProductComponent[]>> {
+  const map = new Map<string, ProductComponent[]>();
+  if (productIds.length === 0) return map;
+
+  const rows = await tx
+    .select()
+    .from(productComponents)
+    .where(inArray(productComponents.parentProductId, productIds))
+    .orderBy(productComponents.sortOrder);
+  for (const row of rows) {
+    const list = map.get(row.parentProductId) ?? [];
+    list.push({ productId: row.componentProductId, quantity: row.quantity });
+    map.set(row.parentProductId, list);
+  }
+  return map;
+}
+
+// A composite may only contain existing standard products: nesting composites would make
+// kitchen routing and pricing recursive, and a deleted component could never be prepared.
+async function replaceComponents(tx: DatabaseClient, productId: string, input: Required<ProductUpsertInput>): Promise<void> {
+  await tx.delete(productComponents).where(eq(productComponents.parentProductId, productId));
+  if (input.kind !== PRODUCT_KIND.COMPOSITE) return;
+
+  const componentIds = input.components.map((component) => component.productId);
+  if (componentIds.includes(productId)) {
+    throw new CompositeProductError("compositeComponentsInvalid", "A composite product cannot include itself");
+  }
+  const componentRows = await tx
+    .select({ id: products.id, kind: products.kind })
+    .from(products)
+    .where(and(inArray(products.id, componentIds), isNull(products.deletedAt)));
+  if (componentRows.length !== componentIds.length || componentRows.some((row) => row.kind !== PRODUCT_KIND.STANDARD)) {
+    throw new CompositeProductError("compositeComponentsInvalid", "Composite components must be active standard products");
+  }
+
+  await tx.insert(productComponents).values(
+    input.components.map((component, index) => ({
+      parentProductId: productId,
+      componentProductId: component.productId,
+      quantity: component.quantity,
+      sortOrder: index,
+    })),
+  );
 }
 
 async function findActiveProductRowById(id: string): Promise<ProductRow | undefined> {
@@ -81,15 +156,16 @@ function loadActiveProductById(id: string, context: string): ResultAsync<Product
       }
 
       const menuIds = await loadMenuIdsForProduct(id);
-      return { row, menuIds };
+      const components = (await loadComponentsByProductId(db, [id])).get(id) ?? [];
+      return { row, menuIds, components };
     }),
     wrapDbError(context),
-  ).andThen(({ row, menuIds }) => {
+  ).andThen(({ row, menuIds, components = [] }) => {
     if (!row) {
       return errAsync(new ProductNotFoundError(id));
     }
 
-    return okAsync(rowToProduct(row, menuIds));
+    return okAsync(rowToProduct(row, menuIds, components));
   });
 }
 
@@ -103,6 +179,9 @@ function normalizeProductInput(input: ProductUpsertInput): Required<ProductUpser
     prepTimeMinutes: input.prepTimeMinutes ?? 0,
     costPrice: input.costPrice ?? 0,
     menuIds: input.menuIds,
+    kind: input.kind ?? PRODUCT_KIND.STANDARD,
+    availabilitySchedule: input.kind === PRODUCT_KIND.COMPOSITE ? (input.availabilitySchedule ?? null) : null,
+    components: input.kind === PRODUCT_KIND.COMPOSITE ? (input.components ?? []) : [],
   };
 }
 
@@ -154,7 +233,11 @@ export const productDrizzleRepository: ProductRepository = {
           menuIdsByProductId.set(row.productId, existing);
         }
 
-        return productRows.map((row) => rowToProduct(row, menuIdsByProductId.get(row.id) ?? []));
+        const componentsByProductId = await loadComponentsByProductId(db, productIds);
+
+        return productRows.map((row) =>
+          rowToProduct(row, menuIdsByProductId.get(row.id) ?? [], componentsByProductId.get(row.id) ?? []),
+        );
       })(),
       wrapDbError("Failed to list products"),
     );
@@ -175,9 +258,9 @@ export const productDrizzleRepository: ProductRepository = {
     const now = new Date();
 
     return ResultAsync.fromPromise(
-      (async () => {
+      withTransaction(async (tx) => {
         // Insert product (WITHOUT menuId)
-        const productRows = await db
+        const productRows = await tx
           .insert(products)
           .values({
             id: productId,
@@ -189,6 +272,8 @@ export const productDrizzleRepository: ProductRepository = {
             prepTimeMinutes: normalizedInput.prepTimeMinutes,
             image: normalizedInput.image,
             isPopular: normalizedInput.isPopular,
+            kind: normalizedInput.kind,
+            availabilitySchedule: normalizedInput.availabilitySchedule,
             createdAt: now,
             updatedAt: now,
           })
@@ -206,13 +291,15 @@ export const productDrizzleRepository: ProductRepository = {
         }));
 
         if (productMenuValues.length > 0) {
-          await db.insert(productMenus).values(productMenuValues);
+          await tx.insert(productMenus).values(productMenuValues);
         }
 
+        await replaceComponents(tx, productId, normalizedInput);
+
         return { product: createdProduct, menuIds: normalizedInput.menuIds };
-      })(),
+      }),
       wrapDbError("Failed to create product"),
-    ).andThen(({ product, menuIds }) => okAsync(rowToProduct(product, menuIds)));
+    ).andThen(({ product, menuIds }) => okAsync(rowToProduct(product, menuIds, normalizedInput.components)));
   },
 
   update(id: string, input: ProductUpsertInput) {
@@ -225,9 +312,9 @@ export const productDrizzleRepository: ProductRepository = {
     const now = new Date();
 
     return ResultAsync.fromPromise(
-      (async () => {
+      withTransaction(async (tx) => {
         // Update product (WITHOUT menuId)
-        const productRows = await db
+        const productRows = await tx
           .update(products)
           .set({
             categoryId: normalizedInput.categoryId,
@@ -238,6 +325,8 @@ export const productDrizzleRepository: ProductRepository = {
             prepTimeMinutes: normalizedInput.prepTimeMinutes,
             image: normalizedInput.image,
             isPopular: normalizedInput.isPopular,
+            kind: normalizedInput.kind,
+            availabilitySchedule: normalizedInput.availabilitySchedule,
             updatedAt: now,
           })
           .where(and(eq(products.id, id), isNull(products.deletedAt)))
@@ -249,7 +338,7 @@ export const productDrizzleRepository: ProductRepository = {
         }
 
         // Delete old product-menu associations
-        await db.delete(productMenus).where(eq(productMenus.productId, id));
+        await tx.delete(productMenus).where(eq(productMenus.productId, id));
 
         // Insert new product-menu associations only when there are menus selected
         const productMenuValues = normalizedInput.menuIds.map((menuId) => ({
@@ -258,13 +347,15 @@ export const productDrizzleRepository: ProductRepository = {
         }));
 
         if (productMenuValues.length > 0) {
-          await db.insert(productMenus).values(productMenuValues);
+          await tx.insert(productMenus).values(productMenuValues);
         }
 
+        await replaceComponents(tx, id, normalizedInput);
+
         return { product: updatedProduct, menuIds: normalizedInput.menuIds };
-      })(),
+      }),
       wrapDbError("Failed to update product"),
-    ).andThen(({ product, menuIds }) => okAsync(rowToProduct(product, menuIds)));
+    ).andThen(({ product, menuIds }) => okAsync(rowToProduct(product, menuIds, normalizedInput.components)));
   },
 
   archive(id: string) {

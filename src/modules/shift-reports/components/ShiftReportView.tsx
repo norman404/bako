@@ -327,7 +327,16 @@ function SalesList({ orders, onReprintOrder, onEditOrder, onVoidOrder, onReprint
                             {item.productName}
                             <span className="ml-1 text-text-muted">× {item.quantity}</span>
                           </span>
-                          {!isDelivery ? <span className="font-mono-tabular shrink-0 text-text-muted">{formatPosCurrency(item.unitPrice)}</span> : null}
+                          {!isDelivery ? (
+                            <span className="font-mono-tabular shrink-0 text-right text-text-muted">
+                              {formatPosCurrency(item.unitPrice)}
+                              {item.discountAmount > 0 ? (
+                                <span className="block text-2xs text-success">
+                                  {t("promotions.discountLine")} −{formatPosCurrency(item.discountAmount)}
+                                </span>
+                              ) : null}
+                            </span>
+                          ) : null}
                         </div>
                       ))}
                     </div>
@@ -473,6 +482,31 @@ export function ShiftReportView({ report, onReprintOrder, onEditOrder, onVoidOrd
 
       {categoriesEnabled && report.salesByCategory.length > 0 ? (
         <CategorySalesBlock categories={report.salesByCategory} t={t} />
+      ) : null}
+
+      {report.promotions.length > 0 ? (
+        <div className="rounded-card border border-border bg-surface-sunken p-4" data-testid="shift-report-promotions">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="eyebrow">{t("promotions.title")}</h3>
+            <span className="font-mono-tabular text-2xs font-semibold text-success">
+              −{formatPosCurrency(report.promotions.reduce((sum, promotion) => sum + promotion.discountTotal, 0))}
+            </span>
+          </div>
+          <dl className="mt-3 grid gap-2 text-sm">
+            {report.promotions.map((promotion) => (
+              <div key={promotion.promotionId ?? `${promotion.kind}:${promotion.name}`} className="flex justify-between gap-3">
+                <dt className="min-w-0 truncate">
+                  {promotion.name}
+                  <span className="ml-2 text-2xs text-text-muted">
+                    {t("promotions.timesApplied", { count: promotion.timesApplied })}
+                  </span>
+                </dt>
+                <dd className="font-mono-tabular shrink-0 text-success">−{formatPosCurrency(promotion.discountTotal)}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-2 text-xs text-text-muted">{t("promotions.hint")}</p>
+        </div>
       ) : null}
 
       <div className="rounded-card border border-border bg-surface-sunken p-4">

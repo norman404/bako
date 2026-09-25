@@ -118,6 +118,11 @@
         "description": "Customize products with modifier groups (ice level, comments, etc.)",
         "updated": "Product Options {{value, select, true {enabled} other {disabled}}}"
       },
+      "promotions_enabled": {
+        "label": "Promotions",
+        "description": "Automatically apply scheduled 2-for-1 deals, bundles and composite products",
+        "updated": "Promotions {{value, select, true {enabled} other {disabled}}}"
+      },
       "comandas_enabled": {
         "label": "Command tickets",
         "description": "Print preparation tickets by area (kitchen, bar, etc.)",
@@ -248,6 +253,8 @@
     "moveGroupUp": "Move group up",
     "moveGroupDown": "Move group down",
     "removeOption": "Remove option",
-    "firstOptionFreeLabel": "First option free"
+    "firstOptionFreeLabel": "First option free",
+    "allowRepeatLabel": "Allow repeating options",
+    "maxRepeatLabel": "Maximum per option"
   }
 }

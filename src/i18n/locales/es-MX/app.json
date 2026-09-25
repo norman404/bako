@@ -19,7 +19,9 @@
     "orderSaved": "Pedido #{{ticketNumber}} guardado",
     "orderItemsCount": "{{itemsCount}} productos cobrados en caja",
     "printError": "La venta quedó guardada, pero no pudimos imprimir el ticket",
-    "comandaPrintError": "No pudimos imprimir una comanda"
+    "comandaPrintError": "No pudimos imprimir una comanda",
+    "compositeAddedSeparately": "Fuera de horario: se agregaron los productos por separado",
+    "compositeUnavailable": "{{productName}} no está disponible: uno de sus productos fue eliminado"
   },
   "header": {
     "title": "Bako"

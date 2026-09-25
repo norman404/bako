@@ -11,7 +11,7 @@ function createItem(
   quantity: number,
   unitPrice: number,
 ): ShiftReportOrderItem {
-  return { productId, productName, categoryId, categoryName, quantity, unitPrice };
+  return { productId, productName, categoryId, categoryName, quantity, unitPrice, discountAmount: 0 };
 }
 
 function createOrder(
@@ -23,7 +23,7 @@ function createOrder(
     total,
   }: { isVoided?: boolean; isPending?: boolean; channel?: string; total?: number } = {},
 ) {
-  const catalogTotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  const catalogTotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity - item.discountAmount, 0);
   return { channel, isPending, isVoided, items, total: total ?? catalogTotal };
 }
 
@@ -126,4 +126,27 @@ it("should include confirmed delivery orders scaling category sales to the confi
   expect(categories).toEqual([
     { categoryId: "drinks", categoryName: "Drinks", totalItems: 4, totalSales: 22000 },
   ]);
+});
+
+describe("promotions", () => {
+  // CASE: A 2x1 on a drink shares an order with food at full price.
+  // VALIDATES: The discount lowers only the promoted category instead of being spread across the order.
+  it("should subtract promotion discounts from the promoted category only", () => {
+    // Arrange
+    const orders = [
+      createOrder([
+        { ...createItem("latte", "Latte", "drinks", "Bebidas", 2, 5_000), discountAmount: 5_000 },
+        createItem("bagel", "Bagel", "food", "Comida", 1, 3_000),
+      ]),
+    ];
+
+    // Act
+    const result = aggregateCategorySales(orders);
+
+    // Assert
+    expect(result).toEqual([
+      { categoryId: "drinks", categoryName: "Bebidas", totalItems: 2, totalSales: 5_000 },
+      { categoryId: "food", categoryName: "Comida", totalItems: 1, totalSales: 3_000 },
+    ]);
+  });
 });

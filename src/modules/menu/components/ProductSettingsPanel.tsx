@@ -3,7 +3,9 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import type { Product } from "../product";
+import { PRODUCT_KIND, type Product } from "../product";
+import { CompositeProductFields, type CompositeFormState } from "./CompositeProductFields";
+import { emptyScheduleForm, formToSchedule, scheduleToForm } from "@/lib/weekly-schedule";
 import type { ProductUpsertInput } from "../ports";
 import { sortProductsForMenu } from "../product-order";
 import {
@@ -54,10 +56,11 @@ interface ProductFormState {
   prepTimeMinutes: string;
   image: string;
   isPopular: boolean;
+  composite: CompositeFormState;
 }
 
 interface ProductFormError {
-  field?: "name" | "price" | "costPrice" | "prepTime" | "categoryId";
+  field?: "name" | "price" | "costPrice" | "prepTime" | "categoryId" | "composite";
   message: string;
 }
 
@@ -76,6 +79,7 @@ function buildEmptyFormState(defaultCategoryId: string): ProductFormState {
     prepTimeMinutes: "0",
     image: "☕",
     isPopular: false,
+    composite: { isComposite: false, components: [], hasSchedule: false, schedule: emptyScheduleForm() },
   };
 }
 
@@ -90,6 +94,15 @@ function buildFormStateFromProduct(product: Product): ProductFormState {
     prepTimeMinutes: String(product.prepTimeMinutes),
     image: product.image,
     isPopular: product.isPopular,
+    composite: {
+      isComposite: product.kind === PRODUCT_KIND.COMPOSITE,
+      components: product.components.map((component) => ({
+        productId: component.productId,
+        quantity: String(component.quantity),
+      })),
+      hasSchedule: product.availabilitySchedule !== null,
+      schedule: product.availabilitySchedule ? scheduleToForm(product.availabilitySchedule) : emptyScheduleForm(),
+    },
   };
 }
 
@@ -124,6 +137,12 @@ function toProductPayload(
     return { success: false, error: { field: "prepTime", message: "Ingresá un tiempo de preparación válido." } };
   }
 
+  const { composite } = formState;
+  const availabilitySchedule = composite.isComposite && composite.hasSchedule ? formToSchedule(composite.schedule) : null;
+  if (composite.isComposite && composite.hasSchedule && availabilitySchedule === null) {
+    return { success: false, error: { field: "composite", message: "Revisa el horario del producto compuesto." } };
+  }
+
   return {
     success: true,
     payload: {
@@ -136,6 +155,14 @@ function toProductPayload(
       prepTimeMinutes,
       image: formState.image.trim(),
       isPopular: formState.isPopular,
+      kind: composite.isComposite ? PRODUCT_KIND.COMPOSITE : PRODUCT_KIND.STANDARD,
+      availabilitySchedule,
+      components: composite.isComposite
+        ? composite.components.map((component) => ({
+            productId: component.productId,
+            quantity: Number.parseInt(component.quantity, 10),
+          }))
+        : [],
     },
   };
 }
@@ -491,6 +518,14 @@ function ProductSettingsPanel() {
                 />
               </FormField>
             </div>
+
+            <CompositeProductFields
+              value={formState.composite}
+              onChange={(composite) => setFormState((previous) => ({ ...previous, composite }))}
+              products={products}
+              editingProductId={mode === PRODUCT_FORM_MODE.EDIT ? selectedProductId : null}
+              compositePrice={parseProductPriceInput(formState.price)}
+            />
 
             <div className="flex items-center gap-2">
               <Checkbox

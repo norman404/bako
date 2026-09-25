@@ -10,7 +10,7 @@ use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 pub const DATABASE_FILENAME: &str = "bako.db";
 pub const DATABASE_URL: &str = "sqlite:bako.db";
-pub const CURRENT_MIGRATION_VERSION: i64 = 33;
+pub const CURRENT_MIGRATION_VERSION: i64 = 35;
 
 #[tauri::command]
 async fn open_settings_window(app: tauri::AppHandle) -> Result<(), String> {
@@ -240,15 +240,35 @@ pub fn run() {
             kind: MigrationKind::Up,
         },
         Migration {
-            version: CURRENT_MIGRATION_VERSION,
+            version: 33,
             description: "payments_platform",
             sql: include_str!("../migrations/0033_payments_platform.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 34,
+            description: "promotions",
+            sql: include_str!("../migrations/0034_promotions.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: CURRENT_MIGRATION_VERSION,
+            description: "modifier_repeat",
+            sql: include_str!("../migrations/0035_modifier_repeat.sql"),
             kind: MigrationKind::Up,
         },
     ];
 
     tauri::Builder::default()
-        .plugin(database_migrations::init())
+        .plugin(database_migrations::init(
+            migrations
+                .iter()
+                .map(|migration| database_migrations::MigrationSource {
+                    version: migration.version,
+                    sql: migration.sql,
+                })
+                .collect(),
+        ))
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(

@@ -50,6 +50,19 @@ CREATE TABLE order_items (
   quantity INTEGER NOT NULL,
   unit_price INTEGER NOT NULL,
   unit_cost INTEGER NOT NULL DEFAULT 0,
+  discount_amount INTEGER NOT NULL DEFAULT 0,
+  order_promotion_id TEXT,
+  parent_order_item_id TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE order_promotions (
+  id TEXT PRIMARY KEY,
+  order_id TEXT NOT NULL,
+  promotion_id TEXT,
+  kind TEXT NOT NULL,
+  name_snapshot TEXT NOT NULL,
+  rule_snapshot TEXT NOT NULL,
+  discount_amount INTEGER NOT NULL,
   created_at INTEGER NOT NULL
 );
 CREATE TABLE order_item_modifiers (
@@ -211,7 +224,7 @@ describe("exploratory: duplicated checkout submissions", () => {
     await initDatabase();
     if (!sqliteRef.db) throw new Error("Database not initialized");
     sqliteRef.db.exec(
-      "DELETE FROM order_item_modifiers; DELETE FROM order_items; DELETE FROM payments; DELETE FROM orders;",
+      "DELETE FROM order_item_modifiers; DELETE FROM order_items; DELETE FROM order_promotions; DELETE FROM payments; DELETE FROM orders;",
     );
   });
 
@@ -288,5 +301,125 @@ describe("checkout retry after a failed save", () => {
     const retried = await orderDrizzleRepository.createOrder(ORDER_INPUT);
     expect(retried.isOk()).toBe(true);
     expect(queryOrders()).toHaveLength(1);
+  });
+});
+
+const PROMOTION_ORDER_INPUT = {
+  orderName: "Mesa 7",
+  promotions: [
+    {
+      ref: "p1",
+      promotionId: "promo-2x1",
+      kind: "nxm" as const,
+      name: "2x1 Café",
+      ruleSnapshot: { buyQuantity: 2, payQuantity: 1 },
+      discountAmount: 3500,
+    },
+    {
+      ref: "p2",
+      promotionId: null,
+      kind: "composite" as const,
+      name: "Paquete tarde",
+      ruleSnapshot: { price: 8000 },
+      discountAmount: 1000,
+    },
+  ],
+  items: [
+    { productId: "prod-cafe", quantity: 2, unitPrice: 3500, unitCost: 1000, discountAmount: 3500, promotionRef: "p1", modifiers: [] },
+    {
+      productId: "prod-paquete",
+      quantity: 1,
+      unitPrice: 9000,
+      unitCost: 2500,
+      discountAmount: 1000,
+      promotionRef: "p2",
+      children: [
+        { productId: "prod-cafe", quantity: 1 },
+        { productId: "prod-pan", quantity: 2 },
+      ],
+      modifiers: [],
+    },
+  ],
+  payments: [{ method: "cash" as const, amount: 11500, cashReceived: 11500 }],
+};
+
+describe("checkout promotion evidence", () => {
+  beforeEach(async () => {
+    await initDatabase();
+    sqliteRef.failNextStatementMatching = null;
+    sqliteRef.failNextCommit = false;
+    if (!sqliteRef.db) throw new Error("Database not initialized");
+    sqliteRef.db.exec(
+      "DELETE FROM order_item_modifiers; DELETE FROM order_items; DELETE FROM order_promotions; DELETE FROM payments; DELETE FROM orders;",
+    );
+  });
+
+  // CASE: A sale with a 2x1 and a composite product inside its schedule is charged.
+  // VALIDATES: The total is net of discounts and every discount is linked to its frozen promotion snapshot.
+  it("should persist promotion snapshots linked to discounted lines and composite children", async () => {
+    // Arrange
+    const input = PROMOTION_ORDER_INPUT;
+
+    // Act
+    const result = await orderDrizzleRepository.createOrder(input);
+
+    // Assert
+    expect(result.isOk()).toBe(true);
+    if (!sqliteRef.db) throw new Error("Database not initialized");
+    expect(queryOrders().map((order) => order.total)).toEqual([11500]);
+    const promotions = sqliteRef.db
+      .query("SELECT id, name_snapshot, rule_snapshot, discount_amount FROM order_promotions ORDER BY name_snapshot")
+      .all() as Array<{ id: string; name_snapshot: string; rule_snapshot: string; discount_amount: number }>;
+    expect(promotions.map(({ name_snapshot, discount_amount }) => [name_snapshot, discount_amount])).toEqual([
+      ["2x1 Café", 3500],
+      ["Paquete tarde", 1000],
+    ]);
+    expect(JSON.parse(promotions[0].rule_snapshot)).toEqual({ buyQuantity: 2, payQuantity: 1 });
+    const lines = sqliteRef.db
+      .query(
+        `SELECT oi.product_id, oi.unit_price, oi.discount_amount, op.name_snapshot AS promotion, parent.product_id AS parent
+         FROM order_items oi
+         LEFT JOIN order_promotions op ON op.id = oi.order_promotion_id
+         LEFT JOIN order_items parent ON parent.id = oi.parent_order_item_id
+         ORDER BY oi.product_id, parent`,
+      )
+      .all();
+    expect(lines).toEqual([
+      { product_id: "prod-cafe", unit_price: 3500, discount_amount: 3500, promotion: "2x1 Café", parent: null },
+      { product_id: "prod-cafe", unit_price: 0, discount_amount: 0, promotion: null, parent: "prod-paquete" },
+      { product_id: "prod-pan", unit_price: 0, discount_amount: 0, promotion: null, parent: "prod-paquete" },
+      { product_id: "prod-paquete", unit_price: 9000, discount_amount: 1000, promotion: "Paquete tarde", parent: null },
+    ]);
+  });
+
+  // CASE: Saving the promotion evidence fails in the middle of checkout.
+  // VALIDATES: The sale is rolled back instead of keeping a discount without its evidence.
+  it("should leave no order when the promotion evidence cannot be saved", async () => {
+    // Arrange
+    sqliteRef.failNextStatementMatching = /insert into "order_promotions"/i;
+
+    // Act
+    const result = await orderDrizzleRepository.createOrder(PROMOTION_ORDER_INPUT);
+
+    // Assert
+    expect(result.isErr()).toBe(true);
+    expect(queryOrders()).toHaveLength(0);
+  });
+
+  // CASE: A payload claims a discount larger than the promotion evidence it references.
+  // VALIDATES: Checkout rejects discounts that do not reconcile with their promotion.
+  it("should reject a discount that does not match its promotion", async () => {
+    // Arrange
+    const input = {
+      ...PROMOTION_ORDER_INPUT,
+      promotions: [{ ...PROMOTION_ORDER_INPUT.promotions[0], discountAmount: 1000 }, PROMOTION_ORDER_INPUT.promotions[1]],
+    };
+
+    // Act
+    const result = await orderDrizzleRepository.createOrder(input);
+
+    // Assert
+    expect(result.isErr() && result.error.code).toBe("orderPromotionInvalid");
+    expect(queryOrders()).toHaveLength(0);
   });
 });

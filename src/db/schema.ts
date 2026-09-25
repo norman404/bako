@@ -1,4 +1,4 @@
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { type AnySQLiteColumn, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const menus = sqliteTable("menus", {
   id: text("id").primaryKey(),
@@ -39,6 +39,8 @@ export const products = sqliteTable(
     prepTimeMinutes: integer("prep_time_minutes").notNull(),
     image: text("image").notNull(),
     isPopular: integer("is_popular", { mode: "boolean" }).notNull().default(false),
+    kind: text("kind").notNull().default("standard"),
+    availabilitySchedule: text("availability_schedule", { mode: "json" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
@@ -47,6 +49,56 @@ export const products = sqliteTable(
     index("idx_products_category_id").on(table.categoryId),
     index("idx_products_deleted_at").on(table.deletedAt),
   ],
+);
+
+export const productComponents = sqliteTable(
+  "product_components",
+  {
+    parentProductId: text("parent_product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    componentProductId: text("component_product_id")
+      .notNull()
+      .references(() => products.id),
+    quantity: integer("quantity").notNull().default(1),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (table) => [
+    primaryKey({ columns: [table.parentProductId, table.componentProductId] }),
+    index("idx_product_components_component").on(table.componentProductId),
+  ],
+);
+
+export const promotions = sqliteTable(
+  "promotions",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    type: text("type").notNull(),
+    buyQuantity: integer("buy_quantity"),
+    payQuantity: integer("pay_quantity"),
+    bundlePrice: integer("bundle_price"),
+    schedule: text("schedule", { mode: "json" }).notNull(),
+    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("idx_promotions_deleted_at").on(table.deletedAt)],
+);
+
+export const promotionTargets = sqliteTable(
+  "promotion_targets",
+  {
+    id: text("id").primaryKey(),
+    promotionId: text("promotion_id")
+      .notNull()
+      .references(() => promotions.id, { onDelete: "cascade" }),
+    productId: text("product_id").references(() => products.id),
+    categoryId: text("category_id").references(() => categories.id),
+    quantity: integer("quantity").notNull().default(1),
+  },
+  (table) => [index("idx_promotion_targets_promotion_id").on(table.promotionId)],
 );
 
 export const productMenus = sqliteTable(
@@ -71,6 +123,8 @@ export const modifierGroups = sqliteTable(
     required: integer("required", { mode: "boolean" }).notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
     firstOptionFree: integer("first_option_free", { mode: "boolean" }).notNull().default(false),
+    allowRepeat: integer("allow_repeat", { mode: "boolean" }).notNull().default(false),
+    maxRepeat: integer("max_repeat").notNull().default(3),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
@@ -236,11 +290,37 @@ export const orderItems = sqliteTable(
     quantity: integer("quantity").notNull(),
     unitPrice: integer("unit_price").notNull(),
     unitCost: integer("unit_cost").notNull().default(0),
+    discountAmount: integer("discount_amount").notNull().default(0),
+    orderPromotionId: text("order_promotion_id").references(() => orderPromotions.id, { onDelete: "set null" }),
+    parentOrderItemId: text("parent_order_item_id").references((): AnySQLiteColumn => orderItems.id, {
+      onDelete: "cascade",
+    }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [
     index("idx_order_items_order_id").on(table.orderId),
     index("idx_order_items_product_id").on(table.productId),
+    index("idx_order_items_parent").on(table.parentOrderItemId),
+  ],
+);
+
+export const orderPromotions = sqliteTable(
+  "order_promotions",
+  {
+    id: text("id").primaryKey(),
+    orderId: text("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    promotionId: text("promotion_id"),
+    kind: text("kind").notNull(),
+    nameSnapshot: text("name_snapshot").notNull(),
+    ruleSnapshot: text("rule_snapshot", { mode: "json" }).notNull(),
+    discountAmount: integer("discount_amount").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("idx_order_promotions_order_id").on(table.orderId),
+    index("idx_order_promotions_promotion_id").on(table.promotionId),
   ],
 );
 
@@ -293,11 +373,16 @@ export type FeatureFlagRow = typeof featureFlags.$inferSelect;
 export type ModifierGroupRow = typeof modifierGroups.$inferSelect;
 export type ModifierOptionRow = typeof modifierOptions.$inferSelect;
 export type OrderItemModifierRow = typeof orderItemModifiers.$inferSelect;
+export type PromotionRow = typeof promotions.$inferSelect;
+export type PromotionTargetRow = typeof promotionTargets.$inferSelect;
+export type ProductComponentRow = typeof productComponents.$inferSelect;
+export type OrderPromotionRow = typeof orderPromotions.$inferSelect;
 
 export type OrderInsert = typeof orders.$inferInsert;
 export type PaymentInsert = typeof payments.$inferInsert;
 export type OrderItemInsert = typeof orderItems.$inferInsert;
 export type OrderItemModifierInsert = typeof orderItemModifiers.$inferInsert;
+export type OrderPromotionInsert = typeof orderPromotions.$inferInsert;
 export type ShiftRow = typeof shifts.$inferSelect;
 export type CashMovementRow = typeof cashMovements.$inferSelect;
 

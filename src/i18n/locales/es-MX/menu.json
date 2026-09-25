@@ -30,9 +30,27 @@
     "requiredLabel": "Obligatorio",
     "optionalLabel": "Opcional",
     "missingSelectionHint": "Falta seleccionar {{groupName}}",
-    "summaryTotal": "Total"
+    "summaryTotal": "Total",
+    "decreaseOption": "Quitar uno de {{optionName}}",
+    "increaseOption": "Agregar otro {{optionName}}"
   },
   "modifierBadge": {
     "label": "Personalizable"
+  },
+  "composite": {
+    "toggle": "Producto compuesto (paquete)",
+    "hint": "Al venderlo se registran los productos incluidos. Dentro de su horario se cobra el precio de este producto; fuera de horario se agregan los productos por separado a su precio normal.",
+    "componentsLabel": "Productos incluidos",
+    "componentPlaceholder": "Elige un producto",
+    "add": "Agregar",
+    "remove": "Quitar",
+    "quantityLabel": "Cantidad",
+    "missing": "Producto eliminado",
+    "separately": "Por separado: {{amount}}",
+    "savings": "Ahorro: {{amount}}",
+    "moreExpensive": "El paquete cuesta más que por separado",
+    "scheduleToggle": "Precio de paquete solo en un horario",
+    "badge": "Paquete",
+    "outsideSchedule": "Fuera de horario: se agrega por separado"
   }
 }

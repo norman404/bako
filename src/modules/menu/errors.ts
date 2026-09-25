@@ -36,3 +36,12 @@ export class ModifierGroupNotFoundError extends MenuDomainError implements MenuT
     this.params = { groupId };
   }
 }
+
+export class CompositeProductError extends MenuDomainError implements MenuTranslatableError {
+  readonly code: "compositeComponentsInvalid" | "compositeScheduleInvalid";
+
+  constructor(code: CompositeProductError["code"], message: string) {
+    super(message);
+    this.code = code;
+  }
+}
