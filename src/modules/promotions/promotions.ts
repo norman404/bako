@@ -18,6 +18,7 @@ interface PricingUnit {
   lineIndex: number;
   productId: string;
   categoryId: string;
+  // Discountable price of the unit, not what it is charged.
   price: number;
   addedAt: number;
 }
@@ -34,13 +35,20 @@ interface SearchResult {
   applications: CandidateApplication[];
 }
 
+// Promotions discount the product itself: paid modifiers such as extra toppings are always
+// charged on top. Capping at the charged price keeps a negative modifier from producing a
+// discount larger than the line.
+function discountablePrice(line: PricingLine): number {
+  return Math.max(0, Math.min(line.basePrice, line.unitPrice));
+}
+
 function expandUnits(lines: PricingLine[]): PricingUnit[] {
   const units = lines.flatMap((line, lineIndex) =>
     line.unitAddedAt.map((addedAt) => ({
       lineIndex,
       productId: line.productId,
       categoryId: line.categoryId,
-      price: line.unitPrice,
+      price: discountablePrice(line),
       addedAt,
     })),
   );

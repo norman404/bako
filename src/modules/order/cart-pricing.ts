@@ -88,6 +88,7 @@ export function priceCart(
       productId: item.product.id,
       categoryId: item.product.categoryId,
       unitPrice: calculateItemUnitPrice(item.product, item.selectedModifiers),
+      basePrice: item.product.price,
       unitAddedAt: item.unitAddedAt,
     })),
     options.applyDiscounts ? promotions : [],

@@ -50,7 +50,14 @@ const BREAKFAST_BUNDLE: Promotion = {
 };
 
 function line(lineId: string, productId: string, unitPrice: number, quantity: number, addedAt = AT_NOON): PricingLine {
-  return { lineId, productId, categoryId: "coffee", unitPrice, unitAddedAt: Array.from({ length: quantity }, () => addedAt) };
+  return {
+    lineId,
+    productId,
+    categoryId: "coffee",
+    unitPrice,
+    basePrice: unitPrice,
+    unitAddedAt: Array.from({ length: quantity }, () => addedAt),
+  };
 }
 
 describe("applyPromotions", () => {

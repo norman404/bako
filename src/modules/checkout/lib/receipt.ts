@@ -1,3 +1,4 @@
+import { collapseModifiersForPrint } from "@/modules/menu";
 import type { CartItem, CartPricing } from "@/modules/order";
 
 import type { PrintOrderDiscount, PrintOrderItem } from "../print-ticket";
@@ -19,11 +20,7 @@ export function buildReceiptLines(items: CartItem[], pricing: CartPricing): Rece
         name: item?.product.name ?? "Producto",
         quantity: segment.quantity,
         unitPrice: segment.unitPrice,
-        modifiers: (item?.selectedModifiers ?? []).map((modifier) => ({
-          groupName: modifier.groupName,
-          optionName: modifier.optionName,
-          textValue: modifier.textValue,
-        })),
+        modifiers: collapseModifiersForPrint(item?.selectedModifiers ?? []),
         discount: segment.discountAmount,
         discountLabel: segment.applicationRef ? (namesByRef.get(segment.applicationRef) ?? null) : null,
         children: (item?.composite?.components ?? []).map((component) => ({

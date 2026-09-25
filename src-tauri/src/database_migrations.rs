@@ -761,6 +761,7 @@ const SHIPPED_MIGRATIONS: &[&str] = &[
     include_str!("../migrations/0032_delivery_orders.sql"),
     include_str!("../migrations/0033_payments_platform.sql"),
     include_str!("../migrations/0034_promotions.sql"),
+    include_str!("../migrations/0035_modifier_repeat.sql"),
 ];
 
 #[cfg(test)]
@@ -1104,6 +1105,38 @@ mod line_ending_checksum_repair {
             // Assert
             assert_eq!(repaired, 0);
             assert!(!missing.exists());
+        });
+    }
+}
+
+#[cfg(test)]
+mod modifier_repeat_migration {
+    use super::SHIPPED_MIGRATIONS;
+    use sqlx::{Connection, Executor, SqliteConnection};
+
+    // CASE: Existing modifier groups upgrade to the version that allows repeated options.
+    // VALIDATES: Groups keep today's one-per-option behavior and SQLite rejects absurd limits.
+    #[test]
+    fn should_keep_existing_groups_non_repeatable_when_migration_runs() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
+            for sql in SHIPPED_MIGRATIONS {
+                db.execute(*sql).await.unwrap();
+            }
+            db.execute("INSERT INTO modifier_groups (id, name, type, created_at, updated_at) VALUES ('g', 'Toppings', 'multiple', 1, 1)")
+                .await
+                .unwrap();
+            // Act
+            let (allow_repeat, max_repeat): (i64, i64) =
+                sqlx::query_as("SELECT allow_repeat, max_repeat FROM modifier_groups WHERE id = 'g'")
+                    .fetch_one(&mut db)
+                    .await
+                    .unwrap();
+            let rejected = db.execute("UPDATE modifier_groups SET max_repeat = 0 WHERE id = 'g'").await;
+            // Assert
+            assert_eq!((allow_repeat, max_repeat), (0, 3));
+            assert!(rejected.is_err());
         });
     }
 }

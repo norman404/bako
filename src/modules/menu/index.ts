@@ -9,8 +9,14 @@ export { ProductSearch } from "./components/ProductSearch";
 export type { Category } from "./category";
 export type { Product, ProductComponent, ProductKind } from "./product";
 export { PRODUCT_KIND } from "./product";
-export type { ModifierGroup, SelectedModifier } from "./modifier-group";
-export { buildCartItemKey } from "./modifier-group";
+export type { ModifierGroup, RepeatedModifier, SelectedModifier } from "./modifier-group";
+export {
+  buildCartItemKey,
+  collapseModifiersForPrint,
+  formatRepeatedModifierLabel,
+  groupRepeatedModifiers,
+  type PrintableModifier,
+} from "./modifier-group";
 
 // Hooks
 export { useCategories } from "./use-categories";

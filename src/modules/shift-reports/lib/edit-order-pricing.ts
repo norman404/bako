@@ -77,6 +77,7 @@ export function priceEditedOrder(order: OrderDetail, editedItems: OrderDetailIte
       productId: item.productId,
       categoryId: item.categoryId ?? "",
       unitPrice: item.unitPrice,
+      basePrice: item.unitPrice - item.modifiers.reduce((sum, modifier) => sum + modifier.priceDelta, 0),
       // Every unit was added before the sale was charged, so the sale time decides eligibility.
       unitAddedAt: Array.from({ length: item.quantity }, () => order.createdAt.getTime()),
     })),

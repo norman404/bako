@@ -30,7 +30,9 @@
     "requiredLabel": "Required",
     "optionalLabel": "Optional",
     "missingSelectionHint": "Please select {{groupName}}",
-    "summaryTotal": "Total"
+    "summaryTotal": "Total",
+    "decreaseOption": "Remove one {{optionName}}",
+    "increaseOption": "Add another {{optionName}}"
   },
   "modifierBadge": {
     "label": "Customizable"

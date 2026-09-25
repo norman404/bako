@@ -42,7 +42,10 @@ export interface PricingLine {
   lineId: string;
   productId: string;
   categoryId: string;
+  // Charged price per unit, modifiers included.
   unitPrice: number;
+  // Catalog price per unit before modifiers: the only part a promotion may discount.
+  basePrice: number;
   unitAddedAt: number[];
 }
 

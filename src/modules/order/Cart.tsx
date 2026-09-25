@@ -4,7 +4,13 @@ import { useTranslation } from "react-i18next";
 
 import type { CartItem } from "./cart-operations";
 import { getLinePricing, type CartPricing } from "./cart-pricing";
-import { calculateItemUnitPrice, type SelectedModifier } from "@/modules/menu";
+import {
+  calculateItemUnitPrice,
+  formatRepeatedModifierLabel,
+  groupRepeatedModifiers,
+  type RepeatedModifier,
+  type SelectedModifier,
+} from "@/modules/menu";
 import { useFeatureFlagsStore } from "@/modules/feature-flags";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -281,12 +287,12 @@ interface ModifierListProps {
  * the cashier can see which group each chip belongs to.
  */
 function ModifierList({ modifiers, quantity }: ModifierListProps) {
-  // Group modifiers by groupName, preserving first-seen order.
-  const grouped = new Map<string, SelectedModifier[]>();
-  for (const modifier of modifiers) {
-    const key = modifier.groupName ?? "_";
+  // Group modifiers by groupName, preserving first-seen order; repeated picks collapse to "×n".
+  const grouped = new Map<string, RepeatedModifier[]>();
+  for (const entry of groupRepeatedModifiers(modifiers)) {
+    const key = entry.modifier.groupName ?? "_";
     const list = grouped.get(key) ?? [];
-    list.push(modifier);
+    list.push(entry);
     grouped.set(key, list);
   }
 
@@ -303,8 +309,9 @@ function ModifierList({ modifiers, quantity }: ModifierListProps) {
               {groupName}:
             </span>
           ) : null}
-          {mods.map((modifier, index) => {
-            const label = modifier.optionName || modifier.textValue || "";
+          {mods.map((entry, index) => {
+            const { modifier } = entry;
+            const label = formatRepeatedModifierLabel(entry);
             const value = groupName === "_"
               ? label
               : `${groupName}: ${label}`;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Product } from "@/modules/menu";
+import type { Product, SelectedModifier } from "@/modules/menu";
 import { PROMOTION_TYPE, type Promotion } from "@/modules/promotions";
 
 import { addCompositeToCart, addItemToCart, expandCompositeItems, incrementItemQuantity } from "./cart-operations";
@@ -169,5 +169,92 @@ describe("composite products", () => {
 
     // Assert
     expect(pricing).toMatchObject({ subtotal: 8_000, discountTotal: 0, total: 8_000, applications: [] });
+  });
+});
+
+const EXTRA_TOPPING: SelectedModifier = {
+  groupId: "toppings",
+  groupName: "Toppings",
+  optionId: "extra-1",
+  optionName: "Extra 1",
+  priceDelta: 1_000,
+  textValue: null,
+};
+const SECOND_TOPPING: SelectedModifier = { ...EXTRA_TOPPING, optionId: "extra-2", optionName: "Extra 2" };
+const PLAIN = { ...LATTE, id: "plain", name: "Frappé", price: 7_000 };
+const OTHER = { ...LATTE, id: "other", name: "Smoothie", price: 7_000 };
+const ALWAYS_OPEN = TWO_FOR_ONE.schedule;
+
+describe("promotions with paid modifiers", () => {
+  const now = new Date(2026, 8, 21, 12, 0).getTime();
+
+  // CASE: A $70 product with two $10 toppings is bundled with another $70 product for $100.
+  // VALIDATES: The bundle covers the products only; the $20 of toppings is still charged.
+  it("should charge toppings on top of a bundle price", () => {
+    // Arrange
+    const bundle: Promotion = {
+      ...TWO_FOR_ONE,
+      id: "promo-bundle",
+      name: "Frappé + Smoothie",
+      type: PROMOTION_TYPE.BUNDLE,
+      buyQuantity: null,
+      payQuantity: null,
+      bundlePrice: 10_000,
+      schedule: ALWAYS_OPEN,
+      targets: [
+        { productId: "plain", categoryId: null, quantity: 1 },
+        { productId: "other", categoryId: null, quantity: 1 },
+      ],
+    };
+    const items = addItemToCart(
+      addItemToCart([], PLAIN, [EXTRA_TOPPING, SECOND_TOPPING], "line-1", now),
+      OTHER,
+      [],
+      "line-2",
+      now,
+    );
+
+    // Act
+    const pricing = priceCart(items, [bundle]);
+
+    // Assert
+    expect(pricing).toMatchObject({ subtotal: 16_000, discountTotal: 4_000, total: 12_000 });
+  });
+
+  // CASE: In a 2x1, the free unit was ordered with a $10 topping.
+  // VALIDATES: The product is free but its topping is charged.
+  it("should charge the toppings of the free unit in a 2x1", () => {
+    // Arrange
+    const twoForOne: Promotion = { ...TWO_FOR_ONE, targets: [{ productId: "plain", categoryId: null, quantity: 1 }] };
+    const items = addItemToCart(
+      addItemToCart([], PLAIN, [EXTRA_TOPPING], "line-1", now),
+      PLAIN,
+      [],
+      "line-2",
+      now,
+    );
+
+    // Act
+    const pricing = priceCart(items, [twoForOne]);
+
+    // Assert
+    expect(pricing).toMatchObject({ subtotal: 15_000, discountTotal: 7_000, total: 8_000 });
+  });
+
+  // CASE: A modifier lowers the price below the catalog price (e.g. "no cheese" −$5).
+  // VALIDATES: The discount never exceeds what the line charges.
+  it("should cap the discount at the charged price when a modifier is negative", () => {
+    // Arrange
+    const twoForOne: Promotion = { ...TWO_FOR_ONE, targets: [{ productId: "plain", categoryId: null, quantity: 1 }] };
+    const discountModifier: SelectedModifier = { ...EXTRA_TOPPING, optionId: "less", priceDelta: -500 };
+    const items = addItemToCart([], PLAIN, [discountModifier], "line-1", now);
+    const withSecond = addItemToCart(items, PLAIN, [discountModifier], "line-2", now);
+
+    // Act
+    const pricing = priceCart(withSecond, [twoForOne]);
+
+    // Assert
+    expect(pricing).toMatchObject({ subtotal: 13_000, discountTotal: 6_500, total: 6_500 });
+    expect(pricing.segments.every((segment) => segment.discountAmount <= segment.unitPrice * segment.quantity)).toBe(true);
   });
 });

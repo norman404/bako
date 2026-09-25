@@ -123,6 +123,8 @@ export const modifierGroups = sqliteTable(
     required: integer("required", { mode: "boolean" }).notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
     firstOptionFree: integer("first_option_free", { mode: "boolean" }).notNull().default(false),
+    allowRepeat: integer("allow_repeat", { mode: "boolean" }).notNull().default(false),
+    maxRepeat: integer("max_repeat").notNull().default(3),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),

@@ -253,6 +253,8 @@
     "moveGroupUp": "Move group up",
     "moveGroupDown": "Move group down",
     "removeOption": "Remove option",
-    "firstOptionFreeLabel": "First option free"
+    "firstOptionFreeLabel": "First option free",
+    "allowRepeatLabel": "Allow repeating options",
+    "maxRepeatLabel": "Maximum per option"
   }
 }

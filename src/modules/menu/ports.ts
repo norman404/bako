@@ -75,6 +75,8 @@ export interface ModifierGroupUpsertInput {
   required: boolean;
   sortOrder: number;
   firstOptionFree?: boolean;
+  allowRepeat?: boolean;
+  maxRepeat?: number;
   options: ModifierOptionInput[];
 }
 

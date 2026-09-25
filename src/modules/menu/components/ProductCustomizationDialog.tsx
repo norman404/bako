@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Check, Plus, X } from "lucide-react";
+import { Check, Minus, Plus, X } from "lucide-react";
 
 import type { ModifierGroup, ModifierOption, SelectedModifier } from "../modifier-group";
-import { applyFirstOptionFree } from "../modifier-group";
+import { applyFirstOptionFree, formatRepeatedModifierLabel, groupRepeatedModifiers } from "../modifier-group";
 import type { Product } from "../product";
 import { calculateItemUnitPrice } from "../lib/modifier-price";
 import { formatPosCurrency } from "@/lib/currency";
@@ -28,6 +28,8 @@ export interface ProductCustomizationDialogProps {
 interface OptionSelection {
   optionId: string;
   selected: boolean;
+  // Units picked; always 1 when selected unless the group allows repeating options.
+  quantity: number;
 }
 
 interface TextSelection {
@@ -51,7 +53,7 @@ function buildInitialSelection(group: ModifierGroup): GroupSelectionState {
 
   const selections = new Map<string, OptionSelection>();
   for (const option of group.options) {
-    selections.set(option.id, { optionId: option.id, selected: option.isDefault });
+    selections.set(option.id, { optionId: option.id, selected: option.isDefault, quantity: option.isDefault ? 1 : 0 });
   }
 
   if (group.type === "single_text") {
@@ -135,14 +137,17 @@ function buildSelectedModifiers(
     for (const optionId of selectedIds) {
       const option = findOption(group, optionId);
       if (!option) continue;
-      groupModifiers.push({
-        groupId: group.id,
-        groupName: group.name,
-        optionId: option.id,
-        optionName: option.name,
-        priceDelta: option.priceDelta,
-        textValue: null,
-      });
+      const units = group.allowRepeat ? Math.min(state.selections.get(optionId)?.quantity ?? 1, group.maxRepeat) : 1;
+      for (let unit = 0; unit < units; unit += 1) {
+        groupModifiers.push({
+          groupId: group.id,
+          groupName: group.name,
+          optionId: option.id,
+          optionName: option.name,
+          priceDelta: option.priceDelta,
+          textValue: null,
+        });
+      }
     }
     result.push(...applyFirstOptionFree(group, groupModifiers));
   }
@@ -230,11 +235,50 @@ function ModifierOptionChip({
   );
 }
 
+interface OptionQuantityStepperProps {
+  option: ModifierOption;
+  quantity: number;
+  max: number;
+  onChange: (quantity: number) => void;
+}
+
+function OptionQuantityStepper({ option, quantity, max, onChange }: OptionQuantityStepperProps) {
+  const { t } = useTranslation("menu");
+  return (
+    <div
+      className="inline-flex shrink-0 items-center rounded-sharp border border-border-strong"
+      data-testid={`modifier-quantity-${option.id}`}
+    >
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-10 w-10 text-text-muted"
+        aria-label={t("customizationDialog.decreaseOption", { optionName: option.name })}
+        onClick={() => onChange(quantity - 1)}
+      >
+        <Minus className="h-3.5 w-3.5" />
+      </Button>
+      <span className="font-mono-tabular min-w-8 text-center text-sm font-semibold text-primary-strong">{quantity}</span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-10 w-10 text-text-muted"
+        aria-label={t("customizationDialog.increaseOption", { optionName: option.name })}
+        disabled={quantity >= max}
+        onClick={() => onChange(quantity + 1)}
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
 interface ModifierGroupSectionProps {
   group: ModifierGroup;
   state: GroupSelectionState;
   onToggleSingle: (optionId: string) => void;
   onToggleMultiple: (optionId: string) => void;
+  onQuantityChange: (optionId: string, quantity: number) => void;
   onTextChange: (value: string) => void;
 }
 
@@ -243,6 +287,7 @@ function ModifierGroupSection({
   state,
   onToggleSingle,
   onToggleMultiple,
+  onQuantityChange,
   onTextChange,
 }: ModifierGroupSectionProps) {
   const { t } = useTranslation("menu");
@@ -286,9 +331,9 @@ function ModifierGroupSection({
       {isSingle || isMultiple ? (
         <div role={role} aria-label={ariaLabel} className="space-y-1.5">
           {group.options.map((option) => {
-            const selected =
-              state.selections.get(option.id)?.selected === true;
-            return (
+            const selection = state.selections.get(option.id);
+            const selected = selection?.selected === true;
+            const chip = (
               <ModifierOptionChip
                 key={option.id}
                 option={option}
@@ -300,6 +345,19 @@ function ModifierGroupSection({
                     : onToggleMultiple(option.id)
                 }
               />
+            );
+            if (!isMultiple || !group.allowRepeat || !selected) return chip;
+
+            return (
+              <div key={option.id} className="flex items-center gap-2">
+                <div className="min-w-0 flex-1">{chip}</div>
+                <OptionQuantityStepper
+                  option={option}
+                  quantity={selection?.quantity ?? 1}
+                  max={group.maxRepeat}
+                  onChange={(quantity) => onQuantityChange(option.id, quantity)}
+                />
+              </div>
             );
           })}
         </div>
@@ -348,12 +406,12 @@ function SelectionSummary({ product, groups, states }: SelectionSummaryProps) {
 
   // Group modifiers by groupName for compact display
   const groupedByName = new Map<string, string[]>();
-  for (const m of modifiers) {
-    const label = m.optionName ?? m.textValue ?? "";
+  for (const entry of groupRepeatedModifiers(modifiers)) {
+    const label = formatRepeatedModifierLabel(entry);
     if (!label) continue;
-    const list = groupedByName.get(m.groupName) ?? [];
+    const list = groupedByName.get(entry.modifier.groupName) ?? [];
     list.push(label);
-    groupedByName.set(m.groupName, list);
+    groupedByName.set(entry.modifier.groupName, list);
   }
 
   return (
@@ -430,7 +488,7 @@ function ProductCustomizationDialog({
 
       const newSelections = new Map(state.selections);
       for (const [id] of newSelections) {
-        newSelections.set(id, { optionId: id, selected: id === optionId });
+        newSelections.set(id, { optionId: id, selected: id === optionId, quantity: id === optionId ? 1 : 0 });
       }
       if (state.kind === "single_text") {
         next.set(groupId, { kind: "single_text", selections: newSelections, text: state.text });
@@ -450,9 +508,24 @@ function ProductCustomizationDialog({
       const newSelections = new Map(state.selections);
       const current = newSelections.get(optionId);
       if (current) {
-        newSelections.set(optionId, { optionId, selected: !current.selected });
+        newSelections.set(optionId, { optionId, selected: !current.selected, quantity: current.selected ? 0 : 1 });
       }
       next.set(groupId, { kind: "multiple", selections: newSelections });
+      return next;
+    });
+  };
+
+  // Going below one unit deselects the option, so the stepper doubles as a remove control.
+  const changeOptionQuantity = (group: ModifierGroup, optionId: string, quantity: number) => {
+    setSelectionStates((prev) => {
+      const state = prev.get(group.id);
+      if (!state || state.kind !== "multiple") return prev;
+
+      const clamped = Math.max(0, Math.min(quantity, group.maxRepeat));
+      const newSelections = new Map(state.selections);
+      newSelections.set(optionId, { optionId, selected: clamped > 0, quantity: clamped });
+      const next = new Map(prev);
+      next.set(group.id, { kind: "multiple", selections: newSelections });
       return next;
     });
   };
@@ -527,6 +600,7 @@ function ProductCustomizationDialog({
                   state={state}
                   onToggleSingle={(optionId) => toggleSingleOption(group.id, optionId)}
                   onToggleMultiple={(optionId) => toggleMultipleOption(group.id, optionId)}
+                  onQuantityChange={(optionId, quantity) => changeOptionQuantity(group, optionId, quantity)}
                   onTextChange={(value) => updateTextValue(group.id, value)}
                 />
               );

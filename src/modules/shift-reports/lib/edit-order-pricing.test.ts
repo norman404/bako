@@ -123,4 +123,28 @@ describe("priceEditedOrder", () => {
     expect(pricing.promotions).toEqual([]);
     expect(pricing.total).toBe(5_000);
   });
+
+  // CASE: A 2x1 sale had lattes with a $20 topping and one latte is removed then re-added in quantity.
+  // VALIDATES: Re-pricing an edit discounts only the base price, so toppings stay charged.
+  it("should keep charging toppings when re-pricing an edited sale", () => {
+    // Arrange
+    const withTopping: OrderDetailItem = {
+      ...LATTES,
+      quantity: 2,
+      unitPrice: 7_000,
+      discountAmount: 5_000,
+      modifiers: [
+        { groupId: "toppings", groupName: "Toppings", optionId: "extra", optionName: "Extra", textValue: null, priceDelta: 2_000 },
+      ],
+    };
+    const order: OrderDetail = { ...ORDER, items: [withTopping] };
+
+    // Act
+    const pricing = priceEditedOrder(order, [withTopping]);
+
+    // Assert
+    expect(pricing.items[0]).toMatchObject({ quantity: 2, unitPrice: 7_000, discountAmount: 5_000 });
+    expect(pricing.total).toBe(9_000);
+  });
 });
+
