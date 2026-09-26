@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { calculateCartTotals, type CartItem } from "@/modules/order";
+import type { CartItem, CartPricing } from "@/modules/order";
 import { CheckoutModalFooterActions } from "./CheckoutModal.Footer";
 import { CheckoutModalOrderSummary } from "./CheckoutModal.OrderSummary";
 import { CheckoutModalPaymentPanel } from "./CheckoutModal.Payment";
@@ -13,6 +13,7 @@ import { useCheckoutForm } from "../use-checkout-form";
 interface CheckoutModalProps {
   open: boolean;
   items: CartItem[];
+  pricing: CartPricing;
   orderName: string;
   isSubmitting?: boolean;
   onClose: () => void;
@@ -22,13 +23,14 @@ interface CheckoutModalProps {
 function CheckoutModal({
   open,
   items,
+  pricing,
   orderName,
   isSubmitting = false,
   onClose,
   onConfirmCheckout,
 }: CheckoutModalProps) {
   const { t } = useTranslation("checkout");
-  const totals = calculateCartTotals(items);
+  const totals = pricing;
 
   const {
     paymentMode,
@@ -48,7 +50,7 @@ function CheckoutModal({
     open,
     items,
     orderName,
-    totals,
+    pricing,
     isSubmitting,
     onClose,
     onConfirmCheckout,
@@ -92,7 +94,7 @@ function CheckoutModal({
 
           <div className="scrollbar-thin min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-4">
             <div className="grid items-start gap-4 lg:grid-cols-[0.84fr_1.16fr]">
-              <CheckoutModalOrderSummary items={items} totals={totals} />
+              <CheckoutModalOrderSummary items={items} pricing={pricing} />
 
               <CheckoutModalPaymentPanel
                 totals={totals}

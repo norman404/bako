@@ -30,6 +30,7 @@ const LABELS: ReprintShiftReportLabels = {
   categorySalesLabel: "Ventas por categoría",
   uncategorizedCategoryLabel: "Sin categoría",
   itemCountLabel: "productos",
+  promotionsLabel: "Promociones",
 };
 
 const REPORT: ShiftReport = {
@@ -62,6 +63,7 @@ const REPORT: ShiftReport = {
       totalSales: 100,
     },
   ],
+  promotions: [],
   openingCash: 0,
   cashMovementsIn: 0,
   cashMovementsOut: 0,
@@ -141,4 +143,24 @@ it("should omit zero platform collections when reprinting a delivery cut", () =>
   expect(itemNames.some((name) => name.startsWith("DiDi · Pagado en app:"))).toBe(false);
   expect(itemNames.some((name) => name.startsWith(`${LABELS.platformLabel}:`))).toBe(false);
   expect(payload.payments).toEqual([]);
+});
+
+describe("promotions", () => {
+  // CASE: A closed shift applied a 2x1 three times and is reprinted.
+  // VALIDATES: The printed cut includes each promotion with its uses and total discount.
+  it("should print the promotions applied during the shift", () => {
+    // Arrange
+    const report: ShiftReport = {
+      ...REPORT,
+      promotions: [{ promotionId: "p1", kind: "nxm", name: "2x1 Latte", timesApplied: 3, discountTotal: 15_000 }],
+    };
+
+    // Act
+    const payload = buildReprintShiftReportPayload(report, PRINTER, LABELS, false);
+
+    // Assert
+    const names = payload.items.map((item) => item.name);
+    expect(names).toContain("Promociones");
+    expect(payload.items.find((item) => item.name === "2x1 Latte — 3x")?.unitPrice).toBe(15_000);
+  });
 });

@@ -1,6 +1,6 @@
 use sqlx::migrate::{Migration, MigrationType};
 use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::{Connection, SqlStr, SqliteConnection};
+use sqlx::{AssertSqlSafe, Connection, SqlSafeStr, SqlStr, SqliteConnection};
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 use tauri::{Manager, Runtime};
@@ -172,14 +172,112 @@ async fn apply_pending_product_costs_migration(path: &Path) -> Result<(), String
         .map_err(|error| format!("Could not commit product costs migration: {error}"))
 }
 
-pub fn init<R: Runtime>() -> tauri::plugin::TauriPlugin<R> {
+/// A shipped migration as the running build embeds it: its version and exact SQL text.
+#[derive(Clone, Copy)]
+pub struct MigrationSource {
+    pub version: i64,
+    pub sql: &'static str,
+}
+
+fn sql_checksum(version: i64, sql: String) -> Vec<u8> {
+    Migration::new(
+        version,
+        Cow::Borrowed(""),
+        MigrationType::ReversibleUp,
+        AssertSqlSafe(sql).into_sql_str(),
+        false,
+    )
+    .checksum
+    .into_owned()
+}
+
+/// sqlx checksums the exact bytes of each migration. A Windows checkout converts the
+/// `.sql` files to CRLF, so a database created by a Windows build and restored on
+/// another platform (or the reverse) looks "modified" and can never migrate again. A
+/// stored checksum is realigned only when it equals the LF or CRLF variant of the very
+/// same SQL, which proves the applied migration is identical; anything else still fails.
+pub async fn repair_line_ending_checksums(
+    path: &Path,
+    sources: &[MigrationSource],
+) -> Result<u64, String> {
+    if !path.exists() {
+        return Ok(0);
+    }
+
+    let mut connection = open_database(path).await?;
+    let migrations_table_exists: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = '_sqlx_migrations'",
+    )
+    .fetch_one(&mut connection)
+    .await
+    .map_err(|error| format!("Could not inspect migration history: {error}"))?;
+    if migrations_table_exists == 0 {
+        connection
+            .close()
+            .await
+            .map_err(|error| error.to_string())?;
+        return Ok(0);
+    }
+
+    let applied: Vec<(i64, Vec<u8>)> =
+        sqlx::query_as("SELECT version, checksum FROM _sqlx_migrations WHERE success = TRUE")
+            .fetch_all(&mut connection)
+            .await
+            .map_err(|error| format!("Could not read migration checksums: {error}"))?;
+
+    let mut transaction = connection
+        .begin()
+        .await
+        .map_err(|error| format!("Could not start checksum repair: {error}"))?;
+    let mut repaired = 0;
+    for (version, stored) in applied {
+        let Some(source) = sources.iter().find(|source| source.version == version) else {
+            continue;
+        };
+        let expected = sql_checksum(version, source.sql.to_owned());
+        if stored == expected {
+            continue;
+        }
+
+        let lf = source.sql.replace("\r\n", "\n");
+        let crlf = lf.replace('\n', "\r\n");
+        if stored != sql_checksum(version, lf) && stored != sql_checksum(version, crlf) {
+            continue;
+        }
+
+        sqlx::query("UPDATE _sqlx_migrations SET checksum = ? WHERE version = ?")
+            .bind(expected)
+            .bind(version)
+            .execute(&mut *transaction)
+            .await
+            .map_err(|error| format!("Could not repair checksum of migration {version}: {error}"))?;
+        repaired += 1;
+    }
+    transaction
+        .commit()
+        .await
+        .map_err(|error| format!("Could not commit checksum repair: {error}"))?;
+
+    Ok(repaired)
+}
+
+pub fn init<R: Runtime>(sources: Vec<MigrationSource>) -> tauri::plugin::TauriPlugin<R> {
     tauri::plugin::Builder::new("database-migrations")
-        .setup(|app, _api| {
+        .setup(move |app, _api| {
             let mut path = app
                 .path()
                 .app_config_dir()
                 .map_err(|error| format!("Could not resolve database directory: {error}"))?;
             path.push(PathBuf::from(crate::DATABASE_FILENAME));
+
+            match tauri::async_runtime::block_on(repair_line_ending_checksums(&path, &sources)) {
+                Ok(0) => {}
+                Ok(repaired) => log::info!("Realigned {repaired} migration checksums that differed only in line endings"),
+                Err(error) => {
+                    log::error!("Database checksum repair failed: {error}");
+                    return Err(Box::new(std::io::Error::other(error)));
+                }
+            }
 
             if let Err(error) =
                 tauri::async_runtime::block_on(repair_partial_label_orientation_migration(&path))
@@ -628,7 +726,47 @@ mod tests {
 
 
 #[cfg(test)]
+const SHIPPED_MIGRATIONS: &[&str] = &[
+    include_str!("../migrations/0000_initial.sql"),
+    include_str!("../migrations/0001_seed_menu.sql"),
+    include_str!("../migrations/0002_orders_customers.sql"),
+    include_str!("../migrations/0003_payments.sql"),
+    include_str!("../migrations/0005_system_settings.sql"),
+    include_str!("../migrations/0006_category_colors.sql"),
+    include_str!("../migrations/0007_feature_flags.sql"),
+    include_str!("../migrations/0008_menus.sql"),
+    include_str!("../migrations/0009_product_menus.sql"),
+    include_str!("../migrations/0010_delivery_persons.sql"),
+    include_str!("../migrations/0011_printer_settings.sql"),
+    include_str!("../migrations/0012_shifts.sql"),
+    include_str!("../migrations/0013_updater_flag.sql"),
+    include_str!("../migrations/0014_product_modifiers.sql"),
+    include_str!("../migrations/0015_modifiers_flag_seed.sql"),
+    include_str!("../migrations/0016_comandas_flag_seed.sql"),
+    include_str!("../migrations/0017_printers_and_category_printer.sql"),
+    include_str!("../migrations/0018_receipt_printing_flag_seed.sql"),
+    include_str!("../migrations/0019_comanda_header_text.sql"),
+    include_str!("../migrations/0020_first_option_free.sql"),
+    include_str!("../migrations/0021_label_printer_columns.sql"),
+    include_str!("../migrations/0022_label_printer_language.sql"),
+    include_str!("../migrations/0023_printer_is_default.sql"),
+    include_str!("../migrations/0024_printer_role_comanda.sql"),
+    include_str!("../migrations/0025_voided_at_orders.sql"),
+    include_str!("../migrations/0026_cash_management.sql"),
+    include_str!("../migrations/0027_printer_label_orientation.sql"),
+    include_str!("../migrations/0028_mixed_payments.sql"),
+    include_str!("../migrations/0029_shift_list_order.sql"),
+    include_str!("../migrations/0030_order_name.sql"),
+    include_str!("../migrations/0031_product_costs.sql"),
+    include_str!("../migrations/0032_delivery_orders.sql"),
+    include_str!("../migrations/0033_payments_platform.sql"),
+    include_str!("../migrations/0034_promotions.sql"),
+    include_str!("../migrations/0035_modifier_repeat.sql"),
+];
+
+#[cfg(test)]
 mod delivery_orders_migration {
+    use super::SHIPPED_MIGRATIONS;
     use sqlx::{Connection, Executor, SqliteConnection};
 
     async fn migrate_legacy_orders(url: &str) -> SqliteConnection {
@@ -697,42 +835,8 @@ mod delivery_orders_migration {
             // Arrange
             let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
             // Act
-            for sql in [
-                include_str!("../migrations/0000_initial.sql"),
-                include_str!("../migrations/0001_seed_menu.sql"),
-                include_str!("../migrations/0002_orders_customers.sql"),
-                include_str!("../migrations/0003_payments.sql"),
-                include_str!("../migrations/0005_system_settings.sql"),
-                include_str!("../migrations/0006_category_colors.sql"),
-                include_str!("../migrations/0007_feature_flags.sql"),
-                include_str!("../migrations/0008_menus.sql"),
-                include_str!("../migrations/0009_product_menus.sql"),
-                include_str!("../migrations/0010_delivery_persons.sql"),
-                include_str!("../migrations/0011_printer_settings.sql"),
-                include_str!("../migrations/0012_shifts.sql"),
-                include_str!("../migrations/0013_updater_flag.sql"),
-                include_str!("../migrations/0014_product_modifiers.sql"),
-                include_str!("../migrations/0015_modifiers_flag_seed.sql"),
-                include_str!("../migrations/0016_comandas_flag_seed.sql"),
-                include_str!("../migrations/0017_printers_and_category_printer.sql"),
-                include_str!("../migrations/0018_receipt_printing_flag_seed.sql"),
-                include_str!("../migrations/0019_comanda_header_text.sql"),
-                include_str!("../migrations/0020_first_option_free.sql"),
-                include_str!("../migrations/0021_label_printer_columns.sql"),
-                include_str!("../migrations/0022_label_printer_language.sql"),
-                include_str!("../migrations/0023_printer_is_default.sql"),
-                include_str!("../migrations/0024_printer_role_comanda.sql"),
-                include_str!("../migrations/0025_voided_at_orders.sql"),
-                include_str!("../migrations/0026_cash_management.sql"),
-                include_str!("../migrations/0027_printer_label_orientation.sql"),
-                include_str!("../migrations/0028_mixed_payments.sql"),
-                include_str!("../migrations/0029_shift_list_order.sql"),
-                include_str!("../migrations/0030_order_name.sql"),
-                include_str!("../migrations/0031_product_costs.sql"),
-                include_str!("../migrations/0032_delivery_orders.sql"),
-                include_str!("../migrations/0033_payments_platform.sql"),
-            ] {
-                db.execute(sql).await.unwrap();
+            for sql in SHIPPED_MIGRATIONS {
+                db.execute(*sql).await.unwrap();
             }
             let columns: i64 = sqlx::query_scalar("SELECT count(*) FROM pragma_table_info('orders') WHERE name IN ('channel', 'delivery_reference', 'confirmed_at', 'financial_shift_id')")
                 .fetch_one(&mut db).await.unwrap();
@@ -793,6 +897,245 @@ mod payments_platform_migration {
             let rejected = db
                 .execute("INSERT INTO payments (id, order_id, method, amount, created_at) VALUES ('r', 'o', 'other', 1, 3000)")
                 .await;
+            assert!(rejected.is_err());
+        });
+    }
+}
+
+#[cfg(test)]
+mod promotions_migration {
+    use super::SHIPPED_MIGRATIONS;
+    use sqlx::{Connection, Executor, SqliteConnection};
+
+    async fn fresh_database() -> SqliteConnection {
+        let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
+        db.execute("PRAGMA foreign_keys = ON;").await.unwrap();
+        for sql in SHIPPED_MIGRATIONS {
+            db.execute(*sql).await.unwrap();
+        }
+        db.execute("INSERT INTO promotions (id, name, type, buy_quantity, pay_quantity, schedule, created_at, updated_at)
+                VALUES ('p', '2x1', 'nxm', 2, 1, '{}', 1, 1);")
+            .await
+            .unwrap();
+        db
+    }
+
+    // CASE: An installation upgrades with sales recorded before promotions existed.
+    // VALIDATES: Existing sale lines default to no discount and new flags start disabled.
+    #[test]
+    fn should_default_existing_lines_to_no_discount_when_migration_runs() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = fresh_database().await;
+            // Act
+            let flag: String = sqlx::query_scalar("SELECT value FROM feature_flags WHERE key = 'promotions_enabled'")
+                .fetch_one(&mut db)
+                .await
+                .unwrap();
+            let discount_default: String = sqlx::query_scalar(
+                "SELECT dflt_value FROM pragma_table_info('order_items') WHERE name = 'discount_amount'",
+            )
+            .fetch_one(&mut db)
+            .await
+            .unwrap();
+            // Assert
+            assert_eq!(flag, "false");
+            assert_eq!(discount_default, "0");
+        });
+    }
+
+    // CASE: Invalid promotion rules bypass the TypeScript form.
+    // VALIDATES: SQLite rejects an NxM that pays for everything, mixed rule columns and ambiguous targets.
+    #[test]
+    fn should_reject_invalid_promotion_rules_when_data_bypasses_the_form() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = fresh_database().await;
+            // Act
+            let pays_all = db
+                .execute("INSERT INTO promotions (id, name, type, buy_quantity, pay_quantity, schedule, created_at, updated_at)
+                    VALUES ('a', 'bad', 'nxm', 2, 2, '{}', 1, 1)")
+                .await;
+            let mixed = db
+                .execute("INSERT INTO promotions (id, name, type, bundle_price, buy_quantity, schedule, created_at, updated_at)
+                    VALUES ('b', 'bad', 'bundle', 100, 2, '{}', 1, 1)")
+                .await;
+            let ambiguous_target = db
+                .execute("INSERT INTO promotion_targets (id, promotion_id) VALUES ('t', 'p')")
+                .await;
+            // Assert
+            assert!(pays_all.is_err());
+            assert!(mixed.is_err());
+            assert!(ambiguous_target.is_err());
+        });
+    }
+}
+
+#[cfg(test)]
+mod line_ending_checksum_repair {
+    use super::{repair_line_ending_checksums, sql_checksum, MigrationSource};
+    use sqlx::migrate::{Migration, MigrationType, Migrator};
+    use sqlx::sqlite::SqliteConnectOptions;
+    use sqlx::{Connection, Executor, SqlStr, SqliteConnection, SqlitePool};
+    use std::borrow::Cow;
+    use std::path::PathBuf;
+
+    const CREATE_ITEMS: &str = "CREATE TABLE items (id TEXT PRIMARY KEY);\nCREATE INDEX idx_items ON items (id);\n";
+    const ADD_NAME: &str = "ALTER TABLE items ADD COLUMN name TEXT;\n";
+    const ADD_PRICE: &str = "ALTER TABLE items ADD COLUMN price INTEGER;\n";
+    const SOURCES: [MigrationSource; 2] = [
+        MigrationSource { version: 1, sql: CREATE_ITEMS },
+        MigrationSource { version: 2, sql: ADD_NAME },
+    ];
+
+    fn temporary_database_path() -> PathBuf {
+        let suffix = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!("bako-line-endings-{}-{suffix}.db", std::process::id()))
+    }
+
+    fn crlf(sql: &str) -> String {
+        sql.replace('\n', "\r\n")
+    }
+
+    fn migration(version: i64, sql: &'static str) -> Migration {
+        Migration::new(version, Cow::Borrowed("m"), MigrationType::ReversibleUp, SqlStr::from_static(sql), false)
+    }
+
+    // A database whose schema and history were written by a build with CRLF migrations.
+    async fn create_windows_database(path: &PathBuf, tampered_version_2: bool) {
+        let options = SqliteConnectOptions::new().filename(path).create_if_missing(true);
+        let mut connection = SqliteConnection::connect_with(&options).await.unwrap();
+        connection
+            .execute("CREATE TABLE _sqlx_migrations (version INTEGER PRIMARY KEY, description TEXT NOT NULL, installed_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, success BOOLEAN NOT NULL, checksum BLOB NOT NULL, execution_time BIGINT NOT NULL)")
+            .await
+            .unwrap();
+        connection.execute(sqlx::AssertSqlSafe(crlf(CREATE_ITEMS))).await.unwrap();
+        connection.execute(sqlx::AssertSqlSafe(crlf(ADD_NAME))).await.unwrap();
+        let version_2_checksum = if tampered_version_2 {
+            sql_checksum(2, "ALTER TABLE items ADD COLUMN nombre TEXT;\r\n".to_owned())
+        } else {
+            sql_checksum(2, crlf(ADD_NAME))
+        };
+        for (version, checksum) in [(1, sql_checksum(1, crlf(CREATE_ITEMS))), (2, version_2_checksum)] {
+            sqlx::query("INSERT INTO _sqlx_migrations (version, description, success, checksum, execution_time) VALUES (?, 'm', TRUE, ?, 1)")
+                .bind(version)
+                .bind(checksum)
+                .execute(&mut connection)
+                .await
+                .unwrap();
+        }
+        connection.close().await.unwrap();
+    }
+
+    // CASE: A backup made on Windows is restored on macOS and a new migration ships.
+    // VALIDATES: sqlx rejects it as modified before the repair, and after the repair the real
+    // migrator accepts the history and applies the pending migration.
+    #[test]
+    fn should_let_a_restored_crlf_database_apply_new_migrations() {
+        let path = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            create_windows_database(&path, false).await;
+            let url = format!("sqlite:{}", path.display());
+            let migrator = Migrator::with_migrations(vec![
+                migration(1, CREATE_ITEMS),
+                migration(2, ADD_NAME),
+                migration(3, ADD_PRICE),
+            ]);
+            let pool = SqlitePool::connect(&url).await.unwrap();
+            let before = migrator.run(&pool).await;
+            pool.close().await;
+
+            // Act
+            let repaired = repair_line_ending_checksums(&path, &SOURCES).await.unwrap();
+            let pool = SqlitePool::connect(&url).await.unwrap();
+            let after = migrator.run(&pool).await;
+            let price_column: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM pragma_table_info('items') WHERE name = 'price'")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            pool.close().await;
+
+            // Assert
+            assert!(matches!(before, Err(sqlx::migrate::MigrateError::VersionMismatch(1))));
+            assert_eq!(repaired, 2);
+            assert!(after.is_ok(), "{after:?}");
+            assert_eq!(price_column, 1);
+        });
+        let _ = std::fs::remove_file(path);
+    }
+
+    // CASE: A migration's stored checksum differs by more than line endings.
+    // VALIDATES: Genuinely different SQL is never "repaired", so sqlx still reports it.
+    #[test]
+    fn should_not_realign_a_migration_whose_sql_really_differs() {
+        let path = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            create_windows_database(&path, true).await;
+
+            // Act
+            let repaired = repair_line_ending_checksums(&path, &SOURCES).await.unwrap();
+            let pool = SqlitePool::connect(&format!("sqlite:{}", path.display())).await.unwrap();
+            let stored: Vec<u8> = sqlx::query_scalar("SELECT checksum FROM _sqlx_migrations WHERE version = 2")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+            pool.close().await;
+
+            // Assert
+            assert_eq!(repaired, 1);
+            assert_ne!(stored, sql_checksum(2, ADD_NAME.to_owned()));
+        });
+        let _ = std::fs::remove_file(path);
+    }
+
+    // CASE: A normal installation whose history already matches the running build starts up.
+    // VALIDATES: The repair is a no-op, including for a fresh install without a database.
+    #[test]
+    fn should_leave_matching_or_missing_databases_untouched() {
+        let missing = temporary_database_path();
+        tauri::async_runtime::block_on(async {
+            // Act
+            let repaired = repair_line_ending_checksums(&missing, &SOURCES).await.unwrap();
+
+            // Assert
+            assert_eq!(repaired, 0);
+            assert!(!missing.exists());
+        });
+    }
+}
+
+#[cfg(test)]
+mod modifier_repeat_migration {
+    use super::SHIPPED_MIGRATIONS;
+    use sqlx::{Connection, Executor, SqliteConnection};
+
+    // CASE: Existing modifier groups upgrade to the version that allows repeated options.
+    // VALIDATES: Groups keep today's one-per-option behavior and SQLite rejects absurd limits.
+    #[test]
+    fn should_keep_existing_groups_non_repeatable_when_migration_runs() {
+        tauri::async_runtime::block_on(async {
+            // Arrange
+            let mut db = SqliteConnection::connect("sqlite::memory:").await.unwrap();
+            for sql in SHIPPED_MIGRATIONS {
+                db.execute(*sql).await.unwrap();
+            }
+            db.execute("INSERT INTO modifier_groups (id, name, type, created_at, updated_at) VALUES ('g', 'Toppings', 'multiple', 1, 1)")
+                .await
+                .unwrap();
+            // Act
+            let (allow_repeat, max_repeat): (i64, i64) =
+                sqlx::query_as("SELECT allow_repeat, max_repeat FROM modifier_groups WHERE id = 'g'")
+                    .fetch_one(&mut db)
+                    .await
+                    .unwrap();
+            let rejected = db.execute("UPDATE modifier_groups SET max_repeat = 0 WHERE id = 'g'").await;
+            // Assert
+            assert_eq!((allow_repeat, max_repeat), (0, 3));
             assert!(rejected.is_err());
         });
     }

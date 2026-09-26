@@ -10,8 +10,8 @@ use tauri::{AppHandle, Manager, Runtime};
 use crate::print::usb_detection::detect_usb_printers;
 use crate::print::{
     create_printer_driver, print_command_with_driver, print_ticket_with_driver,
-    test_printer_with_driver, CommandItem, CommandPayload, LabelConfig, TicketItem, TicketPayload,
-    TicketPayment,
+    test_printer_with_driver, CommandItem, CommandPayload, LabelConfig, TicketDiscount, TicketItem,
+    TicketPayload, TicketPayment,
 };
 
 const DATABASE_BACKUP_DIRECTORY: &str = "backups";
@@ -29,6 +29,8 @@ pub struct PrintTicketInput {
     pub total: u32,
     pub items: Vec<TicketItem>,
     pub payments: Vec<TicketPayment>,
+    #[serde(default)]
+    pub discounts: Vec<TicketDiscount>,
 }
 
 #[tauri::command]
@@ -53,6 +55,7 @@ pub fn print_ticket(input: PrintTicketInput) -> Result<(), String> {
         total: input.total,
         items: input.items,
         payments: input.payments,
+        discounts: input.discounts,
     };
 
     print_ticket_with_driver(driver, &payload).map_err(|e| {

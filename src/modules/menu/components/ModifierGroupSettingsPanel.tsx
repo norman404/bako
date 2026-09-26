@@ -42,10 +42,20 @@ interface GroupFormState {
   required: boolean;
   sortOrder: number;
   firstOptionFree: boolean;
+  allowRepeat: boolean;
+  maxRepeat: string;
 }
 
 function buildEmptyFormState(): GroupFormState {
-  return { name: "", type: "single", required: false, sortOrder: 0, firstOptionFree: false };
+  return {
+    name: "",
+    type: "single",
+    required: false,
+    sortOrder: 0,
+    firstOptionFree: false,
+    allowRepeat: false,
+    maxRepeat: "3",
+  };
 }
 
 function buildFormStateFromGroup(group: ModifierGroup): GroupFormState {
@@ -55,6 +65,8 @@ function buildFormStateFromGroup(group: ModifierGroup): GroupFormState {
     required: group.required,
     sortOrder: group.sortOrder,
     firstOptionFree: group.firstOptionFree,
+    allowRepeat: group.allowRepeat,
+    maxRepeat: String(group.maxRepeat),
   };
 }
 
@@ -67,6 +79,8 @@ function toGroupPayload(formState: GroupFormState, options: OptionsEditorOption[
     required: formState.required,
     sortOrder: formState.sortOrder,
     firstOptionFree: formState.firstOptionFree,
+    allowRepeat: formState.allowRepeat,
+    maxRepeat: Number.parseInt(formState.maxRepeat, 10) || 1,
     options: options.map((opt, i) => ({
       name: opt.name,
       priceDelta: opt.priceDelta,
@@ -83,6 +97,8 @@ function buildGroupUpsertInput(group: ModifierGroup, sortOrder: number): Modifie
     required: group.required,
     sortOrder,
     firstOptionFree: group.firstOptionFree,
+    allowRepeat: group.allowRepeat,
+    maxRepeat: group.maxRepeat,
     options: group.options.map((option) => ({
       name: option.name,
       priceDelta: option.priceDelta,
@@ -401,6 +417,37 @@ function ModifierGroupSettingsPanel() {
                   }}
                   disabled={isSaving}
                 />
+              </FormField>
+            ) : null}
+
+            {formState.type === "multiple" ? (
+              <FormField label={t("modifierGroups.allowRepeatLabel")} htmlFor="mod-allow-repeat">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="mod-allow-repeat"
+                    checked={formState.allowRepeat}
+                    onCheckedChange={(checked) => {
+                      setFormState((previous) => ({ ...previous, allowRepeat: checked === true }));
+                    }}
+                    disabled={isSaving}
+                  />
+                  {formState.allowRepeat ? (
+                    <label className="flex items-center gap-2 text-xs text-text-muted" htmlFor="mod-max-repeat">
+                      {t("modifierGroups.maxRepeatLabel")}
+                      <Input
+                        id="mod-max-repeat"
+                        inputMode="numeric"
+                        value={formState.maxRepeat}
+                        onInput={(event) => {
+                          const value = event.currentTarget.value.replace(/\D/g, "").slice(0, 2);
+                          setFormState((previous) => ({ ...previous, maxRepeat: value }));
+                        }}
+                        className="h-8 w-14 text-center"
+                        disabled={isSaving}
+                      />
+                    </label>
+                  ) : null}
+                </div>
               </FormField>
             ) : null}
 

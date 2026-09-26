@@ -3,7 +3,9 @@
     "productNotFound": "Product not found: {{productId}}",
     "categoryNotFound": "Category not found: {{categoryId}}",
     "modifierGroupNotFound": "Modifier group not found: {{groupId}}",
-    "generic": "An unexpected error occurred"
+    "generic": "An unexpected error occurred",
+    "compositeComponentsInvalid": "A composite product needs at least 2 included units, no duplicates, and only active standard products.",
+    "compositeScheduleInvalid": "The composite product schedule is invalid."
   },
   "printer": {
     "printerNotFound": "Printer not found: {{printerId}}",

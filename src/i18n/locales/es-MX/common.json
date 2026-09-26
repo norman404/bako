@@ -1,4 +1,24 @@
 {
   "confirm": "Confirmar",
-  "cancel": "Cancelar"
+  "cancel": "Cancelar",
+  "schedule": {
+    "daysLabel": "Días",
+    "startLabel": "Hora de inicio",
+    "endLabel": "Hora de fin",
+    "until": "a",
+    "removeWindow": "Quitar horario",
+    "addWindow": "Agregar horario",
+    "midnightHint": "Un fin a las 00:00 significa hasta la medianoche. Si el fin es antes del inicio (22:00 a 02:00), el horario cruza la medianoche.",
+    "validFrom": "Vigente desde (opcional)",
+    "validUntil": "Vigente hasta (opcional)",
+    "weekdays": {
+      "0": "Dom",
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mié",
+      "4": "Jue",
+      "5": "Vie",
+      "6": "Sáb"
+    }
+  }
 }

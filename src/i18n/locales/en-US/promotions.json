@@ -1,0 +1,60 @@
+{
+  "title": "Promotions",
+  "description": "Applied automatically in the cart on schedule and recorded on every sale.",
+  "createNew": "New promotion",
+  "editTitle": "Edit promotion",
+  "createButton": "Create promotion",
+  "saveButton": "Save changes",
+  "archiveButton": "Delete promotion",
+  "confirmArchive": "Delete \"{{name}}\"? Past sales keep their record.",
+  "emptyState": "No promotions yet.",
+  "nameLabel": "Name",
+  "namePlaceholder": "2-for-1 lattes",
+  "typeLabel": "Promotion type",
+  "types": {
+    "nxm": "Buy N, pay M",
+    "bundle": "Fixed-price bundle"
+  },
+  "buyLabel": "Buy",
+  "payLabel": "Pay",
+  "bundlePriceLabel": "Bundle price",
+  "scheduleLabel": "Schedule",
+  "activeLabel": "Promotion active",
+  "summary": {
+    "nxm": "{{buy}}x{{pay}}",
+    "bundle": "Bundle {{price}}"
+  },
+  "status": {
+    "runningNow": "Active now",
+    "scheduled": "Scheduled",
+    "paused": "Paused"
+  },
+  "targets": {
+    "nxmLabel": "Applies to",
+    "bundleLabel": "Bundle products",
+    "placeholder": "Choose a product or category",
+    "products": "Products",
+    "categories": "Categories",
+    "anyInCategory": "Any product in {{name}}",
+    "add": "Add",
+    "remove": "Remove",
+    "quantityLabel": "Quantity",
+    "missing": "Deleted product"
+  },
+  "errors": {
+    "nameRequired": "Give the promotion a name.",
+    "targetsRequired": "Add at least one product or category.",
+    "targetInvalid": "Check the products and their quantities.",
+    "quantitiesInvalid": "\"Pay\" must be less than \"Buy\", and \"Buy\" must be at least 2.",
+    "bundlePriceInvalid": "The bundle price is invalid.",
+    "bundleTooSmall": "A bundle needs at least 2 products.",
+    "scheduleInvalid": "Check the schedule: each slot needs days and different times, and validity must end after it starts.",
+    "notFound": "The promotion no longer exists.",
+    "dbError": "We couldn't save the promotion. Try again."
+  },
+  "cart": {
+    "discountLine": "{{name}}",
+    "subtotal": "Subtotal",
+    "discounts": "Discounts"
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "title": "Promociones",
+  "description": "Se aplican solas en el carrito según su horario y quedan registradas en cada venta.",
+  "createNew": "Nueva promoción",
+  "editTitle": "Editar promoción",
+  "createButton": "Crear promoción",
+  "saveButton": "Guardar cambios",
+  "archiveButton": "Eliminar promoción",
+  "confirmArchive": "¿Eliminar \"{{name}}\"? Las ventas pasadas conservan su registro.",
+  "emptyState": "Todavía no hay promociones.",
+  "nameLabel": "Nombre",
+  "namePlaceholder": "2x1 en lattes",
+  "typeLabel": "Tipo de promoción",
+  "types": {
+    "nxm": "Lleva N, paga M",
+    "bundle": "Paquete a precio fijo"
+  },
+  "buyLabel": "Lleva",
+  "payLabel": "Paga",
+  "bundlePriceLabel": "Precio del paquete",
+  "scheduleLabel": "Horario",
+  "activeLabel": "Promoción activa",
+  "summary": {
+    "nxm": "{{buy}}x{{pay}}",
+    "bundle": "Paquete {{price}}"
+  },
+  "status": {
+    "runningNow": "Activa ahora",
+    "scheduled": "Programada",
+    "paused": "Pausada"
+  },
+  "targets": {
+    "nxmLabel": "Aplica a",
+    "bundleLabel": "Productos del paquete",
+    "placeholder": "Elige un producto o categoría",
+    "products": "Productos",
+    "categories": "Categorías",
+    "anyInCategory": "Cualquier producto de {{name}}",
+    "add": "Agregar",
+    "remove": "Quitar",
+    "quantityLabel": "Cantidad",
+    "missing": "Producto eliminado"
+  },
+  "errors": {
+    "nameRequired": "Ponle un nombre a la promoción.",
+    "targetsRequired": "Agrega al menos un producto o categoría.",
+    "targetInvalid": "Revisa los productos y sus cantidades.",
+    "quantitiesInvalid": "\"Paga\" debe ser menor que \"Lleva\", y \"Lleva\" debe ser al menos 2.",
+    "bundlePriceInvalid": "El precio del paquete no es válido.",
+    "bundleTooSmall": "Un paquete necesita al menos 2 productos.",
+    "scheduleInvalid": "Revisa el horario: cada bloque necesita días y horas distintas, y la vigencia debe terminar después de empezar.",
+    "notFound": "La promoción ya no existe.",
+    "dbError": "No pudimos guardar la promoción. Intenta de nuevo."
+  },
+  "cart": {
+    "discountLine": "{{name}}",
+    "subtotal": "Subtotal",
+    "discounts": "Descuentos"
+  }
+}

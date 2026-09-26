@@ -41,6 +41,15 @@ export interface ShiftReportOrderItem {
   categoryName: string | null;
   quantity: number;
   unitPrice: number;
+  discountAmount: number;
+}
+
+export interface ShiftReportPromotion {
+  promotionId: string | null;
+  kind: string;
+  name: string;
+  timesApplied: number;
+  discountTotal: number;
 }
 
 export interface ShiftReportCategory {
@@ -95,6 +104,7 @@ export interface ShiftReport {
   pendingDeliveries: number;
   orders: ShiftReportOrder[];
   salesByCategory: ShiftReportCategory[];
+  promotions: ShiftReportPromotion[];
   openingCash: number;
   cashMovementsIn: number;
   cashMovementsOut: number;

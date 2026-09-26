@@ -9,6 +9,13 @@ export interface OrderDetailItemModifier {
   priceDelta: number;
 }
 
+export interface OrderDetailItemChild {
+  productId: string;
+  productName: string;
+  categoryId: string | null;
+  quantity: number;
+}
+
 export interface OrderDetailItem {
   id: string;
   productId: string;
@@ -16,7 +23,22 @@ export interface OrderDetailItem {
   categoryId: string | null;
   quantity: number;
   unitPrice: number;
+  unitCost: number;
+  discountAmount: number;
+  orderPromotionId: string | null;
+  promotionName: string | null;
   modifiers: OrderDetailItemModifier[];
+  // Products included in a composite line; empty for regular lines.
+  children: OrderDetailItemChild[];
+}
+
+export interface OrderDetailPromotion {
+  id: string;
+  promotionId: string | null;
+  kind: string;
+  name: string;
+  ruleSnapshot: unknown;
+  discountAmount: number;
 }
 
 export interface OrderDetailPayment {
@@ -43,6 +65,7 @@ export interface OrderDetail {
   total: number;
   payments: OrderDetailPayment[];
   items: OrderDetailItem[];
+  promotions: OrderDetailPromotion[];
   isVoided: boolean;
   voidedAt: Date | null;
 }
@@ -56,11 +79,29 @@ export interface UpdateOrderItemModifierInput {
   textValue: string | null;
 }
 
+export interface UpdateOrderItemChildInput {
+  productId: string;
+  quantity: number;
+}
+
 export interface UpdateOrderItemInput {
   productId: string;
   quantity: number;
   unitPrice: number;
+  unitCost: number;
+  discountAmount: number;
+  promotionRef: string | null;
   modifiers: UpdateOrderItemModifierInput[];
+  children: UpdateOrderItemChildInput[];
+}
+
+export interface UpdateOrderPromotionInput {
+  ref: string;
+  promotionId: string | null;
+  kind: string;
+  name: string;
+  ruleSnapshot: unknown;
+  discountAmount: number;
 }
 
 export interface UpdateOrderPaymentInput {
@@ -71,5 +112,6 @@ export interface UpdateOrderPaymentInput {
 
 export interface UpdateOrderInput {
   items: UpdateOrderItemInput[];
+  promotions: UpdateOrderPromotionInput[];
   payments: UpdateOrderPaymentInput[];
 }

@@ -1,4 +1,4 @@
-import type { Category, SelectedModifier } from "@/modules/menu";
+import { collapseModifiersForPrint, type Category, type SelectedModifier } from "@/modules/menu";
 import type { Printer } from "@/modules/printer";
 import type { PrintCommandItemModifier, PrintCommandOptions } from "../print-command";
 
@@ -9,11 +9,7 @@ export interface CartLine {
 }
 
 function toCommandModifiers(line: CartLine): PrintCommandItemModifier[] {
-  return line.selectedModifiers.map((modifier) => ({
-    groupName: modifier.groupName,
-    optionName: modifier.optionName,
-    textValue: modifier.textValue,
-  }));
+  return collapseModifiersForPrint(line.selectedModifiers);
 }
 
 function buildCategoryToPrinterMap(categories: Category[]): Map<string, string> {

@@ -48,6 +48,8 @@ function rowToGroup(row: ModifierGroupRow, options: ModifierOption[] = []): Modi
     required: row.required,
     sortOrder: row.sortOrder,
     firstOptionFree: row.firstOptionFree,
+    allowRepeat: row.allowRepeat,
+    maxRepeat: row.maxRepeat,
     options,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -137,6 +139,8 @@ function normalizeModifierGroupInput(input: ModifierGroupUpsertInput): ModifierG
     required: input.required,
     sortOrder: input.sortOrder,
     firstOptionFree: input.firstOptionFree ?? false,
+    allowRepeat: input.type === "multiple" && (input.allowRepeat ?? false),
+    maxRepeat: Math.min(20, Math.max(1, Math.trunc(input.maxRepeat ?? 3))),
     options: input.options.map(normalizeModifierOptionInput),
   };
 }
@@ -283,6 +287,8 @@ export const modifierGroupDrizzleRepository: ModifierGroupRepository = {
             required: normalizedInput.required,
             sortOrder: normalizedInput.sortOrder,
             firstOptionFree: normalizedInput.firstOptionFree,
+            allowRepeat: normalizedInput.allowRepeat,
+            maxRepeat: normalizedInput.maxRepeat,
             createdAt: now,
             updatedAt: now,
           })
@@ -344,6 +350,8 @@ export const modifierGroupDrizzleRepository: ModifierGroupRepository = {
             required: normalizedInput.required,
             sortOrder: normalizedInput.sortOrder,
             firstOptionFree: normalizedInput.firstOptionFree,
+            allowRepeat: normalizedInput.allowRepeat,
+            maxRepeat: normalizedInput.maxRepeat,
             updatedAt: now,
           })
           .where(and(eq(modifierGroups.id, id), isNull(modifierGroups.deletedAt)))

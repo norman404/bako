@@ -19,7 +19,9 @@
     "orderSaved": "Order #{{ticketNumber}} saved",
     "orderItemsCount": "{{itemsCount}} products charged at register",
     "printError": "Sale was saved, but we could not print the ticket",
-    "comandaPrintError": "Could not print a command ticket"
+    "comandaPrintError": "Could not print a command ticket",
+    "compositeAddedSeparately": "Outside its schedule: products were added separately",
+    "compositeUnavailable": "{{productName}} is unavailable: one of its products was deleted"
   },
   "header": {
     "title": "Bako"

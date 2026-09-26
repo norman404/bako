@@ -11,6 +11,7 @@ import esMxOrder from './locales/es-MX/order.json';
 import esMxShift from './locales/es-MX/shift.json';
 import esMxUpdater from './locales/es-MX/updater.json';
 import esMxErrors from './locales/es-MX/errors.json';
+import esMxPromotions from './locales/es-MX/promotions.json';
 
 // en-US
 import enUsCommon from './locales/en-US/common.json';
@@ -23,6 +24,7 @@ import enUsOrder from './locales/en-US/order.json';
 import enUsShift from './locales/en-US/shift.json';
 import enUsUpdater from './locales/en-US/updater.json';
 import enUsErrors from './locales/en-US/errors.json';
+import enUsPromotions from './locales/en-US/promotions.json';
 
 export const resources: Resource = {
   'es-MX': {
@@ -36,6 +38,7 @@ export const resources: Resource = {
     shift: esMxShift,
     updater: esMxUpdater,
     errors: esMxErrors,
+    promotions: esMxPromotions,
   },
   'en-US': {
     common: enUsCommon,
@@ -48,5 +51,6 @@ export const resources: Resource = {
     shift: enUsShift,
     updater: enUsUpdater,
     errors: enUsErrors,
+    promotions: enUsPromotions,
   }
 };

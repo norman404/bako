@@ -1,6 +1,7 @@
 import { errAsync, type ResultAsync } from "neverthrow";
 
 import { printOrder, type PrintOrderOptions, type PrintOrderPayment } from "@/modules/checkout";
+import { collapseModifiersForPrint } from "@/modules/menu";
 import { ORDER_CHANNEL, orderPrintName } from "@/modules/order";
 import type { Printer } from "@/modules/printer";
 import type { OrderDetail } from "../order-management";
@@ -17,7 +18,10 @@ export function buildReprintOrderOptions(order: OrderDetail): PrintOrderOptions 
         name: item.productName,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
-        modifiers: item.modifiers.map((mod) => ({ groupName: mod.groupName, optionName: mod.optionName, textValue: mod.textValue })),
+        modifiers: collapseModifiersForPrint(item.modifiers),
+        discount: item.discountAmount,
+        discountLabel: item.promotionName,
+        children: item.children.map((child) => ({ name: child.productName, quantity: child.quantity })),
       }))
     : [{
         name: order.channel === ORDER_CHANNEL.DIDI ? "DiDi" : "Uber Eats",
@@ -25,7 +29,7 @@ export function buildReprintOrderOptions(order: OrderDetail): PrintOrderOptions 
         unitPrice: order.total,
         modifiers: order.items.flatMap((item) => [
           { groupName: `${item.quantity} x ${item.productName}`, optionName: null, textValue: null },
-          ...item.modifiers.map((mod) => ({ groupName: mod.groupName, optionName: mod.optionName, textValue: mod.textValue })),
+          ...collapseModifiersForPrint(item.modifiers),
         ]),
       }];
 
@@ -36,6 +40,7 @@ export function buildReprintOrderOptions(order: OrderDetail): PrintOrderOptions 
     total: order.total,
     items,
     payments,
+    discounts: order.promotions.map((promotion) => ({ name: promotion.name, amount: promotion.discountAmount })),
   };
 }
 

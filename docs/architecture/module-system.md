@@ -41,7 +41,7 @@ The shape is in [`BAKO.md` § Module system](../../BAKO.md#module-system), and t
 
 ## 3. The barrel rule
 
-The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All ten modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to a documented capability-bound entry below. There is no ad-hoc third form; a new one is a review failure, not a precedent.
+The rule is in [`BAKO.md` § The barrel is the boundary](../../BAKO.md#the-barrel-is-the-boundary). All eleven modules satisfy it: every cross-module import outside the owning module resolves either to `@/modules/<module>` or to a documented capability-bound entry below. There is no ad-hoc third form; a new one is a review failure, not a precedent.
 
 This guide documents the two exceptions to the rule, each bounded by call site and runtime surface: `manifest.ts` and `settings-window-entry.ts` (§5).
 
@@ -118,7 +118,7 @@ A module migrates only when real work already touches it — never as a standalo
 
 5. **Verify.** Run the relevant focused checks, then the full gate in [`BAKO.md` § Verify before claiming done](../../BAKO.md#verify-before-claiming-done). If the change alters behavior, document it as a behavior change rather than calling it purely structural.
 
-`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all ten modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or a documented exception in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
+`updater` was the pilot. Its one structural blocker was the cycle in §4, resolved as part of the migration rather than before it. The procedure then ran to completion across the rest of the repo: **all eleven modules are in the flat shape, no layer folders remain anywhere under `src/modules/`, and every cross-module import goes through a barrel or a documented exception in §5.** The five steps above are not a proposal and not a historical record — they are the procedure for the next module that needs restructuring, and for checking that a new module was born in the right shape.
 
 ### The trap the migration hit
 

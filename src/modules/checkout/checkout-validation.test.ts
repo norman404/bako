@@ -61,3 +61,65 @@ describe("delivery creation", () => {
     expect(error?.code).toBe("invalidPaymentMethod");
   });
 });
+
+const TWO_FOR_ONE: NonNullable<CreateOrderInput["promotions"]>[number] = {
+  ref: "p1",
+  promotionId: "promo-2x1",
+  kind: "nxm",
+  name: "2x1 Café",
+  ruleSnapshot: { buyQuantity: 2, payQuantity: 1 },
+  discountAmount: 7000,
+};
+const DISCOUNTED_ITEMS: CreateOrderInput["items"] = [{ ...ITEMS[0], discountAmount: 7000, promotionRef: "p1" }];
+
+describe("promotion discounts", () => {
+  // CASE: A local 2x1 sale is charged for one of its two coffees.
+  // VALIDATES: The order total and payment requirement are net of the reconciled discount.
+  it("should charge the net total when a discount matches its promotion", () => {
+    // Arrange
+    const input = normalizeCreateOrderInput({
+      items: DISCOUNTED_ITEMS,
+      promotions: [TWO_FOR_ONE],
+      payments: [{ method: "card", amount: 7000 }],
+    });
+    // Act
+    const error = validateCreateOrderInput(input);
+    const accounting = initialOrderAccounting(input, NOW);
+    // Assert
+    expect(error).toBeNull();
+    expect(accounting.total).toBe(7000);
+  });
+
+  // CASE: A payload tampers with discounts, references or channels.
+  // VALIDATES: Unjustified, oversized, orphaned, unreconciled or delivery discounts are rejected.
+  it("should reject discounts that are not backed by consistent promotion evidence", () => {
+    // Arrange
+    const payments = [{ method: "card" as const, amount: 7000 }];
+    const cases: Array<[CreateOrderInput, string]> = [
+      [{ items: [{ ...ITEMS[0], discountAmount: 7000 }], payments }, "orderPromotionInvalid"],
+      [{ items: [{ ...ITEMS[0], discountAmount: 14001, promotionRef: "p1" }], promotions: [TWO_FOR_ONE], payments }, "orderItemDiscountInvalid"],
+      [{ items: [{ ...ITEMS[0], discountAmount: 7000, promotionRef: "missing" }], promotions: [TWO_FOR_ONE], payments }, "orderPromotionInvalid"],
+      [{ items: DISCOUNTED_ITEMS, promotions: [{ ...TWO_FOR_ONE, discountAmount: 5000 }], payments }, "orderPromotionInvalid"],
+      [{ channel: "uber", items: DISCOUNTED_ITEMS, promotions: [TWO_FOR_ONE], payments: [] }, "orderPromotionInvalid"],
+    ];
+    // Act
+    const codes = cases.map(([input]) => validateCreateOrderInput(normalizeCreateOrderInput(input))?.code);
+    // Assert
+    expect(codes).toEqual(cases.map(([, code]) => code));
+  });
+
+  // CASE: A payment covers the catalog price but ignores the promotion discount.
+  // VALIDATES: Payments must match the net total, not the gross one.
+  it("should reject payments that ignore the discount", () => {
+    // Arrange
+    const input = normalizeCreateOrderInput({
+      items: DISCOUNTED_ITEMS,
+      promotions: [TWO_FOR_ONE],
+      payments: [{ method: "card", amount: 14000 }],
+    });
+    // Act
+    const error = validateCreateOrderInput(input);
+    // Assert
+    expect(error?.code).toBe("paymentTotalMismatch");
+  });
+});

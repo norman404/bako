@@ -118,6 +118,11 @@
         "description": "Personalizar productos con grupos de modificadores (nivel de hielo, comentarios, etc.)",
         "updated": "Opciones de producto {{value, select, true {habilitadas} other {deshabilitadas}}}"
       },
+      "promotions_enabled": {
+        "label": "Promociones",
+        "description": "Aplicar 2x1, paquetes y productos compuestos por horario de forma automática",
+        "updated": "Promociones {{value, select, true {habilitadas} other {deshabilitadas}}}"
+      },
       "comandas_enabled": {
         "label": "Comandas",
         "description": "Imprimir tickets de preparación por área (cocina, barra, etc.)",
@@ -248,6 +253,8 @@
     "moveGroupUp": "Subir grupo",
     "moveGroupDown": "Bajar grupo",
     "removeOption": "Eliminar opción",
-    "firstOptionFreeLabel": "Primera opción gratis"
+    "firstOptionFreeLabel": "Primera opción gratis",
+    "allowRepeatLabel": "Permitir repetir opciones",
+    "maxRepeatLabel": "Máximo por opción"
   }
 }

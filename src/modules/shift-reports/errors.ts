@@ -10,6 +10,7 @@ export type ShiftErrorCode =
   | "deliveryEditNotAllowed"
   | "closedShift"
   | "invalidOrderPayment"
+  | "invalidOrderPromotion"
   | "invalidOpeningCash"
   | "invalidCountedCash"
   | "invalidCashMovement"

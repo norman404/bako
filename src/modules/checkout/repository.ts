@@ -7,6 +7,7 @@ import { withTransaction, type DatabaseClient } from "@/db/client";
 import {
   orderItems,
   orderItemModifiers,
+  orderPromotions,
   orders,
   payments,
   shifts,
@@ -16,6 +17,7 @@ import {
   type OrderItemModifierInsert,
   type OrderItemModifierRow,
   type OrderItemRow,
+  type OrderPromotionInsert,
   type OrderRow,
   type PaymentInsert,
   type PaymentRow,
@@ -23,14 +25,21 @@ import {
 import {
   type CheckoutOrder,
   type CheckoutOrderItem,
-  type CheckoutOrderItemInput,
   type CheckoutOrderItemModifier,
   type CheckoutPayment,
   type CheckoutPaymentMethod,
   type CreateOrderInput,
 } from "./order";
 import { CheckoutPersistenceError } from "./errors";
-import { initialOrderAccounting, isCheckoutPaymentMethod, normalizeCreateOrderInput, validateCreateOrderInput, type NormalizedCheckoutPaymentInput, type NormalizedCreateOrderInput } from "./checkout-validation";
+import {
+  initialOrderAccounting,
+  isCheckoutPaymentMethod,
+  normalizeCreateOrderInput,
+  validateCreateOrderInput,
+  type NormalizedCheckoutOrderItemInput,
+  type NormalizedCheckoutPaymentInput,
+  type NormalizedCreateOrderInput,
+} from "./checkout-validation";
 
 export {
   CHECKOUT_PAYMENT_METHOD,
@@ -86,6 +95,9 @@ function rowToCheckoutOrderItem(row: OrderItemRow, modifiers: CheckoutOrderItemM
     quantity: row.quantity,
     unitPrice: row.unitPrice,
     unitCost: row.unitCost,
+    discountAmount: row.discountAmount,
+    orderPromotionId: row.orderPromotionId,
+    parentOrderItemId: row.parentOrderItemId,
     modifiers,
     createdAt: row.createdAt,
   };
@@ -200,25 +212,40 @@ async function createPaymentRows(
   return createdPayments;
 }
 
-async function createOrderItemRows(
+async function createOrderPromotionRows(
   tx: DatabaseClient,
   orderId: string,
-  items: CheckoutOrderItemInput[],
+  input: NormalizedCreateOrderInput,
   now: Date,
-): Promise<OrderItemRow[]> {
-  const orderItemValues: OrderItemInsert[] = items.map((item) => ({
-    id: crypto.randomUUID(),
-    orderId,
-    productId: item.productId,
-    quantity: item.quantity,
-    unitPrice: item.unitPrice,
-    unitCost: item.unitCost,
-    createdAt: now,
-  }));
+): Promise<Map<string, string>> {
+  const idsByRef = new Map<string, string>();
+  if (input.promotions.length === 0) return idsByRef;
 
-  const createdOrderItems = await tx.insert(orderItems).values(orderItemValues).returning();
+  const values: OrderPromotionInsert[] = input.promotions.map((promotion) => {
+    const id = crypto.randomUUID();
+    idsByRef.set(promotion.ref, id);
+    return {
+      id,
+      orderId,
+      promotionId: promotion.promotionId,
+      kind: promotion.kind,
+      nameSnapshot: promotion.name,
+      ruleSnapshot: promotion.ruleSnapshot,
+      discountAmount: promotion.discountAmount,
+      createdAt: now,
+    };
+  });
 
-  if (createdOrderItems.length !== orderItemValues.length) {
+  await tx.insert(orderPromotions).values(values);
+  return idsByRef;
+}
+
+async function insertOrderItemRows(tx: DatabaseClient, values: OrderItemInsert[]): Promise<OrderItemRow[]> {
+  if (values.length === 0) return [];
+
+  const createdOrderItems = await tx.insert(orderItems).values(values).returning();
+
+  if (createdOrderItems.length !== values.length) {
     throw new CheckoutPersistenceError(
       "dbError",
       { context: "Failed to load created order items" },
@@ -229,10 +256,58 @@ async function createOrderItemRows(
   return createdOrderItems;
 }
 
+async function createOrderItemRows(
+  tx: DatabaseClient,
+  orderId: string,
+  items: NormalizedCheckoutOrderItemInput[],
+  promotionIdsByRef: Map<string, string>,
+  now: Date,
+): Promise<OrderItemRow[]> {
+  const orderItemValues: OrderItemInsert[] = items.map((item) => ({
+    id: crypto.randomUUID(),
+    orderId,
+    productId: item.productId,
+    quantity: item.quantity,
+    unitPrice: item.unitPrice,
+    unitCost: item.unitCost,
+    discountAmount: item.discountAmount,
+    orderPromotionId: item.promotionRef === null ? null : (promotionIdsByRef.get(item.promotionRef) ?? null),
+    createdAt: now,
+  }));
+
+  return insertOrderItemRows(tx, orderItemValues);
+}
+
+// Composite children are informational (kitchen routing and sale detail): the parent line
+// carries the whole price, cost and discount, so children are stored at zero.
+async function createOrderItemChildRows(
+  tx: DatabaseClient,
+  orderId: string,
+  parentRows: OrderItemRow[],
+  items: NormalizedCheckoutOrderItemInput[],
+  now: Date,
+): Promise<OrderItemRow[]> {
+  const childValues: OrderItemInsert[] = parentRows.flatMap((parentRow, index) =>
+    (items[index]?.children ?? []).map((child) => ({
+      id: crypto.randomUUID(),
+      orderId,
+      productId: child.productId,
+      quantity: child.quantity,
+      unitPrice: 0,
+      unitCost: 0,
+      discountAmount: 0,
+      parentOrderItemId: parentRow.id,
+      createdAt: now,
+    })),
+  );
+
+  return insertOrderItemRows(tx, childValues);
+}
+
 async function createOrderItemModifiers(
   tx: DatabaseClient,
   orderItemRows: OrderItemRow[],
-  items: CheckoutOrderItemInput[],
+  items: NormalizedCheckoutOrderItemInput[],
   now: Date,
 ): Promise<void> {
   const modifierValues: OrderItemModifierInsert[] = [];
@@ -314,12 +389,14 @@ export const orderDrizzleRepository = {
         const paymentRows = normalizedInput.payments.length === 0
           ? []
           : await createPaymentRows(tx, orderRow.id, normalizedInput.payments, now);
-        const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, now);
+        const promotionIdsByRef = await createOrderPromotionRows(tx, orderRow.id, normalizedInput, now);
+        const orderItemRows = await createOrderItemRows(tx, orderRow.id, normalizedInput.items, promotionIdsByRef, now);
         await createOrderItemModifiers(tx, orderItemRows, normalizedInput.items, now);
+        const childRows = await createOrderItemChildRows(tx, orderRow.id, orderItemRows, normalizedInput.items, now);
 
         const orderItemModifierRows = await loadOrderItemModifierRows(tx, orderItemRows);
 
-        return rowToCheckoutOrder(orderRow, orderItemRows, orderItemModifierRows, paymentRows);
+        return rowToCheckoutOrder(orderRow, [...orderItemRows, ...childRows], orderItemModifierRows, paymentRows);
       }),
       wrapPersistenceError("Failed to create order"),
     );

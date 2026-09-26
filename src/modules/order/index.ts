@@ -2,8 +2,10 @@
 export { Cart } from "./Cart";
 
 // Domain
-export type { CartItem, CartTotals } from "./cart-operations";
+export type { CartCompositeComponent, CartItem, CartTotals } from "./cart-operations";
+export { addCompositeToCart, addItemToCart, expandCompositeItems, isCompositeActive } from "./cart-operations";
 export { calculateCartTotals } from "./cart-operations";
+export { getLinePricing, priceCart, type CartLinePricing, type CartPricing } from "./cart-pricing";
 
 // Store
 export { useOrderStore } from "./order-store";

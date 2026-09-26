@@ -7,7 +7,8 @@ const ORDER: OrderDetail = {
   createdAt: new Date("2026-08-01T15:00:00Z"), confirmedAt: new Date("2026-08-01T17:00:00Z"),
   total: 5000, isVoided: false, voidedAt: null,
   payments: [{ id: "payment", method: "platform", amount: 5000, cashReceived: null, createdAt: new Date("2026-08-01T17:00:00Z") }],
-  items: [{ id: "item", productId: "coffee", productName: "Café", categoryId: "drinks", quantity: 2, unitPrice: 7000, modifiers: [] }],
+  items: [{ id: "item", productId: "coffee", productName: "Café", categoryId: "drinks", quantity: 2, unitPrice: 7000, unitCost: 0, discountAmount: 0, orderPromotionId: null, promotionName: null, modifiers: [], children: [] }],
+  promotions: [],
 };
 
 describe("delivery receipt", () => {
@@ -36,5 +37,25 @@ describe("delivery receipt", () => {
     // Assert
     expect(receipt).toBeNull();
     expect(voidedReceipt).toBeNull();
+  });
+
+  // CASE: A local sale with a 2x1 is reprinted days later.
+  // VALIDATES: The reprint shows the frozen promotion evidence, so it matches the original receipt.
+  it("should reprint the stored promotion discounts for a local sale", () => {
+    // Arrange
+    const order: OrderDetail = {
+      ...ORDER,
+      channel: "local",
+      deliveryReference: null,
+      total: 7000,
+      payments: [{ id: "payment", method: "card", amount: 7000, cashReceived: null, createdAt: new Date("2026-08-01T17:00:00Z") }],
+      items: [{ ...ORDER.items[0], discountAmount: 7000, promotionName: "2x1 Café" }],
+      promotions: [{ id: "op", promotionId: "promo", kind: "nxm", name: "2x1 Café", ruleSnapshot: {}, discountAmount: 7000 }],
+    };
+    // Act
+    const receipt = buildReprintOrderOptions(order);
+    // Assert
+    expect(receipt?.items[0]).toMatchObject({ unitPrice: 7000, quantity: 2, discount: 7000, discountLabel: "2x1 Café" });
+    expect(receipt?.discounts).toEqual([{ name: "2x1 Café", amount: 7000 }]);
   });
 });

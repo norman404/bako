@@ -3,7 +3,9 @@
     "productNotFound": "Producto no encontrado: {{productId}}",
     "categoryNotFound": "Categoría no encontrada: {{categoryId}}",
     "modifierGroupNotFound": "Grupo de modificadores no encontrado: {{groupId}}",
-    "generic": "Ocurrió un error inesperado"
+    "generic": "Ocurrió un error inesperado",
+    "compositeComponentsInvalid": "Un producto compuesto necesita al menos 2 productos incluidos, sin repetir, y solo productos normales activos.",
+    "compositeScheduleInvalid": "El horario del producto compuesto no es válido."
   },
   "printer": {
     "printerNotFound": "Impresora no encontrada: {{printerId}}",

@@ -15,7 +15,10 @@ export function aggregateCategorySales(
   for (const order of orders) {
     if (order.isVoided || order.isPending) continue;
 
-    const catalogTotal = order.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    // Promotion discounts are exact per line; the ratio only absorbs what they cannot, such as
+    // a delivery collected for a different amount than its catalog prices.
+    const netLine = (item: (typeof order.items)[number]) => item.unitPrice * item.quantity - (item.discountAmount ?? 0);
+    const catalogTotal = order.items.reduce((sum, item) => sum + netLine(item), 0);
     const revenueRatio = catalogTotal > 0 ? order.total / catalogTotal : 0;
 
     for (const item of order.items) {
@@ -27,7 +30,7 @@ export function aggregateCategorySales(
         totalItems: 0,
         totalSales: 0,
       };
-      const lineTotal = Math.round(item.unitPrice * item.quantity * revenueRatio);
+      const lineTotal = Math.round(netLine(item) * revenueRatio);
 
       category.totalItems += item.quantity;
       category.totalSales += lineTotal;

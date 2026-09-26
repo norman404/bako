@@ -19,13 +19,13 @@ import {
   parsePaymentAmountInput,
   sanitizePaymentAmountInput,
 } from "./lib/formatters";
-import { calculateCartTotals, type CartItem } from "@/modules/order";
+import type { CartItem, CartPricing } from "@/modules/order";
 
 interface UseCheckoutFormOptions {
   open: boolean;
   items: CartItem[];
   orderName: string;
-  totals?: ReturnType<typeof calculateCartTotals>;
+  pricing: CartPricing;
   isSubmitting?: boolean;
   onClose: () => void;
   onConfirmCheckout: (input: CreateOrderInput) => Promise<void>;
@@ -76,13 +76,13 @@ function getPaymentSummary(breakdown: PaymentBreakdown) {
 export function useCheckoutForm({
   items,
   orderName,
-  totals,
+  pricing,
   isSubmitting = false,
   onClose,
   onConfirmCheckout,
 }: UseCheckoutFormOptions) {
   const { t } = useTranslation("checkout");
-  const normalizedTotals = totals ?? calculateCartTotals(items);
+  const normalizedTotals = pricing;
 
   const [paymentMode, setPaymentMode] = useState<CheckoutPaymentMode>(
     CHECKOUT_PAYMENT_MODE.CASH,
@@ -140,13 +140,7 @@ export function useCheckoutForm({
       return;
     }
 
-    const payload = buildCreateOrderInput(
-      items,
-      paymentMode,
-      cashAmountInput,
-      normalizedTotals.total,
-      orderName,
-    );
+    const payload = buildCreateOrderInput(items, pricing, paymentMode, cashAmountInput, orderName);
     if (!payload) {
       setFormError(paymentValidationMessage ?? t("errors.formEmptyCart"));
       return;

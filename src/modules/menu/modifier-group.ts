@@ -19,6 +19,10 @@ export interface ModifierGroup {
   required: boolean;
   sortOrder: number;
   firstOptionFree: boolean;
+  // Multiple-choice groups only: an option can be picked several times (e.g. extra cheese ×2),
+  // stored as one SelectedModifier per unit so pricing and the first-free rule stay per unit.
+  allowRepeat: boolean;
+  maxRepeat: number;
   options: ModifierOption[];
   createdAt: Date;
   updatedAt: Date;
@@ -51,11 +55,14 @@ export function resolveProductModifierGroups(
   return [...merged.values()].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+function modifierIdentity(modifier: SelectedModifier): string {
+  return `${modifier.groupId}:${modifier.optionId ?? ""}:${modifier.textValue ?? ""}`;
+}
+
+// Sorted by the full identity so the same picks in a different order share one cart line,
+// while "cheese ×2" and "cheese ×1" stay distinct.
 export function buildCartItemKey(productId: string, modifiers: SelectedModifier[]): string {
-  const normalized = [...modifiers]
-    .sort((a, b) => a.groupId.localeCompare(b.groupId))
-    .map((m) => `${m.groupId}:${m.optionId ?? ""}:${m.textValue ?? ""}`)
-    .join("|");
+  const normalized = modifiers.map(modifierIdentity).sort().join("|");
 
   return `${productId}::${normalized}`;
 }
@@ -99,4 +106,58 @@ export function applyFirstOptionFree(
   return sorted.map((modifier, index) =>
     index === 0 ? Object.assign({}, modifier, { priceDelta: 0 }) : modifier,
   );
+}
+export interface RepeatedModifier {
+  modifier: SelectedModifier;
+  quantity: number;
+  totalDelta: number;
+}
+
+// Collapses repeated picks of the same option for display ("Extra cheese ×2"), summing what
+// each unit costs, so a first-free unit and a paid one read as one line with the right total.
+export function groupRepeatedModifiers(modifiers: SelectedModifier[]): RepeatedModifier[] {
+  const groups = new Map<string, RepeatedModifier>();
+  for (const modifier of modifiers) {
+    const key = modifierIdentity(modifier);
+    const existing = groups.get(key);
+    if (existing) {
+      existing.quantity += 1;
+      existing.totalDelta += modifier.priceDelta;
+    } else {
+      groups.set(key, { modifier, quantity: 1, totalDelta: modifier.priceDelta });
+    }
+  }
+  return [...groups.values()];
+}
+
+export function formatRepeatedModifierLabel(entry: RepeatedModifier): string {
+  const label = entry.modifier.optionName ?? entry.modifier.textValue ?? "";
+  return entry.quantity > 1 ? `${label} ×${entry.quantity}` : label;
+}
+
+export interface PrintableModifier {
+  groupName: string;
+  optionName: string | null;
+  textValue: string | null;
+}
+
+interface PrintableModifierSource extends PrintableModifier {
+  optionId: string | null;
+}
+
+// Receipts and kitchen tickets print a repeated option once with its count ("Extra ×2").
+export function collapseModifiersForPrint(modifiers: PrintableModifierSource[]): PrintableModifier[] {
+  const collapsed = new Map<string, { modifier: PrintableModifierSource; quantity: number }>();
+  for (const modifier of modifiers) {
+    const key = `${modifier.groupName}:${modifier.optionId ?? ""}:${modifier.textValue ?? ""}`;
+    const existing = collapsed.get(key);
+    if (existing) existing.quantity += 1;
+    else collapsed.set(key, { modifier, quantity: 1 });
+  }
+
+  return [...collapsed.values()].map(({ modifier, quantity }) => ({
+    groupName: modifier.groupName,
+    optionName: modifier.optionName !== null && quantity > 1 ? `${modifier.optionName} ×${quantity}` : modifier.optionName,
+    textValue: modifier.textValue,
+  }));
 }

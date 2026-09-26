@@ -129,6 +129,7 @@
     "orderNotFound": "No encontramos el pedido.",
     "orderAlreadyVoided": "El pedido ya fue anulado.",
     "invalidOrderPayment": "Los importes de pago no coinciden con el total del pedido.",
+    "invalidOrderPromotion": "Las promociones de la venta no cuadran con sus descuentos.",
     "dbError": "No pudimos cargar los turnos. Intentá de nuevo.",
     "generic": "Ocurrió un error con los turnos.",
     "deliveryRequired": "El pedido no es un delivery válido.",
@@ -143,5 +144,12 @@
   "deliveryPending": "Delivery pendiente",
   "pendingDeliveries": "{{count}} deliveries pendientes",
   "pendingDeliveriesHint": "No suman a ventas ni caja. Permanecen disponibles para confirmar en otro turno.",
-  "platformHint": "Pagado en app está separado del efectivo y de las tarjetas de tu terminal."
+  "platformHint": "Pagado en app está separado del efectivo y de las tarjetas de tu terminal.",
+  "promotions": {
+    "title": "Promociones",
+    "timesApplied_one": "{{count}} vez",
+    "timesApplied_other": "{{count}} veces",
+    "hint": "Descuento ya restado del total de ventas.",
+    "discountLine": "Promo"
+  }
 }
